@@ -51,6 +51,32 @@ async function withActionLock<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
+function isTransientSqliteError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === 'P1008' || error.code === 'P2028' || error.code === 'P2034')
+  );
+}
+
+async function executeActionWithRetry(
+  auth: Awaited<ReturnType<typeof requireAuth>>,
+  playerId: string,
+  type: string,
+  args: Record<string, unknown>
+): Promise<ActionResult> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await executeGameAction(auth, playerId, type, args);
+    } catch (error) {
+      if (!isTransientSqliteError(error) || attempt === 2) throw error;
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 const actionSchema = z.object({
   playerId: z.string().min(1),
   type: z.string().min(1),
@@ -188,7 +214,7 @@ export async function POST(request: Request) {
             throw e;
           }
         }
-        const r = await executeGameAction(auth, playerId, type, args);
+        const r = await executeActionWithRetry(auth, playerId, type, args);
         if (dedupRef.current) {
           // cacheia o resultado para retries futuros com o mesmo requestId
           const dedupKey = dedupRef.current;
