@@ -17,6 +17,9 @@ import {
   type AdminCharacterRow,
 } from '@/lib/game/adminActions';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // =====================================================================
 // POST /api/admin/action — ações do painel sobre PERSONAGENS (v0.9.6)
 // ---------------------------------------------------------------------

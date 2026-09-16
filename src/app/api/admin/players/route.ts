@@ -5,6 +5,9 @@ import { LIMITS, clientIp, rateLimit } from '@/lib/rate-limit';
 import { extractBearerToken, verifySupabaseAdmin, adminListCloudCharacters } from '@/lib/supabase/admin';
 import { listLocalCharactersForAdmin, type AdminCharacterRow } from '@/lib/game/adminActions';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // =====================================================================
 // GET /api/admin/players — lista de PERSONAGENS para o painel (v0.9.6)
 // ---------------------------------------------------------------------

@@ -5,6 +5,9 @@ import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { requirePanelAdmin } from '@/lib/supabase/admin';
 import { deleteGuildAdmin } from '@/lib/game/adminErasure';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // =====================================================================
 // POST /api/admin/delete-guild — EXCLUSÃO DESTRUTIVA de UMA guilda (v0.14)
 // ---------------------------------------------------------------------

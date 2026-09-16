@@ -5,6 +5,9 @@ import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { requirePanelAdmin } from '@/lib/supabase/admin';
 import { deleteCharacterAdmin } from '@/lib/game/adminErasure';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // =====================================================================
 // POST /api/admin/delete-character — EXCLUSÃO DESTRUTIVA de UM
 // personagem, NAS DUAS CAMADAS (v0.14)

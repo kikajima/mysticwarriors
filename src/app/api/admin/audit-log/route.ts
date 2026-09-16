@@ -4,6 +4,9 @@ import { LIMITS, clientIp, rateLimit } from '@/lib/rate-limit';
 import { requirePanelAdmin } from '@/lib/supabase/admin';
 import { listAuditLogs } from '@/lib/game/adminErasure';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // =====================================================================
 // GET /api/admin/audit-log — LOG DE AÇÕES ADMINISTRATIVAS (v0.14)
 // ---------------------------------------------------------------------
