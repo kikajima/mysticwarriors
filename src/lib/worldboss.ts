@@ -226,7 +226,7 @@ export async function getBossView(playerId: string | null): Promise<WorldBossVie
         canAttackAt: mine ? new Date(mine.lastAttackedAt.getTime() + ATTACK_COOLDOWN_SEC * 1000).toISOString() : null,
       };
     },
-    { timeout: 15_000, maxWait: 5_000 }
+    { timeout: 60_000, maxWait: 30_000 }
   );
 }
 

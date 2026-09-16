@@ -354,7 +354,11 @@ function WorldBossSection({
   const now = useServerNow(250);
 
   const loadSequence = useRef(0);
+  const loadInFlight = useRef(false);
+  const restoreAttempted = useRef(false);
   const load = useCallback(async () => {
+    if (loadInFlight.current) return;
+    loadInFlight.current = true;
     const sequence = ++loadSequence.current;
     setFailed(false);
     try {
@@ -365,11 +369,14 @@ function WorldBossSection({
       if (nextBoss && cloud && cloud.id === nextBoss.id) {
         // O SQLite pode ter acabado de nascer após um deploy. O snapshot
         // global do Supabase é a fonte durável do HP, prazo e ranking.
-        await fetch('/api/game/worldboss-cloud', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(cloud),
-        });
+        if (!restoreAttempted.current) {
+          restoreAttempted.current = true;
+          await fetch('/api/game/worldboss-cloud', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cloud),
+          });
+        }
         const cloudDamage = [...cloud.damages].sort((a, b) => b.damage - a.damage);
         const mine = cloud.damages.find((d) => d.playerId === player.id);
         const myPosition = mine ? cloudDamage.findIndex((d) => d.playerId === player.id) + 1 : null;
@@ -383,7 +390,8 @@ function WorldBossSection({
           topDamage: cloudDamage.slice(0, 10).map((d) => ({ name: d.name, damage: d.damage, isMe: d.playerId === player.id })),
         };
       }
-      if (nextBoss && !cloud) {
+      if (nextBoss && !cloud && !restoreAttempted.current) {
+        restoreAttempted.current = true;
         void saveLocalBossToCloud();
       }
       if (sequence === loadSequence.current) setBoss(nextBoss);
@@ -393,6 +401,7 @@ function WorldBossSection({
       if (sequence === loadSequence.current) setFailed(true);
     } finally {
       if (sequence === loadSequence.current) setLoading(false);
+      loadInFlight.current = false;
     }
   }, [player.id]);
   const saveLocalBossToCloud = useCallback(async () => {

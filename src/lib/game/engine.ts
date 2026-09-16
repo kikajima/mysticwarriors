@@ -405,9 +405,11 @@ export function applyRegen(player: Player, nowMs: number = Date.now()): boolean 
     player.lastRegen = new Date(eRefMs + Math.floor(eGain * eInt * 1000));
   }
   if (player.energy >= derived.maxEnergy) {
-    // cheio: relógio acompanha o presente (precisa persistir)
-    player.lastRegen = new Date(now);
-    changed = true;
+    // cheio: corrige o relógio uma vez; não grava em todo polling.
+    if (now - player.lastRegen.getTime() > 1000) {
+      player.lastRegen = new Date(now);
+      changed = true;
+    }
   }
 
   // --- relógio da VIDA (independente) ---
@@ -428,8 +430,11 @@ export function applyRegen(player: Player, nowMs: number = Date.now()): boolean 
     player.lastRegenHp = new Date(hpRefMs + Math.floor(hGain * hInt * 1000));
   }
   if (player.hp >= derived.maxHp) {
-    player.lastRegenHp = new Date(now);
-    changed = true;
+    // cheio: corrige o relógio uma vez; não grava em todo polling.
+    if (now - (player.lastRegenHp?.getTime() ?? now) > 1000) {
+      player.lastRegenHp = new Date(now);
+      changed = true;
+    }
   }
   return changed;
 }

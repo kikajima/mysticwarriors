@@ -7,7 +7,6 @@ import { ensureBalanceVersion } from '@/lib/game/balance';
 import { maybeBeacon } from '@/lib/game/persistence';
 import { ensureQuests } from '@/lib/progression';
 import { ensureActiveSeason } from '@/lib/seasons';
-import { ensureActiveBoss } from '@/lib/worldboss';
 import { LIMITS, rateLimit } from '@/lib/rate-limit';
 
 // =====================================================================
@@ -112,9 +111,8 @@ export async function GET(request: Request) {
           async (tx) => {
             await ensureQuests(tx, player.id);
             await ensureActiveSeason(tx).catch(() => undefined);
-            await ensureActiveBoss(tx).catch(() => undefined);
           },
-          { timeout: 15_000, maxWait: 5_000 }
+          { timeout: 60_000, maxWait: 30_000 }
         );
       } catch (ensureError) {
         console.error('[state] ensure falhou (não crítico):', ensureError instanceof Error ? ensureError.message : ensureError);
