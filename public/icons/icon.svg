@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="ball" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#ffe9a8"/>
+      <stop offset="45%" stop-color="#ffb830"/>
+      <stop offset="100%" stop-color="#c2620a"/>
+    </radialGradient>
+    <radialGradient id="star" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#fffbe8"/>
+      <stop offset="100%" stop-color="#e8341c"/>
+    </radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#241708"/>
+      <stop offset="100%" stop-color="#120c05"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="190" fill="#1a1208" opacity="0.9"/>
+  <circle cx="256" cy="256" r="170" fill="url(#ball)"/>
+  <path d="M96 190 Q140 120 220 96" stroke="#fff3c4" stroke-width="14" fill="none" opacity="0.55" stroke-linecap="round"/>
+  <g transform="translate(256 256)">
+    <path d="M0,-62 L18,-19 L64,-19 L27,9 L41,52 L0,25 L-41,52 L-27,9 L-64,-19 L-18,-19 Z" fill="url(#star)" stroke="#8f1508" stroke-width="5" stroke-linejoin="round"/>
+  </g>
+  <g fill="#e8341c" opacity="0.85">
+    <circle cx="140" cy="392" r="13"/>
+    <circle cx="372" cy="392" r="13"/>
+    <circle cx="110" cy="330" r="11"/>
+    <circle cx="402" cy="330" r="11"/>
+  </g>
+</svg>

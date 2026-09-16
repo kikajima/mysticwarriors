@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "O layout está limpo, sem sobreposição de elementos ou textos cortados, apresentando uma organização visual clara. O texto é perfeitamente legível, com bom contraste entre as cores e fontes adequadas para leitura. Sim, o design transmite uma aparência profissional de painel de RPG, com estatísticas bem distribuídas e interface moderna.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789062228,
+  "id": "20260911014345ee22d7807cb34879",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "20260911014345ee22d7807cb34879",
+  "usage": {
+    "completion_tokens": 77,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 939,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 1016
+  }
+}

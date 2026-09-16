@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "Sim, existem barras de HP exibindo os valores atuais e máximos para ambos os lutadores. O registro de batalha é legível, detalhando as ações rodada por rodada com os danos causados. A qualidade visual é boa, com uma interface clara, cores contrastantes e tipografia legível.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789062239,
+  "id": "202609110143554ff3d9dec35c498c",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "202609110143554ff3d9dec35c498c",
+  "usage": {
+    "completion_tokens": 73,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 449,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 522
+  }
+}

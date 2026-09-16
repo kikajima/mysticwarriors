@@ -1,0 +1,439 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ===== Utilidades do jogo Guerreiros Místicos ===== */
+
+.font-display {
+  font-family: var(--font-bangers), 'Segoe UI', cursive;
+  letter-spacing: 0.04em;
+}
+
+.font-heading {
+  font-family: var(--font-russo), var(--font-geist-sans), sans-serif;
+}
+
+/* Scrollbar temática */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: #14100b;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #92400e, #78350f);
+  border-radius: 8px;
+  border: 2px solid #14100b;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b45309;
+}
+
+/* Animações */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes pulse-aura {
+  0%,
+  100% {
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 42px rgba(249, 115, 22, 0.65);
+  }
+}
+.aura {
+  animation: pulse-aura 2.6s ease-in-out infinite;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.slide-in {
+  animation: slide-in 0.25s ease-out both;
+}
+
+/* barra de progresso do overlay "Treino em progresso" */
+@keyframes slideLoop {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+/* ===== v0.9 — TREINO INSTANTÂNEO: "puladinha" elegante do botão +
+     (sobe ~7px e volta, ~300ms no total) ===== */
+@keyframes train-pop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-7px) scale(1.06);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-train-pop {
+  animation: train-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ===== v0.9.2 — botão do escudo do ADMIN: brilho pulsante dourado
+   (chama atenção sem incomodar; só existe no navegador do admin) ===== */
+@keyframes admin-shield-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(251, 191, 36, 0.55),
+      0 10px 24px -6px rgba(0, 0, 0, 0.7);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px rgba(251, 191, 36, 0),
+      0 10px 24px -6px rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* ===== Efeitos de cosméticos (v0.5) ===== */
+
+/* Efeito: Teleporte — clarão azul ao entrar em cena */
+@keyframes fx-teleport {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  25% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+/* Efeito: Onda de Ki — energia varre a tela */
+@keyframes fx-kiwave {
+  0% {
+    transform: translateX(-130%) skewX(-12deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(240%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+/* ===== v0.9.12 — detalhes de polimento ===== */
+
+/* Brilho deslizante nas barras de recurso (HP/energia/XP) — "energia
+   viva". Fica SOMENTE sobre o preenchimento (posicionado pelo pai
+   .relative do ResourceBar) e some com prefers-reduced-motion. */
+@keyframes bar-sheen {
+  0% {
+    transform: translateX(-150%);
+  }
+  100% {
+    transform: translateX(450%);
+  }
+}
+.bar-sheen {
+  position: absolute;
+  inset: 0;
+  width: 28%;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.16) 45%,
+    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.16) 55%,
+    transparent 100%
+  );
+  animation: bar-sheen 2.8s ease-in-out infinite;
+}
+
+/* Selo da Escala de Poder (ficha) — pulso dourado discreto: a escala
+   "respira" enquanto é o termômetro de progresso do guerreiro */
+@keyframes scale-seal-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.28);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(251, 191, 36, 0);
+  }
+}
+.scale-seal {
+  animation: scale-seal-pulse 2.4s ease-out infinite;
+}
+
+/* v0.9.13 — Chamas do medidor de Ímpeto (Cap. 7 do ASCENSÃO Z): cada
+   chama acesa tremula levemente (brilho + altura), como fogo vivo —
+   a leitura do medidor é instantânea sem depender de números. */
+@keyframes impeto-flicker {
+  0%,
+  100% {
+    transform: scaleY(1);
+    filter: brightness(1);
+  }
+  30% {
+    transform: scaleY(1.12);
+    filter: brightness(1.25);
+  }
+  60% {
+    transform: scaleY(0.94);
+    filter: brightness(0.92);
+  }
+}
+
+/* v0.9.15 — TALENTOS DE ÍMPETO (Cap. 7): chama viva nos ícones de
+   talento e halo dourado pulsante no card do talento dominado */
+.talent-flame {
+  animation: impeto-flicker 1.6s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+.talent-owned-glow {
+  animation: talent-glow 2.4s ease-in-out infinite;
+}
+@keyframes talent-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(251, 191, 36, 0),
+      0 0 12px 1px rgba(251, 191, 36, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(251, 191, 36, 0.25),
+      0 0 18px 4px rgba(251, 191, 36, 0.3);
+  }
+}
+
+/* v0.9.18 — TORNEIO DE ARTES MARCIAIS: o holofote da arena varre o card
+   da luta atual (feixe diagonal de luz que atravessa lentamente) */
+@keyframes spotlight-sweep {
+  0% {
+    background-position: -160% 0;
+  }
+  100% {
+    background-position: 260% 0;
+  }
+}
+.arena-spotlight {
+  background-image: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(253, 230, 138, 0.12) 48%,
+    rgba(254, 243, 199, 0.22) 50%,
+    rgba(253, 230, 138, 0.12) 52%,
+    transparent 58%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: spotlight-sweep 3.6s ease-in-out infinite;
+}
+
+/* Cinturão do campeão: brilho metálico que percorre a faixa dourada */
+@keyframes belt-shine {
+  0% {
+    background-position: -120% 0;
+  }
+  60%,
+  100% {
+    background-position: 220% 0;
+  }
+}
+.belt-shine {
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.28) 46%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.28) 54%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: belt-shine 4.2s ease-in-out infinite;
+}
+
+/* Rodada atual na chave: anel dourado que "respira" (foco da campanha) */
+@keyframes round-current-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(251, 191, 36, 0);
+  }
+}
+.round-current {
+  animation: round-current-pulse 2.2s ease-out infinite;
+}
+
+/* Acessibilidade: quem pede menos movimento no sistema recebe menos
+   movimento no jogo (animações decorativas DESLIGADAS; transições
+   funcionais curtas permanecem) */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .aura,
+  .bar-sheen,
+  .scale-seal,
+  .animate-train-pop,
+  .slide-in,
+  .animate-bounce,
+  .animate-pulse,
+  .talent-flame,
+  .talent-owned-glow,
+  .arena-spotlight,
+  .belt-shine,
+  .round-current {
+    animation: none !important;
+  }
+}

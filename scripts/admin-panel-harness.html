@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness — casca do modal do painel admin (v0.9.11)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; }
+  /* cores do jogo (aproximadas — só para o harness visual) */
+  .bg-painel { background: #16110b; }
+  .txt-ambar { color: #fde68a; }
+</style>
+</head>
+<body class="bg-black">
+
+<!-- ══════════ RÉPLICA EXATA DA CASCA DO MODAL (mesmas classes do AdminPanel.tsx v0.9.11) ══════════ -->
+<div class="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm overflow-y-auto p-2 sm:p-4">
+  <div class="mx-auto w-full max-w-5xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-painel border border-amber-800/50 rounded-2xl shadow-2xl shadow-black/60">
+
+    <!-- Cabeçalho — flex-none, FORA do scroll -->
+    <div class="flex-none flex items-center justify-between gap-3 px-5 py-4 border-b border-amber-900/40 bg-painel rounded-t-2xl">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🛡️</span>
+        <h2 class="text-lg txt-ambar font-bold">Painel do Administrador</h2>
+        <span class="text-[10px] txt-ambar border border-amber-900/50 rounded px-1.5 py-0.5 hidden sm:inline">F2 abre/fecha</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="px-2 py-1 rounded-lg bg-black/40 border border-amber-900/50 txt-ambar">↻</button>
+        <button class="px-2 py-1 rounded-lg bg-black/40 border border-amber-900/50 txt-ambar">✕ Fechar</button>
+      </div>
+    </div>
+
+    <!-- Corpo — ÚNICO ponto de scroll -->
+    <div class="flex-1 min-h-0 overflow-y-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-[320px_1fr]">
+        <!-- Lista -->
+        <div class="border-b lg:border-b-0 lg:border-r border-amber-900/40 p-4">
+          <input placeholder="Buscar personagem ou e-mail" class="w-full bg-black/40 border border-amber-900/50 rounded-lg px-3 py-2 text-sm txt-ambar mb-3">
+          <!-- 12 personagens para simular lista longa -->
+          <div class="space-y-1.5">
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ General Zorun <span class="text-[11px] opacity-60">Nv 68</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Piccorodo <span class="text-[11px] opacity-60">Nv 34</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Príncipe Frizon <span class="text-[11px] opacity-60">Nv 22</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Rei Taurion <span class="text-[11px] opacity-60">Nv 5</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Goku Jr <span class="text-[11px] opacity-60">Nv 41</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Vegeta SS4 <span class="text-[11px] opacity-60">Nv 55</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Kuririn <span class="text-[11px] opacity-60">Nv 12</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Majin Boo <span class="text-[11px] opacity-60">Nv 30</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Androide 18 <span class="text-[11px] opacity-60">Nv 27</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Dende <span class="text-[11px] opacity-60">Nv 8</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Yamcha <span class="text-[11px] opacity-60">Nv 15</span></div>
+            <div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Tenshinhan <span class="text-[11px] opacity-60">Nv 19</span></div>
+          </div>
+        </div>
+
+        <!-- Detalhe: as 7 seções do painel real (conteúdo alto de propósito) -->
+        <div class="p-4 sm:p-5 space-y-5">
+          <div class="flex flex-wrap items-center gap-2"><h3 class="text-base txt-ambar font-bold">⚔️ General Zorun</h3><span class="text-[11px] txt-ambar opacity-60">Saiyajin · Nv 68 · no servidor</span></div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div class="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2 txt-ambar">💰 Zeni<br><b class="text-base">1.234.567</b></div>
+            <div class="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2 txt-ambar">💎 Diamantes<br><b class="text-base">320</b></div>
+            <div class="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2 txt-ambar">🔴 Esferas<br><b class="text-base">4/7</b></div>
+            <div class="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2 txt-ambar">⭐ Nível / XP<br><b class="text-base">68 · 45.000</b></div>
+          </div>
+          <section class="bg-black/20 rounded-xl border border-amber-900/40 p-4"><h3 class="text-sm txt-ambar mb-3">💰 Conceder recursos</h3><div class="flex flex-wrap gap-3"><input placeholder="Zeni" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><input placeholder="Diamantes" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><input placeholder="Esferas" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><input placeholder="XP" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><button class="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm">Conceder</button></div></section>
+          <section class="bg-black/20 rounded-xl border border-amber-900/40 p-4"><h3 class="text-sm txt-ambar mb-3">⌄ Editar atributos (define o valor final)</h3><div class="flex flex-wrap gap-3"><input placeholder="Força" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><input placeholder="Defesa" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><input placeholder="Velocidade" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><input placeholder="Ki" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><button class="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm">Aplicar</button></div></section>
+          <section class="bg-black/20 rounded-xl border border-amber-900/40 p-4"><h3 class="text-sm txt-ambar mb-3">⭐ Nível e XP (define o valor final)</h3><div class="flex flex-wrap gap-3"><input placeholder="Nível" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><input placeholder="XP" class="w-24 bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar"><button class="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm">Aplicar</button></div></section>
+          <section class="bg-black/20 rounded-xl border border-amber-900/40 p-4 space-y-3"><h3 class="text-sm txt-ambar">🎒 Dar item, aura/cosmético ou transformação</h3><div class="flex flex-wrap gap-3"><select class="flex-1 min-w-[200px] bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar text-sm"><option>— escolher item —</option></select><button class="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm">Dar item</button></div><div class="flex flex-wrap gap-3"><select class="flex-1 min-w-[200px] bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar text-sm"><option>— escolher aura/cosmético —</option></select><button class="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm">✨ Dar</button></div><div class="flex flex-wrap gap-3"><select class="flex-1 min-w-[200px] bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 txt-ambar text-sm"><option>— escolher transformação —</option></select><button class="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm">🪄 Desbloquear</button></div></section>
+          <section class="grid grid-cols-1 sm:grid-cols-2 gap-3"><button class="px-4 py-3 rounded-xl bg-amber-950/40 border border-amber-800/50 txt-ambar text-sm">💚 Restaurar energia total</button><button class="px-4 py-3 rounded-xl bg-sky-950/40 border border-sky-800/50 text-sky-100 text-sm">⏩ Completar profissão/treino</button></section>
+          <section class="rounded-xl border border-red-900/50 bg-red-950/20 p-4"><h3 class="text-sm text-red-200 mb-1">🗑️ Zona de risco</h3><p class="text-[11px] text-red-200/60 leading-relaxed mb-2">O reset é SÓ de <b>General Zorun</b> (os outros personagens da conta não mudam). Ele NÃO apaga o personagem: volta ao <b>estado de criação</b> preservando apenas <b>nome, raça e sexo</b> — cosméticos comprados, avatar, diamantes, itens, equipamentos, auras, transformações, conquistas, missões, profissão e dano no chefe global atual são <b>zerados</b>.</p><button class="px-4 py-2 rounded-lg bg-black/40 border border-red-900/50 text-red-300 text-sm">Resetar progresso de General Zorun</button></section>
+          <section class="rounded-xl border-2 border-red-800/60 bg-red-950/25 p-4"><h3 class="text-sm text-red-200 mb-1">💣 Reset geral do servidor — apaga TUDO</h3><p class="text-[11px] text-red-200/70 leading-relaxed mb-3">Apaga <b>todos os personagens, contas locais, inventários, conquistas, missões, guildas, carteiras, temporada e o chefe global</b> deste servidor do jogo (backup automático do banco é salvo antes, com o caminho exibido no resultado). Contas de login, admins e catálogos <b>não</b> são tocados. Bots de PvP são recriados automaticamente.</p><div class="flex flex-wrap items-center gap-2"><input placeholder="digite RESET para confirmar" class="flex-1 min-w-40 bg-black/60 border border-red-900/60 rounded-lg px-3 py-2 text-red-100 text-sm"><button class="px-4 py-2 rounded-lg bg-red-700 text-white text-sm">Apagar tudo e recomeçar</button></div></section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ VERSÃO ANTIGA (com o bug) para comparação A/B ══════════ -->
+<div id="old-bug" class="hidden fixed inset-0 z-[110] bg-black/80 flex items-start sm:items-center justify-center p-2 sm:p-6 overflow-y-auto">
+  <div class="w-full max-w-5xl bg-painel border border-amber-800/50 rounded-2xl my-4">
+    <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-amber-900/40 sticky top-0 bg-painel rounded-t-2xl z-10">
+      <div class="flex items-center gap-2"><span class="text-xl">🛡️</span><h2 class="text-lg txt-ambar font-bold">VERSÃO ANTIGA — topo cortado</h2></div>
+      <button class="px-2 py-1 rounded-lg bg-black/40 border border-amber-900/50 txt-ambar">✕ Fechar</button>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-[320px_1fr]">
+      <div class="border-b lg:border-b-0 lg:border-r border-amber-900/40 p-4 max-h-[40vh] lg:max-h-[70vh] overflow-y-auto">
+        <div class="space-y-1.5"><div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ General Zorun</div><div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Piccorodo</div><div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Príncipe Frizon</div><div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Rei Taurion</div><div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Goku Jr</div><div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Vegeta SS4</div><div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Kuririn</div><div class="px-3 py-2.5 rounded-lg bg-black/30 border border-amber-900/40 txt-ambar text-sm">⚔️ Majin Boo</div></div>
+      </div>
+      <div class="p-4 sm:p-5 space-y-5">
+        <!-- conteúdo alto idêntico: 10 blocos de 110px para estourar a viewport -->
+        <div style="height:1100px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 1/10 — conteúdo que estoura a viewport (simula as 7 seções reais do painel pós-loja/venda)</div>
+        <div style="height:110px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 2/10</div>
+        <div style="height:110px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 3/10</div>
+        <div style="height:110px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 4/10</div>
+        <div style="height:110px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 5/10</div>
+        <div style="height:110px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 6/10</div>
+        <div style="height:110px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 7/10</div>
+        <div style="height:110px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 8/10</div>
+        <div style="height:110px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 9/10</div>
+        <div style="height:110px" class="bg-black/20 rounded-xl border border-amber-900/40 p-4 txt-ambar text-sm">Seção alta 10/10 (fim)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // alterna entre a versão NOVA (fix) e a ANTIGA (bug) para o teste A/B
+  const params = new URLSearchParams(location.search);
+  if (params.get('old') === '1') {
+    document.querySelectorAll('.fixed')[0].classList.add('hidden');
+    document.getElementById('old-bug').classList.remove('hidden');
+  }
+</script>
+</body>
+</html>

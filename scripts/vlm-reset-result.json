@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "**Painel do Administrador**\nF2 abre/fecha\n\n🔍 Buscar personagem ou e-mail\n\n🔥 **General Zorun** Nv 68\n✉️ flutwr@gmail.com • poder 3.698\n\n🔥 **General Zorun** Nv 5\n✉️ flutwr@gmail.com • poder 281\n\n🎮 **Piccorudo** Nv 2\n✉️ kltajimage@gmail.com • poder 125\n\n🔥 **Rei Taurion** Nv 1\n✉️ alicomprasbbbb@gmail.com • poder 140\n\n👑 **Príncipe Frizon** Nv 1\n✉️ leticialsilva27@gmail.com • poder 110\n\n---\n\nSelecione um personagem na lista para conceder itens e ajustes.\n\n🔄 **Reset geral do servidor — apaga TUDO**\n\nApaga **todos os personagens**, contas locais, inventários, conquistas, missões, guildas, carteiras, Temporada e o chefe global deste servidor do jogo (backup automático do banco é salvo antes, com o caminho exibido no resultado). Apaga também os personagens da **NUVEM** (Supabase) com backup em tabelas `*_backup_reset` — sem isso eles voltariam no próximo login. Contas de login, admins e catálogos **não** são tocados. Bots de PvP são recridados automaticamente. Requer a RPC `admin_reset_c1oud` instalada no Supabase (SQL único, uma vez só — se falhar, o resultado avisa com a instrução exata).\n\n**DIGITE RESET PARA CONFIRMAR** [Apagar tudo e recomeçar]\n\n⚠️ **RESET PARCIAL:** o SERVIDOR foi apagado (backup em /app-data/guerreiros/backups/reset-backup-2026-09-13T02-50-S4-611Z.db, 0.33 MB; 15 bots re-semeados), mas a NUVEM (Supabase) **NÃO** foi limpa — falha ao limpar a nuvem (HTTP 400) — rode o supabase-reset-rpc.sql no SQL Editor se ainda não o fez e tente de novo. Os personagens antigos não voltam enquanto a guarda pós-reset estiver ativa; mas rode a RPC para limpar de vez (inclui o ranking público da nuvem — apagado no servidor: contas: 1 · sessões: 1 · personagens: 1 · bots: 15 · missões s_dianas_semanais: 5 · chefes_globais: 1 · temporadas: 1 · events_analytics: 3. Temporada nova: Temporada 1.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789267973,
+  "id": "202609131052440e83ba85c060471d",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "202609131052440e83ba85c060471d",
+  "usage": {
+    "completion_tokens": 623,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 806,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 1429
+  }
+}

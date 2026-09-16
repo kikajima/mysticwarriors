@@ -1,0 +1,457 @@
+// =====================================================================
+// Guerreiros Místicos — Schema Prisma
+// ---------------------------------------------------------------------
+// DESENVOLVIMENTO: SQLite (padrão, zero configuração).
+// PRODUÇÃO (PostgreSQL): troque o provider abaixo e aponte DATABASE_URL
+//   para o Postgres, depois rode `prisma migrate deploy`:
+//
+//   datasource db {
+//     provider = "postgresql"
+//     url      = env("DATABASE_URL")
+//   }
+//
+// Nenhum campo usa tipos exclusivos de SQLite — todas as colunas JSON são
+// `String` com conteúdo JSON válido, compatível com os dois provedores.
+// Índices cobrem as consultas de ranking, guildas e auditoria.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ===== Contas e sessões =====
+
+model Account {
+  id           String    @id @default(cuid())
+  username     String?   @unique // null para contas de convidado
+  usernameLower String?  @unique
+  passwordHash String    @default("") // vazio para convidados
+  isGuest      Boolean   @default(false)
+  // v0.8 — CONTAS NA NUVEM: id do usuário no Supabase Auth. Contas
+  // Supabase não usam senha local (passwordHash é aleatório inútil);
+  // o login acontece no Supabase e a ponte /api/auth/supabase valida o
+  // token e cria/promove a conta local vinculada a este id.
+  supabaseUserId String? @unique
+  // personagem atualmente selecionado no servidor — o cliente NUNCA
+  // persiste playerId (sem localStorage); o boot resolve por aqui
+  activePlayerId String?  @unique
+  activePlayer   Player?  @relation("ActivePlayer", fields: [activePlayerId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  players      Player[]
+  sessions     Session[]
+  walletTx     WalletTransaction[]
+  purchases    Purchase[]
+  cosmetics    CosmeticOwned[]
+
+  @@index([isGuest])
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  accountId String
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+  userAgent String?
+
+  @@index([accountId])
+  @@index([expiresAt])
+}
+
+// ===== Guildas =====
+
+model Guild {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  description  String   @default("")
+  leaderId     String
+  level        Int      @default(1)
+  xp           Int      @default(0)
+  totalDonated Int      @default(0)
+  // v0.15 — GUILDA DE SISTEMA EXTINTA (decisão do dono): o mundo começa
+  // com ZERO guildas; guildas só existem quando jogadores as criam. A
+  // coluna isSystem foi removida (migration 20260915210000) — nenhum
+  // código volta a criar/assegurar guilda de sistema.
+  createdAt    DateTime @default(now())
+  members      Player[]
+
+  @@index([level])
+}
+
+// ===== Jogadores =====
+
+model Player {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  race          String
+  // v0.16 — gênero REMOVIDO do jogador (decisão definitiva, ver DESIGN-DECISIONS.md).
+  // Bots NPC continuam com nomes de lore (femininos/masculinos) — só a mecânica do jogador saiu.
+  avatarUrl     String?   // avatar customizado (URL http/https validada ou upload servido)
+  level         Int       @default(1)
+  xp            Int       @default(0)
+  zeni          Int       @default(500)
+  crystals      Int       @default(0)
+  hp            Int       @default(100)
+  strength      Int       @default(10)
+  defense       Int       @default(10)
+  speed         Int       @default(10)
+  ki            Int       @default(10)
+  energy        Int       @default(100)
+  battlesWon    Int       @default(0)
+  battlesLost   Int       @default(0)
+  pvpWins       Int       @default(0)
+  trainingsDone Int       @default(0)
+  guildDonated  Int       @default(0)
+  missionsDone  Int       @default(0)
+  dragonBalls   Int       @default(0)
+  // v0.9.17 — conquistas narrativas (ASCENSÃO Z): Milagre no Limite e
+  // David vs Golias (contadores aditivos, default 0)
+  miracleWins   Int       @default(0)
+  davidWins     Int       @default(0)
+  isBot         Boolean   @default(false)
+  items         String    @default("{\"weapon\":null,\"armor\":null,\"accessory\":null,\"owned\":[],\"consumables\":{}}")
+  techniques    String    @default("[]")
+  loadout       String    @default("{\"1\":null,\"2\":null,\"3\":null,\"S\":null}")
+  strategy      String    @default("balanced")
+  missionId     String?
+  missionEndsAt DateTime?
+  missionsCompleted String   @default("[]") // histórico de ids de missões/profissões concluídas
+  // v0.6 — progresso nas PROFISSÕES: JSON {professionId: {rank, completions}}.
+  // O trabalho ativo continua em missionId/missionEndsAt (mesma maquinaria
+  // de bloqueio/claim), com o id da profissão gravado em missionId.
+  professions   String?
+  // transformações
+  transformationId    String?
+  transformationsOwned String   @default("[]")
+  // anti-farm Zenkai (Saiyajin)
+  lastZenkaiAt         DateTime?
+  zenkaiWindowStart    DateTime?
+  zenkaiCount24h       Int      @default(0)
+  lastZenkaiOpponentId String?
+  // anti-farm PvE
+  pveBattleDay  String?
+  pveBattleCount Int      @default(0)
+  // v0.9.24 (C2) — PRIMEIRA CURA DO DIA GRÁTIS: diaKey (YYYY-MM-DD,
+  // fuso SP) da última cura gratuita usada; null/dia diferente = grátis
+  // disponível. Resolve o onboarding caro (playtest: derrota KO + cura
+  // total ~231 Zeni vs vitória PvE de 64) sem tocar na economia veterana.
+  freeHealDay   String?
+  // bloqueio otimista para mutações de campos JSON (itens/técnicas/loadout)
+  stateVersion  Int       @default(0)
+  lastRegen     DateTime  @default(now())
+  // relógio de regeneração de VIDA (v0.4) — INDEPENDENTE do de energia;
+  // null = assume o valor de lastRegen na primeira execução (compatível)
+  lastRegenHp   DateTime?
+  // cosméticos equipados DESTE personagem (v0.5) — JSON {slot: cosmeticId}.
+  // v0.9.6 (Mudança 3): a POSSE também é do personagem — JSON [cosmeticId].
+  // Antes a posse vivia na CONTA (tabela CosmeticOwned) e todos os
+  // personagens da mesma conta compartilhavam os cosméticos comprados;
+  // a migração local duplicou a posse da conta para cada personagem.
+  // A tabela CosmeticOwned permanece apenas como relíquia/backup — o
+  // jogo não lê nem escreve nela desde a v0.9.6.
+  cosmeticsEquipped String?
+  cosmeticsOwned   String?
+  // v0.9.15 — TALENTOS DE ÍMPETO (Cap. 7 do ASCENSÃO Z): os dois gastos
+  // restantes de 1 Ímpeto ("Repetir um d10" e "Reposicionamento
+  // dramático") como talentos compráveis — JSON [talentId].
+  talents         String    @default("[]")
+  // v0.9.18 — TORNEIO DE ARTES MARCIAIS: estado da campanha atual na
+  // chave de 8 (JSON { round, wins, runCount, bestRound, lastRunAt };
+  // round 0 = fora de campanha) + contadores permanentes para conquistas.
+  tournament          String?
+  tournamentTitles    Int      @default(0)
+  tournamentRoundWins Int      @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accountId     String?
+  account       Account?  @relation(fields: [accountId], references: [id])
+  guildId       String?
+  guild         Guild?    @relation(fields: [guildId], references: [id])
+
+  questProgress    QuestProgress[]
+  achievements     AchievementState[]
+  walletTx         WalletTransaction[]
+  bossDamage       WorldBossDamage[]
+  seasonRank       SeasonRankEntry[]
+  guildDonations   GuildDonation[]
+  requestDedups    RequestDedup[]
+  activities       Activity[]
+  accountActive    Account?  @relation("ActivePlayer")
+
+  @@index([accountId])
+  @@index([guildId])
+  @@index([level, battlesWon, xp])
+  @@index([isBot])
+  @@index([transformationId])
+}
+
+// ===== Ledger da economia (auditoria de Zeni/cristais) =====
+
+model WalletTransaction {
+  id                String   @id @default(cuid())
+  accountId         String?
+  account           Account? @relation(fields: [accountId], references: [id])
+  playerId          String
+  player            Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  currency          String // "zeni" | "crystal"
+  amount            Int // positivo = crédito, negativo = débito
+  type              String // "earn" | "spend" | "reward" | "steal" | "lose" | "grant" | "refund"
+  source            String // "mission" | "battle" | "pve" | "pvp" | "shop" | "guild" | "wish" | "quest" | "achievement" | "world_boss" | "admin" | ...
+  balanceBefore     Int
+  balanceAfter      Int
+  metadata          String?
+  externalPaymentId String?
+  createdAt         DateTime @default(now())
+
+  @@index([playerId, createdAt])
+  @@index([source])
+  @@index([accountId])
+}
+
+// ===== Progressão: missões diárias/semanais e conquistas =====
+
+model QuestProgress {
+  id             String    @id @default(cuid())
+  playerId       String
+  player         Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  questId        String
+  kind           String // "daily" | "weekly"
+  period         String // "2026-09-11" | "2026-W37"
+  progress       Int       @default(0)
+  target         Int
+  rewardZeni     Int       @default(0)
+  rewardXp       Int       @default(0)
+  rewardCrystals Int       @default(0)
+  claimed        Boolean   @default(false)
+  claimedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@unique([playerId, questId, period])
+  @@index([playerId, period])
+}
+
+model AchievementState {
+  id            String    @id @default(cuid())
+  playerId      String
+  player        Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  achievementId String
+  progress      Int       @default(0)
+  unlockedAt    DateTime?
+  claimedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@unique([playerId, achievementId])
+  @@index([playerId])
+}
+
+// ===== World Boss =====
+
+model WorldBoss {
+  id            String    @id @default(cuid())
+  name          String
+  emoji         String
+  description   String    @default("")
+  maxHp         Int
+  currentHp     Int
+  level         Int       @default(50)
+  strength      Int       @default(300)
+  defense       Int       @default(200)
+  speed         Int       @default(150)
+  ki            Int       @default(280)
+  startsAt      DateTime  @default(now())
+  endsAt        DateTime
+  status        String    @default("active") // active | defeated | expired
+  zeniReward    Int       @default(0)
+  xpReward      Int       @default(0)
+  crystalReward Int       @default(0)
+  defeatedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  damages       WorldBossDamage[]
+
+  @@index([status])
+}
+
+model WorldBossDamage {
+  id              String    @id @default(cuid())
+  bossId          String
+  boss            WorldBoss @relation(fields: [bossId], references: [id], onDelete: Cascade)
+  playerId        String
+  player          Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  damage          Int       @default(0)
+  attacks         Int       @default(0)
+  rewarded        Boolean   @default(false)
+  lastAttackedAt  DateTime  @default(now())
+
+  @@unique([bossId, playerId])
+  @@index([bossId, damage])
+}
+
+// ===== Temporadas =====
+
+model Season {
+  id        String   @id @default(cuid())
+  name      String
+  number    Int      @default(1)
+  startsAt  DateTime
+  endsAt    DateTime
+  status    String   @default("active") // active | finished
+  createdAt DateTime @default(now())
+  ranking   SeasonRankEntry[]
+
+  @@index([status])
+}
+
+model SeasonRankEntry {
+  id        String   @id @default(cuid())
+  seasonId  String
+  season    Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  points    Int      @default(0)
+  wins      Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([seasonId, playerId])
+  @@index([seasonId, points])
+}
+
+// ===== Doações de guilda (histórico) =====
+
+model GuildDonation {
+  id        String   @id @default(cuid())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  guildId   String
+  amount    Int
+  createdAt DateTime @default(now())
+
+  @@index([guildId])
+  @@index([playerId])
+}
+
+// ===== Monetização (estrutura pronta — NENHUM gateway conectado) =====
+
+model Purchase {
+  id                String   @id @default(cuid())
+  accountId         String
+  account           Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  product           String // id do produto (ex.: "cosmetic_aura_gold", "vip_month", "season_pass")
+  currency          String   @default("crystal") // moeda usada na aquisição
+  amount            Int      @default(0)
+  status            String   @default("completed") // pending | completed | cancelled | refunded
+  externalPaymentId String? // reservado para gateway futuro
+  createdAt         DateTime @default(now())
+
+  @@index([accountId])
+  @@index([product])
+}
+
+model CosmeticOwned {
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  cosmetic  String // id do cosmético
+  equipped  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([accountId, cosmetic])
+}
+
+// ===== Metadados do jogo (versão de balanceamento etc.) =====
+
+model GameMeta {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// ===== Idempotência de ações (proteção contra replay) =====
+
+model RequestDedup {
+  id        String   @id @default(cuid())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  requestId String   // identificador único gerado pelo cliente (crypto.randomUUID)
+  result    String?  // null = em processamento; JSON do ActionResult ao concluir
+  createdAt DateTime @default(now())
+
+  @@unique([playerId, requestId])
+  @@index([createdAt])
+}
+
+// ===== Atividades com duração server-side (treino/batalha v0.4) =====
+
+model Activity {
+  id          String    @id @default(cuid())
+  playerId    String
+  player      Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  kind        String    // "train" | "battle"
+  payload     String    @default("{}") // argumentos snapshotados no início
+  result      String?   // resultado COMPUTADO no início (animação + dados p/ aplicar)
+  startedAt   DateTime  @default(now())
+  endsAt      DateTime  // término exigido — resultado concedido só depois
+  completedAt DateTime? // null = em andamento ou vencida aguardando aplicação
+  createdAt   DateTime  @default(now())
+
+  @@index([playerId, completedAt])
+  @@index([endsAt])
+}
+
+// ===== Auditoria administrativa (v0.14) =====
+//
+// REGISTRO DAS AÇÕES DESTRUTIVAS do painel admin (excluir personagem /
+// excluir guilda) — o antídoto ao "apagaram e ninguém sabe quem":
+// timestamp, e-mail do admin, alvo (nome/tipo), camadas afetadas
+// (local/nuvem) e resultado. VISÍVEL no próprio painel (aba "Ações
+// administrativas" via GET /api/admin/audit-log).
+//
+// POR PROJETO, ESTA TABELA:
+//  * NÃO TEM FK NENHUMA — é registro HISTÓRICO: sobrevive à morte do
+//    que registra (excluir personagem/guilda não apaga a prova de quem
+//    excluiu) e sobrevive ao reset geral do servidor (accountability
+//    não morre com o mundo — ver design-decisions);
+//  * registra TAMBÉM tentativas BLOQUEADAS (result 'blocked': bot,
+//    próprio personagem do admin, guilda do sistema, nome digitado
+//    errado) — quem TENTOU apagar e foi impedido fica registrado;
+//  * registra estado PARCIAL: se uma camada falha (local ok, nuvem
+//    não — ou vice-versa), o log diz EM QUAL camada parou. Nenhuma
+//    exclusão silenciosamente incompleta.
+model AdminActionLog {
+  id         String   @id @default(cuid())
+  adminEmail String
+  // "delete_character" | "delete_guild"
+  action     String
+  // "personagem" | "guilda"
+  targetType String
+  targetName String
+  // JSON {local: "ok"|"failed"|"skipped"|"na", cloud: "ok"|"failed"|"skipped"|"not-mirrored"|"na"}
+  layers     String   @default("{}")
+  // "ok" | "partial" | "failed" | "blocked"
+  result     String
+  // JSON livre — inventário do que morreu, contagens, erros, gatilho
+  details    String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ===== Analytics (eventos anônimos, sem dados pessoais) =====
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String
+  playerId  String?
+  accountId String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+}
