@@ -265,6 +265,8 @@ export default function PlayPage() {
         const activeValid = activeId && chars.some((c) => c.id === activeId);
         if (activeValid) {
           // personagem em uso definido pelo servidor — segue direto ao jogo
+          setPlayer(chars.find((c) => c.id === activeId) ?? null);
+          setView('dashboard');
           setPlayerId(activeId);
           setScreen('game');
         } else {
