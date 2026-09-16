@@ -7,14 +7,16 @@ import { GameButton } from './Bits';
 import { WikiIconLink } from './WikiIconLink';
 import { Mail, Lock, LogIn, UserPlus, ShieldCheck, Dices, User, MailCheck, Eye, EyeOff, KeyRound } from 'lucide-react';
 import {
+  getSupabaseClient,
   getSupabaseSession,
   supabaseSignUp,
   supabaseSignIn,
   supabaseResetPassword,
+  supabaseUpdatePassword,
 } from '@/lib/supabase/client';
 import { requestStorageAccessSafely } from '@/lib/iframe-storage';
 
-type Mode = 'login' | 'register' | 'check-email' | 'reset-password';
+type Mode = 'login' | 'register' | 'check-email' | 'reset-password' | 'set-password';
 
 /**
  * Portão de entrada do jogo (v0.8 — contas na nuvem Supabase).
@@ -37,6 +39,8 @@ export function AuthGate({
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [resetCooldown, setResetCooldown] = useState(0);
+  const [resetRequested, setResetRequested] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [bannerFailed, setBannerFailed] = useState(false);
@@ -50,6 +54,32 @@ export function AuthGate({
     const t = setTimeout(() => setCooldown((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [cooldown]);
+
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    const timer = setTimeout(() => setResetCooldown((value) => value - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resetCooldown]);
+
+  useEffect(() => {
+    const client = getSupabaseClient();
+    const handleUrlError = () => {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      if (params.get('type') === 'recovery' || params.has('access_token')) {
+        setMode('set-password');
+      }
+      if (params.get('error_code') === 'otp_expired') {
+        setMode('reset-password');
+        setError('Este link expirou. Informe seu e-mail para receber outro link.');
+        window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}`);
+      }
+    };
+    handleUrlError();
+    const { data } = client.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setMode('set-password');
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const clearError = () => {
     setError(null);
@@ -166,7 +196,7 @@ export function AuthGate({
   };
 
   const submitResetPassword = async () => {
-    if (loading) return;
+    if (loading || resetCooldown > 0) return;
     if (!email.trim()) {
       setError('Informe seu e-mail para receber o link de redefinição.');
       return;
@@ -179,7 +209,38 @@ export function AuthGate({
         return;
       }
       setError(null);
+      setResetCooldown(60);
+      setResetRequested(true);
       setMode('check-email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitNewPassword = async () => {
+    if (loading) return;
+    if (password.length < 8) {
+      setError('A nova senha precisa ter pelo menos 8 caracteres.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('As senhas não coincidem.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const outcome = await supabaseUpdatePassword(password);
+      if (outcome.status === 'error') {
+        setError(outcome.message);
+        return;
+      }
+      setError(null);
+      setMode('login');
+      setPassword('');
+      setConfirm('');
+      setShowPassword(false);
+      setShowConfirm(false);
+      setError('Senha atualizada. Entre com sua nova senha.');
     } finally {
       setLoading(false);
     }
@@ -251,16 +312,20 @@ export function AuthGate({
             <>
               <div className="text-center py-2">
                 <MailCheck className="w-10 h-10 text-emerald-400 mx-auto mb-3" aria-hidden />
-                <h2 className="font-heading text-lg text-amber-100 mb-1">Confirme seu e-mail</h2>
+                <h2 className="font-heading text-lg text-amber-100 mb-1">{resetRequested ? 'Confira seu e-mail' : 'Confirme seu e-mail'}</h2>
                 <p className="text-sm text-amber-200/70 leading-relaxed">
-                  Enviamos um link de confirmação para{' '}
+                  Enviamos um link para{' '}
                   <span className="text-amber-100 font-semibold break-all">{email.trim()}</span>.
                 </p>
                 <p className="text-xs text-amber-200/50 leading-relaxed mt-2">
-                  Abra o link no seu e-mail (procure também no spam) e depois volte aqui para entrar.
-                  Seu apelido <span className="text-amber-200/80">{nick.trim()}</span> já está guardado.
+                  {resetRequested ? 'Use o link para criar uma nova senha. Confira também a pasta de spam.' : `Abra o link no seu e-mail (procure também no spam) e depois volte aqui para entrar. Seu apelido ${nick.trim()} já está guardado.`}
                 </p>
               </div>
+              {resetRequested && (
+                <GameButton size="lg" variant="gold" className="w-full mt-4" disabled={loading || resetCooldown > 0} onClick={submitResetPassword}>
+                  {resetCooldown > 0 ? `Reenviar link em ${resetCooldown}s` : 'Reenviar link'}
+                </GameButton>
+              )}
               <GameButton
                 size="lg"
                 variant="gold"
@@ -270,6 +335,7 @@ export function AuthGate({
                   setMode('login');
                   setPassword('');
                   setConfirm('');
+                  setResetRequested(false);
                   clearError();
                 }}
               >
@@ -284,6 +350,27 @@ export function AuthGate({
               >
                 Usar outro e-mail
               </button>
+            </>
+          ) : mode === 'set-password' ? (
+            <>
+              <div className="text-center py-2">
+                <KeyRound className="w-10 h-10 text-amber-300 mx-auto mb-3" aria-hidden />
+                <h2 className="font-heading text-lg text-amber-100 mb-1">Criar nova senha</h2>
+                <p className="text-sm text-amber-200/70 leading-relaxed">Escolha uma senha nova para sua conta.</p>
+              </div>
+              <label htmlFor="auth-new-password" className="font-heading text-amber-100 text-sm block mb-1.5">Nova senha</label>
+              <div className="relative mb-3">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-200/40" aria-hidden />
+                <input id="auth-new-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} autoComplete="new-password" />
+                <button type="button" aria-label="Mostrar ou ocultar senha" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-200/60">{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+              </div>
+              <label htmlFor="auth-new-confirm" className="font-heading text-amber-100 text-sm block mb-1.5">Confirmar nova senha</label>
+              <div className="relative mb-3">
+                <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-200/40" aria-hidden />
+                <input id="auth-new-confirm" type={showConfirm ? 'text' : 'password'} value={confirm} onChange={(e) => setConfirm(e.target.value)} className={inputClass} autoComplete="new-password" />
+              </div>
+              {error && <p role="alert" className="text-red-400 text-sm mb-2">⚠ {error}</p>}
+              <GameButton size="lg" variant="gold" className="w-full" onClick={submitNewPassword} disabled={loading}>Salvar nova senha</GameButton>
             </>
           ) : mode === 'reset-password' ? (
             <>

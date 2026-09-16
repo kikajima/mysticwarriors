@@ -194,6 +194,16 @@ export async function supabaseResetPassword(email: string): Promise<AuthOutcome>
   }
 }
 
+export async function supabaseUpdatePassword(password: string): Promise<AuthOutcome> {
+  try {
+    const { error } = await getSupabaseClient().auth.updateUser({ password });
+    if (error) return { status: 'error', message: error.message };
+    return { status: 'session', session: (await getSupabaseSession())! };
+  } catch {
+    return { status: 'error', message: 'Não foi possível atualizar a senha. Solicite um novo link.' };
+  }
+}
+
 export async function supabaseSignOut(): Promise<void> {
   try {
     await getSupabaseClient().auth.signOut();
