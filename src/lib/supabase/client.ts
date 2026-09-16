@@ -107,7 +107,10 @@ export async function supabaseSignUp({ email, password, nick }: SignUpInput): Pr
     const { data, error } = await getSupabaseClient().auth.signUp({
       email,
       password,
-      options: { data: { nick } },
+      options: {
+        data: { nick },
+        emailRedirectTo: `${window.location.origin}/jogar`,
+      },
     });
     // o pedido realmente chegou ao Supabase — conta para a trava de 60s
     // (falhas de conexão acima não caem aqui e não travam novas tentativas)
