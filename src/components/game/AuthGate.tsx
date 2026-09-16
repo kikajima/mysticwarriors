@@ -5,15 +5,16 @@ import type { PlayerView } from '@/lib/game/types';
 import type { AccountSession } from '@/lib/auth';
 import { GameButton } from './Bits';
 import { WikiIconLink } from './WikiIconLink';
-import { Mail, Lock, LogIn, UserPlus, ShieldCheck, Dices, User, MailCheck } from 'lucide-react';
+import { Mail, Lock, LogIn, UserPlus, ShieldCheck, Dices, User, MailCheck, Eye, EyeOff, KeyRound } from 'lucide-react';
 import {
   getSupabaseSession,
   supabaseSignUp,
   supabaseSignIn,
+  supabaseResetPassword,
 } from '@/lib/supabase/client';
 import { requestStorageAccessSafely } from '@/lib/iframe-storage';
 
-type Mode = 'login' | 'register' | 'check-email';
+type Mode = 'login' | 'register' | 'check-email' | 'reset-password';
 
 /**
  * Portão de entrada do jogo (v0.8 — contas na nuvem Supabase).
@@ -34,6 +35,8 @@ export function AuthGate({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [bannerFailed, setBannerFailed] = useState(false);
@@ -138,7 +141,7 @@ export function AuthGate({
   };
 
   const submitLogin = async () => {
-    if (loading || cooldown > 0) return;
+    if (loading) return;
     if (!email.trim() || !password) {
       setError('Informe e-mail e senha.');
       return;
@@ -157,6 +160,26 @@ export function AuthGate({
       await bridgeToLocal();
     } catch {
       setError('Falha de conexão. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitResetPassword = async () => {
+    if (loading) return;
+    if (!email.trim()) {
+      setError('Informe seu e-mail para receber o link de redefinição.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const outcome = await supabaseResetPassword(email.trim());
+      if (outcome.status === 'error') {
+        setError(outcome.message);
+        return;
+      }
+      setError(null);
+      setMode('check-email');
     } finally {
       setLoading(false);
     }
@@ -262,6 +285,22 @@ export function AuthGate({
                 Usar outro e-mail
               </button>
             </>
+          ) : mode === 'reset-password' ? (
+            <>
+              <div className="text-center py-2">
+                <KeyRound className="w-10 h-10 text-amber-300 mx-auto mb-3" aria-hidden />
+                <h2 className="font-heading text-lg text-amber-100 mb-1">Redefinir senha</h2>
+                <p className="text-sm text-amber-200/70 leading-relaxed">Informe seu e-mail e enviaremos um link para criar uma nova senha.</p>
+              </div>
+              <label htmlFor="auth-reset-email" className="font-heading text-amber-100 text-sm block mb-1.5">E-mail</label>
+              <div className="relative mb-3">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-200/40" aria-hidden />
+                <input id="auth-reset-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} autoComplete="email" />
+              </div>
+              {error && <p role="alert" className="text-red-400 text-sm mb-2">⚠ {error}</p>}
+              <GameButton size="lg" variant="gold" className="w-full mt-2" onClick={submitResetPassword} disabled={loading}>Enviar link</GameButton>
+              <button type="button" onClick={() => { setMode('login'); clearError(); }} className="w-full text-xs text-amber-200/60 py-2 mt-1 underline">Voltar para entrar</button>
+            </>
           ) : (
             <>
               {/* Alternador login/registro */}
@@ -361,7 +400,7 @@ export function AuthGate({
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-200/40" aria-hidden />
                 <input
                   id="auth-password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && submit()}
@@ -370,6 +409,9 @@ export function AuthGate({
                   placeholder={mode === 'register' ? 'Pelo menos 8 caracteres' : 'Sua senha secreta'}
                   className={inputClass}
                 />
+                <button type="button" aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-200/60 hover:text-amber-100">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
 
               {mode === 'register' && (
@@ -384,7 +426,7 @@ export function AuthGate({
                     />
                     <input
                       id="auth-confirm"
-                      type="password"
+                      type={showConfirm ? 'text' : 'password'}
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && submit()}
@@ -393,6 +435,9 @@ export function AuthGate({
                       placeholder="Repita a senha"
                       className={inputClass}
                     />
+                    <button type="button" aria-label={showConfirm ? 'Ocultar confirmação' : 'Mostrar confirmação'} onClick={() => setShowConfirm((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-200/60 hover:text-amber-100">
+                      {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </>
               )}
@@ -421,11 +466,24 @@ export function AuthGate({
                 </p>
               )}
 
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('reset-password');
+                    clearError();
+                  }}
+                  className="text-xs text-amber-300 hover:text-amber-100 underline mb-1"
+                >
+                  Esqueci minha senha
+                </button>
+              )}
+
               <GameButton
                 size="lg"
                 variant="gold"
                 onClick={submit}
-                disabled={loading || cooldown > 0}
+                disabled={loading || (mode === 'register' && cooldown > 0)}
                 className="w-full mt-3"
               >
                 {loading

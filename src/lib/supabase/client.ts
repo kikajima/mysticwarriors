@@ -179,6 +179,21 @@ export async function supabaseSignIn(email: string, password: string): Promise<A
   }
 }
 
+export async function supabaseResetPassword(email: string): Promise<AuthOutcome> {
+  try {
+    const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/jogar`,
+    });
+    if (error) {
+      const translated = translateSupabaseAuthError(error);
+      return { status: 'error', message: translated.message, kind: translated.kind, retryInSeconds: translated.retryInSeconds };
+    }
+    return { status: 'confirm-email' };
+  } catch {
+    return { status: 'error', message: 'Falha de conexão com o servidor de contas. Tente novamente.' };
+  }
+}
+
 export async function supabaseSignOut(): Promise<void> {
   try {
     await getSupabaseClient().auth.signOut();
