@@ -149,7 +149,7 @@ describe('applyPendingMigrations (migrador de boot)', () => {
         log: ['error'],
       });
       const applied = await applyPendingMigrations(client);
-      expect(applied).toBe(15); // todas as migrações do projeto (v0.9.24 = free_heal_day + system_guild; v0.14 = admin_action_log + missing_player_columns; v0.15 = kill_system_guild; v0.16 = remove_gender — gênero do jogador extinto)
+      expect(applied).toBe(16); // inclui a remoção não destrutiva de freeHealDay
 
       // tabela da última migração existe (professions, v0.6)
       const cols = (await client.$queryRawUnsafe('PRAGMA table_info(Player)')) as Array<{
@@ -157,8 +157,8 @@ describe('applyPendingMigrations (migrador de boot)', () => {
       }>;
       expect(cols.some((c) => c.name === 'professions')).toBe(true);
       expect(cols.some((c) => c.name === 'cosmeticsEquipped')).toBe(true);
-      // v0.9.24 (C2): coluna da cura gratuita diária presente
-      expect(cols.some((c) => c.name === 'freeHealDay')).toBe(true);
+      // a regra de cura gratuita foi removida sem alterar os demais dados
+      expect(cols.some((c) => c.name === 'freeHealDay')).toBe(false);
 
       // coluna da v0.8 (contas na nuvem) presente na tabela Account
       const accCols = (await client.$queryRawUnsafe('PRAGMA table_info(Account)')) as Array<{

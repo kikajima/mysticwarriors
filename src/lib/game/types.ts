@@ -565,12 +565,6 @@ export interface PlayerView {
   talents: string[];
   /** v0.9.18 — Torneio de Artes Marciais: campanha atual + palmarés. */
   tournament: TournamentView;
-  /**
-   * v0.9.24 (C2) — PRIMEIRA CURA DO DIA GRÁTIS disponível? O servidor é
-   * a fonte da verdade (compara freeHealDay com o dia atual, fuso SP);
-   * a UI usa isto para comunicar quando a gratuita diária já foi usada.
-   */
-  freeHealAvailable: boolean;
   derived: DerivedStats;
   regen: RegenInfo;
   isBot: boolean;

@@ -348,9 +348,6 @@ export function playerToView(
     // v0.9.18 — Torneio de Artes Marciais: campanha + palmarés (colunas
     // contáveis vêm direto do registro; o cooldown é derivado do estado)
     tournament: tournamentPlayerView(player),
-    // v0.9.24 (C2) — primeira cura do dia grátis: derivada do dia atual
-    // (fuso SP) contra o último dia em que a gratuita foi usada
-    freeHealAvailable: player.freeHealDay !== dayKey(),
     derived,
     regen: {
       energyIntervalSec,

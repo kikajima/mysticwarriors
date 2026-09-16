@@ -8,7 +8,7 @@ import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { BossSkeleton, fetchPanelJson, LoadFail } from './PanelLoad';
 import { getPowerScale, scaleDiffLabel, scaleCombatRules } from '@/lib/game/powerScale';
 import { IMPETO } from '@/lib/game/impeto';
-import { Crosshair, Flame, Heart, Hospital, Shield, Swords, Skull, Sparkles, Timer, Loader2, Zap } from 'lucide-react';
+import { Crosshair, Flame, Heart, Hospital, Shield, Swords, Skull, Timer, Loader2, Zap } from 'lucide-react';
 
 /** Poder de scouter do oponente — fonte ÚNICA compartilhada com a engine
  * (Armadura de Escala, regra 5.1): o que o card mostra é o que o duelo usa. */
@@ -43,9 +43,6 @@ export function BattlePanel({
   const hpPct = Math.round((player.hp / player.derived.maxHp) * 100);
   const tooHurt = player.hp < Math.max(20, Math.floor(player.derived.maxHp * 0.2));
   const healCost = (player.derived.maxHp - player.hp) * 3;
-  // v0.9.24 (C2) — primeira cura do dia é GRÁTIS (o servidor decide; aqui
-  // só se COMUNICA) — o botão libera sem Zeni e avisa quando já usou
-  const freeHeal = player.freeHealAvailable && player.hp < player.derived.maxHp;
   const strategy = getStrategy(player.strategy);
   // v0.16 — matriz de ocupação: trabalho bloqueia SÓ o PvE (o torneio e o
   // treino bloqueiam nos próprios painéis). World Boss e HOSPITAL seguem
@@ -69,11 +66,6 @@ export function BattlePanel({
             <div>
               <h3 className="font-heading text-amber-100 flex items-center gap-2 flex-wrap">
                 Hospital do Doutor Brief
-                {freeHeal && (
-                  <Chip className="bg-emerald-950/60 text-emerald-300 border-emerald-700/60">
-                    <Sparkles className="w-3 h-3" aria-hidden /> 1ª cura do dia GRÁTIS
-                  </Chip>
-                )}
               </h3>
               <p className="text-xs text-amber-200/50">
                 Vida atual:{' '}
@@ -81,8 +73,8 @@ export function BattlePanel({
                   {player.hp}/{player.derived.maxHp} ({hpPct}%)
                 </span>
                 {tooHurt && <span className="text-red-400"> — você está ferido demais para lutar!</span>}
-                {!freeHeal && player.hp < player.derived.maxHp && (
-                  <span className="text-amber-200/40"> · cura de hoje: {healCost.toLocaleString('pt-BR')} Zeni (a gratuita já foi usada)</span>
+                {player.hp < player.derived.maxHp && (
+                  <span className="text-amber-200/40"> · cura: {healCost.toLocaleString('pt-BR')} Zeni</span>
                 )}
               </p>
             </div>
@@ -90,15 +82,13 @@ export function BattlePanel({
           <GameButton
             variant="danger"
             onClick={onHeal}
-            disabled={busy || player.hp >= player.derived.maxHp || (!freeHeal && player.zeni < healCost)}
+            disabled={busy || player.hp >= player.derived.maxHp || player.zeni < healCost}
             title="Cura disponível mesmo durante o trabalho (hospital nunca é bloqueado)"
           >
             <Heart className="w-4 h-4" />
             {player.hp >= player.derived.maxHp
               ? 'Totalmente curado'
-              : freeHeal
-                ? 'Curar de graça'
-                : `Curar por ${healCost.toLocaleString('pt-BR')} Zeni`}
+              : `Curar por ${healCost.toLocaleString('pt-BR')} Zeni`}
           </GameButton>
         </div>
       </GameCard>

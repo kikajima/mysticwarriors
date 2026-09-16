@@ -491,7 +491,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           headers: ['Situação', 'Vida final'],
           rows: [
             ['Vitória', 'A vida final do log (Majin ainda **absorve +4% do máximo** ao vencer)'],
-            ['Derrota por NOCAUTE', `Você acorda no **hospital com 1 de vida** — a primeira cura do dia é grátis; as demais custam ${HEAL_COST_PER_HP} Zeni por HP`],
+            ['Derrota por NOCAUTE', `Você acorda no **hospital com 1 de vida** — cada cura custa ${HEAL_COST_PER_HP} Zeni por HP`],
             ['Derrota por Decisão', 'Você sai do ringue com a vida final do log — decisão **NÃO** vai para o hospital'],
             ['Subiu de nível na luta', 'Vida restaurada à CHEIA após o resultado (vitória ou derrota)'],
           ],
@@ -754,7 +754,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       {
         kind: 'list',
         items: [
-          `**Cura no hospital:** ${HEAL_COST_PER_HP} Zeni por HP — mas a **primeira cura de cada dia é GRÁTIS** (restaura tudo; renova à meia-noite, horário de Brasília). Depois dela, ou um Feijão Senzu (10 💎) restaura 100% na hora.`,
+          `**Cura no hospital:** ${HEAL_COST_PER_HP} Zeni por HP. Um Feijão Senzu (10 💎) restaura 100% na hora.`,
           `**Venda de itens:** ${Math.round(SELL_PRICE_RATIO * 100)}% do preço de compra, na mesma moeda (Zeni→Zeni, 💎→💎).`,
           'Subir de nível restaura a vida à cheia — mas nunca a energia.',
         ],

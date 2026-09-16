@@ -143,24 +143,19 @@ describe('CONTRATO A — comportamento dos handlers reais × afirmações da wik
     expect(ocupacao).not.toContain('só é permitido atacar o');
   });
 
-  test('HOSPITAL — PRIMEIRA CURA DO DIA GRÁTIS (v0.9.24 C2): handler vivo grava freeHealDay e cobra 0', () => {
-    // o handler real precisa: (1) usar dayKey contra freeHealDay;
-    // (2) gravar o dia no MESMO update da cura; (3) caminho de custo
-    // mantido para as demais curas do dia
+  test('HOSPITAL — toda cura cobra o custo normal', () => {
     const healBody = fnBody(
       actionsSrc,
       'async function actionHeal',
       '// ===== SHENRON (desejos) ====='
     );
-    expect(healBody).toContain('freeHealDay');
-    expect(healBody).toContain('dayKey()');
-    expect(healBody).toContain('hp: derived.maxHp, freeHealDay: today');
-    expect(healBody).toContain('spendCurrency'); // curas seguintes continuam custando
+    expect(healBody).not.toContain('freeHealDay');
+    expect(healBody).toContain('spendCurrency');
   });
 
-  test('HOSPITAL — wiki publica a gratuita diária com o custo das demais', () => {
+  test('HOSPITAL — wiki publica o custo da cura', () => {
     const t = wikiText('recursos') + wikiText('fim-de-luta');
-    expect(t).toContain('primeira cura de cada dia é GRÁTIS');
+    expect(t).not.toContain('primeira cura de cada dia é GRÁTIS');
     expect(t).toContain(`${HEAL_COST_PER_HP} Zeni por HP`);
   });
 

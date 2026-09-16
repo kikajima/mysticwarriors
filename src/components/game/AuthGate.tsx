@@ -113,9 +113,14 @@ export function AuthGate({
       });
       if (outcome.status === 'error') {
         setError(outcome.message);
+        if (outcome.kind === 'existing-account') {
+          setMode('login');
+          setPassword('');
+          setConfirm('');
+        }
         if (outcome.kind === 'rate-limit') {
           setRateLimited(true);
-          setCooldown(outcome.retryInSeconds ?? 60);
+          setCooldown(outcome.retryInSeconds ?? 300);
         }
         return;
       }

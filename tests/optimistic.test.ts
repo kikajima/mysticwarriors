@@ -60,7 +60,6 @@ function view(over: Partial<PlayerView> = {}): PlayerView {
       roundWins: 0,
       cooldownEndsAt: null,
     },
-    freeHealAvailable: true,
     derived: {
       maxHp,
       maxEnergy: 80 + 10 * 2,
@@ -150,15 +149,8 @@ describe('v0.9.24 (B2) — applyOptimisticDelta: XP sempre COM level-up + carry'
 });
 
 describe('v0.9.24 (B2) — builtinOptimisticDelta: deltas de tabela', () => {
-  test('hospital: primeira cura do dia é grátis (sem delta de Zeni)', () => {
-    const p = view({ hp: 30 }); // freeHealAvailable: true
-    const d = builtinOptimisticDelta(p, { type: 'heal' });
-    expect(d).toEqual({ hp: p.derived.maxHp });
-  });
-
-  test('hospital: demais curas cobram o custo exato computável', () => {
+  test('hospital: toda cura cobra o custo exato computável', () => {
     const p = view({ hp: 30 });
-    p.freeHealAvailable = false;
     const missing = p.derived.maxHp - 30;
     const d = builtinOptimisticDelta(p, { type: 'heal' });
     expect(d).toEqual({ hp: p.derived.maxHp, zeni: -missing * HEAL_COST_PER_HP });

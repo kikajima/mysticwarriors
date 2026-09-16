@@ -144,9 +144,8 @@ export async function resetCharacterProgression(
  *  * sem registro (banco antigo / primeira execução): REGISTRA a versão
  *    atual sem resetar — os personagens existentes já progrediram sob o
  *    balanceamento vigente;
- *  * registro ANTIGO (< BALANCE_VERSION): o balanceamento mudou desde a
- *    última vez → reset de progressão (contas preservadas) + atualiza o
- *    registro. Idempotente: revalida dentro da transação.
+ *  * registro ANTIGO (< BALANCE_VERSION): atualiza apenas o marcador. Deploy
+ *    nunca reseta progressão, independentemente da versão do balanceamento.
  *
  * Nunca lança (falhas são logadas e retratadas na próxima verificação).
  */
@@ -178,17 +177,11 @@ export async function ensureBalanceVersion(): Promise<void> {
           return;
         }
 
-        // versão antiga registrada → balanceamento mudou de verdade
-        const report = await resetCharacterProgression(tx);
         await tx.gameMeta.update({
           where: { key: META_KEY },
           data: { value: String(BALANCE_VERSION) },
         });
-        console.log(
-          `[balance] versão ${freshVal} → ${BALANCE_VERSION}: progressão resetada ` +
-            `(personagens: ${report.playersReset}, bots recalibrados: ${report.botsRecalibrated}, ` +
-            `contas preservadas)`
-        );
+        console.log(`[balance] versão ${freshVal} → ${BALANCE_VERSION}: marcador atualizado, progresso preservado`);
       },
       { timeout: 30_000, maxWait: 10_000 }
     );

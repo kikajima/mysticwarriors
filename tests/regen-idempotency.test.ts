@@ -74,7 +74,6 @@ function makePlayer(over: Partial<Player> = {}): Player {
     accountId: null,
     guildId: null,
     // campos adicionais do modelo atual (valores neutros)
-    freeHealDay: null,
     tournament: null,
     tournamentTitles: 0,
     tournamentRoundWins: 0,

@@ -1190,26 +1190,6 @@ async function actionHeal(tx: Tx, player: Player): Promise<ActionResult> {
   const missing = derived.maxHp - player.hp;
   if (missing <= 0) throw new ApiError('VALIDATION_ERROR', 'Sua vida já está cheia!');
 
-  // v0.9.24 (C2) — PRIMEIRA CURA DO DIA GRÁTIS: onboarding sem vermelho
-  // (playtest: derrota KO pagava ~231 Zeni de cura contra 64 de vitória).
-  // A gratuita restaura TUDO; o dia (dayKey, fuso SP) é gravado no mesmo
-  // update da cura — o rollover diário é automático (dia diferente =
-  // grátis de novo). Demais curas do dia mantêm o custo integral.
-  const today = dayKey();
-  const isFree = player.freeHealDay !== today;
-  if (isFree) {
-    await tx.player.update({
-      where: { id: player.id },
-      data: { hp: derived.maxHp, freeHealDay: today },
-    });
-    player.hp = derived.maxHp;
-    return {
-      message:
-        '🩺 Tratamento de cortesia do hospital — primeira cura do dia é GRÁTIS! Vida totalmente restaurada. (Próximas curas de hoje custam Zeni.)',
-      levelsGained: 0,
-    };
-  }
-
   const cost = healCost(player);
   await spendCurrency(tx, player.id, 'zeni', cost, { type: 'spend', source: 'hospital', accountId: player.accountId });
   await tx.player.update({ where: { id: player.id }, data: { hp: derived.maxHp } });

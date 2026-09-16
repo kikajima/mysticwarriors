@@ -60,8 +60,8 @@ export type AuthOutcome =
   | {
       status: 'error';
       message: string;
-      /** "rate-limit": o serviço de contas pediu espera (429). */
-      kind?: 'rate-limit';
+      /** O serviço de contas pediu espera (429) ou o endereço já existe. */
+      kind?: 'rate-limit' | 'existing-account';
       /** Segundos sugeridos antes da próxima tentativa. */
       retryInSeconds?: number;
     };
@@ -73,7 +73,17 @@ export type AuthOutcome =
  * jogador vê uma contagem regressiva em vez de um erro 429.
  */
 const SIGNUP_MIN_INTERVAL_MS = 60_000;
-let lastSignUpSentAt = 0;
+const SIGNUP_COOLDOWN_KEY = 'gm-signup-last-at';
+
+function lastSignUpAt(): number {
+  if (typeof window === 'undefined') return 0;
+  const value = Number(window.localStorage.getItem(SIGNUP_COOLDOWN_KEY));
+  return Number.isFinite(value) ? value : 0;
+}
+
+function markSignUpAttempt(): void {
+  if (typeof window !== 'undefined') window.localStorage.setItem(SIGNUP_COOLDOWN_KEY, String(Date.now()));
+}
 
 /**
  * Cadastro via supabase.auth.signUp() com o nick nos metadados.
@@ -82,7 +92,7 @@ let lastSignUpSentAt = 0;
  */
 export async function supabaseSignUp({ email, password, nick }: SignUpInput): Promise<AuthOutcome> {
   const now = Date.now();
-  const elapsed = now - lastSignUpSentAt;
+  const elapsed = now - lastSignUpAt();
   if (elapsed < SIGNUP_MIN_INTERVAL_MS) {
     const wait = Math.max(1, Math.ceil((SIGNUP_MIN_INTERVAL_MS - elapsed) / 1000));
     return {
@@ -101,7 +111,7 @@ export async function supabaseSignUp({ email, password, nick }: SignUpInput): Pr
     });
     // o pedido realmente chegou ao Supabase — conta para a trava de 60s
     // (falhas de conexão acima não caem aqui e não travam novas tentativas)
-    lastSignUpSentAt = Date.now();
+    markSignUpAttempt();
     if (error) {
       const translated = translateSupabaseAuthError(error);
       return {
@@ -244,15 +254,18 @@ export function translateSupabaseAuthError(error: {
           'Seu e-mail ainda não foi confirmado. Abra o link que enviamos para você (procure também no spam) e depois entre.',
       };
     case 'user_already_registered':
-      return { message: 'Este e-mail já tem conta. Use "Entrar" para acessar.' };
+      return {
+        message: 'Este e-mail já tem uma conta. Vamos abrir a tela de login para você entrar.',
+        kind: 'existing-account',
+      };
     case 'weak_password':
       return { message: 'A senha precisa ter pelo menos 8 caracteres.' };
     case 'over_email_send_rate_limit':
       return {
         message:
-          'Muitas tentativas em pouco tempo — o serviço de contas limita o envio de e-mails de confirmação para evitar spam. Aguarde alguns minutos (ou até 1 hora, se você tentou várias vezes) e tente de novo. Se você já recebeu nosso e-mail de confirmação, a conta já foi criada: abra o link e volte para "Entrar".',
+          'Este cadastro já foi enviado ou o serviço de contas está temporariamente limitando novos e-mails. Confira sua caixa de entrada e, se a conta já existir, use "Entrar". Não é necessário cadastrar novamente.',
         kind: 'rate-limit',
-        retryInSeconds: 60,
+        retryInSeconds: 300,
       };
     case 'over_request_rate_limit':
       return {

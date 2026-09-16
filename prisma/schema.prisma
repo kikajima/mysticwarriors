@@ -139,11 +139,6 @@ model Player {
   // anti-farm PvE
   pveBattleDay  String?
   pveBattleCount Int      @default(0)
-  // v0.9.24 (C2) — PRIMEIRA CURA DO DIA GRÁTIS: diaKey (YYYY-MM-DD,
-  // fuso SP) da última cura gratuita usada; null/dia diferente = grátis
-  // disponível. Resolve o onboarding caro (playtest: derrota KO + cura
-  // total ~231 Zeni vs vitória PvE de 64) sem tocar na economia veterana.
-  freeHealDay   String?
   // bloqueio otimista para mutações de campos JSON (itens/técnicas/loadout)
   stateVersion  Int       @default(0)
   lastRegen     DateTime  @default(now())

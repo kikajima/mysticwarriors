@@ -152,18 +152,14 @@ export function builtinOptimisticDelta(
       };
     }
 
-    // ===== Hospital: cura total — grátis na primeira do dia (C2) =====
+    // ===== Hospital: cura total =====
     case 'heal': {
       const missing = player.derived.maxHp - player.hp;
       if (missing <= 0) return null;
-      // v0.9.24 (C2): o servidor cobra 0 quando a gratuita diária está
-      // disponível (freeHealDay !== hoje) — o view já expõe a flag
-      return player.freeHealAvailable
-        ? { hp: player.derived.maxHp }
-        : {
-            hp: player.derived.maxHp,
-            zeni: -missing * HEAL_COST_PER_HP,
-          };
+      return {
+        hp: player.derived.maxHp,
+        zeni: -missing * HEAL_COST_PER_HP,
+      };
     }
 
     // ===== Técnicas: preço de tabela =====
