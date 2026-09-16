@@ -4,6 +4,9 @@ import { requireAuth, requirePlayer } from '@/lib/auth';
 import { LIMITS, rateLimit } from '@/lib/rate-limit';
 import { trackEvent } from '@/lib/analytics';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // =====================================================================
 // DELETE /api/game/character/[playerId] — exclusão de personagem
 // ---------------------------------------------------------------------
