@@ -75,7 +75,7 @@ export function AuthGate({
       }
     };
     handleUrlError();
-    const { data } = client.onAuthStateChange((event) => {
+    const { data } = client.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') setMode('set-password');
     });
     return () => data.subscription.unsubscribe();
