@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ENEMIES, BATTLE_ENERGY_COST, npcCombatPower } from '@/lib/game/constants';
+import { ENEMIES, getStrategy, getTalent, BATTLE_ENERGY_COST, npcCombatPower } from '@/lib/game/constants';
 import { useServerNow } from '@/lib/game/clock';
 import type { PlayerView, WorldBossView } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
