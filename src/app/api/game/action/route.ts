@@ -233,7 +233,7 @@ export async function POST(request: Request) {
 
     // manutenção idempotente — NUNCA derruba uma ação que já passou
     await db
-      .$transaction(async (tx) => ensureQuests(tx, playerId), { timeout: 15_000, maxWait: 5_000 })
+      .$transaction(async (tx) => ensureQuests(tx, playerId), { timeout: 60_000, maxWait: 30_000 })
       .catch(() => undefined);
 
     // idempotente e barato (1 consulta por processo) — política de reset

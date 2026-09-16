@@ -1,12 +1,9 @@
 import { db } from '@/lib/db';
 import { ApiError, ok, toErrorResponse } from '@/lib/api';
 import { requireAuth, requirePlayer } from '@/lib/auth';
-import { applyRegen, playerToView, ensureSeed, persistRegenSafe } from '@/lib/game/engine';
+import { applyRegen, playerToView, persistRegenSafe } from '@/lib/game/engine';
 import { resolveDueActivities } from '@/lib/game/activities';
-import { ensureBalanceVersion } from '@/lib/game/balance';
 import { maybeBeacon } from '@/lib/game/persistence';
-import { ensureQuests } from '@/lib/progression';
-import { ensureActiveSeason } from '@/lib/seasons';
 import { LIMITS, rateLimit } from '@/lib/rate-limit';
 
 // =====================================================================
@@ -28,14 +25,6 @@ import { LIMITS, rateLimit } from '@/lib/rate-limit';
 //  * Regen persistido com UPDATE CONDICIONAL (nunca sobrescreve o
 //    resultado de uma ação concorrente — sem lost update de HP).
 // =====================================================================
-
-/**
- * Throttle em memória do "ensure" (quests/temporada/boss): o polling de 15s
- * não precisa revalidar essas estruturas a cada requisição — 1x por minuto
- * por personagem basta e mantém o caminho quente livre de escritas.
- */
-const lastEnsure = new Map<string, number>();
-const ENSURE_THROTTLE_MS = 60_000;
 
 export async function GET(request: Request) {
   try {
@@ -77,7 +66,7 @@ export async function GET(request: Request) {
               activityApplied = true;
             }
           },
-          { timeout: 15_000, maxWait: 5_000 }
+          { timeout: 60_000, maxWait: 30_000 }
         )
         .catch((err) => {
           console.error('[state] falha ao aplicar atividade vencida (não crítico):', err instanceof Error ? err.message : err);
@@ -98,25 +87,6 @@ export async function GET(request: Request) {
     };
     if (applyRegen(player)) {
       await persistRegenSafe(player, before);
-    }
-
-    // manutenções leves — throttled e à prova de falhas (nunca derruba o estado)
-    const last = lastEnsure.get(player.id) ?? 0;
-    if (Date.now() - last > ENSURE_THROTTLE_MS) {
-      lastEnsure.set(player.id, Date.now());
-      try {
-        await ensureSeed();
-        await ensureBalanceVersion(); // idempotente — 1 consulta por processo
-        await db.$transaction(
-          async (tx) => {
-            await ensureQuests(tx, player.id);
-            await ensureActiveSeason(tx).catch(() => undefined);
-          },
-          { timeout: 60_000, maxWait: 30_000 }
-        );
-      } catch (ensureError) {
-        console.error('[state] ensure falhou (não crítico):', ensureError instanceof Error ? ensureError.message : ensureError);
-      }
     }
 
     // posição no ranking (barata: COUNT condicional, sem carregar todos)
