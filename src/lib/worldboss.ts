@@ -73,6 +73,31 @@ export const ATTACK_ENERGY_COST = BOSS_ATTACK_ENERGY_COST;
 /** Dano mínimo acumulado para receber recompensa de participação — EXPORTADO idem. */
 export const MIN_PARTICIPATION_DAMAGE = 500;
 
+const INVOKED_UNTIL_KEY = 'universalThreatInvokedUntil';
+
+export function isUniversalThreatWeekend(now = new Date()): boolean {
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    weekday: 'short',
+  }).format(now);
+  return weekday === 'Sat' || weekday === 'Sun';
+}
+
+export async function universalThreatIsAvailable(tx: Prisma.TransactionClient | typeof db = db): Promise<boolean> {
+  if (isUniversalThreatWeekend()) return true;
+  const invoked = await tx.gameMeta.findUnique({ where: { key: INVOKED_UNTIL_KEY } });
+  return !!invoked && Date.parse(invoked.value) > Date.now();
+}
+
+export async function invokeUniversalThreat(): Promise<void> {
+  const until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  await db.gameMeta.upsert({
+    where: { key: INVOKED_UNTIL_KEY },
+    update: { value: until },
+    create: { key: INVOKED_UNTIL_KEY, value: until },
+  });
+}
+
 interface BossSeed {
   name: string;
   emoji: string;
@@ -99,28 +124,6 @@ const BOSS_POOL: BossSeed[] = [
     speed: 280,
     ki: 380,
     hp: 1_200_000,
-  },
-  {
-    name: 'Vexara, a Chama Primordial',
-    emoji: '🍬',
-    description: 'Magia caótica condensada em forma viva. Transforma estrelas inteiras em doce.',
-    level: 45,
-    strength: 480,
-    defense: 350,
-    speed: 300,
-    ki: 450,
-    hp: 1_500_000,
-  },
-  {
-    name: 'Zarvok, o Trovão Lendário',
-    emoji: '⚡',
-    description: 'Quando ele desperta, tempestades cósmicas ecoam por toda a galáxia.',
-    level: 50,
-    strength: 550,
-    defense: 400,
-    speed: 330,
-    ki: 500,
-    hp: 1_800_000,
   },
 ];
 
@@ -184,6 +187,7 @@ export async function ensureActiveBoss(tx: Prisma.TransactionClient): Promise<vo
 export async function getBossView(playerId: string | null): Promise<WorldBossView | null> {
   return db.$transaction(
     async (tx) => {
+      if (!(await universalThreatIsAvailable(tx))) return null;
       await ensureActiveBoss(tx);
       const boss = await tx.worldBoss.findFirst({
         where: { status: 'active' },
@@ -211,7 +215,7 @@ export async function getBossView(playerId: string | null): Promise<WorldBossVie
         endsAt: boss.endsAt.toISOString(),
         status: boss.status,
         level: boss.level,
-        power: npcCombatPower(boss),
+        power: Math.max(100_000, npcCombatPower(boss)),
         zeniReward: boss.zeniReward,
         xpReward: boss.xpReward,
         crystalReward: boss.crystalReward,
@@ -254,6 +258,9 @@ export async function attackWorldBoss(
   tx: Prisma.TransactionClient,
   player: Player
 ): Promise<BossAttackResult> {
+  if (!(await universalThreatIsAvailable(tx))) {
+    throw new ApiError('BOSS_NOT_ACTIVE', 'A Ameaça Universal está disponível apenas aos finais de semana.');
+  }
   await ensureActiveBoss(tx);
   const boss = await tx.worldBoss.findFirst({ where: { status: 'active' } });
   if (!boss) throw new ApiError('BOSS_NOT_ACTIVE', 'Nenhuma ameaça universal ativa agora.');
@@ -316,7 +323,7 @@ export async function attackWorldBoss(
   // azarão 4+ escalas abaixo tem golpes ESMAGADOS, mas críticos geram
   // ABERTURAS (×1.75) e 3 delas dão a uma TÉCNICA o tratamento de
   // diferença 3 ("quebra de barreira") — mesma tradução do duelo.
-  const bossPower = npcCombatPower(boss);
+  const bossPower = Math.max(100_000, npcCombatPower(boss));
   const scale = scaleCombatRules(combatant.power, bossPower);
   let aberturas = 0;
   let aberturaHits = 0;

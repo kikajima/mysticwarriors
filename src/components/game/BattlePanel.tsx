@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ENEMIES, getStrategy, BATTLE_ENERGY_COST, npcCombatPower, getTalent } from '@/lib/game/constants';
+import { ENEMIES, BATTLE_ENERGY_COST, npcCombatPower } from '@/lib/game/constants';
 import { useServerNow } from '@/lib/game/clock';
 import type { PlayerView, WorldBossView } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
@@ -46,7 +46,7 @@ export function BattlePanel({
   const healCost = (player.derived.maxHp - player.hp) * 3;
   const strategy = getStrategy(player.strategy);
   // v0.16 — matriz de ocupação: trabalho bloqueia SÓ o PvE (o torneio e o
-  // treino bloqueiam nos próprios painéis). World Boss e HOSPITAL seguem
+  // treino bloqueiam nos próprios painéis). Ameaça Universal e HOSPITAL seguem
   // liberados durante o turno — só os 3 negados têm mensagem clara.
   const onMission = !!player.activeMission;
   // v0.6 — batalhas gastam energia (3 por luta)
@@ -56,7 +56,7 @@ export function BattlePanel({
     <div className="space-y-6">
       <SectionTitle icon="⚔️">Arena de Batalha</SectionTitle>
 
-      {/* World Boss */}
+      {/* Ameaça Universal */}
       <WorldBossSection player={player} onAttack={onBossAttack} busy={busy} />
 
       {/* Hospital */}
@@ -94,7 +94,7 @@ export function BattlePanel({
         </div>
       </GameCard>
 
-      <GameCard className="p-4">
+      {false && <GameCard className="p-4">
         <p className="text-sm text-amber-200/70 leading-relaxed">
           Desafie vilões lendários em batalhas turno a turno. Cada batalha consome{' '}
           <span className="text-amber-300 font-heading">{BATTLE_ENERGY_COST} de energia</span> (recarrega com o
@@ -112,10 +112,9 @@ export function BattlePanel({
             {player.energy}/{player.derived.maxEnergy}
           </span>
         </div>
-      </GameCard>
+      </GameCard>}
 
-      {/* v0.9.13 — ÍMPETO (Cap. 7 do ASCENSÃO Z): o ritmo dramático do combate */}
-      <GameCard className="p-4 border-orange-900/40">
+      {false && <GameCard className="p-4 border-orange-900/40">
         <div className="flex items-start gap-3">
           <div className="shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500/20 to-orange-600/20 border border-orange-700/40 flex items-center justify-center">
             <Flame className="w-5 h-5 text-orange-400" aria-hidden />
@@ -176,7 +175,7 @@ export function BattlePanel({
             )}
           </div>
         </div>
-      </GameCard>
+      </GameCard>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {ENEMIES.map((enemy) => {
@@ -315,7 +314,7 @@ export function BattlePanel({
                 </GameButton>
                 {onMission && (
                   <p className="text-[10px] text-orange-300/70 mt-1.5 text-center">
-                    ⚠️ Em turno de trabalho — lutas contra inimigos esperam o retorno (PvP, World Boss, loja, guilda e hospital seguem liberados).
+                    ⚠️ Em turno de trabalho — lutas contra inimigos esperam o retorno (PvP, Ameaça Universal, loja, guilda e hospital seguem liberados).
                   </p>
                 )}
                 {!onMission && noEnergy && !tooHurt && (
@@ -332,7 +331,7 @@ export function BattlePanel({
   );
 }
 
-// ===== WORLD BOSS =====
+// ===== AMEAÇA UNIVERSAL =====
 
 function WorldBossSection({
   player,
@@ -519,8 +518,7 @@ function WorldBossSection({
             </div>
 
             <p className="text-[11px] text-amber-200/40 mt-2 leading-snug">
-              {boss.description} Recompensas para os maiores danos ao derrotá-lo: Zeni, XP e 💎 cristais.
-              Cada ataque custa 10 de energia e desgasta 15% da sua vida atual.
+              {boss.description}
             </p>
           </div>
         </div>

@@ -37,6 +37,13 @@ function secondsToNextEnergy(player: PlayerView, now: number): number | null {
   return Math.max(1, Math.ceil(next));
 }
 
+function secondsToNextHp(player: PlayerView, now: number): number | null {
+  if (player.hp >= player.derived.maxHp) return null;
+  const interval = Math.max(1, player.regen.hpIntervalSec);
+  const elapsed = (now - new Date(player.regen.lastRegenHpAt).getTime()) / 1000;
+  return Math.max(1, Math.ceil(interval - (elapsed % interval)));
+}
+
 export function Dashboard({
   player,
   onNavigate,
@@ -65,6 +72,7 @@ export function Dashboard({
   const remaining = active ? new Date(active.endsAt).getTime() - now : 0;
   const strategy = getStrategy(player.strategy);
   const nextEnergyIn = secondsToNextEnergy(player, now);
+  const nextHpIn = secondsToNextHp(player, now);
   // ===== Escala de Poder (ASCENSÃO Z, Cap. 5) =====
   const scaleInfo = getPowerScale(player.derived.power);
 
@@ -110,7 +118,7 @@ export function Dashboard({
 
   return (
     <div className="space-y-6">
-      {/* ===== BANNER: EM TURNO DE TRABALHO — ações bloqueadas exceto World Boss ===== */}
+      {/* ===== BANNER: EM TURNO DE TRABALHO — ações bloqueadas exceto Ameaça Universal ===== */}
       {active && !missionDone && (
         <div
           role="status"
@@ -120,12 +128,12 @@ export function Dashboard({
           <div className="text-sm leading-relaxed">
             <p className="font-heading text-orange-200">Você está trabalhando!</p>
             <p className="text-amber-200/60 text-xs mt-0.5">
-              Enquanto isso, só é possível atacar o <span className="text-amber-100">inimigo global</span> — treino,
+              Enquanto isso, só é possível atacar a <span className="text-amber-100">Ameaça Universal</span> — treino,
               loja, hospital e demais ações voltam com o retorno do guerreiro, em {formatCountdown(remaining)}.
             </p>
           </div>
           <GameButton size="sm" variant="ghost" className="ml-auto shrink-0" onClick={() => onNavigate('battle')}>
-            World Boss <ChevronRight className="w-3.5 h-3.5" />
+            Ameaça Universal <ChevronRight className="w-3.5 h-3.5" />
           </GameButton>
         </div>
       )}
@@ -275,7 +283,15 @@ export function Dashboard({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GameCard className="p-4">
           <ResourceBar label="Vida (HP)" icon="❤️" value={player.hp} max={player.derived.maxHp} gradient="from-red-500 to-rose-700" height="h-4" />
-          <p className="text-[11px] text-amber-200/40 mt-2">Regenera com o tempo (Namekuseijins 15% mais rápido)</p>
+          {nextHpIn !== null ? (
+            <p className="text-[11px] text-red-300/80 mt-2 tabular-nums" aria-live="polite">
+              ⏳ Próximo ponto de vida em {nextHpIn >= 60
+                ? `${Math.floor(nextHpIn / 60)}m ${String(nextHpIn % 60).padStart(2, '0')}s`
+                : `${nextHpIn}s`}
+            </p>
+          ) : (
+            <p className="text-[11px] text-amber-200/40 mt-2">Vida cheia</p>
+          )}
         </GameCard>
         <GameCard className="p-4">
           <ResourceBar label="Energia" icon="⚡" value={player.energy} max={player.derived.maxEnergy} gradient="from-yellow-400 to-amber-600" height="h-4" />

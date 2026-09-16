@@ -88,6 +88,8 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
   const [resetText, setResetText] = useState('');
   const [resetWorking, setResetWorking] = useState(false);
   const [resetResult, setResetResult] = useState<{ kind: 'ok' | 'warn' | 'err'; text: string } | null>(null);
+  const [threatWorking, setThreatWorking] = useState(false);
+  const [threatResult, setThreatResult] = useState<string | null>(null);
   // campos de formulário
   const [fZeni, setFZeni] = useState('');
   const [fCrys, setFCrys] = useState('');
@@ -313,6 +315,26 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
       setResetWorking(false);
     }
   }, [resetWorking, resetText, authHeaders, fetchCharacters, onSelfModified]);
+
+  const invokeUniversalThreat = useCallback(async () => {
+    if (threatWorking) return;
+    setThreatWorking(true);
+    setThreatResult(null);
+    try {
+      const headers = await authHeaders();
+      if (!headers) {
+        setThreatResult('Sessão expirada — entre de novo.');
+        return;
+      }
+      const res = await fetch('/api/admin/universal-threat', { method: 'POST', headers });
+      const data = await res.json();
+      setThreatResult(res.ok && data.success !== false ? data.message : data.error?.message ?? 'Invocação recusada.');
+    } catch {
+      setThreatResult('Falha de conexão ao invocar a Ameaça Universal.');
+    } finally {
+      setThreatWorking(false);
+    }
+  }, [threatWorking, authHeaders]);
 
   const filtered = useMemo(() => {
     if (!characters) return [];
@@ -857,7 +879,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                       O reset é SÓ de <b>{selected.name}</b> (os outros personagens da conta não mudam). Ele NÃO apaga o
                       personagem: volta ao <b>estado de criação</b> preservando apenas <b>nome, raça e sexo</b> — cosméticos
                       comprados, avatar, diamantes, itens, equipamentos, auras, transformações, conquistas, missões,
-                      profissão e dano no chefe global atual são <b>zerados</b>.
+                      profissão e dano na Ameaça Universal atual são <b>zerados</b>.
                     </p>
                     {confirmReset ? (
                       <div className="flex items-center gap-2">
@@ -928,13 +950,30 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
               )}
 
               {/* ===== v0.9.10: RESET GERAL DO SERVIDOR (ação global) ===== */}
+              <section className="rounded-xl border border-orange-800/60 bg-orange-950/20 p-4">
+                <h3 className="font-heading text-sm text-orange-200 mb-1 flex items-center gap-1.5">
+                  <Skull className="w-4 h-4 text-orange-400" /> Ameaça Universal
+                </h3>
+                <p className="text-[11px] text-orange-200/70 leading-relaxed mb-3">
+                  A ameaça aparece aos finais de semana. O administrador pode invocá-la por 24 horas durante a semana.
+                </p>
+                <button
+                  onClick={invokeUniversalThreat}
+                  disabled={threatWorking}
+                  className="px-4 py-2 rounded-lg bg-orange-700 hover:bg-orange-600 text-white text-sm font-heading disabled:opacity-40"
+                >
+                  {threatWorking ? 'Invocando…' : 'Invocar Ameaça Universal'}
+                </button>
+                {threatResult && <p role="status" className="mt-2 text-xs text-orange-200">{threatResult}</p>}
+              </section>
+
               <section className="rounded-xl border-2 border-red-800/60 bg-red-950/25 p-4">
                 <h3 className="font-heading text-sm text-red-200 mb-1 flex items-center gap-1.5">
                   <Bomb className="w-4 h-4 text-red-400" /> Reset geral do servidor — apaga TUDO
                 </h3>
                 <p className="text-[11px] text-red-200/70 leading-relaxed mb-3">
                   Apaga <b>todos os personagens, contas locais, inventários, conquistas, missões, guildas, carteiras,
-                  temporada e o chefe global</b> deste servidor do jogo (backup automático do banco é salvo antes,
+                  temporada e a Ameaça Universal</b> deste servidor do jogo (backup automático do banco é salvo antes,
                   com o caminho exibido no resultado). <b>Apaga também os personagens da NUVEM</b> (Supabase) com
                   backup em tabelas <code>*_backup_reset</code> — sem isso eles voltariam no próximo login. Contas de
                   login, admins e catálogos <b>não</b> são tocados. Bots de PvP são recriados automaticamente. Requer a

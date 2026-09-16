@@ -6,7 +6,7 @@ import { getPowerScale } from '@/lib/game/powerScale';
 import type { PlayerView, RankingPage } from '@/lib/game/types';
 import { Chip, GameButton } from './Bits';
 import { fetchPanelJson, LoadFail, RankingSkeleton } from './PanelLoad';
-import { Bot, Crosshair, Crown, ChevronLeft, ChevronRight, Loader2, Swords } from 'lucide-react';
+import { Crosshair, Crown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 /** v0.9.5 — dados frescos: enquanto a tela está aberta, atualiza a cada 60s. */
@@ -88,12 +88,6 @@ export function RankingPanel({
   // v0.9.24 (A2) — motivo ESPECÍFICO por impedimento (fim do genérico
   // "fora de alcance" que contradizia a regra publicada dos ±5 níveis)
   const blockLabel = (entry: (typeof ranking)[number]): { text: string; title: string } => {
-    if (entry.blockReason === 'remote') {
-      return {
-        text: 'noutro servidor',
-        title: 'Guerreiro salvo na nuvem por outro servidor deste jogo — o duelo só acontece entre lutadores deste servidor.',
-      };
-    }
     return {
       text: `${Math.abs(entry.level - player.level)} níveis de distância`,
       title: 'Só é possível desafiar guerreiros com até 5 níveis de diferença.',
@@ -124,11 +118,6 @@ export function RankingPanel({
           </div>
         )}
       </div>
-
-      <p className="text-sm text-amber-200/60 leading-relaxed">
-        Ataque outros guerreiros para roubar 8% do Zeni deles! Você só pode desafiar quem está até 5 níveis
-        acima ou abaixo de você. Cuidado: se perder, eles levam 5% do seu Zeni.
-      </p>
 
       {failed && !data ? (
         <LoadFail what="O ranking" onRetry={() => load(page)} />
@@ -275,50 +264,6 @@ export function RankingPanel({
             </GameButton>
           </div>
 
-          {/* v0.9.24 (A2) — SPARRING GARANTIDO: bots dentro do seu range ±5.
-              Densidade de adversários elegíveis no começo do jogo — sempre
-              há alguém para desafiar, mesmo com o ranking vazio/só-remoto. */}
-          {sparring.length > 0 && (
-            <div className="rounded-xl border border-amber-900/40 bg-black/20 p-3 sm:p-4 mt-2">
-              <div className="flex items-center gap-2 mb-1">
-                <Swords className="w-4 h-4 text-orange-400" aria-hidden />
-                <h3 className="font-heading text-amber-100 text-sm">Sala de Desafios</h3>
-                <Chip className="bg-orange-950/60 text-orange-300 border-orange-800/60">
-                  <Bot className="w-3 h-3" aria-hidden /> sparring
-                </Chip>
-              </div>
-              <p className="text-[11px] text-amber-200/50 mb-3 leading-relaxed">
-                Lutadores do dojo sempre dispostos a um duelo — estão no seu range de níveis e podem ser desafiados a
-                qualquer momento (roubo de Zeni normal, como em qualquer duelo).
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {sparring.map((s) => (
-                  <div
-                    key={s.id}
-                    className="rounded-lg border border-amber-900/30 bg-[#1a140d]/70 px-3 py-2 flex items-center gap-3"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-amber-100 truncate">{s.name}</p>
-                      <p className="text-[11px] text-amber-200/50">
-                        {RACE_EMOJI[s.race] ?? '🥋'} Nv {s.level} • ⚡ {s.power.toLocaleString('pt-BR')} • {s.battlesWon}V/
-                        {s.battlesLost}D
-                      </p>
-                    </div>
-                    <GameButton
-                      size="sm"
-                      variant="danger"
-                      onClick={() => onAttack(s.id)}
-                      disabled={busy || noEnergy}
-                      title={noEnergy ? `Cada duelo exige ${BATTLE_ENERGY_COST} de energia` : `Duelo de sparring (custa ${BATTLE_ENERGY_COST} de energia — liberado mesmo durante o trabalho)`}
-                      aria-label={`Desafiar ${s.name} (sparring)`}
-                    >
-                      <Crosshair className="w-3.5 h-3.5" />
-                    </GameButton>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>
