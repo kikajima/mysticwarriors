@@ -14,6 +14,35 @@ import { createClient, type SupabaseClient, type Session, type User } from '@sup
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './config';
 import type { CloudCharacterSnapshot, CloudProgress } from './progress';
 
+export interface CloudWorldBossDamage {
+  playerId: string;
+  name: string;
+  damage: number;
+  attacks: number;
+  rewarded: boolean;
+  lastAttackedAt: string;
+}
+
+export interface CloudWorldBossSnapshot {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  maxHp: number;
+  currentHp: number;
+  level: number;
+  power: number;
+  startsAt: string;
+  endsAt: string;
+  status: string;
+  zeniReward: number;
+  xpReward: number;
+  crystalReward: number;
+  defeatedAt: string | null;
+  damages: CloudWorldBossDamage[];
+  savedAt: string;
+}
+
 let cached: SupabaseClient | null = null;
 
 export function getSupabaseClient(): SupabaseClient {
@@ -516,6 +545,28 @@ export async function deleteStaleCloudCharacters(keepIds: string[]): Promise<boo
     logCloudError('[nuvem] FALHA ao LIMPAR personagens antigos da nuvem', error);
     return false;
   }
+  return true;
+}
+
+export async function loadCloudWorldBoss(): Promise<CloudWorldBossSnapshot | null> {
+  try {
+    const { data, error } = await getSupabaseClient().rpc('get_world_boss_snapshot');
+    if (error || !data) return null;
+    return data as CloudWorldBossSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveCloudWorldBoss(snapshot: CloudWorldBossSnapshot): Promise<boolean> {
+  const session = await getSupabaseSession();
+  if (!session) return false;
+  const { error } = await getSupabaseClient().rpc('save_world_boss_snapshot', { p_snapshot: snapshot });
+  if (error) {
+    console.error('[nuvem] FALHA ao salvar o chefe global', error.message);
+    return false;
+  }
+  console.info('[nuvem] chefe global salvo', snapshot.id, snapshot.currentHp);
   return true;
 }
 
