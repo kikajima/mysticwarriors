@@ -234,8 +234,8 @@ export async function uploadAvatarToStorage(file: File): Promise<string | null> 
 
 export interface TranslatedAuthError {
   message: string;
-  /** "rate-limit": o serviço de contas pediu espera (429). */
-  kind?: 'rate-limit';
+  /** O serviço pediu espera ou o endereço já tem uma conta. */
+  kind?: 'rate-limit' | 'existing-account';
   /** Segundos sugeridos antes da próxima tentativa. */
   retryInSeconds?: number;
 }
