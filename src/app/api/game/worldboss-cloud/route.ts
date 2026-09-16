@@ -42,6 +42,11 @@ export async function POST(request: Request) {
     const snapshot = parsed.data;
     const boss = await db.worldBoss.findUnique({ where: { id: snapshot.id } });
     if (!boss) return ok({ restored: false });
+    const localDamageCount = await db.worldBossDamage.count({ where: { bossId: boss.id } });
+    // O snapshot só pode repor um banco recém-criado. Depois que existe
+    // progresso local, o servidor é a fonte autoritativa e nenhum polling
+    // pode sobrescrever HP ou dano de um ataque recém concluído.
+    if (localDamageCount > 0 || boss.currentHp !== boss.maxHp) return ok({ restored: false, reason: 'local-progress' });
     const owned = await db.player.findMany({ where: { accountId: auth.account.id, isBot: false }, select: { id: true } });
     const ownedIds = new Set(owned.map((p) => p.id));
     await db.worldBoss.update({ where: { id: boss.id }, data: { currentHp: snapshot.currentHp, endsAt: new Date(snapshot.endsAt), status: snapshot.status } });
