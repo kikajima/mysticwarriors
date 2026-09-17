@@ -1,3 +1,5 @@
+import { isGuildAction, runGuildOnce } from './guilds';
+import { guildLevel, guildThreshold } from './guildRules';
 import { fetchOfflineOpponent, restoreOfflineOpponent, type OfflineOpponent } from '@/lib/supabase/offline-pvp';
 import type { Player, Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
@@ -120,6 +122,7 @@ export async function executeGameAction(
     // ===== AUTORIZAÇÃO CENTRAL =====
     const player = await requirePlayer(auth, playerId, tx);
 
+    if (isGuildAction(type)) return runGuildOnce(tx, player, type, args);
     // ===== ATIVIDADES VENCIDAS: aplicar ANTES de qualquer coisa =====
     // (resultado pendente é concedido no primeiro toque após o término)
     const appliedResults = await resolveDueActivities(tx, player);
@@ -209,18 +212,6 @@ export async function executeGameAction(
         break;
       case 'activate_transformation':
         result = await actionActivateTransformation(tx, player, (args.transformationId as string | null) ?? null);
-        break;
-      case 'create_guild':
-        result = await actionCreateGuild(tx, player, args.guildName as string);
-        break;
-      case 'join_guild':
-        result = await actionJoinGuild(tx, player, String(args.targetId ?? ''));
-        break;
-      case 'leave_guild':
-        result = await actionLeaveGuild(tx, player);
-        break;
-      case 'donate_guild':
-        result = await actionDonateGuild(tx, player, Number(args.amount ?? 0));
         break;
       case 'claim_quest':
         result = await actionClaimQuest(tx, player, String(args.questId ?? ''));
@@ -823,7 +814,7 @@ async function actionStartTournamentFight(tx: Tx, player: Player): Promise<Actio
  *    por ocupar determinado lado da função.
  */
 export async function actionStartPvp(tx: Tx, player: Player, targetId: string): Promise<ActionResult> {
-  const target = await tx.player.findUnique({ where: { id: targetId } });
+  const target = await tx.player.findUnique({ where: { id: targetId }, include: { guild: true } });
   if (!target) throw new ApiError('NOT_FOUND', 'Alvo não encontrado.');
   if (target.id === player.id) {
     throw new ApiError('VALIDATION_ERROR', 'Você não pode lutar contra si mesmo!');
@@ -1443,104 +1434,8 @@ async function actionActivateTransformation(tx: Tx, player: Player, transformati
 
 // ===== GUILDAS =====
 
-export function guildLevelFromXp(xp: number): number {
-  return 1 + Math.floor(Math.sqrt(Math.max(0, xp) / 500));
-}
-
-export function guildXpToNext(level: number): number {
-  return 500 * level * level; // xp total necessária para o próximo nível
-}
-
-async function actionCreateGuild(tx: Tx, player: Player, guildName: string | undefined): Promise<ActionResult> {
-  const name = (guildName ?? '').trim();
-  if (name.length < 3 || name.length > 24 || !/^[\p{L}\p{N} _-]+$/u.test(name)) {
-    throw new ApiError('VALIDATION_ERROR', 'Nome da guilda inválido (3-24 caracteres, sem símbolos especiais).');
-  }
-  if (player.guildId) {
-    throw new ApiError('GUILD_ALREADY_MEMBER', 'Você já pertence a uma guilda. Saia dela antes de criar outra.');
-  }
-
-  const existing = await tx.guild.findFirst({ where: { name } });
-  if (existing) throw new ApiError('GUILD_NAME_TAKEN');
-
-  await spendCurrency(tx, player.id, 'zeni', 5000, { type: 'spend', source: 'guild_create', accountId: player.accountId });
-
-  let guild;
-  try {
-    guild = await tx.guild.create({ data: { name, leaderId: player.id, description: '' } });
-  } catch {
-    throw new ApiError('GUILD_NAME_TAKEN');
-  }
-  await tx.player.update({ where: { id: player.id }, data: { guildId: guild.id } });
-
-  return { message: `Guilda "${guild.name}" fundada! Você é o líder. (-5.000 Zeni)`, levelsGained: 0 };
-}
-
-async function actionJoinGuild(tx: Tx, player: Player, guildId: string): Promise<ActionResult> {
-  if (player.guildId) throw new ApiError('GUILD_ALREADY_MEMBER', 'Você já pertence a uma guilda!');
-  const guild = await tx.guild.findUnique({ where: { id: guildId } });
-  if (!guild) throw new ApiError('NOT_FOUND', 'Guilda não encontrada.');
-  await tx.player.update({ where: { id: player.id }, data: { guildId: guild.id } });
-  await trackEvent('guild_joined', { playerId: player.id, accountId: player.accountId, metadata: { guildId } }, tx);
-  return { message: `Bem-vindo à guilda "${guild.name}"! Treinem juntos e dominem o ranking.`, levelsGained: 0 };
-}
-
-async function actionLeaveGuild(tx: Tx, player: Player): Promise<ActionResult> {
-  if (!player.guildId) throw new ApiError('VALIDATION_ERROR', 'Você não pertence a nenhuma guilda.');
-  const guild = await tx.guild.findUnique({
-    where: { id: player.guildId },
-    include: { members: { orderBy: { createdAt: 'asc' } } },
-  });
-  if (!guild) {
-    await tx.player.update({ where: { id: player.id }, data: { guildId: null } });
-    return { message: 'Guilda não existia mais.', levelsGained: 0 };
-  }
-
-  await tx.player.update({ where: { id: player.id }, data: { guildId: null } });
-  const others = guild.members.filter((m) => m.id !== player.id);
-
-  if (others.length === 0) {
-    // v0.15 — ERASURE ao dissolver: GuildDonation.guildId NÃO tem FK
-    // nesta base (era v0.9.20) — sem esta limpeza manual, doações de uma
-    // guilda dissolvida pelo próprio jogo virariam ÓRFÃS LÓGICAS (a
-    // exata classe de bug que a matriz anti-órfã vigia). A exclusão de
-    // guilda do painel admin já fazia; o caminho do jogador agora também.
-    await tx.guildDonation.deleteMany({ where: { guildId: guild.id } });
-    await tx.guild.delete({ where: { id: guild.id } });
-    return { message: `Você saiu da guilda "${guild.name}". Como estava vazia, ela foi dissolvida.`, levelsGained: 0 };
-  }
-  if (guild.leaderId === player.id) {
-    const newLeader = others[0];
-    await tx.guild.update({ where: { id: guild.id }, data: { leaderId: newLeader.id } });
-    return { message: `Você deixou a liderança da guilda "${guild.name}" para ${newLeader.name} e saiu.`, levelsGained: 0 };
-  }
-  return { message: `Você saiu da guilda "${guild.name}".`, levelsGained: 0 };
-}
-
-async function actionDonateGuild(tx: Tx, player: Player, amount: number): Promise<ActionResult> {
-  if (!player.guildId) throw new ApiError('VALIDATION_ERROR', 'Você não pertence a uma guilda.');
-  if (!Number.isInteger(amount) || amount < 100 || amount > 1000000) {
-    throw new ApiError('VALIDATION_ERROR', 'Doação inválida (mínimo 100 Zeni).');
-  }
-
-  await spendCurrency(tx, player.id, 'zeni', amount, { type: 'spend', source: 'guild_donation', accountId: player.accountId, metadata: { guildId: player.guildId } });
-
-  const guildBefore = await tx.guild.findUniqueOrThrow({ where: { id: player.guildId } });
-  const newXp = guildBefore.xp + amount;
-  const newLevel = guildLevelFromXp(newXp);
-  const leveledUp = newLevel > guildBefore.level;
-  await tx.guild.update({
-    where: { id: guildBefore.id },
-    data: { xp: newXp, level: newLevel, totalDonated: { increment: amount } },
-  });
-  await tx.player.update({ where: { id: player.id }, data: { guildDonated: { increment: amount } } });
-  await tx.guildDonation.create({ data: { playerId: player.id, guildId: guildBefore.id, amount } });
-
-  return {
-    message: `Doação de ${amount.toLocaleString('pt-BR')} Zeni para a guilda!${leveledUp ? ` 🎉 A guilda subiu para o nível ${newLevel}!` : ''}`,
-    levelsGained: 0,
-  };
-}
+export const guildLevelFromXp = guildLevel;
+export const guildXpToNext = (level: number) => guildThreshold(Math.min(10, level + 1));
 
 // ===== QUESTS / CONQUISTAS / COSMÉTICOS / BOSS =====
 

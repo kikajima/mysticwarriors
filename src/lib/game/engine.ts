@@ -1,3 +1,4 @@
+import { playerGuildBonuses, type GuildContext } from './guildRules';
 import { MAX_ACTION_ENERGY } from '@/lib/game/rules';
 import { db } from '@/lib/db';
 import type { Prisma, Player } from '@prisma/client';
@@ -292,8 +293,8 @@ export function playerToView(
   // SEM arredondamento: com base 5s, round(5/1.1)=5 anularia o bônus de 10%
   // do humano — o cálculo floor(elapsed/int) funciona com intervalos fracionários
   const econ = raceEconomy(player.race);
-  const energyIntervalSec = Math.max(1, REGEN.energySeconds / econ.energyRegenMult);
-  const hpIntervalSec = Math.max(1, REGEN.hpSeconds / econ.hpRegenMult);
+  const energyIntervalSec = Math.max(1, REGEN.energySeconds / (econ.energyRegenMult * playerGuildBonuses(player).energyRate));
+  const hpIntervalSec = Math.max(1, REGEN.hpSeconds / (econ.hpRegenMult * playerGuildBonuses(player).hpRate));
   // UNIFICAÇÃO (v0.4): o servidor é a fonte única da interpretação de
   // missão — "ativa" = timer ainda correndo; "pronta" = terminou, falta
   // coletar. A UI nunca decide isso sozinha.
@@ -375,12 +376,12 @@ export function playerToView(
  *    instantâneo quando o recurso volta a ser gasto);
  *  * Bônus raciais aplicados nos intervalos (fracionários, sem round).
  */
-export function applyRegen(player: Player, nowMs: number = Date.now()): boolean {
+export function applyRegen(player: Player & GuildContext, nowMs: number = Date.now()): boolean {
   const now = nowMs;
   const derived = computeDerived(player);
   const econ = raceEconomy(player.race);
-  const eInt = Math.max(1, REGEN.energySeconds / econ.energyRegenMult);
-  const hInt = Math.max(1, REGEN.hpSeconds / econ.hpRegenMult);
+  const eInt = Math.max(1, REGEN.energySeconds / (econ.energyRegenMult * playerGuildBonuses(player).energyRate));
+  const hInt = Math.max(1, REGEN.hpSeconds / (econ.hpRegenMult * playerGuildBonuses(player).hpRate));
   let changed = false;
   if (player.energy > derived.maxEnergy) {
     player.energy = derived.maxEnergy;
@@ -443,7 +444,7 @@ export function applyRegen(player: Player, nowMs: number = Date.now()): boolean 
 
 const BALANCED_STRATEGY = getStrategy('balanced');
 
-export function buildPlayerCombatant(player: Player): Combatant {
+export function buildPlayerCombatant(player: Player & GuildContext): Combatant {
   const items = parseItems(player.items);
   const eq = equipmentBonuses(items);
   const rc = raceCombat(player.race);
@@ -453,6 +454,7 @@ export function buildPlayerCombatant(player: Player): Combatant {
   return {
     name: player.name,
     emoji: '🥋',
+    guildCritical: playerGuildBonuses(player).critical,
     level: player.level,
     race: player.race as RaceId,
     strength: player.strength,
@@ -974,7 +976,7 @@ export function simulateBattle(
         if (scale.crushing) {
           // azarão 4+ escalas abaixo: golpe esmagado… mas pode CRITICAR
           // (Abertura) — o roll da esquiva é reusado (determinismo)
-          const critChance = aberturaChance(attacker.speed, defender.speed);
+          const critChance = Math.min(1, aberturaChance(attacker.speed, defender.speed) + (attacker.guildCritical ?? 0));
           if (dodgeRoll > 1 - critChance) {
             damage *= SCALE_COMBAT.aberturaCritMult;
             if (isPlayerAttacking) playerAberturas += 1;
@@ -1004,6 +1006,12 @@ export function simulateBattle(
       }
     }
 
+    // Fora de golpes esmagados, o bônus de guilda cria uma chance de
+    // crítico de 2pp, usando o mesmo sorteio de esquiva (sem novo RNG).
+    if (!scale.crushing && dodgeRoll > 1 - (attacker.guildCritical ?? 0)) {
+      damage *= SCALE_COMBAT.aberturaCritMult;
+      scaleSuffix += ' [CRÍTICO DA GUILDA!]';
+    }
     damage = Math.max(1, Math.round(damage));
 
     // ===== 6½) ÍMPETO — DEFESA HEROICA (Cap. 7: 2 Ímpetos) =====

@@ -1,3 +1,4 @@
+import { guildBonuses } from './game/guildRules';
 import type { Prisma, Player } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { db } from '@/lib/db';
@@ -375,7 +376,7 @@ export async function attackWorldBoss(
         hitDamage *= 1 - SCALE_COMBAT.maxDiff * SCALE_COMBAT.armorPerLevel;
         breakthrough = true;
       } else if (scale.crushing) {
-        if (rng() < aberturaChance(combatant.speed, boss.speed)) {
+        if (rng() < aberturaChance(combatant.speed, boss.speed) + (combatant.guildCritical ?? 0)) {
           hitDamage *= SCALE_COMBAT.aberturaCritMult;
           aberturas += 1;
           aberturaHits += 1;
@@ -408,7 +409,8 @@ export async function attackWorldBoss(
     }
   }
   // escala para HP global de milhões: multiplicador de ameaça universal
-  const damage = Math.max(10, Math.round((total / hits) * 60));
+  const membership = await tx.player.findUniqueOrThrow({ where: { id: player.id }, select: { guild: { select: { level: true } } } });
+  const damage = Math.max(10, Math.round((total / hits) * 60 * guildBonuses(membership.guild?.level).bossDamage));
   const impetoNote =
     combosEncadeados > 0
       ? ` 🔥 Ímpeto: ${combosEncadeados} combo${combosEncadeados === 1 ? '' : 's'} encadeado${combosEncadeados === 1 ? '' : 's'} (Cap. 7).`
@@ -458,7 +460,7 @@ export async function attackWorldBoss(
 
   // XP proporcional ao dano
   const xpGain = Math.max(20, Math.round(damage / 200));
-  await grantRewards(tx, player, { xp: xpGain }, { type: 'reward', source: 'world_boss', accountId: player.accountId });
+  const xpReward = await grantRewards(tx, player, { xp: xpGain }, { type: 'reward', source: 'world_boss', accountId: player.accountId });
 
   await trackEvent('world_boss_attack', {
     playerId: player.id,
@@ -477,7 +479,7 @@ export async function attackWorldBoss(
     await distributeBossRewards(tx, boss.id);
   }
 
-  return { damage, xpGain, killed, cooldownSec: ATTACK_COOLDOWN_SEC, note };
+  return { damage, xpGain: xpReward.xpGranted, killed, cooldownSec: ATTACK_COOLDOWN_SEC, note };
 }
 
 /**

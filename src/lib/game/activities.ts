@@ -317,7 +317,7 @@ async function applyPveResult(
 
   const finalBattle: BattleResult = {
     ...payload.display.battle,
-    xpGain: data.xp,
+    xpGain: grant.xpGranted,
     zeniGain: data.won ? data.zeni : 0,
     zenkaiGranted: data.zenkai,
   };
@@ -561,7 +561,7 @@ async function applyTournamentResult(
 
   const finalBattle: BattleResult = {
     ...payload.display.battle,
-    xpGain: data.xp,
+    xpGain: grant.xpGranted,
     zeniGain: data.won ? data.zeni : 0,
     crystalsGain: data.won ? data.crystals : 0,
   };

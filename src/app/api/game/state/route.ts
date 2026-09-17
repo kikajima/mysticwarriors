@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { touchPresence } from '@/lib/game/presence';
 import { ApiError, ok, toErrorResponse } from '@/lib/api';
 import { requireAuth, requirePlayer } from '@/lib/auth';
 import { applyRegen, playerToView } from '@/lib/game/engine';
@@ -50,6 +51,7 @@ export async function GET(request: Request) {
       return ok({ player: null, totalPlayers: 0, questsReady: 0, pendingResults: [] });
     }
     let player = await requirePlayer(auth, targetId);
+    touchPresence(player.id);
 
     // ===== ATIVIDADES VENCIDAS: aplica e coleta resultados pendentes =====
     // (o primeiro toque após o término concede o resultado — exactly-once)
@@ -119,6 +121,8 @@ export async function GET(request: Request) {
       player: playerToView(currentPlayer, rankingPosition),
       totalPlayers,
       questsReady,
+      guildInvites: await db.guildInvitation.count({ where: { playerId: player.id, expiresAt: { gt: new Date() }, guild: { disbandedAt: null } } }),
+      guildMotd: withActivity?.guild?.motd ?? '',
       pendingResults,
       // v0.9.6 (Mudança 1): hora do servidor na resposta — o cliente mede
       // a diferença de relógio e conta os timers por ELA, não pelo

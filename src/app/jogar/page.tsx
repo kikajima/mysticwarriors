@@ -160,6 +160,8 @@ export default function PlayPage() {
   const [player, setPlayer] = useState<PlayerView | null>(null);
   const [view, setView] = useState<View>('dashboard');
   const [busy, setBusy] = useState(false);
+  const [guildInvites, setGuildInvites] = useState(0);
+  const [guildMotd, setGuildMotd] = useState('');
   const [battle, setBattle] = useState<BattleResult | null>(null);
   const [auth, setAuth] = useState<AccountSession | null>(null);
   const [characters, setCharacters] = useState<PlayerView[]>([]);
@@ -422,6 +424,8 @@ export default function PlayPage() {
         // servidor — os contadores (profissão/treino/energia) passam a
         // contar pela hora certa, não pelo relógio do dispositivo.
         noteServerTime(data.serverNow, requestStart);
+        setGuildInvites(data.guildInvites ?? 0);
+        setGuildMotd(data.guildMotd ?? '');
         stageIncomingBattle(data);
         applyPlayerState(data.player);
         // v0.9.24 (A1): a poll voltou a falar com o servidor — qualquer
@@ -1262,6 +1266,8 @@ export default function PlayPage() {
 
       {/* ===== Header (desktop + mobile) ===== */}
       <header className="sticky top-0 z-40 bg-[#14100b]/90 backdrop-blur border-b border-amber-900/40">
+        {guildInvites > 0 && <button className="w-full bg-emerald-950 p-2 text-emerald-200" onClick={() => setView('guilds')}>🛡️ {guildInvites} convite(s) de guilda — abrir</button>}
+        {guildMotd && <div className="bg-amber-950 px-3 py-2 text-sm text-amber-100 break-words">📣 {guildMotd}</div>}
         <div className="max-w-6xl mx-auto px-3 sm:px-4">
           <div className="flex items-center gap-3 py-2.5">
             <a

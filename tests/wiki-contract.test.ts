@@ -178,16 +178,9 @@ describe('CONTRATO A — comportamento dos handlers reais × afirmações da wik
     expect(guildsRouteSrc).not.toContain('ensureSystemGuild');
     const systemGuildExists = await Bun.file(`${import.meta.dir}/../src/lib/game/systemGuild.ts`).exists();
     expect(systemGuildExists).toBe(false);
-    // (2) sair de guilda dissolve quando vazia (TODA guilda é de jogador)
-    //     + limpa as doações (sem FK de guildId — erasure na mesma transação)
-    const leaveBody = fnBody(
-      actionsSrc,
-      'async function actionLeaveGuild',
-      'async function actionDonateGuild'
-    );
-    expect(leaveBody).not.toContain('isSystem');
-    expect(leaveBody).toContain('tx.guild.delete');
-    expect(leaveBody).toContain('tx.guildDonation.deleteMany');
+    const guildManagement = await Bun.file(`${import.meta.dir}/../src/lib/game/guilds.ts`).text();
+    expect(guildManagement).toContain('disbandedAt: new Date()');
+    expect(guildManagement).not.toContain('guildDonation.deleteMany');
     // (3) a wiki NÃO menciona guilda de sistema nem Mestre Kame como líder
     const t = wikiText('guildas');
     expect(t).not.toContain('guilda pública do sistema');

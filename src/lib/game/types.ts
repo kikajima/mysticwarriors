@@ -329,6 +329,11 @@ export interface GuildSummary {
 }
 
 export interface GuildMemberView {
+  roleId?: string | null;
+  roleName?: string;
+  rank?: number;
+  online?: boolean;
+  donated?: number;
   id: string;
   name: string;
   race: RaceId;
@@ -339,6 +344,13 @@ export interface GuildMemberView {
 }
 
 export interface GuildDetail {
+  motd?: string;
+  capacity?: number;
+  permissions?: string[];
+  myRank?: number;
+  roles?: Array<{ id: string; name: string; rank: number; permissions: string[] }>;
+  donors?: Array<{ id: string; name: string; total: number }>;
+  invitations?: Array<{ id: string; name: string; expiresAt: string }>;
   id: string;
   name: string;
   description: string;
@@ -353,6 +365,7 @@ export interface GuildDetail {
 // ===== Combate =====
 
 export interface Combatant {
+  guildCritical?: number;
   name: string;
   emoji: string;
   level: number;

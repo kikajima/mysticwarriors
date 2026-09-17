@@ -241,8 +241,8 @@ function runConfig(cfg: ConfigDef, seedBase = 0): ConfigResult {
         {
           const pa = makePlayer(a, cfg, `${seed}-L1`);
           const pb = makePlayer(b, cfg, `${seed}-L1`);
-          const ca = buildPlayerCombatant(pa);
-          const cb = buildPlayerCombatant(pb);
+          const ca = buildPlayerCombatant({ ...pa, guild: process.env.GUILD_SIM_LEVEL ? { level: Number(process.env.GUILD_SIM_LEVEL) } : null });
+          const cb = buildPlayerCombatant({ ...pb, guild: process.env.GUILD_SIM_LEVEL ? { level: Number(process.env.GUILD_SIM_LEVEL) } : null });
           const sim = simulateBattle(ca, cb, { playerStartHp: ca.maxHp, rng: makeRng(seed) });
           totalFights++;
           roundsTotal += sim.rounds.length;
@@ -259,8 +259,8 @@ function runConfig(cfg: ConfigDef, seedBase = 0): ConfigResult {
         {
           const pa = makePlayer(a, cfg, `${seed}-L2`);
           const pb = makePlayer(b, cfg, `${seed}-L2`);
-          const ca = buildPlayerCombatant(pa);
-          const cb = buildPlayerCombatant(pb);
+          const ca = buildPlayerCombatant({ ...pa, guild: process.env.GUILD_SIM_LEVEL ? { level: Number(process.env.GUILD_SIM_LEVEL) } : null });
+          const cb = buildPlayerCombatant({ ...pb, guild: process.env.GUILD_SIM_LEVEL ? { level: Number(process.env.GUILD_SIM_LEVEL) } : null });
           const sim = simulateBattle(cb, ca, { playerStartHp: cb.maxHp, rng: makeRng(seed) });
           totalFights++;
           roundsTotal += sim.rounds.length;
@@ -596,7 +596,7 @@ md.push('');
   md.push('> Nenhuma alteração de balanceamento foi feita nesta auditoria — os dados acima (script `scripts/sim-audit-racial.ts`, reutilizável) ficam a cargo do agente principal para eventuais decisões de ajuste.');
 }
 
-writeFileSync('download/auditoria-f3-racial.md', md.join('\n') + '\n', 'utf-8');
+writeFileSync((process.env.GUILD_SIM_LEVEL ? 'download/guildas-f3-racial.md' : 'download/auditoria-f3-racial.md'), md.join('\n') + '\n', 'utf-8');
 
 // ---- Resumo no console ----
 console.log('');

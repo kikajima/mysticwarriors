@@ -1,3 +1,4 @@
+import { guildBonuses } from './game/guildRules';
 import { MAX_ACTION_ENERGY } from '@/lib/game/rules';
 import type { Prisma, Player } from '@prisma/client';
 import { createHash, randomUUID } from 'crypto';
@@ -156,7 +157,9 @@ export async function transferZeniPvp(
   const transferId = randomUUID();
 
   // 1) débito atômico do pagador — limitado ao saldo atual
-  let debit = params.amount;
+  const loser = await tx.player.findUnique({ where: { id: params.fromPlayerId }, select: { guild: { select: { level: true } } } });
+  const protectedAmount = Math.floor(params.amount * guildBonuses(loser?.guild?.level).pvpLoss);
+  let debit = protectedAmount;
   let res = await tx.player.updateMany({
     where: { id: params.fromPlayerId, zeni: { gte: debit } },
     data: { zeni: { decrement: debit } },
@@ -164,7 +167,7 @@ export async function transferZeniPvp(
   if (res.count === 0) {
     // saldo mudou entre a leitura e agora: tenta o saldo real atual
     const fresh = await tx.player.findUnique({ where: { id: params.fromPlayerId }, select: { zeni: true } });
-    debit = Math.min(params.amount, fresh?.zeni ?? 0);
+    debit = Math.min(protectedAmount, fresh?.zeni ?? 0);
     if (debit <= 0) return { transferId, amount: 0 };
     res = await tx.player.updateMany({
       where: { id: params.fromPlayerId, zeni: { gte: debit } },
@@ -308,7 +311,12 @@ export async function grantRewards(
   player: Player,
   rewards: { zeni?: number; xp?: number; crystals?: number },
   info: LedgerInfo
-): Promise<{ levelsGained: number }> {
+): Promise<{ levelsGained: number; xpGranted: number; zeniGranted: number }> {
+  const current = await tx.player.findUniqueOrThrow({ where: { id: player.id }, select: { guild: { select: { level: true } } } });
+  const bonus = guildBonuses(current.guild?.level);
+  const combat = ['pve', 'pvp', 'tournament', 'world_boss'].includes(info.source);
+  if (rewards.xp) rewards.xp = Math.round(rewards.xp * (combat ? bonus.combatXp : info.source === 'mission' ? bonus.workXp : 1));
+  if (rewards.zeni && info.source === 'mission') rewards.zeni = Math.round(rewards.zeni * bonus.workZeni);
   let levelsGained = 0;
   if (rewards.zeni && rewards.zeni > 0) {
     await addCurrency(tx, player.id, 'zeni', rewards.zeni, { ...info, type: info.type === 'spend' ? 'earn' : info.type });
@@ -321,5 +329,5 @@ export async function grantRewards(
     levelsGained = res.levelsGained;
     player.level = res.newLevel;
   }
-  return { levelsGained };
+  return { levelsGained, xpGranted: rewards.xp ?? 0, zeniGranted: rewards.zeni ?? 0 };
 }

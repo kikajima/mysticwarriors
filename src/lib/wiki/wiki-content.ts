@@ -1,3 +1,4 @@
+import { GUILD_UPGRADE_COSTS, GUILD_PERMISSIONS, GUILD_BONUS_TABLE } from '@/lib/game/guildRules';
 import { UNIVERSAL_THREAT } from '@/lib/game/universalThreat';
 // =====================================================================
 // WIKI DE MECÂNICAS — FONTE ÚNICA DE CONTEÚDO (v0.9.23 — auditoria total)
@@ -1295,41 +1296,24 @@ export const WIKI_SECTIONS: WikiSection[] = [
   // GUILDAS E TEMPORADAS
   // ================================================================
   {
-    id: 'guildas',
-    title: 'Guildas e Temporadas',
-    icon: '🛡️',
-    group: 'Coleção e Social',
-    summary: 'Criação, doações, níveis de guilda e o ranking sazonal de 30 dias.',
-    resumo: [
-      `Fundar custa **${br(GUILD_CREATION_COST)} Zeni**; cabem **${GUILD_MAX_MEMBERS} guerreiros**.`,
-      'Doações de Zeni viram XP da guilda — e nível de guilda.',
-      `A cada **${SEASON_DAYS} dias** uma temporada encerra; cada vitória vale **${SEASON_POINTS_PER_WIN} pontos** no ranking.`,
-    ],
+    id: 'guildas', title: 'Guildas e Temporadas', icon: '🛡️', group: 'Coleção e Social',
+    summary: 'Fundação, convites, cargos, doações e bônus coletivos.',
+    resumo: ['Fundar custa **5.000 Zeni**. O mundo começa com **ZERO guildas** prontas.', 'São 5 vagas no nível 1 e mais uma por nível, até 14 no nível 10.', 'Doações são irreversíveis; benefícios dependem da sua associação atual.'],
     blocks: [
-      {
-        kind: 'callout',
-        tone: 'tip',
-        title: 'O mundo começa com ZERO guildas',
-        text: 'O mundo começa com **ZERO guildas**: não existe guilda de sistema nem guilda pronta — **toda guilda do universo foi fundada por um jogador**, e o nome de qualquer guilda extinta volta a ficar livre. Se nenhuma existe ainda, seja o primeiro: reúna 5.000 Zeni, escolha um nome e hasteie sua bandeira.',
-      },
-      {
-        kind: 'list',
-        items: [
-          'Doações a partir de 100 Zeni; o nível da guilda cresce com o total doado.',
-          'O poder somado da guilda posiciona no ranking de guildas; doações contam para a conquista *Mecenas*.',
-          `Temporadas: a cada ${SEASON_DAYS} dias o ranking sazonal encerra e outro começa — o progresso permanente do personagem nunca é apagado.`,
-        ],
-      },
-      {
-        kind: 'details',
-        summary: '🔍 Detalhes para curiosos — fórmula de nível da guilda',
-        blocks: [
-          {
-            kind: 'text',
-            text: 'Nível da guilda: `1 + √(XP ÷ 500)` — o próximo nível custa `500 × nível²` de XP acumulado em doações.',
-          },
-        ],
-      },
+      { kind: 'text', text: 'Cada Zeni doado vira um ponto de progresso. Aceitamos inteiros positivos, até o restante necessário para o nível 10. No nível máximo, doações são recusadas sem débito. O ranking preserva doações históricas de membros que saíram. Níveis e histórico anteriores à atualização são preservados; guildas acima da nova lotação mantêm seus membros, sem admitir novos até haver vagas.' },
+      { kind: 'table', table: { caption: 'Custos de cada upgrade (Zeni adicionais)', headers: ['Nível', 'Custo'], rows: GUILD_UPGRADE_COSTS.map((cost, i) => [String(i + 2), br(cost)]) } },
+      { kind: 'table', table: { caption: 'Bônus cumulativos', headers: ['Nível', 'Benefício', 'Valor'], rows: GUILD_BONUS_TABLE.map(([level, label, value]) => [String(level), label, `${value}%`]) } },
+      { kind: 'text', text: 'XP de combate aplica-se a PvE, PvP, torneio e Ameaça Universal, inclusive aprendizado em derrota e recompensas de participação. No nível 10, os dois bônus de XP somam 10%. Trabalho recebe +5% XP e +5% Zeni (inclusive promoção). Aplicamos multiplicadores após os bônus raciais, arredondando ao inteiro mais próximo. Quests, conquistas e desejos não recebem XP extra de guilda.' },
+      { kind: 'text', text: 'Regeneração aumenta a TAXA: energia passa de 300 para 285,714 segundos; vida de 12 para 11,429 segundos, antes dos bônus raciais. O teto de energia continua 100. A troca de guilda ou nível liquida a regeneração anterior e inicia o novo intervalo. Crítico adiciona 2 pontos percentuais à abertura contra diferenças esmagadoras; nos outros golpes, dá 2% de chance de dano ×1,75. Dano da Ameaça Universal multiplica por 1,05. Perdas PvP multiplicam por 0,95 antes da transferência: o vencedor recebe exatamente o que foi debitado.' },
+      { kind: 'list', items: [
+        'Só o líder cria, edita ou exclui até cinco cargos personalizados. Membro tem hierarquia 0 e nenhuma permissão; líder tem hierarquia 100 e todos os poderes. Cargos usam hierarquia de 1 a 99.',
+        `Permissões: ${GUILD_PERMISSIONS.join(', ')}.`,
+        'Promover e expulsar exigem permissão e alvo com hierarquia estritamente inferior. Ninguém altera o líder. Não se pode atribuir cargo igual ou superior ao próprio.',
+        'Convites funcionam com alvos offline, expiram em 48 horas e podem ser revogados. Aceitar revalida vagas e ausência de guilda. Recusar não traz penalidade.',
+        'Qualquer membro pode sair. O líder precisa transferir a liderança (podendo sair na mesma ação) ou confirmar a dissolução. A saída do último membro dissolve a guilda. A dissolução arquiva o histórico.',
+        'Descrição pública: até 500 caracteres. Mensagem do dia: até 280 caracteres, exibida aos membros no painel e ao entrar. Online/offline indica atividade observada nos últimos dois minutos; não restringe ações.',
+        `Temporadas duram ${SEASON_DAYS} dias; cada vitória vale ${SEASON_POINTS_PER_WIN} pontos.`,
+      ] },
     ],
   },
 

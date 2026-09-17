@@ -105,6 +105,15 @@ const actionSchema = z.object({
   wishType: z.string().optional(),
   techniqueId: z.string().nullable().optional(),
   guildName: z.string().max(40).optional(),
+  targetName: z.string().max(60).optional(),
+  inviteId: z.string().max(100).optional(),
+  roleId: z.string().max(100).nullable().optional(),
+  roleName: z.string().max(30).optional(),
+  rank: z.number().int().optional(),
+  permissions: z.array(z.enum(['convidar', 'expulsar', 'promover', 'alterar_descricao', 'mensagem_do_dia'])).max(5).optional(),
+  text: z.string().max(500).optional(),
+  confirm: z.boolean().optional(),
+  leave: z.boolean().optional(),
   strategy: z.string().optional(),
   transformationId: z.string().nullable().optional(),
   questId: z.string().optional(),
@@ -216,7 +225,7 @@ export async function POST(request: Request) {
             throw e;
           }
         }
-        const r = await executeActionWithRetry(auth, playerId, type, args, extractBearerToken(request));
+        const r = await executeActionWithRetry(auth, playerId, type, { ...args, requestId }, extractBearerToken(request));
         if (dedupRef.current) {
           // cacheia o resultado para retries futuros com o mesmo requestId
           const dedupKey = dedupRef.current;
