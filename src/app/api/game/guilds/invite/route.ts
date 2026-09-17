@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { guildId, targetPlayerId } = body;
+    const { guildId, targetPlayerId, inviterId } = body;
 
     if (!guildId || !targetPlayerId) {
       return NextResponse.json({ error: 'Parâmetros ausentes.' }, { status: 400 });
@@ -14,7 +14,8 @@ export async function POST(request: Request) {
       data: {
         guildId,
         playerId: targetPlayerId,
-        status: 'PENDING',
+        inviterId: inviterId || targetPlayerId,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
 
