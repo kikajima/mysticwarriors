@@ -1,39 +1,12 @@
 import { db } from '@/lib/db';
-import { ApiError, ok, toErrorResponse } from '@/lib/api';
+import { ok, toErrorResponse } from '@/lib/api';
 import { getAuth, requirePlayer } from '@/lib/auth';
 import { PVP_LEVEL_RANGE } from '@/lib/game/content/world';
 import { RACES } from '@/lib/game/content/races';
 import { fetchCloudRanking } from '@/lib/supabase/ranking';
 import type { RaceId, RankingEntry, RankingPage } from '@/lib/game/types';
 
-// =====================================================================
-// GET /api/game/ranking?page=1&pageSize=20 — ranking PAGINADO
-// ---------------------------------------------------------------------
-// v0.9.5 — A LISTA VEM DA NUVEM: a RPC ranking_nuvem lê TODOS os
-// personagens salvos no Supabase (de todas as contas, logadas ou não,
-// sem nenhum filtro de sessão/login) e calcula as posições na hora.
-//
-// O banco local só entra para COMPLEMENTAR o que a nuvem não tem:
-//  * o id local do personagem — necessário para o botão "Atacar"
-//    (o duelo roda contra a linha do servidor; personagens salvos por
-//    contas que nunca jogaram NESTE servidor ficam sem botão);
-//  * raça/vitórias/derrotas quando a RPC antiga (sem o SQL v2) responde;
-//  * o clã do personagem (dado que só existe no servidor).
-// O casamento é pelo NOME — que é único no servidor do jogo.
-//
-// Se a nuvem falhar (logado no console, nunca silencioso), a rota cai
-// no ranking local de antes — o jogo nunca fica sem ranking.
-//
-// v0.9.24 (A2) — FIM DO "FORA DE ALCANCE" GENÉRICO:
-//  * `attackable` obedece à regra publicada (±5 NÍVEIS, por nível de
-//    personagem — igual ao backend de actionStartPvp);
-//  * impedimentos têm MOTIVO ESPECÍFICO em `blockReason`:
-//      - 'level'  → diferença de nível acima do range;
-//      - 'remote' → personagem existe só na NUVEM (salvo por outro
-//        servidor — não há linha local para o duelo acontecer);
-//  * `sparring`: bots locais dentro do range ±5 do jogador — DENSIDADE
-//    GARANTIDA (sempre há adversário elegível no começo do jogo).
-// =====================================================================
+// One shared world: cloud-only characters can be restored for offline duels.
 
 const MAX_PAGE_SIZE = 50;
 
@@ -68,6 +41,7 @@ export async function GET(request: Request) {
               id: true,
               name: true,
               race: true,
+              level: true,
               battlesWon: true,
               battlesLost: true,
               guild: { select: { name: true } },
@@ -78,32 +52,23 @@ export async function GET(request: Request) {
 
       const entries = cloud.entries.map((e) => {
         const local = byName.get(e.nome);
-        const isMe = !!me && !!local && local.id === me.id;
-        // v0.9.24 (A2): regra REAL (±5 níveis) separada do impedimento
-        // logístico (linha local inexistente) — cada um com seu motivo.
-        const inRange = !!me && Math.abs(e.nivel - me.level) <= PVP_LEVEL_RANGE;
-        const hasLocal = !!local;
-        const attackable = !!me && !isMe && inRange && hasLocal;
-        const blockReason: RankingEntry['blockReason'] = isMe || !me
-          ? null
-          : !inRange
-            ? 'level'
-            : !hasLocal
-              ? 'remote'
-              : null;
+        const isMe = !!me && (local?.id === me.id || e.nome === me.name);
+        const inRange = !!me && Math.abs((local?.level ?? e.nivel) - me.level) <= PVP_LEVEL_RANGE;
+        const attackable = !!me && !isMe && inRange;
+        const blockReason: RankingEntry['blockReason'] = !me || isMe || inRange ? null : 'level';
         // raça: nuvem (SQL v2) → linha local → desconhecida (vazio)
         const raceRaw = e.raca ?? local?.race ?? '';
         const race = (Object.keys(RACES) as string[]).includes(raceRaw)
           ? (raceRaw as RaceId)
           : ('' as RaceId);
         return {
-          id: local?.id ?? `cloud-${e.posicao}-${e.nome}`,
+          id: local?.id ?? `cloud:${encodeURIComponent(e.nome)}`,
           name: e.nome,
           race,
-          level: e.nivel,
+          level: local?.level ?? e.nivel,
           power: e.poder,
-          battlesWon: e.vitorias ?? local?.battlesWon ?? 0,
-          battlesLost: e.derrotas ?? local?.battlesLost ?? 0,
+          battlesWon: local?.battlesWon ?? e.vitorias ?? 0,
+          battlesLost: local?.battlesLost ?? e.derrotas ?? 0,
           isMe,
           isBot: false,
           attackable,
@@ -120,7 +85,6 @@ export async function GET(request: Request) {
         pageSize,
         myPosition: cloud.myPosition,
         source: 'cloud',
-        sparring: await sparringPartners(me),
       };
       return ok({ ranking: result });
     }
@@ -193,57 +157,11 @@ export async function GET(request: Request) {
       pageSize,
       myPosition,
       source: 'local',
-      sparring: await sparringPartners(me),
     };
     return ok({ ranking: result });
   } catch (error) {
     return toErrorResponse(error);
   }
-}
-
-/**
- * v0.9.24 (A2) — bots SPARRING dentro do range ±5 do jogador: densidade
- * garantida de adversários elegíveis (o começo do jogo nunca fica sem
- * ninguém para desafiar). São lutadores de verdade (stats reais, o
- * actionStartPvp os aceita) — marcados com isBot para a UI sinalizar.
- */
-async function sparringPartners(me: { id: string; level: number } | null): Promise<RankingEntry[]> {
-  if (!me) return [];
-  const bots = await db.player.findMany({
-    where: {
-      isBot: true,
-      level: { gte: me.level - PVP_LEVEL_RANGE, lte: me.level + PVP_LEVEL_RANGE },
-    },
-    orderBy: { level: 'asc' },
-    take: 6,
-    select: {
-      id: true,
-      name: true,
-      race: true,
-      level: true,
-      strength: true,
-      defense: true,
-      speed: true,
-      ki: true,
-      battlesWon: true,
-      battlesLost: true,
-    },
-  });
-  return bots.map((b, i) => ({
-    id: b.id,
-    name: b.name,
-    race: b.race as RaceId,
-    level: b.level,
-    power: scouterPower(b),
-    battlesWon: b.battlesWon,
-    battlesLost: b.battlesLost,
-    isMe: false,
-    isBot: true,
-    attackable: true,
-    blockReason: null,
-    guildName: null,
-    position: i + 1,
-  }));
 }
 
 /** Poder aproximado calculado a partir das colunas selecionadas (sem carregar JSONs). */

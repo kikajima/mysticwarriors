@@ -3,7 +3,7 @@ import { getAuth } from '@/lib/auth';
 import { getBossView } from '@/lib/worldboss';
 import { getSeasonView } from '@/lib/seasons';
 
-// GET /api/game/worldboss?playerId=... — estado do boss mundial + temporada
+// GET /api/game/worldboss?playerId=... — estado do Ameaça Universal + temporada
 // (playerId opcional: sem sessão, devolve visão pública sem dano pessoal)
 export async function GET(request: Request) {
   try {

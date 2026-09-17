@@ -64,7 +64,7 @@ export const LIMITS = {
   supabase: { limit: 20, windowMs: 5 * 60_000 }, // ponte de login Supabase (token já validado lá)
   action: { limit: 90, windowMs: 60_000 },
   // worldBoss: REMOVIDO em v0.9.11 — era um número solto (6/60s) que podia
-  // divergir do cooldown real. O limite do chefe global agora é DERIVADO da
+  // divergir do cooldown real. O limite do Ameaça Universal agora é DERIVADO da
   // fonte única (ATTACK_COOLDOWN_SEC em worldboss.ts → bossAttacksPerWindow)
   // e aplicado na rota de ação só para world_boss_attack.
   analytics: { limit: 120, windowMs: 60_000 },

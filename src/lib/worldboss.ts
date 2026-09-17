@@ -11,15 +11,16 @@ import {
   type StaticDefender,
 } from './game/engine';
 import { getStrategy } from './game/content/techniques';
-import { npcCombatPower } from './game/content/world';
 import { scaleCombatRules, aberturaChance, SCALE_COMBAT } from './game/powerScale';
 import { IMPETO, IMPETO_COMBO_THRESHOLD, clampImpeto } from './game/impeto';
 import { grantRewards } from '@/lib/economy';
 import { trackEvent } from '@/lib/analytics';
 import type { WorldBossView } from './game/types';
+import { UNIVERSAL_THREAT, universalThreatWindowEnd } from './game/universalThreat';
+export { isUniversalThreatWeekend } from './game/universalThreat';
 
 // =====================================================================
-// WORLD BOSS — chefe mundial com HP global compartilhado
+// Ameaça Universal — Ameaça Universal com HP global compartilhado
 // ---------------------------------------------------------------------
 // CONCORRÊNCIA (à prova de lost update):
 //  * Dano aplicado com DECREMENTO atômico (nunca "lê → calcula → grava");
@@ -38,10 +39,10 @@ import type { WorldBossView } from './game/types';
 // =====================================================================
 
 /** Duração de cada chefe — EXPORTADO para o teste de contrato da wiki. */
-export const BOSS_DURATION_HOURS = 72; // cada boss dura 3 dias
+export const BOSS_DURATION_HOURS = UNIVERSAL_THREAT.weekendHours;
 
 /**
- * FONTE ÚNICA da cadência de ataques ao chefe global (v0.9.11 — correção
+ * FONTE ÚNICA da cadência de ataques ao Ameaça Universal (v0.9.11 — correção
  * da regressão que voltou a 60s). Valor de projeto: 10 SEGUNDOS.
  * Tudo deriva DAQUI: a validação do servidor (elapsed < cooldown), o
  * canAttackAt da view e o rate limit da rota de ação
@@ -75,26 +76,24 @@ export const MIN_PARTICIPATION_DAMAGE = 500;
 
 const INVOKED_UNTIL_KEY = 'universalThreatInvokedUntil';
 
-export function isUniversalThreatWeekend(now = new Date()): boolean {
-  const weekday = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Sao_Paulo',
-    weekday: 'short',
-  }).format(now);
-  return weekday === 'Sat' || weekday === 'Sun';
+async function threatEndsAt(tx: Prisma.TransactionClient | typeof db, now = new Date()): Promise<Date | null> {
+  const invoked = await tx.gameMeta.findUnique({ where: { key: INVOKED_UNTIL_KEY } });
+  return universalThreatWindowEnd(now, invoked?.value);
 }
 
 export async function universalThreatIsAvailable(tx: Prisma.TransactionClient | typeof db = db): Promise<boolean> {
-  if (isUniversalThreatWeekend()) return true;
-  const invoked = await tx.gameMeta.findUnique({ where: { key: INVOKED_UNTIL_KEY } });
-  return !!invoked && Date.parse(invoked.value) > Date.now();
+  return (await threatEndsAt(tx)) !== null;
 }
 
 export async function invokeUniversalThreat(): Promise<void> {
-  const until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-  await db.gameMeta.upsert({
-    where: { key: INVOKED_UNTIL_KEY },
-    update: { value: until },
-    create: { key: INVOKED_UNTIL_KEY, value: until },
+  const until = new Date(Date.now() + UNIVERSAL_THREAT.invocationHours * 60 * 60 * 1000).toISOString();
+  await db.$transaction(async (tx) => {
+    await tx.gameMeta.upsert({
+      where: { key: INVOKED_UNTIL_KEY },
+      update: { value: until },
+      create: { key: INVOKED_UNTIL_KEY, value: until },
+    });
+    await ensureActiveBoss(tx);
   });
 }
 
@@ -115,7 +114,7 @@ interface BossSeed {
 // elevam o dano por ataque; o boss ATIVO no banco mantém o HP original — preservação).
 const BOSS_POOL: BossSeed[] = [
   {
-    name: 'Kronar, o Devorador de Mundos',
+    name: `${UNIVERSAL_THREAT.name}, ${UNIVERSAL_THREAT.title}`,
     emoji: '🪲',
     description: 'Uma aberração biocósmica que consumiu mil planetas. O universo pede socorro!',
     level: 40,
@@ -135,15 +134,24 @@ const BOSS_POOL: BossSeed[] = [
  */
 export async function ensureActiveBoss(tx: Prisma.TransactionClient): Promise<void> {
   const now = new Date();
+  const endsAt = await threatEndsAt(tx, now);
 
   // expira bosses cuja janela terminou
   await tx.worldBoss.updateMany({
-    where: { status: 'active', endsAt: { lt: now } },
+    where: { status: 'active', ...(!endsAt ? {} : { endsAt: { lte: now } }) },
     data: { status: 'expired' },
   });
+  if (!endsAt) return;
 
   const active = await tx.worldBoss.findFirst({ where: { status: 'active' } });
-  if (active) return;
+  if (active) {
+    // Normalize legacy encounters without resetting HP or contributions.
+    const seed = BOSS_POOL[0];
+    if (active.name !== seed.name || active.endsAt.getTime() !== endsAt.getTime()) {
+      await tx.worldBoss.update({ where: { id: active.id }, data: { name: seed.name, emoji: seed.emoji, description: seed.description, endsAt } });
+    }
+    return;
+  }
 
   const total = await tx.worldBoss.count();
   const seed = BOSS_POOL[total % BOSS_POOL.length];
@@ -166,7 +174,7 @@ export async function ensureActiveBoss(tx: Prisma.TransactionClient): Promise<vo
           maxHp: seed.hp,
           currentHp: seed.hp,
           startsAt: now,
-          endsAt: new Date(now.getTime() + BOSS_DURATION_HOURS * 60 * 60 * 1000),
+          endsAt,
           status: 'active',
           zeniReward: 2000,
           xpReward: 800,
@@ -215,7 +223,7 @@ export async function getBossView(playerId: string | null): Promise<WorldBossVie
         endsAt: boss.endsAt.toISOString(),
         status: boss.status,
         level: boss.level,
-        power: Math.max(100_000, npcCombatPower(boss)),
+        power: UNIVERSAL_THREAT.power,
         zeniReward: boss.zeniReward,
         xpReward: boss.xpReward,
         crystalReward: boss.crystalReward,
@@ -241,7 +249,7 @@ export interface BossAttackResult {
 }
 
 /**
- * Ataca o boss mundial. ATÔMICO contra condições de corrida:
+ * Ataca o Ameaça Universal. ATÔMICO contra condições de corrida:
  *  1. cooldown reivindicado condicionalmente no registro do jogador —
  *     ANTES de qualquer débito (clique durante o cooldown tem efeito
  *     NULO de ponta a ponta: nem energia é tocada, nem dano calculado,
@@ -251,7 +259,7 @@ export interface BossAttackResult {
  *  4. golpe final via updateMany condicional — só um request distribui
  *     as recompensas de morte (exatamente uma vez).
  *
- * OBS: atacar o World Boss é permitido MESMO com missão ativa
+ * OBS: atacar o Ameaça Universal é permitido MESMO com missão ativa
  * (exceção explícita das regras de missão).
  */
 export async function attackWorldBoss(
@@ -323,7 +331,7 @@ export async function attackWorldBoss(
   // azarão 4+ escalas abaixo tem golpes ESMAGADOS, mas críticos geram
   // ABERTURAS (×1.75) e 3 delas dão a uma TÉCNICA o tratamento de
   // diferença 3 ("quebra de barreira") — mesma tradução do duelo.
-  const bossPower = Math.max(100_000, npcCombatPower(boss));
+  const bossPower = UNIVERSAL_THREAT.power;
   const scale = scaleCombatRules(combatant.power, bossPower);
   let aberturas = 0;
   let aberturaHits = 0;

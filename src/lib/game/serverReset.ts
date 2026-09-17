@@ -16,8 +16,8 @@ import { resolveAvatarsDir, resolveDbFilePath } from './persistence';
 //   * APAGA: personagens (jogadores E bots — bots são re-semeados na
 //     sequência), contas/sessões locais, guildas, ledger da carteira,
 //     compras, cosméticos, quests, conquistas, atividades, temporada +
-//     ranking, chefe global + danos, analytics e dedup.
-//   * Chefe global: as linhas somem e o próximo acesso gera um boss NOVO
+//     ranking, Ameaça Universal + danos, analytics e dedup.
+//   * Ameaça Universal: as linhas somem e o próximo acesso gera um boss NOVO
 //     com timestamps de spawn atuais (geração preguiçosa — ensureActiveBoss).
 //
 // SEGURANÇA CONTRA RESSURREIÇÃO (a parte crítica):

@@ -1,3 +1,4 @@
+import { UNIVERSAL_THREAT } from '@/lib/game/universalThreat';
 // =====================================================================
 // WIKI DE MECÂNICAS — FONTE ÚNICA DE CONTEÚDO (v0.9.23 — auditoria total)
 // ---------------------------------------------------------------------
@@ -89,7 +90,7 @@ const STAT_CAP = 999;
 const ZENKAI = { relevanceFactor: 0.6, sameOpponentCooldownHours: 12, zenkaiRequiresHpPct: 0.5 } as const;
 /** ORIGEM: src/lib/worldboss.ts — exportado e validado pelo teste de contrato. */
 const BOSS = {
-  durationHours: 72,
+  durationHours: UNIVERSAL_THREAT.weekendHours,
   attackCooldownSec: 10,
   attackEnergyCost: 10,
   attackMinHpPct: 0.3,
@@ -176,19 +177,19 @@ export const WIKI_SECTIONS: WikiSection[] = [
         ordered: true,
         items: [
           '**Crie o personagem** ([[racas|Raças]]) — a raça define seus bônus permanentes. É para sempre!',
-          '**Comece um turno de trabalho** ([[profissoes|Profissões]]) — dura 1 hora real, **não gasta energia** e rende Zeni + XP mesmo com o jogo fechado. Durante o turno só treino, lutas contra inimigos e torneio esperam — PvP, chefe mundial, loja, guilda, hospital e coletas seguem liberados.',
+          '**Comece um turno de trabalho** ([[profissoes|Profissões]]) — dura 1 hora real, **não gasta energia** e rende Zeni + XP mesmo com o jogo fechado. Durante o turno só lutas contra inimigos e torneio esperam — PvP, Ameaça Universal, loja, guilda, hospital e coletas seguem liberados.',
           '**Aprenda sua primeira técnica** ([[tecnicas|Técnicas]]) — o Rogafufuken (600 Zeni) já deixa seus golpes físicos 25% mais fortes.',
           '**Treine o atributo da sua build** ([[atributos|Atributos]]) — Força para golpes físicos, Ki para ondas de energia.',
           '**Lute contra os vilões** ([[pve|Campanhas PvE]]) — comece pelo Saibaman Verde e suba a fila conforme seu [[escala-poder|Poder de Luta]] cresce.',
           '**Compre equipamento** ([[loja|Loja]]) — Luvas de Treino (300 Zeni) e Gi de Batalha (250 Zeni) custam pouco e já fazem diferença.',
-          'A partir daí: [[torneio|Torneio]], [[world-boss|chefe mundial]], [[esferas-dragao|Esferas do Dragão]] e [[guildas|Guilda]].',
+          'A partir daí: [[torneio|Torneio]], [[world-boss|Ameaça Universal]], [[esferas-dragao|Esferas do Dragão]] e [[guildas|Guilda]].',
         ],
       },
       {
         kind: 'callout',
         tone: 'tip',
         title: 'Dica de energia',
-        text: 'Cada ponto de energia volta em **~5 minutos**. Treinar e lutar é o melhor uso dela — o trabalho rola por conta própria, sem gastar nada. Deixe um turno correndo enquanto ataca o chefe mundial ou planeja os próximos passos.',
+        text: 'Cada ponto de energia volta em **~5 minutos**. Treinar e lutar é o melhor uso dela — o trabalho rola por conta própria, sem gastar nada. Deixe um turno correndo enquanto ataca a Ameaça Universal ou planeja os próximos passos.',
       },
     ],
   },
@@ -723,11 +724,12 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Progressão',
     summary: 'Zeni, cristais, energia, XP e níveis: regeneração, curvas e conversões.',
     resumo: [
-      '**Zeni** compra quase tudo; **💎 cristais** vêm de quests, conquistas e chefe mundial.',
+      '**Zeni** compra quase tudo; **💎 cristais** vêm de quests, conquistas e Ameaça Universal.',
       'Energia volta **1 ponto a cada 5 min** (Humano: mais rápido).',
       'Vida volta **1 ponto a cada 12 s** (Namekuseijin: mais rápido).',
     ],
     blocks: [
+      { kind: 'text', text: 'A ficha e o Hospital mostram o tempo até o próximo ponto de vida e até a recuperação completa. Os contadores usam o relógio do servidor e o intervalo da sua raça; a recuperação continua com o jogo fechado.' },
       {
         kind: 'table',
         table: {
@@ -736,12 +738,12 @@ export const WIKI_SECTIONS: WikiSection[] = [
           rows: [
             [
               '🪙 Zeni',
-              'Profissões, vitórias PvE/PvP, [[torneio|torneio]], [[world-boss|chefe mundial]], quests, conquistas, [[esferas-dragao|desejo de riqueza]]',
+              'Profissões, vitórias PvE/PvP, [[torneio|torneio]], [[world-boss|Ameaça Universal]], quests, conquistas, [[esferas-dragao|desejo de riqueza]]',
               'Equipamentos, técnicas, [[transformacoes|transformações]], [[talentos|talentos]], guilda, cura, treino',
             ],
             [
               '💎 Cristais',
-              'Quests diárias/semanais, [[conquistas|conquistas]], [[world-boss|chefe mundial]]',
+              'Quests diárias/semanais, [[conquistas|conquistas]], [[world-boss|Ameaça Universal]]',
               'Consumíveis, equipamentos de treino e [[loja|cosméticos]]',
             ],
           ],
@@ -807,7 +809,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     summary: 'Quanto custa cada ação em energia/tempo e a matriz completa de ocupação (o que fica bloqueado durante o trabalho).',
     resumo: [
       '**Trabalhar não gasta energia** — só 1 hora de tempo real.',
-      '**Treinar e lutar** custam 3 ⚡ cada; **chefe mundial** custa 10 ⚡.',
+      '**Treinar e lutar** custam 3 ⚡ cada; **Ameaça Universal** custa 10 ⚡.',
       'No trabalho SÓ PvE/torneio travam — **tudo mais liberado, coleta inclusive**.',
     ],
     blocks: [
@@ -820,7 +822,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Treino de atributo', `${TRAIN_ENERGY_COST} ⚡`, 'Instantâneo'],
             ['Batalha PvE / PvP / [[torneio|torneio]]', `${BATTLE_ENERGY_COST} ⚡`, 'Replay animado de ~2 a 20 s (conforme as rodadas)'],
             ['Turno de [[profissoes|profissão]]', '**0 ⚡** (não gasta energia)', '60 min reais'],
-            ['Ataque ao [[world-boss|chefe mundial]]', `${BOSS.attackEnergyCost} ⚡`, `Cooldown de ${BOSS.attackCooldownSec} s entre ataques`],
+            ['Ataque ao [[world-boss|Ameaça Universal]]', `${BOSS.attackEnergyCost} ⚡`, `Cooldown de ${BOSS.attackCooldownSec} s entre ataques`],
           ],
         },
       },
@@ -832,7 +834,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'callout',
         tone: 'warn',
         title: 'Matriz de ocupação (v0.16 — definitiva)',
-        text: '**TRABALHANDO bloqueia APENAS 2 ações:** combate PvE contra inimigos e torneio. **TUDO mais fica liberado durante o turno:** treino, PvP, chefe mundial, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), hospital, equipamento/inventário, perfil e Shenron. **Em luta em andamento:** não iniciar outra luta/treino/trabalho até o desfecho — mas coletas seguem liberadas.',
+        text: '**TRABALHANDO bloqueia APENAS 2 ações:** combate PvE contra inimigos e torneio. **TUDO mais fica liberado durante o turno:** treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), hospital, equipamento/inventário, perfil e Shenron. **Em luta em andamento:** não iniciar outra luta/treino/trabalho até o desfecho — mas coletas seguem liberadas.',
       },
       {
         kind: 'table',
@@ -844,7 +846,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Batalha PvE (inimigos)', '❌ Bloqueado', '❌ Bloqueado', '✅'],
             ['Torneio', '❌ Bloqueado', '❌ Bloqueado', '✅'],
             ['PvP (atacar jogador)', '✅ Liberado', '❌ (uma luta por vez)', '✅'],
-            ['Chefe mundial', '✅ Liberado', '✅ Liberado (ataque instantâneo)', '✅'],
+            ['Ameaça Universal', '✅ Liberado', '✅ Liberado (ataque instantâneo)', '✅'],
             ['Loja (comprar/vender/usar/equipar)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Guilda (fundar/entrar/sair/doar)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Coletar recompensa (qualquer tipo)', '✅ Liberado', '✅ Liberado', '✅'],
@@ -874,7 +876,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'list',
             items: [
               'Lutas PvP, PvE e de torneio exigem entrar com **≥ 20% da vida** (mínimo 20 HP).',
-              `Atacar o chefe mundial exige **≥ ${Math.round(BOSS.attackMinHpPct * 100)}% da vida** — e cada ataque consome ${Math.round(BOSS.hpCostPct * 100)}% da vida ATUAL (desgastante, nunca letal).`,
+              `Atacar a Ameaça Universal exige **≥ ${Math.round(BOSS.attackMinHpPct * 100)}% da vida** — e cada ataque consome ${Math.round(BOSS.hpCostPct * 100)}% da vida ATUAL (desgastante, nunca letal).`,
               `Replay de batalha: base de ${(BATTLE_REPLAY.baseMs / 1000).toFixed(1).replace('.', ',')} s + ${BATTLE_REPLAY.perRoundMs / 1000} s por rodada, teto de ${(BATTLE_REPLAY.maxMs / 1000).toFixed(0)} s (ORIGEM: rules.ts — ACTIVITY_DURATION, sincronizado com o animador do cliente).`,
             ],
           },
@@ -1093,6 +1095,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       'A vítima é **sempre atacável**; o atacante pode atacar **durante o próprio trabalho** — só não pode estar em luta em andamento.',
     ],
     blocks: [
+      { kind: 'text', text: 'Todos os guerreiros pertencem ao mesmo servidor. Você pode desafiar um personagem **offline**, sem exigir que o dono esteja conectado. O servidor recupera os personagens salvos na nuvem quando necessário e preserva os resultados do duelo para o próximo login. A diferença máxima continua sendo de 5 níveis.' },
       {
         kind: 'text',
         text: `Ataque pelo Ranking. As regras: diferença máxima de **${PVP_LEVEL_RANGE} níveis**, atacante com pelo menos **20% de vida** e **${BATTLE_ENERGY_COST} de energia** — e fora de luta em andamento (atacar durante o próprio turno de trabalho é permitido). Quem SOFRE o ataque pode estar fazendo qualquer coisa: o duelo processa por completo. (Entrar na luta com pouca vida por vontade própria é a única punição do atacante descuidado.)`,
@@ -1189,23 +1192,23 @@ export const WIKI_SECTIONS: WikiSection[] = [
   },
 
   // ================================================================
-  // WORLD BOSS
+  // Ameaça Universal
   // ================================================================
   {
     id: 'world-boss',
-    title: 'Ameaça Universal (Chefe Mundial)',
+    title: 'Ameaça Universal',
     icon: '🐲',
     group: 'Progressão',
     summary: 'Chefe com HP global compartilhado: cadência, custo, XP e premiação por posição.',
     resumo: [
       'HP **global compartilhado** — o dano de todos os jogadores soma no mesmo barril.',
       'Cada ataque: **10 ⚡ + 15% da vida atual**, cooldown de 10 s.',
-      'É a única ação liberada **mesmo trabalhando**.',
+      'Disponível aos finais de semana ou por invocação do administrador; pode ser enfrentado **mesmo trabalhando**.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: `Um chefe colossal com vida compartilhada por todo o servidor. Cada boss dura **${BOSS.durationHours / 24} dias** e o painel mostra a vida, o ranking e o Top 10 em tempo real. Cada ataque seu simula uma sequência de golpes contra a defesa colossal — [[escala-poder|Armadura de Escala]] e [[impeto|Aberturas]] valem aqui também.`,
+        text: `**Kronar, o Devorador de Mundos**, tem escala **Transcendente** e vida compartilhada por todo o servidor. Surge no sábado às 00:00 e encerra na segunda às 00:00, no horário de Brasília (janela de **${BOSS.durationHours / 24} dias**). O administrador pode invocá-lo por **${UNIVERSAL_THREAT.invocationHours} horas** fora desse período e o painel mostra a vida, o ranking e o Top 10 em tempo real. Cada ataque seu simula uma sequência de golpes contra a defesa colossal — [[escala-poder|Armadura de Escala]] e [[impeto|Aberturas]] valem aqui também.`,
       },
       {
         kind: 'table',
@@ -1217,7 +1220,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Vida mínima para atacar', `${Math.round(BOSS.attackMinHpPct * 100)}% da vida máxima`],
             ['Cooldown entre ataques', `${BOSS.attackCooldownSec} segundos`],
             ['XP por ataque', 'dano ÷ 200 (mínimo 20)'],
-            ['Atacar durante trabalho?', 'SIM — é a única ação de gameplay sempre liberada'],
+            ['Atacar durante trabalho?', 'SIM'],
           ],
         },
       },
@@ -1352,7 +1355,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       {
         kind: 'callout',
         tone: 'tip',
-        text: 'Recompensas de conquista incluem cristais — a principal fonte de 💎 para [[loja|cosméticos]] e equipamentos de treino, junto com o [[world-boss|chefe mundial]].',
+        text: 'Recompensas de conquista incluem cristais — a principal fonte de 💎 para [[loja|cosméticos]] e equipamentos de treino, junto com o [[world-boss|Ameaça Universal]].',
       },
       {
         kind: 'details',

@@ -1,3 +1,4 @@
+import { extractBearerToken } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { toErrorResponse, ApiError, ok } from '@/lib/api';
@@ -62,12 +63,13 @@ async function executeActionWithRetry(
   auth: Awaited<ReturnType<typeof requireAuth>>,
   playerId: string,
   type: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
+  accessToken?: string | null
 ): Promise<ActionResult> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      return await executeGameAction(auth, playerId, type, args);
+      return await executeGameAction(auth, playerId, type, args, accessToken);
     } catch (error) {
       if (!isTransientSqliteError(error) || attempt === 2) throw error;
       lastError = error;
@@ -139,7 +141,7 @@ export async function POST(request: Request) {
     }
     const { playerId, type, requestId, ...args } = parsed.data;
 
-    // v0.9.11 — rate limit ESPECÍFICO do chefe global, DERIVADO da fonte
+    // v0.9.11 — rate limit ESPECÍFICO do Ameaça Universal, DERIVADO da fonte
     // única do cooldown (worldboss.ts): cadência legítima máxima = 1 ataque
     // por ATTACK_COOLDOWN_SEC, com +1 de folga para corridas de borda.
     // Aplicado ANTES do lock de dedup — spam nem chega a criar registro.
@@ -214,7 +216,7 @@ export async function POST(request: Request) {
             throw e;
           }
         }
-        const r = await executeActionWithRetry(auth, playerId, type, args);
+        const r = await executeActionWithRetry(auth, playerId, type, args, extractBearerToken(request));
         if (dedupRef.current) {
           // cacheia o resultado para retries futuros com o mesmo requestId
           const dedupKey = dedupRef.current;

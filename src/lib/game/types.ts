@@ -584,13 +584,8 @@ export interface RankingEntry {
   attackable: boolean;
   guildName?: string | null;
   position?: number;
-  /**
-   * v0.9.24 (A2) — motivo ESPECÍFICO do bloqueio (fim do "fora de alcance"
-   * genérico): 'level' = diferença de nível acima do permitido;
-   * 'remote' = personagem salvo na nuvem por outro servidor (sem linha
-   * local para duelar). null = atacável.
-   */
-  blockReason?: 'level' | 'remote' | null;
+  /** Only level differences restrict ranking challenges. */
+  blockReason?: 'level' | null;
 }
 
 export interface RankingPage {
@@ -601,15 +596,10 @@ export interface RankingPage {
   myPosition: number | null;
   /** v0.9.5 — de onde veio a lista: nuvem (todos do Supabase) ou servidor (reserva). */
   source?: 'cloud' | 'local';
-  /**
-   * v0.9.24 (A2) — DENSIDADE GARANTIDA: bots sparring dentro do range ±5
-   * níveis do jogador (sempre há alguém para desafiar no começo do jogo).
-   * Presente apenas quando o solicitante está autenticado com personagem.
-   */
-  sparring?: RankingEntry[];
+
 }
 
-// ===== World Boss =====
+// ===== Ameaça Universal =====
 
 export interface WorldBossView {
   id: string;

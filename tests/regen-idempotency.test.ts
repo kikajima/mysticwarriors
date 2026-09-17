@@ -27,6 +27,28 @@ import type { Player } from '@prisma/client';
 
 const T0 = 1_700_000_000_000; // instante base arbitrário (fixo)
 
+test('consultas sem escrita preservam a regeneração acumulada até a próxima ação', () => {
+  const saved = makePlayer({ hp: 10, energy: 10 });
+  const original = structuredClone(saved);
+  for (let elapsed = 15_000; elapsed <= 600_000; elapsed += 15_000) {
+    const response = structuredClone(saved);
+    applyRegen(response, T0 + elapsed);
+  }
+  expect(saved).toEqual(original);
+
+  const actionPlayer = structuredClone(saved);
+  applyRegen(actionPlayer, T0 + 600_000);
+  expect(actionPlayer.hp).toBe(60);
+  expect(actionPlayer.energy).toBe(12);
+  actionPlayer.hp -= 20;
+  actionPlayer.energy -= 5;
+
+  const nextResponse = structuredClone(actionPlayer);
+  applyRegen(nextResponse, T0 + 615_000);
+  expect(nextResponse.hp).toBe(41);
+  expect(nextResponse.energy).toBe(7);
+});
+
 /** Fábrica de Player sintético (não toca o banco — applyRegen é puro). */
 function makePlayer(over: Partial<Player> = {}): Player {
   const base: Player = {

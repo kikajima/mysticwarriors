@@ -161,22 +161,7 @@ export function TournamentPanel({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-heading text-amber-100 text-lg leading-tight">Arena do Grande Torneio</h3>
-              <p className="text-xs text-amber-200/60 leading-relaxed mt-1">
-                Chave de 8 com eliminação direta: <span className="text-amber-300">Quartas → Semifinal → Grande Final</span>.
-                A <span className="text-amber-300">vida carrega entre as lutas</span> — chegar machucado na final é o preço
-                da glória. Derrota encerra a campanha; o comitê reorganiza a chave em 30 minutos.
-              </p>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                <Chip className="bg-yellow-950/60 text-yellow-300 border-yellow-700/60">
-                  <Swords className="w-3 h-3" /> Eliminação direta
-                </Chip>
-                <Chip className="bg-red-950/60 text-red-300 border-red-800/60">
-                  <Heart className="w-3 h-3" /> Vida carrega
-                </Chip>
-                <Chip className="bg-cyan-950/60 text-cyan-300 border-cyan-800/60">
-                  <Sparkles className="w-3 h-3" /> Adversário escala com você
-                </Chip>
-              </div>
+
             </div>
           </div>
 
@@ -482,12 +467,7 @@ export function TournamentPanel({
             );
           })}
         </div>
-        <p className="text-[11px] text-amber-200/40 mt-3 leading-relaxed">
-          Cada luta consome {BATTLE_ENERGY_COST} de energia e a inscrição da campanha custa{' '}
-          {TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR')} Zeni (o comitê tem despesas). A XP acompanha o seu nível — o
-          torneio vale a pena em qualquer estágio da carreira. Eliminados levam metade do XP da rodada (a luta ensina);
-          Zeni, cristais e o cinturão ficam com quem vence.
-        </p>
+
       </GameCard>
 
       {/* ===== ELenco (sabores da chave) ===== */}
@@ -512,9 +492,7 @@ export function TournamentPanel({
             </div>
           ))}
         </div>
-        <p className="text-[11px] text-amber-200/40 mt-3">
-          O sorteio da chave muda a cada campanha — você nunca encara o mesmo caminho duas vezes seguidas.
-        </p>
+
       </GameCard>
     </div>
   );

@@ -1,3 +1,4 @@
+import { fetchOfflineOpponent, restoreOfflineOpponent, type OfflineOpponent } from '@/lib/supabase/offline-pvp';
 import type { Player, Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { ApiError } from '@/lib/api';
@@ -102,8 +103,18 @@ export async function executeGameAction(
   auth: AuthContext,
   playerId: string,
   type: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
+  accessToken?: string | null
 ): Promise<ActionResult> {
+  let offline: OfflineOpponent | undefined;
+  let targetName = '';
+  if (type === 'attack_player' && String(args.targetId ?? '').startsWith('cloud:')) {
+    await requirePlayer(auth, playerId);
+    try { targetName = decodeURIComponent(String(args.targetId).slice(6)); }
+    catch { throw new ApiError('VALIDATION_ERROR', 'Adversário inválido.'); }
+    const local = await db.player.findUnique({ where: { name: targetName } });
+    if (!local) offline = await fetchOfflineOpponent(targetName, accessToken);
+  }
   return db.$transaction(
     async (tx) => {
     // ===== AUTORIZAÇÃO CENTRAL =====
@@ -154,7 +165,14 @@ export async function executeGameAction(
         result = await actionStartTournamentFight(tx, player);
         break;
       case 'attack_player':
-        result = await actionStartPvp(tx, player, String(args.targetId ?? ''));
+        if (targetName) {
+          const target = await tx.player.findUnique({ where: { name: targetName } })
+            ?? (offline ? await restoreOfflineOpponent(tx, offline, targetName) : null);
+          if (!target) throw new ApiError('NOT_FOUND', 'Alvo não encontrado.');
+          result = await actionStartPvp(tx, player, target.id);
+        } else {
+          result = await actionStartPvp(tx, player, String(args.targetId ?? ''));
+        }
         break;
       case 'buy':
         result = await actionBuy(tx, player, String(args.itemId ?? ''), quantityArg(args));
@@ -804,7 +822,7 @@ async function actionStartTournamentFight(tx: Tx, player: Player): Promise<Actio
  *    condição relativa com desempate 50/50 — nenhum lado tem vantagem
  *    por ocupar determinado lado da função.
  */
-async function actionStartPvp(tx: Tx, player: Player, targetId: string): Promise<ActionResult> {
+export async function actionStartPvp(tx: Tx, player: Player, targetId: string): Promise<ActionResult> {
   const target = await tx.player.findUnique({ where: { id: targetId } });
   if (!target) throw new ApiError('NOT_FOUND', 'Alvo não encontrado.');
   if (target.id === player.id) {

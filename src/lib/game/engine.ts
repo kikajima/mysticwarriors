@@ -439,37 +439,6 @@ export function applyRegen(player: Player, nowMs: number = Date.now()): boolean 
   return changed;
 }
 
-/**
- * Persiste o regen de forma SEGURA CONTRA CORRIDA com ações concorrentes:
- * o update só passa se hp/energia/relógios não mudaram desde a leitura —
- * se uma batalha gravou vida nova no meio do caminho, esta escrita é
- * descartada (o regen é recalculado na próxima consulta; nunca sobrescreve
- * o resultado de uma ação).
- */
-export async function persistRegenSafe(
-  player: Player,
-  before: { hp: number; energy: number; lastRegen: Date; lastRegenHp: Date | null }
-): Promise<boolean> {
-  try {
-    const res = await db.player.updateMany({
-      where: {
-        id: player.id,
-        hp: before.hp,
-        energy: before.energy,
-        lastRegen: before.lastRegen,
-        ...(before.lastRegenHp ? { lastRegenHp: before.lastRegenHp } : {}),
-      },
-      data: { hp: player.hp, energy: player.energy, lastRegen: player.lastRegen, lastRegenHp: player.lastRegenHp },
-    });
-    return res.count > 0;
-  } catch {
-    // contenção benigna (SQLite busy em polling simultâneo): o regen não
-    // persistiu NESTA consulta — sem problema, a próxima recalcula pelo
-    // tempo transcorrido. NUNCA vira erro para o cliente.
-    return false;
-  }
-}
-
 // ===== Construtores de combatentes =====
 
 const BALANCED_STRATEGY = getStrategy('balanced');
@@ -628,7 +597,7 @@ interface SimOptions {
   rng?: () => number;
 }
 
-/** Ação escolhida pelo combatente (exportada — reutilizada pelo World Boss). */
+/** Ação escolhida pelo combatente (exportada — reutilizada pelo Ameaça Universal). */
 export interface ChosenAction {
   kind: 'technique' | 'physical' | 'energy';
   tech?: TechniqueDef;

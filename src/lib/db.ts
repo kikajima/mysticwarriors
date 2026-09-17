@@ -41,4 +41,6 @@ void (async () => {
 // Segurança: com WAL + NORMAL nada é perdido em queda do processo; apenas
 // uma queda de energia/SO pode perder os últimos segundos — aceitável
 // para um jogo de navegador (o padrão do SQLite moderno em WAL).
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+// Também em produção: os bundles das rotas compartilham o mesmo cliente
+// no processo, evitando pools concorrentes para o mesmo arquivo SQLite.
+globalForPrisma.prisma = db

@@ -69,7 +69,7 @@ export function AchievementsPanel({
 
   useEffect(() => {
     // fetch on mount: setState só ocorre após o await (assíncrono)
-     
+
     load();
   }, [load]);
 
@@ -149,14 +149,6 @@ export function AchievementsPanel({
         </div>
       </div>
 
-      <GameCard className="p-4">
-        <p className="text-sm text-amber-200/70 leading-relaxed">
-          Conquistas registram sua jornada permanente: batalhas, treinos, níveis, técnicas, guildas e
-          coleções. Recompensas incluem Zeni, XP e <span className="text-sky-300">💎 cristais</span> — colete
-          uma única vez, para sempre.
-        </p>
-      </GameCard>
-
       {grouped.map(([category, list]) => (
         <div key={category}>
           <h3
@@ -169,11 +161,7 @@ export function AchievementsPanel({
             }`}
           >
             <Award className="w-4 h-4" /> {CATEGORY_LABEL[category] ?? category}
-            {category === 'narrative' && (
-              <span className="text-[9px] font-normal text-cyan-300/70 border border-cyan-800/50 rounded-full px-2 py-0.5">
-                ASCENSÃO Z
-              </span>
-            )}
+
             {category === 'tournament' && (
               <span className="text-[9px] font-normal text-yellow-300/70 border border-yellow-700/50 rounded-full px-2 py-0.5">
                 GRANDE TORNEIO

@@ -157,15 +157,7 @@ export function ShopPanel({
       <SectionTitle icon="🏪">Loja do Mestre Kame</SectionTitle>
 
       <GameCard className="p-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-amber-200/70 max-w-xl">
-          Equipamentos ampliam seu poder e podem ser comprados em <span className="text-amber-100">múltiplas unidades</span> —
-          uma fica em uso, as demais são <span className="text-amber-100">reservas</span> no inventário. Itens não usados
-          podem ser <span className="text-amber-100">vendidos de volta por 50%</span> do preço de compra (na mesma moeda).
-          A aba <span className="text-amber-100">Treino</span> e os <span className="text-amber-100">Consumíveis</span> são
-          pagos em <span className="text-sky-300">💎 diamantes</span> — a moeda rara que você ganha nas missões diárias,
-          conquistas e no boss mundial. O bônus de itens de treino vale <span className="text-amber-100">uma vez</span>,
-          mesmo com várias unidades.
-        </p>
+
         <div className="flex gap-2">
           <Chip className="bg-yellow-950/50 text-yellow-300 border-yellow-700/50 text-sm px-3 py-1">
             <Coins className="w-4 h-4" /> {player.zeni.toLocaleString('pt-BR')} Zeni
@@ -351,7 +343,7 @@ export function ShopPanel({
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-heading text-amber-100 text-sm leading-tight">{item.name}</h4>
-                    <p className="text-[11px] text-amber-200/50 mt-1 leading-snug">{item.description}</p>
+
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-3">
@@ -393,7 +385,7 @@ export function ShopPanel({
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span
                     className={`font-heading text-sm flex items-center gap-1 tabular-nums ${crystalItem ? 'text-sky-300' : 'text-yellow-400'}`}
-                    title={crystalItem ? 'Diamantes — ganhos em missões, conquistas e boss' : 'Zeni'}
+                    title={crystalItem ? 'Diamantes' : 'Zeni'}
                   >
                     {crystalItem ? <Gem className="w-4 h-4" /> : <Coins className="w-4 h-4" />}
                     {q > 1 ? (
@@ -448,13 +440,8 @@ function TalentsSection({
             <Flame className="w-5 h-5 text-orange-300 talent-flame" />
           </div>
           <div className="min-w-0">
-            <h3 className="font-heading text-amber-100 text-sm">Talentos de Ímpeto — ASCENSÃO Z, Cap. 7</h3>
-            <p className="text-xs text-amber-200/60 mt-1 leading-relaxed">
-              Privilégios de combate que abrem <span className="text-orange-300 font-semibold">novos gastos de Ímpeto</span> durante a
-              batalha. O Ímpeto acumula sozinho (golpes pesados recebidos, aberturas, perigo de morte) — o talento ensina a
-              <span className="text-amber-100"> queimá-lo</span> na hora certa. Cada talento é <span className="text-amber-100">vitalício</span>,
-              dispara <span className="text-amber-100">1×/rodada</span> (o Segundo Vento, 1×/combate) e não consome energia.
-            </p>
+            <h3 className="font-heading text-amber-100 text-sm">Talentos de Ímpeto</h3>
+
           </div>
         </div>
       </GameCard>
@@ -533,12 +520,8 @@ function TalentCard({
               </Chip>
             )}
           </div>
-          <p className="text-[11px] text-amber-200/55 mt-1.5 leading-snug">{talent.description}</p>
-        </div>
-      </div>
 
-      <div className="flex flex-wrap gap-1.5 mb-3 relative">
-        <Chip className="bg-black/40 text-amber-200/80 border-amber-900/50 text-[10px]">⚡ {talent.effect}</Chip>
+        </div>
       </div>
 
       <div className="mt-auto pt-2 border-t border-amber-900/30 relative">
@@ -611,15 +594,6 @@ function CosmeticsSection({
 
   return (
     <>
-      <GameCard className="p-4">
-        <p className="text-sm text-amber-200/70 leading-relaxed">
-          Cosméticos são <span className="text-amber-100">pura expressão</span>: nenhum deles altera atributos
-          ou dano. Ganhe 💎 cristais nas missões diárias, conquistas e no boss mundial. Depois de adquirir,
-          use <span className="text-amber-100">Equipar</span> — a aura envolve seu avatar, o título acompanha
-          seu nome, o fundo muda sua ficha e o efeito toca quando você entra em cena. VIP e Passe de
-          Temporada chegarão em breve — <span className="text-emerald-300">nunca</span> como vantagem de poder.
-        </p>
-      </GameCard>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {COSMETICS.map((c) => {

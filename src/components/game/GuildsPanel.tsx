@@ -44,7 +44,7 @@ export function GuildsPanel({
     } finally {
       setLoading(false);
     }
-     
+
   }, [player.id]);
 
   useEffect(() => {
@@ -145,9 +145,7 @@ export function GuildsPanel({
             <p className="text-xs font-heading text-amber-100 mb-2 flex items-center gap-1.5">
               <HandCoins className="w-4 h-4 text-yellow-400" /> Contribuir com a guilda
             </p>
-            <p className="text-[11px] text-amber-200/40 mb-2">
-              Doações viram XP da guilda e sobem o nível dela (doações também contam para conquistas).
-            </p>
+
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="number"
@@ -202,10 +200,7 @@ export function GuildsPanel({
         <>
           <GameCard className="p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-amber-200/70 flex-1 min-w-60">
-                Funda sua própria guilda ou junte-se a uma existente. Guildas reúnem guerreiros sob a mesma
-                bandeira — doem, subam de nível e dominem o ranking!
-              </p>
+
               {!showCreate && (
                 <GameButton variant="gold" onClick={() => setShowCreate(true)} disabled={busy}>
                   <Flag className="w-4 h-4" /> Fundar guilda

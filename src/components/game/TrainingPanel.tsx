@@ -125,13 +125,7 @@ function TrainTab({
   return (
     <>
       <GameCard className="p-4">
-        <p className="text-sm text-amber-200/70 leading-relaxed">
-          Gaste <span className="text-yellow-400 font-heading">Zeni</span> e{' '}
-          <span className="text-amber-300 font-heading">energia</span> para aumentar seus atributos
-          permanentemente. Com <span className="text-amber-100">equipamentos de treino</span> (aba Treino da loja),
-          cada sessão rende pontos extras!
-          {player.race === 'humano' && <span className="text-emerald-300"> Bônus humano: treinos com 10% de desconto!</span>}
-        </p>
+
         <div className="flex flex-wrap gap-4 mt-3 text-xs">
           <span className="flex items-center gap-1.5 text-amber-200/60">
             <Coins className="w-4 h-4 text-yellow-500" /> {player.zeni.toLocaleString('pt-BR')} Zeni
@@ -189,12 +183,7 @@ function TrainTab({
       <SectionTitle icon="🧙">Mestres & Técnicas</SectionTitle>
 
       <GameCard className="p-4">
-        <p className="text-sm text-amber-200/70 leading-relaxed">
-          Grandes mestres ensinam <span className="text-amber-100">técnicas de combate</span> que usam{' '}
-          <span className="text-orange-400 font-heading">Força</span> ou{' '}
-          <span className="text-rose-400 font-heading">Ki</span>. Depois de aprender, <span className="text-amber-100">equipe até 4 técnicas no Loadout</span> — só as
-          equipadas aparecem nas batalhas, consumindo Ki quando usadas.
-        </p>
+
         {learned.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {learned.map((tech) => {
@@ -274,12 +263,12 @@ function TrainTab({
                               <Chip className="bg-purple-950/60 text-purple-300 border-purple-800/50">SUPREMA</Chip>
                             )}
                           </p>
-                          <p className="text-[11px] text-amber-200/50 leading-snug mt-0.5">{tech.description}</p>
+
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-2 mt-1.5">
                         <div className="flex flex-wrap gap-1.5">
-                          <Chip className="bg-black/40 text-amber-200/70 border-amber-900/50">dano ×{tech.power.toFixed(1)}</Chip>
+
                           <Chip className="bg-black/40 text-sky-300/80 border-sky-900/50">{tech.kiCost} Ki</Chip>
                           {tech.minLevel > 1 && (
                             <Chip className="bg-black/40 text-amber-200/60 border-amber-900/50">Nv {tech.minLevel}+</Chip>
@@ -337,14 +326,6 @@ function LoadoutTab({
 
   return (
     <>
-      <GameCard className="p-4">
-        <p className="text-sm text-amber-200/70 leading-relaxed">
-          Escolha <span className="text-amber-100">até 4 técnicas equipadas</span>: 3 slots comuns + 1 slot
-          <span className="text-purple-300 font-heading"> Supremo</span>. Só o que estiver equipado é usado em
-          batalha — aprender técnicas novas <span className="text-emerald-300">nunca te deixa mais fraco</span>.
-          Técnicas consomem Ki de batalha quando usadas.
-        </p>
-      </GameCard>
 
       {/* Slots */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -368,9 +349,7 @@ function LoadoutTab({
                       {tech.icon}
                     </p>
                     <p className="font-heading text-amber-100 text-sm leading-tight">{tech.name}</p>
-                    <p className="text-[10px] text-amber-200/50 mt-1">
-                      ×{tech.power.toFixed(1)} · {tech.kiCost} Ki
-                    </p>
+
                   </div>
                 ) : (
                   <div className="text-center py-3">
@@ -423,9 +402,7 @@ function LoadoutTab({
                           <Chip className="bg-purple-950/60 text-purple-300 border-purple-800/50">S</Chip>
                         )}
                       </p>
-                      <p className="text-[11px] text-amber-200/50 mt-0.5">
-                        ×{tech!.power.toFixed(1)} dano · {tech!.kiCost} Ki · {tech!.type === 'energy' ? 'energia' : 'física'}
-                      </p>
+
                     </div>
                     {slotNow ? (
                       <Chip className="bg-emerald-900/60 text-emerald-300 border-emerald-700/60 shrink-0">
@@ -464,13 +441,6 @@ function StrategyTab({
 }) {
   return (
     <>
-      <GameCard className="p-4">
-        <p className="text-sm text-amber-200/70 leading-relaxed">
-          A estratégia orienta as decisões automáticas da engine de combate — qual tipo de golpe usar,
-          quando arriscar técnicas, quanto se proteger. <span className="text-amber-100">Não garante vitória</span>:
-          atributos e loadout continuam sendo a base do seu poder.
-        </p>
-      </GameCard>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {STRATEGY_LIST.map((s) => {
@@ -486,7 +456,7 @@ function StrategyTab({
                 )}
               </div>
               <h3 className="font-heading text-amber-100 text-lg">{s.name}</h3>
-              <p className="text-xs text-amber-200/50 mt-1 leading-relaxed min-h-10">{s.description}</p>
+
               <GameButton
                 className="w-full mt-3"
                 variant={active ? 'ghost' : 'primary'}
@@ -541,13 +511,6 @@ function TransformTab({
 
   return (
     <>
-      <GameCard className="p-4">
-        <p className="text-sm text-amber-200/70 leading-relaxed">
-          A árvore de transformações dos <span className="text-amber-100">{race.name}s</span>. Cada forma desbloqueada
-          dá <span className="text-emerald-300">bônus permanentes</span>; a forma <span className="text-amber-100">ativa</span> concede
-          multiplicadores em combate. Desbloquear nunca enfraquece seu personagem.
-        </p>
-      </GameCard>
 
       {/* Árvore por profundidade */}
       <div className="space-y-4">
@@ -597,19 +560,7 @@ function TransformTab({
                             <Chip className="bg-emerald-900/50 text-emerald-300 border-emerald-800/50">desbloqueada</Chip>
                           )}
                         </div>
-                        <p className="text-[11px] text-amber-200/50 mt-0.5 leading-snug">{tr!.description}</p>
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {tr!.bonuses && (
-                            <Chip className="bg-emerald-950/50 text-emerald-300 border-emerald-800/50">
-                              permanente: {Object.entries(tr!.bonuses).map(([k, v]) => `+${v} ${k}`).join(' ')}
-                            </Chip>
-                          )}
-                          {tr!.multipliers && (
-                            <Chip className="bg-purple-950/50 text-purple-300 border-purple-800/50">
-                              em combate: {Object.entries(tr!.multipliers).map(([k, v]) => `${k} ×${v}`).join(' ')}
-                            </Chip>
-                          )}
-                        </div>
+
                         {!isOwned && req.missing.length > 0 && (
                           <p className="text-[11px] text-red-300/70 mt-1.5">🔒 Requisitos: {req.missing.join(' · ')}</p>
                         )}

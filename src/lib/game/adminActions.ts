@@ -495,7 +495,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           await tx.questProgress.deleteMany({ where: { playerId: fresh.id } });
           await tx.achievementState.deleteMany({ where: { playerId: fresh.id } });
           await tx.seasonRankEntry.deleteMany({ where: { playerId: fresh.id } });
-          // dano no chefe global ATUAL: personagem zerado não mantém
+          // dano no Ameaça Universal ATUAL: personagem zerado não mantém
           // crédito de dano no evento em andamento (histórico de
           // eventos passados permanece — é registro do evento)
           const bossRemoved = await tx.worldBossDamage.deleteMany({
@@ -506,7 +506,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
             `${fresh.name} voltou ao estado de criação — só nome, raça e sexo preservados. ` +
             `Zerados: cosméticos, avatar, diamantes (${fresh.crystals}), itens, transformações, ` +
             `conquistas, missões, profissão e pontos de temporada` +
-            `${bossRemoved.count > 0 ? ' — dano no chefe global atual removido' : ''}.`
+            `${bossRemoved.count > 0 ? ' — dano no Ameaça Universal atual removido' : ''}.`
           );
 
         } else {

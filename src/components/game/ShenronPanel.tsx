@@ -134,8 +134,7 @@ export function ShenronPanel({
         <GameCard className="p-6 text-center">
           <p className="text-amber-200/50 text-sm">
             Faltam <span className="font-heading text-yellow-400 text-lg">{7 - player.dragonBalls}</span>{' '}
-            esferas para completar o conjunto. As esferas se espalham novamente pelo mundo após cada
-            desejo.
+            esferas para completar o conjunto.
           </p>
         </GameCard>
       )}

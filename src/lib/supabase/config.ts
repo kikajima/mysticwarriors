@@ -11,15 +11,15 @@
 // o ambiente de build (chave publicável é, por design, pública).
 //
 // 2026 — NOVA BASE (a pedido do dono, para não misturar com o projeto
-// antigo): rugbhzcmxmtmoqoxrhki. O schema desta base nasce do script
+// antigo): zkocvbovcwhwdmhwruja. O schema desta base nasce do script
 // supabase-instalacao-nova-base.sql (instalação única no SQL Editor).
 // =====================================================================
 
 export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://rugbhzcmxmtmoqoxrhki.supabase.co';
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://zkocvbovcwhwdmhwruja.supabase.co';
 
 export const SUPABASE_PUBLISHABLE_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_pPxZG2kASZLr_mgv-1BNBg_dvfCN7-a';
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_SqnRASBW52AGDQsQgjSa2A_cztQn02n';
 
 /**
  * Versão do contrato de progresso na nuvem.

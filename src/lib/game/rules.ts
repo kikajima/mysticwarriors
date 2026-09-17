@@ -32,7 +32,7 @@ export const BALANCE_VERSION = 6;
  * v0.16 — MATRIZ DE OCUPAÇÃO DEFINITIVA (3ª ordem; ver DESIGN-DECISIONS.md).
  *
  * TRABALHANDO bloqueia APENAS as 2 ações abaixo. TUDO mais é LIBERADO:
- * Treino, PvP, Chefe Global, loja (comprar/vender/usar), gestão completa de
+ * Treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de
  * guilda, coleta de recompensas (conquista/diária/missão/torneio),
  * hospital, equipamento/inventário, perfil e visualizações, Shenron,
  * cosméticos, talentos, técnicas, transformações, estratégia.
@@ -49,7 +49,7 @@ export const BALANCE_VERSION = 6;
  * morreu e que a blocklist continua fechada em 2.
  */
 export const MISSION_BLOCKED_ACTIONS: ReadonlySet<string> = new Set([
-  'battle', // ❌ combate PvE contra inimigos (Chefe Global é EXCEÇÃO — liberado)
+  'battle', // ❌ combate PvE contra inimigos (Ameaça Universal é EXCEÇÃO — liberado)
   'tournament_fight', // ❌ torneio
 ]);
 
@@ -110,7 +110,7 @@ export const ACTIVITY_DURATION = {
 } as const;
 
 /**
- * v0.9.24 (B2) — custo de energia do ataque ao chefe mundial. Vivia em
+ * v0.9.24 (B2) — custo de energia do ataque ao Ameaça Universal. Vivia em
  * worldboss.ts (server-only); movido para cá (fonte central de regras,
  * importável pelo cliente) — o delta otimista da UI e o servidor passam
  * a ler O MESMO número.
@@ -138,7 +138,7 @@ export function isOnActiveMission(
  * servidor — o frontend apenas DESABILITA botões, quem decide é aqui).
  * v0.16 — MATRIZ DEFINITIVA: durante trabalho ativo, SÓ as 2 ações da
  * MISSION_BLOCKED_ACTIONS são negadas; tudo mais passa (loja, guilda,
- * hospital, coletas, PvP, chefe mundial, equipamento, perfil…).
+ * hospital, coletas, PvP, Ameaça Universal, equipamento, perfil…).
  * Mensagem clara EXISTENTE apenas nos 2 casos negados.
  */
 export function assertPlayerAvailableForAction(
@@ -149,7 +149,7 @@ export function assertPlayerAvailableForAction(
   if (isOnActiveMission(player, now) && MISSION_BLOCKED_ACTIONS.has(action)) {
     throw new ApiError(
       'PLAYER_BUSY_ON_MISSION',
-      'Seu guerreiro está trabalhando — batalhas contra inimigos e o torneio ficam liberados só quando ele voltar. (Treinar, atacar jogadores e o Chefe Global, loja, guilda, hospital e coletas seguem funcionando normalmente!)'
+      'Seu guerreiro está trabalhando — batalhas contra inimigos e o torneio ficam liberados só quando ele voltar. (Treinar, atacar jogadores e o Ameaça Universal, loja, guilda, hospital e coletas seguem funcionando normalmente!)'
     );
   }
 }

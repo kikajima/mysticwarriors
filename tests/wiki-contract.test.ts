@@ -283,7 +283,7 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
 
   test('Chefe mundial: duração, participação e cadência = worldboss.ts real', () => {
     const t = wikiText('world-boss');
-    expect(BOSS_DURATION_HOURS).toBe(72);
+    expect(BOSS_DURATION_HOURS).toBe(48);
     expect(MIN_PARTICIPATION_DAMAGE).toBe(500);
     expect(ATTACK_COOLDOWN_SEC).toBe(10);
     expect(t).toContain(`${BOSS_DURATION_HOURS / 24} dias`);

@@ -1,7 +1,7 @@
 // =====================================================================
 // COSMÉTICOS E PRODUTOS (preparação de monetização — SEM cobrança real)
 // ---------------------------------------------------------------------
-// Cristais são conquistados JOGANDO (quests, conquistas, world boss).
+// Cristais são conquistados JOGANDO (quests, conquistas, Ameaça Universal).
 // Cosméticos NÃO alteram atributos — nenhuma venda de poder.
 // VIP / Passe de Temporada: apenas estrutura de dados + UI "em breve".
 // Nenhum gateway de pagamento está conectado.

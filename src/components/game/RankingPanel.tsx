@@ -78,7 +78,6 @@ export function RankingPanel({
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const ranking = data?.entries ?? [];
-  const sparring = data?.sparring ?? [];
   // v0.16 — matriz de ocupação: trabalho NÃO bloqueia mais o PvP — o
   // duelista ataca do turno mesmo (o servidor também libera; só
   // treino/PvE/torneio são negados durante o trabalho).
@@ -112,7 +111,7 @@ export function RankingPanel({
                   : 'bg-amber-950/50 text-amber-300/80 border-amber-800/50'
               }
             >
-              {data.source === 'cloud' ? '🌐 Nuvem' : '💾 Servidor'}
+              Atualizado
               {updatedAt ? ` • ${updatedAt.toLocaleTimeString('pt-BR')}` : ''}
             </Chip>
           </div>
@@ -189,7 +188,7 @@ export function RankingPanel({
                           variant="danger"
                           onClick={() => onAttack(entry.id)}
                           disabled={busy || noEnergy}
-                          title={noEnergy ? `Cada duelo exige ${BATTLE_ENERGY_COST} de energia` : `Duelo (custa ${BATTLE_ENERGY_COST} de energia — liberado mesmo durante o trabalho)`}
+                          title={noEnergy ? `Energia necessária: ${BATTLE_ENERGY_COST}` : `Atacar ${entry.name}`}
                         >
                           <Crosshair className="w-3.5 h-3.5" /> {noEnergy ? 'Sem energia' : 'Atacar'}
                         </GameButton>
@@ -237,7 +236,7 @@ export function RankingPanel({
                       variant="danger"
                       onClick={() => onAttack(entry.id)}
                       disabled={busy || noEnergy}
-                      title={noEnergy ? `Cada duelo exige ${BATTLE_ENERGY_COST} de energia` : `Duelo (custa ${BATTLE_ENERGY_COST} de energia — liberado mesmo durante o trabalho)`}
+                      title={noEnergy ? `Energia necessária: ${BATTLE_ENERGY_COST}` : `Atacar ${entry.name}`}
                       aria-label={`Atacar ${entry.name}`}
                     >
                       <Crosshair className="w-3.5 h-3.5" />

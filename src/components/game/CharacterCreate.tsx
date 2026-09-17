@@ -167,13 +167,7 @@ export function CharacterCreate({
                   </div>
                 </div>
                 <p className="text-xs text-amber-100/70 mb-3 leading-relaxed">{r.description}</p>
-                <ul className="space-y-1">
-                  {r.perks.map((perk, i) => (
-                    <li key={i} className="text-xs text-emerald-300/90 flex items-start gap-1.5">
-                      <span aria-hidden>✔</span> {perk}
-                    </li>
-                  ))}
-                </ul>
+
               </button>
             );
           })}

@@ -588,10 +588,10 @@ export async function saveCloudWorldBoss(snapshot: CloudWorldBossSnapshot): Prom
   if (!session) return false;
   const { error } = await getSupabaseClient().rpc('save_world_boss_snapshot', { p_snapshot: snapshot });
   if (error) {
-    console.error('[nuvem] FALHA ao salvar o chefe global', error.message);
+    console.error('[nuvem] FALHA ao salvar o Ameaça Universal', error.message);
     return false;
   }
-  console.info('[nuvem] chefe global salvo', snapshot.id, snapshot.currentHp);
+  console.info('[nuvem] Ameaça Universal salvo', snapshot.id, snapshot.currentHp);
   return true;
 }
 

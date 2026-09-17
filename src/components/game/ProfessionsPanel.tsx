@@ -121,18 +121,6 @@ export function ProfessionsPanel({
 
       {tab === 'professions' ? (
         <>
-          <GameCard className="p-4">
-            <p className="text-sm text-amber-200/70 leading-relaxed">
-              Cada profissão tem um turno de <span className="text-amber-100">1 hora</span> que rende{' '}
-              <span className="text-yellow-400">Zeni</span>, <span className="text-orange-400">XP</span> e pode render{' '}
-              <span className="text-yellow-300">Esferas do Dragão</span>. Conclua turnos para ser{' '}
-              <span className="text-emerald-300">promovido</span> — cada promoção paga um bônus e aumenta o salário,
-              até <span className="text-amber-100">5x o valor inicial</span>.
-            </p>
-            <div className="flex items-center gap-2 mt-3 text-xs text-emerald-300/80">
-              <Zap className="w-4 h-4 text-emerald-400" /> Trabalhar não gasta energia — só o seu tempo.
-            </div>
-          </GameCard>
 
           {/* Trabalho em andamento */}
           {(active || claimable) && currentProf && (
@@ -382,7 +370,7 @@ function QuestsTab({
 
   useEffect(() => {
     // fetch on mount: setState só ocorre após o await (assíncrono)
-     
+
     load();
   }, [load]);
 
@@ -476,13 +464,6 @@ function QuestsTab({
 
   return (
     <div className="space-y-6">
-      <GameCard className="p-4">
-        <p className="text-sm text-amber-200/70 leading-relaxed">
-          <span className="text-amber-100">Missões diárias</span> resetam todos os dias à meia-noite (horário de
-          Brasília) e as <span className="text-amber-100">semanais</span> toda segunda-feira. Recompensas incluem{' '}
-          <span className="text-sky-300">💎 cristais</span> para a loja de cosméticos!
-        </p>
-      </GameCard>
 
       <div>
         <h3 className="font-heading text-amber-100 mb-3 flex items-center gap-2">

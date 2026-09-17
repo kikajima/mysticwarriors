@@ -1,15 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ENEMIES, getStrategy, getTalent, BATTLE_ENERGY_COST, npcCombatPower } from '@/lib/game/constants';
+import { ENEMIES, BATTLE_ENERGY_COST, npcCombatPower } from '@/lib/game/constants';
 import { useServerNow } from '@/lib/game/clock';
 import type { PlayerView, WorldBossView } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { BossSkeleton, fetchPanelJson, LoadFail } from './PanelLoad';
 import { loadCloudWorldBoss, saveCloudWorldBoss, type CloudWorldBossSnapshot } from '@/lib/supabase/client';
-import { getPowerScale, scaleDiffLabel, scaleCombatRules } from '@/lib/game/powerScale';
-import { IMPETO } from '@/lib/game/impeto';
-import { Crosshair, Flame, Heart, Hospital, Shield, Swords, Skull, Timer, Loader2, Zap } from 'lucide-react';
+import { getPowerScale, scaleDiffLabel } from '@/lib/game/powerScale';
+import { HpRecovery } from './HpRecovery';
+import { BOSS_ATTACK_ENERGY_COST } from '@/lib/game/rules';
+import { Crosshair, Heart, Hospital, Shield, Swords, Skull, Timer, Zap } from 'lucide-react';
 
 /** Poder de scouter do oponente — fonte ÚNICA compartilhada com a engine
  * (Armadura de Escala, regra 5.1): o que o card mostra é o que o duelo usa. */
@@ -44,7 +45,6 @@ export function BattlePanel({
   const hpPct = Math.round((player.hp / player.derived.maxHp) * 100);
   const tooHurt = player.hp < Math.max(20, Math.floor(player.derived.maxHp * 0.2));
   const healCost = (player.derived.maxHp - player.hp) * 3;
-  const strategy = getStrategy(player.strategy);
   // v0.16 — matriz de ocupação: trabalho bloqueia SÓ o PvE (o torneio e o
   // treino bloqueiam nos próprios painéis). Ameaça Universal e HOSPITAL seguem
   // liberados durante o turno — só os 3 negados têm mensagem clara.
@@ -78,13 +78,14 @@ export function BattlePanel({
                   <span className="text-amber-200/40"> · cura: {healCost.toLocaleString('pt-BR')} Zeni</span>
                 )}
               </p>
+              <HpRecovery player={player} />
             </div>
           </div>
           <GameButton
             variant="danger"
             onClick={onHeal}
             disabled={busy || player.hp >= player.derived.maxHp || player.zeni < healCost}
-            title="Cura disponível mesmo durante o trabalho (hospital nunca é bloqueado)"
+            title="Recuperar vida"
           >
             <Heart className="w-4 h-4" />
             {player.hp >= player.derived.maxHp
@@ -93,89 +94,6 @@ export function BattlePanel({
           </GameButton>
         </div>
       </GameCard>
-
-      {false && <GameCard className="p-4">
-        <p className="text-sm text-amber-200/70 leading-relaxed">
-          Desafie vilões lendários em batalhas turno a turno. Cada batalha consome{' '}
-          <span className="text-amber-300 font-heading">{BATTLE_ENERGY_COST} de energia</span> (recarrega com o
-          tempo — cerca de 5 minutos por ponto). Ataques <span className="text-orange-400">físicos</span> escalam de{' '}
-          <span className="text-orange-300">Força</span>; ataques de <span className="text-rose-400">energia</span>{' '}
-          escalam de <span className="text-rose-300">Ki</span> e consomem Ki de batalha. Sua estratégia atual:{' '}
-          <span className="text-amber-100">
-            {strategy.icon} {strategy.name}
-          </span>{' '}
-          (mude na aba Treino).
-        </p>
-        <div className="flex items-center gap-2 mt-3 text-xs text-amber-200/60">
-          <Zap className="w-4 h-4 text-amber-400" /> Energia atual:{' '}
-          <span className={`font-heading ${noEnergy ? 'text-red-400' : 'text-amber-300'}`}>
-            {player.energy}/{player.derived.maxEnergy}
-          </span>
-        </div>
-      </GameCard>}
-
-      {false && <GameCard className="p-4 border-orange-900/40">
-        <div className="flex items-start gap-3">
-          <div className="shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500/20 to-orange-600/20 border border-orange-700/40 flex items-center justify-center">
-            <Flame className="w-5 h-5 text-orange-400" aria-hidden />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-heading text-amber-100 flex items-center gap-2 flex-wrap">
-              Ímpeto
-              <span className="text-[10px] font-normal text-amber-200/50 border border-amber-800/40 rounded-full px-2 py-0">
-                ASCENSÃO Z — Cap. 7
-              </span>
-            </h3>
-            <p className="text-xs text-amber-200/70 leading-relaxed mt-1">
-              O combate gera <span className="text-orange-300 font-heading">Ímpeto</span> (máx.{' '}
-              {IMPETO.max}): golpes pesados recebidos, críticos de Abertura e a metade da vida perdida acendem a
-              chama. Gasto automático no duelo:{' '}
-              <span className="text-amber-100">1</span> estende o combo (golpe extra),{' '}
-              <span className="text-cyan-300">2</span> ativam a Defesa Heroica (impacto pela metade) e{' '}
-              <span className="text-yellow-300">3</span> disparam a{' '}
-              <span className="text-yellow-300 font-heading">Quebra de Limite</span>: +1 Escala por 2 rodadas
-              quando a vida cai abaixo da metade (Cap. 29 — 1× por combate). Depois vem o preço:{' '}
-              <span className="text-teal-300">💧 2 rodadas de Exaustão</span> — golpes{' '}
-              <span className="text-teal-300">−15%</span>, dano recebido{' '}
-              <span className="text-teal-300">+10%</span> (Cap. 29: o milagre cobra caro). Mas quem domina o
-              talento{' '}
-              <span className="text-sky-300">🌬️ Segundo Vento</span> intercepta a fadiga no instante em que
-              ela ia entrar — <span className="text-sky-300">2 Ímpetos</span> e o milagre fica completo, sem preço.
-            </p>
-            <p className="text-[11px] text-amber-200/50 mt-2 leading-relaxed">
-              <span className="text-orange-300">🔥 Espírito de Superação:</span> enfrentar um oponente ≥1 escala
-              acima dá <span className="text-orange-300">+1 Ímpeto</span> no início — a chama dos azarões. Estratégia
-              <span className="text-amber-100"> {strategy.icon} {strategy.name}</span> define a avidez por combos
-              (mude na aba Treino).
-            </p>
-            {/* v0.9.15 — talentos dominados: badges de talento no card de Ímpeto */}
-            {(player.talents?.length ?? 0) > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2.5">
-                {player.talents.map((tid) => {
-                  const t = getTalent(tid);
-                  if (!t) return null;
-                  return (
-                    <span
-                      key={tid}
-                      title={t.effect}
-                      className="inline-flex items-center gap-1 text-[10px] font-heading px-2 py-0.5 rounded-full border border-emerald-700/50 bg-emerald-950/40 text-emerald-300"
-                    >
-                      {t.icon} {t.name}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-            {(player.talents?.length ?? 0) === 0 && (
-              <p className="text-[10px] text-amber-200/40 mt-2.5 leading-snug">
-                🎯 <span className="text-emerald-300/80">Talentos de Ímpeto</span> (Cap. 7) desbloqueiam gastos
-                extras de Ímpeto — repertório de acerto, esquiva e até o cancelamento da Exaustão. Disponíveis na{' '}
-                <span className="text-amber-200/70">Loja → Talentos</span>.
-              </p>
-            )}
-          </div>
-        </div>
-      </GameCard>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {ENEMIES.map((enemy) => {
@@ -243,52 +161,7 @@ export function BattlePanel({
                   >
                     {scaleDiffLabel(enemyPower(enemy), player.derived.power).text}
                   </span>
-                  {/* v0.9.13 — Espírito de Superação (Cap. 7): o azarão
-                      começa o duelo com +1 Ímpeto (badge informativo) */}
-                  {scaleCombatRules(player.derived.power, enemyPower(enemy)).diff >= 1 && (
-                    <span
-                      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] text-orange-300 border-orange-700/60 bg-orange-950/50"
-                      title="Espírito de Superação: começar abaixo na Escala de Poder dá +1 Ímpeto no início do combate."
-                    >
-                      <Flame className="w-3 h-3" aria-hidden /> +1 Ímpeto de superação
-                    </span>
-                  )}
-                  {/* v0.9.12 — Armadura de Escala: o que a regra 5.1/5.3 fará
-                      com o SEU dano neste duelo (informação antes de lutar) */}
-                  {(() => {
-                    const rules = scaleCombatRules(player.derived.power, enemyPower(enemy));
-                    if (rules.crushing) {
-                      return (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] text-rose-300 border-rose-800/60 bg-rose-950/50"
-                          title="Regra 5.3: golpes do azarão são esmagados; críticos geram Aberturas e 3 delas rompem a barreira numa técnica."
-                        >
-                          💥 escala esmagadora — crie Aberturas!
-                        </span>
-                      );
-                    }
-                    if (rules.armor > 0) {
-                      return (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] text-sky-300 border-sky-800/60 bg-sky-950/50"
-                          title="Regra 5.1: seu dano é reduzido pela Armadura de Escala do oponente."
-                        >
-                          🛡️ Armadura de Escala {rules.armor} contra você
-                        </span>
-                      );
-                    }
-                    if (rules.advantage > 0) {
-                      return (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] text-amber-300 border-amber-700/60 bg-amber-950/50"
-                          title="Regra 5.1: você causa dano adicional por escala de vantagem."
-                        >
-                          ⚔️ +{Math.round(rules.damageMult * 100 - 100)}% de dano
-                        </span>
-                      );
-                    }
-                    return null;
-                  })()}
+
                 </div>
                 {recommended && (
                   <p className="text-[11px] text-emerald-300/80 mb-2 text-center">✓ Nível ideal para você</p>
@@ -303,25 +176,16 @@ export function BattlePanel({
                   disabled={busy || tooHurt || onMission || noEnergy}
                   title={
                     onMission
-                      ? 'Treinos, lutas contra inimigos e torneio esperam o fim do turno de trabalho'
+                      ? 'Aguarde o fim do turno de trabalho'
                       : noEnergy
-                        ? `Precisa de ${BATTLE_ENERGY_COST} de energia (recarrega com o tempo)`
+                        ? `Precisa de ${BATTLE_ENERGY_COST} de energia`
                         : undefined
                   }
                 >
                   <Crosshair className="w-4 h-4" />
                   {tooHurt ? 'Cure-se primeiro' : onMission ? 'EM TURNO' : noEnergy ? 'Sem energia' : 'Lutar!'}
                 </GameButton>
-                {onMission && (
-                  <p className="text-[10px] text-orange-300/70 mt-1.5 text-center">
-                    ⚠️ Em turno de trabalho — lutas contra inimigos esperam o retorno (PvP, Ameaça Universal, loja, guilda e hospital seguem liberados).
-                  </p>
-                )}
-                {!onMission && noEnergy && !tooHurt && (
-                  <p className="text-[10px] text-amber-300/70 mt-1.5 text-center">
-                    ⚡ Cada batalha custa {BATTLE_ENERGY_COST} de energia — aguarde recarregar (~5 min/ponto).
-                  </p>
-                )}
+
               </div>
             </GameCard>
           );
@@ -363,6 +227,7 @@ function WorldBossSection({
     setFailed(false);
     try {
       const res = await fetchPanelJson(`/api/game/worldboss?playerId=${player.id}`);
+      if (!res.ok) throw new Error('Falha ao carregar a Ameaça Universal');
       const data = await res.json();
       let nextBoss = data.boss as WorldBossView | null;
       const cloud = await loadCloudWorldBoss();
@@ -377,18 +242,10 @@ function WorldBossSection({
             body: JSON.stringify(cloud),
           });
         }
-        const cloudDamage = [...cloud.damages].sort((a, b) => b.damage - a.damage);
-        const mine = cloud.damages.find((d) => d.playerId === player.id);
-        const myPosition = mine ? cloudDamage.findIndex((d) => d.playerId === player.id) + 1 : null;
-        nextBoss = {
-          ...nextBoss,
-          currentHp: cloud.currentHp,
-          endsAt: cloud.endsAt,
-          myDamage: mine?.damage ?? nextBoss.myDamage,
-          myPosition,
-          totalAttackers: cloud.damages.length,
-          topDamage: cloudDamage.slice(0, 10).map((d) => ({ name: d.name, damage: d.damage, isMe: d.playerId === player.id })),
-        };
+        const fresh = await fetchPanelJson(`/api/game/worldboss?playerId=${player.id}`);
+        if (!fresh.ok) throw new Error('Falha ao atualizar a Ameaça Universal');
+        nextBoss = (await fresh.json()).boss;
+
       }
       if (nextBoss && !cloud && !restoreAttempted.current) {
         restoreAttempted.current = true;
@@ -439,7 +296,7 @@ function WorldBossSection({
     );
   }
 
-  if (!boss) return null;
+  if (!boss || Date.parse(boss.endsAt) <= now) return null;
 
   const hpPct = Math.max(0, (boss.currentHp / boss.maxHp) * 100);
   const timeLeft = new Date(boss.endsAt).getTime() - now;
@@ -472,7 +329,7 @@ function WorldBossSection({
             {/* v0.9.12 — Escala de Poder da ameaça (regra 5.1 visível) */}
             <div
               className="mt-2 flex flex-col items-center gap-1"
-              title={`Poder de luta: ${boss.power.toLocaleString('pt-BR')} — a Armadura de Escala (5.1) reduz o dano de quem está abaixo.`}
+              title={`Poder de luta: ${boss.power.toLocaleString('pt-BR')}`}
             >
               <span
                 className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-heading ${getPowerScale(boss.power).scale.badge}`}
@@ -526,9 +383,6 @@ function WorldBossSection({
               </div>
             </div>
 
-            <p className="text-[11px] text-amber-200/40 mt-2 leading-snug">
-              {boss.description}
-            </p>
           </div>
         </div>
 
@@ -560,7 +414,7 @@ function WorldBossSection({
           <GameButton
             size="lg"
             variant="danger"
-            disabled={busy || onCooldown || player.energy < 10 || player.hp < Math.max(20, Math.floor(player.derived.maxHp * 0.3))}
+            disabled={busy || onCooldown || player.energy < BOSS_ATTACK_ENERGY_COST || player.hp < Math.max(20, Math.floor(player.derived.maxHp * 0.3))}
             onClick={async () => {
               if (await onAttack()) {
                 await load();
@@ -571,8 +425,8 @@ function WorldBossSection({
             <Zap className="w-5 h-5" />
             {onCooldown
               ? `Recarregando... ${formatCountdown(cooldownLeft)}`
-              : player.energy < 10
-              ? 'Sem energia (precisa 10)'
+              : player.energy < BOSS_ATTACK_ENERGY_COST
+              ? `Sem energia (${BOSS_ATTACK_ENERGY_COST})`
               : 'ATACAR A AMEAÇA'}
           </GameButton>
         </div>

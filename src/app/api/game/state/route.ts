@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { ApiError, ok, toErrorResponse } from '@/lib/api';
 import { requireAuth, requirePlayer } from '@/lib/auth';
-import { applyRegen, playerToView, persistRegenSafe } from '@/lib/game/engine';
+import { applyRegen, playerToView } from '@/lib/game/engine';
 import { resolveDueActivities } from '@/lib/game/activities';
 import { maybeBeacon } from '@/lib/game/persistence';
 import { LIMITS, rateLimit } from '@/lib/rate-limit';
@@ -22,8 +22,8 @@ import { LIMITS, rateLimit } from '@/lib/rate-limit';
 //  * Aplica ATIVIDADES VENCIDAS (treino/batalha) e devolve os
 //    resultados como `pendingResults` — exibidos pelo cliente mesmo
 //    depois de recarregar a página;
-//  * Regen persistido com UPDATE CONDICIONAL (nunca sobrescreve o
-//    resultado de uma ação concorrente — sem lost update de HP).
+//  * Regeneração calculada em memória; ações persistem recursos na sua
+//    própria transação. Consultas não disputam o escritor do SQLite.
 // =====================================================================
 
 export async function GET(request: Request) {
@@ -77,18 +77,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // ===== REGEN com persistência SEGURA CONTRA CORRIDA =====
-    // captura os valores ANTES do regen; o update só passa se nada mudou
-    const before = {
-      hp: player.hp,
-      energy: player.energy,
-      lastRegen: player.lastRegen,
-      lastRegenHp: player.lastRegenHp,
-    };
-    if (applyRegen(player)) {
-      await persistRegenSafe(player, before);
-    }
-
     // posição no ranking (barata: COUNT condicional, sem carregar todos)
     const level = player.level;
     const battlesWon = player.battlesWon;
@@ -122,8 +110,13 @@ export async function GET(request: Request) {
       },
     });
 
+    // Usa a leitura mais recente, inclusive se uma batalha ocorreu durante
+    // a consulta. O tempo acumulado permanece nos relógios salvos até a ação.
+    const currentPlayer = withActivity ?? player;
+    applyRegen(currentPlayer);
+
     return ok({
-      player: playerToView(withActivity ?? player, rankingPosition),
+      player: playerToView(currentPlayer, rankingPosition),
       totalPlayers,
       questsReady,
       pendingResults,

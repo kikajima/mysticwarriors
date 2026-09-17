@@ -16,7 +16,7 @@
 //   itens/inventário, auras, transformações, zenni, diamantes, esferas,
 //   XP/nível/atributos, vida/energia, conquistas, missões
 //   diárias/semanais, profissão (níveis e turnos), treinamentos,
-//   cooldowns, pontos de temporada e dano no chefe global atual.
+//   cooldowns, pontos de temporada e dano no Ameaça Universal atual.
 //
 // NÃO CONFUNDIR com o reset de BALANCEAMENTO (balance.ts /
 // CREATION_DEFAULTS): aquele é outro contrato, com política própria e

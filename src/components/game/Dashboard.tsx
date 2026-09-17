@@ -1,20 +1,21 @@
 'use client';
 
+import { HpRecovery } from './HpRecovery';
 import { useEffect } from 'react';
 import { RACES, getItem, getTechnique, trainingCost, getStrategy, getProfession, professionRankTitle } from '@/lib/game/constants';
 import { equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { useServerNow } from '@/lib/game/clock';
 import type { PlayerView } from '@/lib/game/types';
-import { Chip, GameCard, PlayerAvatar, RACE_EMOJI, ResourceBar, SectionTitle, GameButton } from './Bits';
+import { Chip, GameCard, PlayerAvatar, RACE_EMOJI, ResourceBar, GameButton } from './Bits';
 import { getPowerScale, POWER_SCALES } from '@/lib/game/powerScale';
 import { useToast } from '@/hooks/use-toast';
-import { Swords, Shield, Gauge, Sparkles, Trophy, ScrollText, Hourglass, GraduationCap, Zap, Crown, Target, Flame, ChevronRight, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { Swords, Shield, Gauge, Sparkles, Trophy, Hourglass, GraduationCap, Zap, Crown, Target, Flame, ChevronRight, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 
-const STAT_META: Record<string, { label: string; icon: React.ReactNode; desc: string }> = {
-  strength: { label: 'Força', icon: <Swords className="w-4 h-4" />, desc: 'Potência dos ataques físicos' },
-  defense: { label: 'Defesa', icon: <Shield className="w-4 h-4" />, desc: 'Reduz dano físico e aumenta a vida' },
-  speed: { label: 'Velocidade', icon: <Gauge className="w-4 h-4" />, desc: 'Iniciativa e chance de esquiva' },
-  ki: { label: 'Ki', icon: <Sparkles className="w-4 h-4" />, desc: 'Poder dos ataques de energia; não aumenta a energia de ações' },
+const STAT_META: Record<string, { label: string; icon: React.ReactNode }> = {
+  strength: { label: 'Força', icon: <Swords className="w-4 h-4" /> },
+  defense: { label: 'Defesa', icon: <Shield className="w-4 h-4" /> },
+  speed: { label: 'Velocidade', icon: <Gauge className="w-4 h-4" /> },
+  ki: { label: 'Ki', icon: <Sparkles className="w-4 h-4" /> },
 };
 
 function formatCountdown(ms: number): string {
@@ -35,13 +36,6 @@ function secondsToNextEnergy(player: PlayerView, now: number): number | null {
   const elapsed = (now - new Date(player.regen.lastRegenAt).getTime()) / 1000;
   const next = interval - (elapsed % interval);
   return Math.max(1, Math.ceil(next));
-}
-
-function secondsToNextHp(player: PlayerView, now: number): number | null {
-  if (player.hp >= player.derived.maxHp) return null;
-  const interval = Math.max(1, player.regen.hpIntervalSec);
-  const elapsed = (now - new Date(player.regen.lastRegenHpAt).getTime()) / 1000;
-  return Math.max(1, Math.ceil(interval - (elapsed % interval)));
 }
 
 export function Dashboard({
@@ -72,7 +66,6 @@ export function Dashboard({
   const remaining = active ? new Date(active.endsAt).getTime() - now : 0;
   const strategy = getStrategy(player.strategy);
   const nextEnergyIn = secondsToNextEnergy(player, now);
-  const nextHpIn = secondsToNextHp(player, now);
   // ===== Escala de Poder (ASCENSÃO Z, Cap. 5) =====
   const scaleInfo = getPowerScale(player.derived.power);
 
@@ -118,7 +111,7 @@ export function Dashboard({
 
   return (
     <div className="space-y-6">
-      {/* ===== BANNER: EM TURNO DE TRABALHO — ações bloqueadas exceto Ameaça Universal ===== */}
+      {/* ===== BANNER: EM TURNO DE TRABALHO ===== */}
       {active && !missionDone && (
         <div
           role="status"
@@ -127,13 +120,10 @@ export function Dashboard({
           <AlertTriangle className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
           <div className="text-sm leading-relaxed">
             <p className="font-heading text-orange-200">Você está trabalhando!</p>
-            <p className="text-amber-200/60 text-xs mt-0.5">
-              Enquanto isso, só é possível atacar a <span className="text-amber-100">Ameaça Universal</span> — treino,
-              loja, hospital e demais ações voltam com o retorno do guerreiro, em {formatCountdown(remaining)}.
-            </p>
+
           </div>
-          <GameButton size="sm" variant="ghost" className="ml-auto shrink-0" onClick={() => onNavigate('battle')}>
-            Ameaça Universal <ChevronRight className="w-3.5 h-3.5" />
+          <GameButton size="sm" variant="ghost" className="ml-auto shrink-0" onClick={() => onNavigate('missions')}>
+            Profissões <ChevronRight className="w-3.5 h-3.5" />
           </GameButton>
         </div>
       )}
@@ -283,15 +273,7 @@ export function Dashboard({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GameCard className="p-4">
           <ResourceBar label="Vida (HP)" icon="❤️" value={player.hp} max={player.derived.maxHp} gradient="from-red-500 to-rose-700" height="h-4" />
-          {nextHpIn !== null ? (
-            <p className="text-[11px] text-red-300/80 mt-2 tabular-nums" aria-live="polite">
-              ⏳ Próximo ponto de vida em {nextHpIn >= 60
-                ? `${Math.floor(nextHpIn / 60)}m ${String(nextHpIn % 60).padStart(2, '0')}s`
-                : `${nextHpIn}s`}
-            </p>
-          ) : (
-            <p className="text-[11px] text-amber-200/40 mt-2">Vida cheia</p>
-          )}
+          <HpRecovery player={player} />
         </GameCard>
         <GameCard className="p-4">
           <ResourceBar label="Energia" icon="⚡" value={player.energy} max={player.derived.maxEnergy} gradient="from-yellow-400 to-amber-600" height="h-4" />
@@ -306,7 +288,7 @@ export function Dashboard({
                 : `${nextEnergyIn}s`}
             </p>
           ) : (
-            <p className="text-[11px] text-amber-200/40 mt-2">Gasta em batalhas, treinos e trabalhos · humanos regeneram +10%</p>
+            <p className="text-[11px] text-amber-200/40 mt-2">Energia cheia</p>
           )}
         </GameCard>
         <GameCard className="p-4 flex flex-col">
@@ -365,9 +347,7 @@ export function Dashboard({
             </div>
             <div className="flex-1">
               <p className="font-heading text-amber-100">Sem trabalho em andamento</p>
-              <p className="text-sm text-amber-200/50 mt-0.5">
-                Profissões rendem Zeni e XP estáveis — com promoções que multiplicam o salário.
-              </p>
+
             </div>
             <GameButton size="sm" onClick={() => onNavigate('missions')}>
               Ir ao trabalho <ChevronRight className="w-3.5 h-3.5" />
@@ -383,12 +363,7 @@ export function Dashboard({
             <h3 className="font-heading text-amber-100 flex items-center gap-2">
               <Target className="w-4 h-4" /> Escala de Poder
             </h3>
-            <p className="text-[11px] text-amber-200/40 mt-1 leading-snug max-w-md">
-              A ordem geral de potência do seu guerreiro — a mesma escala do sistema ASCENSÃO Z.
-              {scaleInfo.next
-                ? ''
-                : ' Você alcançou a escala máxima: suficiente para conflitos envolvendo universos.'}
-            </p>
+
           </div>
           <div className="text-right shrink-0">
             <span
@@ -469,7 +444,7 @@ export function Dashboard({
                 </span>
                 <span className="font-heading text-2xl text-orange-400">{player[key]}</span>
               </div>
-              <p className="text-[11px] text-amber-200/40 leading-snug">{STAT_META[key].desc}</p>
+
               <button
                 onClick={() => onNavigate('training')}
                 className="text-[10px] text-amber-200/30 mt-2 hover:text-orange-300 transition-colors"
@@ -488,7 +463,7 @@ export function Dashboard({
             <Zap className="w-4 h-4" /> Preparação de Combate
           </h3>
           <p className="text-[11px] text-amber-200/40 mb-3">
-            Estratégia: <span className="text-amber-200/80">{strategy.icon} {strategy.name}</span> — {strategy.description}
+            Estratégia: <span className="text-amber-200/80">{strategy.icon} {strategy.name}</span>
           </p>
           <div className="space-y-2">
             {(['1', '2', '3', 'S'] as const).map((slot) => {
@@ -510,9 +485,7 @@ export function Dashboard({
                   {tech ? (
                     <span className="text-sm text-amber-100">
                       {tech.icon} {tech.name}{' '}
-                      <span className="text-amber-200/40 text-[10px]">
-                        ×{tech.power.toFixed(1)} · {tech.kiCost} Ki
-                      </span>
+
                     </span>
                   ) : (
                     <span className="text-sm text-amber-200/30 italic">vazio</span>
@@ -557,31 +530,12 @@ export function Dashboard({
               <p className="text-[11px] text-amber-200/50">Aproveitamento</p>
             </div>
           </div>
-          <div className="border-t border-amber-900/30 pt-3">
-            <p className="text-[11px] text-amber-200/50 leading-relaxed flex gap-2">
-              <ScrollText className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>
-                Trabalhe nas profissões, treine atributos, compre equipamentos e desafie vilões. Colete 7 Esferas
-                do Dragão para invocar Shenlon, enfrente a Ameaça Universal e cresça no ranking!
-              </span>
-            </p>
-          </div>
+
         </GameCard>
       </div>
 
       {/* Bônus raciais */}
-      <GameCard className="p-5">
-        <h3 className="font-heading text-amber-100 mb-3 flex items-center gap-2">
-          <Shield className="w-4 h-4" /> Bônus raciais ativos (valem atacando e defendendo)
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {race.perks.map((perk, i) => (
-            <Chip key={i} className="bg-emerald-950/50 text-emerald-300 border-emerald-800/50">
-              ✔ {perk}
-            </Chip>
-          ))}
-        </div>
-      </GameCard>
+
     </div>
   );
 }

@@ -146,7 +146,7 @@ export default function LandingPage() {
           <p className="text-sm text-amber-200/60 leading-relaxed max-w-2xl mx-auto">
             Todo o conteúdo é conquistado jogando: Zeni vem de profissões e batalhas, e{' '}
             <span className="text-sky-300">cristais</span> — a moeda dos cosméticos — caem das missões
-            diárias, conquistas e do boss mundial. Cosméticos nunca alteram atributos. VIP e Passe de
+            diárias, conquistas e do Ameaça Universal. Cosméticos nunca alteram atributos. VIP e Passe de
             Temporada trarão apenas conveniência e estilo quando chegarem.
           </p>
           <div className="flex items-center justify-center gap-2 mt-4 text-amber-200/40 text-xs">
