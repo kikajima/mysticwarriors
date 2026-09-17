@@ -74,12 +74,12 @@ export async function revokeSession(token: string): Promise<void> {
  * Valida o cookie de sessão e retorna account + session.
  * Checa existência, revogação e expiração no banco.
  */
-export async function getAuth(): Promise<AuthContext | null> {
+export async function getAuth(client: Prisma.TransactionClient = db): Promise<AuthContext | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
 
-  const session = await db.session.findUnique({
+  const session = await client.session.findUnique({
     where: { token },
     include: { account: true },
   });

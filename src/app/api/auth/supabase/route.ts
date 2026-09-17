@@ -137,7 +137,9 @@ export async function POST(request: Request) {
       if (linked) return { account: linked, promoted: false as const };
 
       // 2. sessão atual de convidado → PROMOVE (personagens preservados)
-      const current = await getAuth();
+      // A sessão usa a conexão já reservada: consultar o db global aqui
+      // aguardaria a própria transação liberar o pool de uma conexão.
+      const current = await getAuth(tx);
       const username = await uniqueUsername(tx, preferredNick);
       if (current?.account.isGuest) {
         const promotedAccount = await tx.account.update({
