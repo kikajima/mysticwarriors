@@ -82,13 +82,62 @@ model Guild {
   // código volta a criar/assegurar guilda de sistema.
   createdAt    DateTime @default(now())
   members      Player[]
+  motd         String @default("")
+  stateVersion Int @default(0)
+  disbandedAt  DateTime?
+  roles        GuildRole[]
+  invitations  GuildInvitation[]
 
   @@index([level])
+}
+
+model GuildRole {
+  id String @id @default(cuid())
+  guildId String
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  name String
+  rank Int
+  permissions String @default("[]")
+  assignments GuildRoleAssignment[]
+  @@unique([guildId, name])
+}
+
+model GuildRoleAssignment {
+  playerId String @id
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  roleId String
+  role GuildRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+}
+
+model GuildInvitation {
+  id String @id @default(cuid())
+  guildId String
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  playerId String
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  inviterId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@unique([guildId, playerId])
+  @@index([playerId, expiresAt])
+}
+
+model GuildActionReceipt {
+  id String @id @default(cuid())
+  playerId String
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  requestId String
+  result String
+  createdAt DateTime @default(now())
+  @@unique([playerId, requestId])
 }
 
 // ===== Jogadores =====
 
 model Player {
+  guildRoleAssignment GuildRoleAssignment?
+  guildInvitations GuildInvitation[]
+  guildActionReceipts GuildActionReceipt[]
   id            String    @id @default(cuid())
   name          String    @unique
   race          String
