@@ -1,6 +1,3 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '@prisma/client';
-import { withAuth, withZeniCheck } from '../../../utils/auth';// =====================================================================
 // Guerreiros Místicos — Schema Prisma
 // ---------------------------------------------------------------------
 // DESENVOLVIMENTO: SQLite (padrão, zero configuração).
