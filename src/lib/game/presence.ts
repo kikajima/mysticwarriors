@@ -1,8 +1,7 @@
-const globalPresence = globalThis as unknown as { guildPresence?: Map<string, number> };
-const presence = globalPresence.guildPresence ??= new Map<string, number>();
-export function touchPresence(id: string) {
-  const now = Date.now();
-  presence.set(id, now);
-  if (presence.size > 1000) for (const [key, at] of presence) if (now - at > 120000) presence.delete(key);
-}
-export const isOnline = (id: string) => Date.now() - (presence.get(id) ?? 0) < 120000;
+// src/lib/game/presence.ts
+export const isOnline = (playerId: string): boolean => {
+  // Implemente a lógica para verificar se o jogador está online
+  // Por exemplo, você pode buscar o status do jogador no banco de dados ou em algum cache
+  // Retorne true se o jogador estiver online, false caso contrário
+  return false; // Substitua por sua lógica real
+};
