@@ -1,4 +1,5 @@
 import type { Prisma, Player } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import { db } from '@/lib/db';
 import { ApiError } from '@/lib/api';
 import {
@@ -85,15 +86,19 @@ export async function universalThreatIsAvailable(tx: Prisma.TransactionClient | 
   return (await threatEndsAt(tx)) !== null;
 }
 
-export async function invokeUniversalThreat(): Promise<void> {
+export async function invokeUniversalThreat(client: typeof db = db): Promise<void> {
   const until = new Date(Date.now() + UNIVERSAL_THREAT.invocationHours * 60 * 60 * 1000).toISOString();
-  await db.$transaction(async (tx) => {
+  await client.$transaction(async (tx) => {
     await tx.gameMeta.upsert({
       where: { key: INVOKED_UNTIL_KEY },
       update: { value: until },
       create: { key: INVOKED_UNTIL_KEY, value: until },
     });
-    await ensureActiveBoss(tx);
+    // Invocar inicia outro encontro. O histórico anterior fica arquivado,
+    // com seu próprio dano, participantes e cooldowns.
+    await tx.worldBoss.updateMany({ where: { status: 'active' }, data: { status: 'expired' } });
+    // ID novo também impede que um backup de outra invocação seja aplicado.
+    await ensureActiveBoss(tx, `boss_${randomUUID()}`);
   });
 }
 
@@ -132,7 +137,7 @@ const BOSS_POOL: BossSeed[] = [
  * transações paralelas que tentem criar o mesmo slot colidem no PK —
  * apenas a primeira vence e a segunda apenas retorna.
  */
-export async function ensureActiveBoss(tx: Prisma.TransactionClient): Promise<void> {
+export async function ensureActiveBoss(tx: Prisma.TransactionClient, newEncounterId?: string): Promise<void> {
   const now = new Date();
   const endsAt = await threatEndsAt(tx, now);
 
@@ -158,7 +163,7 @@ export async function ensureActiveBoss(tx: Prisma.TransactionClient): Promise<vo
 
   // tenta criar com ID determinístico; colisão = outra transação criou antes
   for (let attempt = 0; attempt < 5; attempt++) {
-    const id = `boss_${total + 1 + attempt}`;
+    const id = newEncounterId ?? `boss_${total + 1 + attempt}`;
     try {
       await tx.worldBoss.create({
         data: {
@@ -182,7 +187,10 @@ export async function ensureActiveBoss(tx: Prisma.TransactionClient): Promise<vo
         },
       });
       return;
-    } catch {
+    } catch (error) {
+      // Uma invocação explícita precisa falhar atomicamente se não criar
+      // seu novo encontro, sem confirmar apenas a expiração do anterior.
+      if (newEncounterId) throw error;
       // PK ocupado — outra transação concorrente criou este slot.
       const retry = await tx.worldBoss.findFirst({ where: { status: 'active' } });
       if (retry) return;

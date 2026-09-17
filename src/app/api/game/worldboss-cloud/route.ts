@@ -46,7 +46,9 @@ export async function POST(request: Request) {
       return ok({ restored: false, reason: 'expired' });
     }
     const boss = await db.worldBoss.findUnique({ where: { id: snapshot.id } });
-    if (!boss) return ok({ restored: false });
+    if (!boss || boss.status !== 'active' || boss.endsAt.getTime() <= Date.now()) {
+      return ok({ restored: false });
+    }
     const localDamageCount = await db.worldBossDamage.count({ where: { bossId: boss.id } });
     // O snapshot só pode repor um banco recém-criado. Depois que existe
     // progresso local, o servidor é a fonte autoritativa e nenhum polling

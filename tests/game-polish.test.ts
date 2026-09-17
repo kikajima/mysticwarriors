@@ -11,7 +11,7 @@ import { applyPendingMigrations } from '../src/lib/game/persistence';
 import { restoreOfflineOpponent, fetchOfflineOpponent, type OfflineOpponent } from '../src/lib/supabase/offline-pvp';
 import { actionStartPvp } from '../src/lib/game/actions';
 import { resolveDueActivities } from '../src/lib/game/activities';
-import { ensureActiveBoss } from '../src/lib/worldboss';
+import { ensureActiveBoss, invokeUniversalThreat } from '../src/lib/worldboss';
 import { POST as invokeThreat } from '../src/app/api/admin/universal-threat/route';
 import type { PlayerView } from '../src/lib/game/types';
 
@@ -103,7 +103,7 @@ describe('PvP offline e preservação do estado', () => {
   test('consulta offline sem token é recusada antes de acessar a nuvem', async () => {
     await expect(fetchOfflineOpponent('Offline Warrior')).rejects.toThrow('Entre na sua conta');
   });
-  test('encontro antigo é normalizado sem perder dano; invocação fixa prazo', async () => {
+  test('consulta normaliza encontro antigo sem perder dano', async () => {
     const until = new Date(Date.now() + 7 * 86400000);
     await db.gameMeta.create({ data: { key: 'universalThreatInvokedUntil', value: until.toISOString() } });
     const old = await db.worldBoss.create({ data: { name: 'Old encounter', emoji: 'X', maxHp: 1000, currentHp: 400, endsAt: new Date(Date.now() + 3600000) } });
@@ -112,5 +112,22 @@ describe('PvP offline e preservação do estado', () => {
     expect(current.name).toBe('Kronar, o Devorador de Mundos');
     expect(current.currentHp).toBe(400);
     expect(current.endsAt.toISOString()).toBe(until.toISOString());
+  });
+  test('invocar cria encontro com vida cheia e sem dano ou cooldown anterior', async () => {
+    const old = await db.worldBoss.findFirstOrThrow({ where: { status: 'active' } });
+    await db.worldBossDamage.create({ data: { bossId: old.id, playerId: 'offline-test-0', damage: 442, attacks: 1 } });
+    await invokeUniversalThreat(db);
+    const fresh = await db.worldBoss.findFirstOrThrow({ where: { status: 'active' }, include: { damages: true } });
+    expect(fresh.id).not.toBe(old.id);
+    expect(fresh.currentHp).toBe(1_200_000);
+    expect(fresh.currentHp).toBe(fresh.maxHp);
+    expect(fresh.damages).toHaveLength(0);
+    expect((await db.worldBoss.findUniqueOrThrow({ where: { id: old.id } })).status).toBe('expired');
+    expect(await db.worldBossDamage.count({ where: { bossId: old.id } })).toBe(1);
+    await db.$transaction((tx) => ensureActiveBoss(tx));
+    expect((await db.worldBoss.findFirstOrThrow({ where: { status: 'active' } })).id).toBe(fresh.id);
+    await invokeUniversalThreat(db);
+    expect(await db.worldBoss.count({ where: { status: 'active' } })).toBe(1);
+    expect((await db.worldBoss.findFirstOrThrow({ where: { status: 'active' } })).id).not.toBe(fresh.id);
   });
 });
