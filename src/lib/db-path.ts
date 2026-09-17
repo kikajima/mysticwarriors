@@ -64,5 +64,8 @@ export function resolveDbFilePath(): string {
 
 /** URL `file:` pronta para o Prisma (datasource override). */
 export function resolveDbUrl(): string {
-  return `file:${resolveDbFilePath()}`;
+  // SQLite tem um único escritor. Uma conexão evita que uma gravação avulsa
+  // bloqueie a conexão de uma transação que ainda precisa executar/commitar.
+  // A fila do pool também cobre state, temporadas, dedup e rotas administrativas.
+  return `file:${resolveDbFilePath()}?connection_limit=1&socket_timeout=15`;
 }
