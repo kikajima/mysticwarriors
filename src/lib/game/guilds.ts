@@ -52,7 +52,11 @@ export async function manageGuild(tx: Tx, actor: Player, type: string, args: Rec
     await spendCurrency(tx, actor.id, 'zeni', 5000, { type: 'spend', source: 'guild_create', accountId: actor.accountId });
     const guild = await tx.guild.create({ data: { name, leaderId: actor.id } });
     await settle(tx, actor.id);
-    await tx.player.update({ where: { id: actor.id }, data: { guildId: guild.id } });
+    const attached = await tx.player.updateMany({
+      where: { id: actor.id, guildId: null },
+      data: { guildId: guild.id },
+    });
+    if (!attached.count) throw new ApiError('CONFLICT', 'Seu vínculo de guilda mudou durante a fundação. Tente novamente.');
     return done(`Guilda ${name} fundada!`);
   }
   if (type === 'join_guild') return invalid('Para entrar, aceite um convite da guilda.');
@@ -71,7 +75,11 @@ export async function manageGuild(tx: Tx, actor: Player, type: string, args: Rec
     if (!locked.count) throw new ApiError('CONFLICT');
     if (await tx.player.count({ where: { guildId: guild.id } }) >= guildCapacity(guild.level)) return invalid('A guilda está sem vagas.');
     await settle(tx, actor.id);
-    await tx.player.update({ where: { id: actor.id }, data: { guildId: guild.id } });
+    const attached = await tx.player.updateMany({
+      where: { id: actor.id, guildId: null },
+      data: { guildId: guild.id },
+    });
+    if (!attached.count) return invalid('Você já pertence a uma guilda.');
     await tx.guildRoleAssignment.deleteMany({ where: { playerId: actor.id } });
     await tx.guildInvitation.deleteMany({ where: { playerId: actor.id } });
     return done(`Bem-vindo à guilda ${guild.name}!`);
