@@ -148,7 +148,7 @@ test('contratos fixos: curva, bônus, permissões e wiki sincronizados', () => {
   for (const [, label] of GUILD_BONUS_TABLE) expect(wiki).toContain(label);
   expect(guildCapacity(1)).toBe(5); expect(guildCapacity(10)).toBe(14);
 });
-test('migração preserva níveis e doações existentes, inclusive nível acima de 10', async () => {
+test('migração preserva níveis e doações existentes; hardening normaliza legado acima do teto', async () => {
   const legacy = new PrismaClient({ datasources: { db: { url: `file:${path.join(dir, 'legacy.db')}` } } });
   try {
     await legacy.$executeRawUnsafe('CREATE TABLE Guild (id TEXT PRIMARY KEY, level INTEGER, xp INTEGER, totalDonated INTEGER)');
@@ -156,8 +156,10 @@ test('migração preserva níveis e doações existentes, inclusive nível acima
     for (const level of [1, 2, 5, 10, 12]) await legacy.$executeRawUnsafe('INSERT INTO Guild VALUES (?, ?, ?, ?)', `QA_${level}`, level, 500 * (level - 1) ** 2, 12345);
     const sql = await Bun.file(path.join(process.cwd(), 'prisma/migrations/20260918120000_guild_management/migration.sql')).text();
     for (const statement of splitSqlStatements(sql)) await legacy.$executeRawUnsafe(statement);
-    const rows = await legacy.$queryRawUnsafe<Array<{ level: number; xp: number; totalDonated: number }>>('SELECT level, xp, totalDonated FROM Guild ORDER BY level');
-    expect(rows.map(r => Number(r.level))).toEqual([1, 2, 5, 10, 12]);
+    const capSql = await Bun.file(path.join(process.cwd(), 'prisma/migrations/20260918203000_guild_level_cap/migration.sql')).text();
+    for (const statement of splitSqlStatements(capSql)) await legacy.$executeRawUnsafe(statement);
+    const rows = await legacy.$queryRawUnsafe<Array<{ level: number; xp: number; totalDonated: number }>>('SELECT level, xp, totalDonated FROM Guild ORDER BY id');
+    expect(rows.map(r => Number(r.level)).sort((a,b) => a-b)).toEqual([1, 2, 5, 10, 10]);
     for (const row of rows) { expect(Number(row.xp)).toBe(guildThreshold(Number(row.level))); expect(Number(row.totalDonated)).toBe(12345); }
   } finally { await legacy.$disconnect(); }
 });
