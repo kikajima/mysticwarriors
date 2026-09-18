@@ -316,11 +316,13 @@ check "ranking paginado com myPosition" "True" "$R"
 R=$(curl -s -b $JAR_B "$BASE/api/game/guilds?playerId=$PB" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(isinstance(d["guilds"],list))' 2>/dev/null)
 check "lista de guildas resumida" "True" "$R"
 
-# cria guilda + doação
-R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"create_guild\",\"guildName\":\"Audit Guild $TS\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["guild"]["name"])' 2>/dev/null)
+# cria guilda + doação (guildas exigem requestId para exactly-once)
+REQ_CREATE="guild-create-$TS"
+R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"create_guild\",\"guildName\":\"Audit Guild $TS\",\"requestId\":\"$REQ_CREATE\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["guild"]["name"])' 2>/dev/null)
 check "criar guilda" "Audit Guild $TS" "$R"
-R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"donate_guild\",\"amount\":1500}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
-check "doar 1500 para a guilda" "True" "$R"
+REQ_DONATE="guild-donate-$TS"
+R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"donate_guild\",\"amount\":8000,\"requestId\":\"$REQ_DONATE\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
+check "doar 8000 para a guilda" "True" "$R"
 GUILD_LVL=$(bun -e "
 import { PrismaClient } from '@prisma/client';
 const db = new PrismaClient();
@@ -328,7 +330,7 @@ const g = await db.guild.findFirst({ where: { name: 'Audit Guild $TS' } });
 await db.\$disconnect();
 console.log(g.level);
 " 2>/dev/null)
-check "guilda subiu para nível 2 (500 XP)" "2" "$GUILD_LVL"
+check "guilda subiu para nível 2 (8.000 Zeni)" "2" "$GUILD_LVL"
 
 echo ""
 echo "=== 11. ECONOMIA: ledger e transações ==="
@@ -353,7 +355,7 @@ bun -e "
 import { PrismaClient } from '@prisma/client';
 const db = new PrismaClient();
 await db.player.deleteMany({ where: { name: { in: ['AuditA$TS','AuditB$TS','GuestAudit$TS'] } } });
-await db.account.deleteMany({ where: { OR: [{ username: { in: ['audit_a_$TS','audit_b_$TS','converted_$TS'] } }, { username: null }] } });
+await db.account.deleteMany({ where: { username: { in: ['audit_a_$TS','audit_b_$TS','converted_$TS'] } } });
 await db.guild.deleteMany({ where: { name: 'Audit Guild $TS' } });
 await db.\$disconnect();
 console.log('cleanup ok');
