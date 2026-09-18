@@ -6,7 +6,6 @@ import { useServerNow } from '@/lib/game/clock';
 import type { PlayerView, WorldBossView } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { BossSkeleton, fetchPanelJson, LoadFail } from './PanelLoad';
-import { loadCloudWorldBoss, saveCloudWorldBoss, type CloudWorldBossSnapshot } from '@/lib/supabase/client';
 import { getPowerScale, scaleDiffLabel } from '@/lib/game/powerScale';
 import { HpRecovery } from './HpRecovery';
 import { BOSS_ATTACK_ENERGY_COST } from '@/lib/game/rules';
@@ -219,7 +218,6 @@ function WorldBossSection({
 
   const loadSequence = useRef(0);
   const loadInFlight = useRef(false);
-  const restoreAttempted = useRef(false);
   const load = useCallback(async () => {
     if (loadInFlight.current) return;
     loadInFlight.current = true;
@@ -229,28 +227,7 @@ function WorldBossSection({
       const res = await fetchPanelJson(`/api/game/worldboss?playerId=${player.id}`);
       if (!res.ok) throw new Error('Falha ao carregar a Ameaça Universal');
       const data = await res.json();
-      let nextBoss = data.boss as WorldBossView | null;
-      const cloud = await loadCloudWorldBoss();
-      if (nextBoss && cloud && cloud.id === nextBoss.id) {
-        // O SQLite pode ter acabado de nascer após um deploy. O snapshot
-        // global do Supabase é a fonte durável do HP, prazo e ranking.
-        if (!restoreAttempted.current) {
-          restoreAttempted.current = true;
-          await fetch('/api/game/worldboss-cloud', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(cloud),
-          });
-        }
-        const fresh = await fetchPanelJson(`/api/game/worldboss?playerId=${player.id}`);
-        if (!fresh.ok) throw new Error('Falha ao atualizar a Ameaça Universal');
-        nextBoss = (await fresh.json()).boss;
-
-      }
-      if (nextBoss && !cloud && !restoreAttempted.current) {
-        restoreAttempted.current = true;
-        void saveLocalBossToCloud();
-      }
+      const nextBoss = data.boss as WorldBossView | null;
       if (sequence === loadSequence.current) setBoss(nextBoss);
     } catch {
       // v0.9.24 (B1): sem card na tela ainda → erro amigável; refresh
@@ -261,20 +238,6 @@ function WorldBossSection({
       loadInFlight.current = false;
     }
   }, [player.id]);
-  const saveLocalBossToCloud = useCallback(async () => {
-    const localRes = await fetch('/api/game/worldboss-cloud');
-    const localData = await localRes.json();
-    const local = localData.snapshot as CloudWorldBossSnapshot | null;
-    if (!local) return;
-    const previous = await loadCloudWorldBoss();
-    if (previous && previous.id === local.id) {
-      const merged = new Map(previous.damages.map((d) => [d.playerId, d]));
-      for (const damage of local.damages) merged.set(damage.playerId, damage);
-      local.damages = [...merged.values()];
-    }
-    await saveCloudWorldBoss(local);
-  }, []);
-
   useEffect(() => {
     void load();
     const timer = setInterval(() => void load(), 15000);
