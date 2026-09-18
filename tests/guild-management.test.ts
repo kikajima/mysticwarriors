@@ -63,8 +63,22 @@ test('doações simultâneas sobem exatamente um nível; replay e inválidos nã
   expect(g.level).toBe(2); expect(g.xp).toBe(16000); expect(g.totalDonated).toBe(16000);
   const request = randomUUID();
   await Promise.all([act(1, 'donate_guild', { amount: 1 }, request), act(1, 'donate_guild', { amount: 1 }, request)]);
-  for (const amount of [0, -1, 1.5, NaN, 2_000_000]) await expect(act(1, 'donate_guild', { amount })).rejects.toThrow();
+  for (const amount of [0, -1, 1.5, NaN]) await expect(act(1, 'donate_guild', { amount })).rejects.toThrow();
   g = await db.guild.findUniqueOrThrow({ where: { id: guildId } }); expect(g.totalDonated).toBe(16001);
+});
+test('doação que ultrapassa o nível 10 cobra apenas o restante útil', async () => {
+  const threshold = guildThreshold(10);
+  await db.guild.update({ where: { id: guildId }, data: { level: 9, xp: threshold - 50, totalDonated: threshold - 50 } });
+  const before = await db.player.findUniqueOrThrow({ where: { id: ids[0] } });
+  const result = await act(0, 'donate_guild', { amount: 100 });
+  const after = await db.player.findUniqueOrThrow({ where: { id: ids[0] } });
+  const guild = await db.guild.findUniqueOrThrow({ where: { id: guildId } });
+  expect(before.zeni - after.zeni).toBe(50);
+  expect(guild.level).toBe(10);
+  expect(guild.xp).toBe(threshold);
+  expect(result.message).toContain('excedente de 50');
+  // volta ao estado usado pelos testes seguintes.
+  await db.guild.update({ where: { id: guildId }, data: { level: 2, xp: 16001, totalDonated: 16001 } });
 });
 test('cargos, permissões, hierarquia e gestão offline são autoritativos', async () => {
   await act(0, 'guild_role_save', { roleName: 'Recruta-Mestre', rank: 10, permissions: ['convidar'] });
@@ -134,7 +148,7 @@ test('contratos fixos: curva, bônus, permissões e wiki sincronizados', () => {
   for (const [, label] of GUILD_BONUS_TABLE) expect(wiki).toContain(label);
   expect(guildCapacity(1)).toBe(5); expect(guildCapacity(10)).toBe(14);
 });
-test('migração preserva níveis e doações existentes, inclusive nível acima de 10', async () => {
+test('migração preserva níveis e doações existentes; hardening normaliza legado acima do teto', async () => {
   const legacy = new PrismaClient({ datasources: { db: { url: `file:${path.join(dir, 'legacy.db')}` } } });
   try {
     await legacy.$executeRawUnsafe('CREATE TABLE Guild (id TEXT PRIMARY KEY, level INTEGER, xp INTEGER, totalDonated INTEGER)');
@@ -142,8 +156,10 @@ test('migração preserva níveis e doações existentes, inclusive nível acima
     for (const level of [1, 2, 5, 10, 12]) await legacy.$executeRawUnsafe('INSERT INTO Guild VALUES (?, ?, ?, ?)', `QA_${level}`, level, 500 * (level - 1) ** 2, 12345);
     const sql = await Bun.file(path.join(process.cwd(), 'prisma/migrations/20260918120000_guild_management/migration.sql')).text();
     for (const statement of splitSqlStatements(sql)) await legacy.$executeRawUnsafe(statement);
-    const rows = await legacy.$queryRawUnsafe<Array<{ level: number; xp: number; totalDonated: number }>>('SELECT level, xp, totalDonated FROM Guild ORDER BY level');
-    expect(rows.map(r => Number(r.level))).toEqual([1, 2, 5, 10, 12]);
+    const capSql = await Bun.file(path.join(process.cwd(), 'prisma/migrations/20260918203000_guild_level_cap/migration.sql')).text();
+    for (const statement of splitSqlStatements(capSql)) await legacy.$executeRawUnsafe(statement);
+    const rows = await legacy.$queryRawUnsafe<Array<{ level: number; xp: number; totalDonated: number }>>('SELECT level, xp, totalDonated FROM Guild ORDER BY id');
+    expect(rows.map(r => Number(r.level)).sort((a,b) => a-b)).toEqual([1, 2, 5, 10, 10]);
     for (const row of rows) { expect(Number(row.xp)).toBe(guildThreshold(Number(row.level))); expect(Number(row.totalDonated)).toBe(12345); }
   } finally { await legacy.$disconnect(); }
 });

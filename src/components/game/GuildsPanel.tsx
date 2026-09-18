@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GuildDetail, GuildSummary, PlayerView } from '@/lib/game/types';
-import { GUILD_PERMISSIONS } from '@/lib/game/guildRules';
+import { GUILD_BONUS_TABLE, GUILD_PERMISSIONS } from '@/lib/game/guildRules';
 import { GameButton, GameCard, SectionTitle } from './Bits';
 import { fetchPanelJson, GuildsSkeleton, LoadFail } from './PanelLoad';
 const input = 'w-full min-w-0 rounded border border-amber-800 bg-black/40 p-2 text-amber-100';
@@ -69,6 +69,12 @@ export function GuildsPanel({ player, onAction, busy }: { player: PlayerView; on
       <p className="whitespace-pre-wrap break-words">{myGuild.description}</p>
       {myGuild.motd && <p className="rounded bg-amber-950 p-3 whitespace-pre-wrap break-words">📣 {myGuild.motd}</p>}
       <p>{myGuild.members.length}/{myGuild.capacity} membros · Total doado: {myGuild.totalDonated.toLocaleString('pt-BR')} Zeni</p>
+      <div className="rounded border border-amber-900/60 bg-black/20 p-3">
+        <h3 className="font-heading">Bônus coletivos ativos</h3>
+        {GUILD_BONUS_TABLE.filter(([level]) => level <= myGuild.level).length > 0
+          ? <ul className="mt-2 space-y-1 text-sm">{GUILD_BONUS_TABLE.filter(([level]) => level <= myGuild.level).map(([level, label, value]) => <li key={level}>Nv {level}: {label} +{value}%</li>)}</ul>
+          : <p className="mt-2 text-sm text-amber-200/80">O primeiro bônus é liberado no nível 2.</p>}
+      </div>
       {myGuild.level < 10 ? <div className="space-y-2"><label htmlFor="guild-donation">Progresso: {myGuild.xp.toLocaleString('pt-BR')} / {myGuild.xpToNext.toLocaleString('pt-BR')} Zeni</label><progress className="w-full" value={myGuild.xp} max={myGuild.xpToNext} /><input id="guild-donation" className={input} type="number" min="1" step="1" value={donation} onChange={e => setDonation(e.target.value)} /><GameButton disabled={busy} onClick={() => void run({ type: 'donate_guild', amount: Number(donation) })}>Doar Zeni</GameButton></div> : <p>Nível máximo alcançado</p>}
       {can('alterar_descricao') && <div className="space-y-2"><label htmlFor="guild-description">Descrição pública</label><textarea id="guild-description" className={input} maxLength={500} value={description} onChange={e => setDescription(e.target.value)} /><GameButton disabled={busy} onClick={() => void run({ type: 'guild_description', text: description })}>Salvar descrição</GameButton></div>}
       {can('mensagem_do_dia') && <div className="space-y-2"><label htmlFor="guild-motd">Mensagem do dia</label><textarea id="guild-motd" className={input} maxLength={280} value={motd} onChange={e => setMotd(e.target.value)} /><GameButton disabled={busy} onClick={() => void run({ type: 'guild_motd', text: motd })}>Salvar mensagem</GameButton></div>}
