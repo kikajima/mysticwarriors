@@ -183,18 +183,19 @@ describe('Integridade do conteúdo', () => {
   });
 });
 
-describe('Guildas (nível por XP de doações)', () => {
-  test('nível 1 sem doações, nível 2 aos 500 XP', () => {
+describe('Guildas (curva coletiva fixa)', () => {
+  test('níveis seguem os custos cumulativos publicados', () => {
     expect(guildLevelFromXp(0)).toBe(1);
-    expect(guildLevelFromXp(499)).toBe(1);
-    expect(guildLevelFromXp(500)).toBe(2);
-    expect(guildLevelFromXp(2000)).toBe(3); // 500*2^2
-    expect(guildLevelFromXp(4500)).toBe(4); // 500*3^2
+    expect(guildLevelFromXp(7_999)).toBe(1);
+    expect(guildLevelFromXp(8_000)).toBe(2);
+    expect(guildLevelFromXp(21_999)).toBe(2);
+    expect(guildLevelFromXp(22_000)).toBe(3);
+    expect(guildLevelFromXp(47_000)).toBe(4);
   });
 
-  test('xpToNext coerente com a fórmula de nível', () => {
-    expect(guildXpToNext(1)).toBe(500);
-    expect(guildXpToNext(2)).toBe(2000);
+  test('xpToNext devolve o limiar cumulativo do próximo nível', () => {
+    expect(guildXpToNext(1)).toBe(8_000);
+    expect(guildXpToNext(2)).toBe(22_000);
   });
 });
 
