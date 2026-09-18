@@ -72,12 +72,14 @@ export async function GET(request: Request) {
           : [];
       const myRank = isLeader ? 100 : actorRole?.rank ?? 0;
 
-      const donationTotals = await db.guildDonation.groupBy({
-        by: ['playerId'],
-        where: { guildId: id },
-        _sum: { amount: true },
-        orderBy: { _sum: { amount: 'desc' } },
-      });
+      const donationTotals = isMember
+        ? await db.guildDonation.groupBy({
+            by: ['playerId'],
+            where: { guildId: id },
+            _sum: { amount: true },
+            orderBy: { _sum: { amount: 'desc' } },
+          })
+        : [];
       const donorPlayers = donationTotals.length
         ? await db.player.findMany({
             where: { id: { in: donationTotals.map((row) => row.playerId) } },
