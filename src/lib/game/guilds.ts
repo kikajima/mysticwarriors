@@ -93,14 +93,15 @@ export async function manageGuild(tx: Tx, actor: Player, type: string, args: Rec
     if (guild.level >= 10) return invalid('A guilda já atingiu o nível máximo. Doações encerradas.');
     const amount = args.amount;
     if (typeof amount !== 'number' || !Number.isSafeInteger(amount) || amount <= 0) return invalid('Informe um valor inteiro maior que zero.');
-    if (amount > guildThreshold(10) - guild.xp) return invalid(`Faltam apenas ${guildThreshold(10) - guild.xp} Zeni para o nível máximo.`);
-    const level = Math.max(guild.level, guildLevel(guild.xp + amount));
+    const remaining = guildThreshold(10) - guild.xp;
+    const acceptedAmount = Math.min(amount, remaining);
+    const level = Math.max(guild.level, guildLevel(guild.xp + acceptedAmount));
     if (level > guild.level) for (const member of await tx.player.findMany({ where: { guildId: guild.id }, select: { id: true } })) await settle(tx, member.id);
-    await spendCurrency(tx, actor.id, 'zeni', amount, { type: 'spend', source: 'guild_donation', accountId: actor.accountId, metadata: { guildId: guild.id } });
-    await tx.guild.update({ where: { id: guild.id }, data: { xp: { increment: amount }, totalDonated: { increment: amount }, level } });
-    await tx.player.update({ where: { id: actor.id }, data: { guildDonated: { increment: amount }, stateVersion: { increment: 1 } } });
-    await tx.guildDonation.create({ data: { guildId: guild.id, playerId: actor.id, amount } });
-    return done(`Doação de ${amount} Zeni registrada.${level > guild.level ? ` Guilda no nível ${level}!` : ''}`);
+    await spendCurrency(tx, actor.id, 'zeni', acceptedAmount, { type: 'spend', source: 'guild_donation', accountId: actor.accountId, metadata: { guildId: guild.id } });
+    await tx.guild.update({ where: { id: guild.id }, data: { xp: { increment: acceptedAmount }, totalDonated: { increment: acceptedAmount }, level } });
+    await tx.player.update({ where: { id: actor.id }, data: { guildDonated: { increment: acceptedAmount }, stateVersion: { increment: 1 } } });
+    await tx.guildDonation.create({ data: { guildId: guild.id, playerId: actor.id, amount: acceptedAmount } });
+    return done(`Doação de ${acceptedAmount} Zeni registrada.${acceptedAmount < amount ? ` O excedente de ${amount - acceptedAmount} Zeni não foi cobrado.` : ''}${level > guild.level ? ` Guilda no nível ${level}!` : ''}`);
   }
   if (type === 'guild_description' || type === 'guild_motd') {
     permit(type === 'guild_description' ? 'alterar_descricao' : 'mensagem_do_dia');
