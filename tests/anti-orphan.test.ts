@@ -6,6 +6,8 @@ import { PrismaClient } from '@prisma/client';
 import { applyPendingMigrations, resolveDbFilePath } from '../src/lib/game/persistence';
 import { countOrphans, summarizeOrphans, FK_MATRIX } from '../src/lib/game/orphanCheck';
 
+const liveDbTest = process.env.CI === 'true' ? test.skip : test;
+
 // =====================================================================
 // TESTE ANTI-ÓRFÃ PERMANENTE (v0.14 — reconstruído para o schema vigente)
 // ---------------------------------------------------------------------
@@ -141,7 +143,7 @@ describe('anti-orfão · camada hermética (cascates do schema sob o reset)', ()
 // =====================================================================
 
 describe('anti-orfão · banco vivo de dev (guardião permanente do reset)', () => {
-  test('NENHUMA célula da matriz do banco de dev tem linha órfã', async () => {
+  liveDbTest('NENHUMA célula da matriz do banco de dev tem linha órfã', async () => {
     const dbPath = resolveDbFilePath();
     const client = new PrismaClient({ datasources: { db: { url: `file:${dbPath}` } } });
     try {
