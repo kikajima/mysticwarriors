@@ -15,7 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "db:deploy": "prisma migrate deploy",
-    "test:guild-racial": "GUILD_SIM_LEVEL=10 bun scripts/sim-audit-racial.ts",
+    "test:guild-racial": "bun scripts/sim-audit-racial.ts --guild-level=10",
     "pretest": "prisma generate",
     "pretypecheck": "prisma generate"
   },
