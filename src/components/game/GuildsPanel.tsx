@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GuildDetail, GuildSummary, PlayerView } from '@/lib/game/types';
-import { GUILD_BONUS_TABLE, GUILD_PERMISSIONS } from '@/lib/game/guildRules';
+import { GUILD_BONUS_TABLE, GUILD_PERMISSIONS, guildThreshold } from '@/lib/game/guildRules';
 import { GameButton, GameCard, SectionTitle } from './Bits';
 import { fetchPanelJson, GuildsSkeleton, LoadFail } from './PanelLoad';
 const input = 'w-full min-w-0 rounded border border-amber-800 bg-black/40 p-2 text-amber-100';
@@ -43,6 +43,9 @@ export function GuildsPanel({ player, onAction, busy }: { player: PlayerView; on
   };
   const can = (permission: string) => myGuild?.permissions?.includes(permission);
   const leader = myGuild?.leaderId === player.id;
+  const currentLevelFloor = myGuild ? guildThreshold(myGuild.level) : 0;
+  const levelProgress = myGuild ? Math.max(0, myGuild.xp - currentLevelFloor) : 0;
+  const levelCost = myGuild ? Math.max(1, myGuild.xpToNext - currentLevelFloor) : 1;
   const showPublic = async (id: string) => {
     try { const res = await fetchPanelJson(`/api/game/guilds?playerId=${player.id}&guildId=${id}`); if (!res.ok) throw new Error(); setPublicGuild((await res.json()).publicGuild); }
     catch { setFailed(true); }
@@ -75,7 +78,7 @@ export function GuildsPanel({ player, onAction, busy }: { player: PlayerView; on
           ? <ul className="mt-2 space-y-1 text-sm">{GUILD_BONUS_TABLE.filter(([level]) => level <= myGuild.level).map(([level, label, value]) => <li key={level}>Nv {level}: {label} +{value}%</li>)}</ul>
           : <p className="mt-2 text-sm text-amber-200/80">O primeiro bônus é liberado no nível 2.</p>}
       </div>
-      {myGuild.level < 10 ? <div className="space-y-2"><label htmlFor="guild-donation">Progresso: {myGuild.xp.toLocaleString('pt-BR')} / {myGuild.xpToNext.toLocaleString('pt-BR')} Zeni</label><progress className="w-full" value={myGuild.xp} max={myGuild.xpToNext} /><input id="guild-donation" className={input} type="number" min="1" step="1" value={donation} onChange={e => setDonation(e.target.value)} /><GameButton disabled={busy} onClick={() => void run({ type: 'donate_guild', amount: Number(donation) })}>Doar Zeni</GameButton></div> : <p>Nível máximo alcançado</p>}
+      {myGuild.level < 10 ? <div className="space-y-2"><label htmlFor="guild-donation">Progresso para Nv {myGuild.level + 1}: {levelProgress.toLocaleString('pt-BR')} / {levelCost.toLocaleString('pt-BR')} Zeni</label><progress className="w-full" value={levelProgress} max={levelCost} /><input id="guild-donation" className={input} type="number" min="1" step="1" value={donation} onChange={e => setDonation(e.target.value)} /><GameButton disabled={busy} onClick={() => void run({ type: 'donate_guild', amount: Number(donation) })}>Doar Zeni</GameButton></div> : <p>Nível máximo alcançado</p>}
       {can('alterar_descricao') && <div className="space-y-2"><label htmlFor="guild-description">Descrição pública</label><textarea id="guild-description" className={input} maxLength={500} value={description} onChange={e => setDescription(e.target.value)} /><GameButton disabled={busy} onClick={() => void run({ type: 'guild_description', text: description })}>Salvar descrição</GameButton></div>}
       {can('mensagem_do_dia') && <div className="space-y-2"><label htmlFor="guild-motd">Mensagem do dia</label><textarea id="guild-motd" className={input} maxLength={280} value={motd} onChange={e => setMotd(e.target.value)} /><GameButton disabled={busy} onClick={() => void run({ type: 'guild_motd', text: motd })}>Salvar mensagem</GameButton></div>}
       {can('convidar') && <div className="space-y-2"><label htmlFor="guild-target">Convidar guerreiro pelo nome</label><input id="guild-target" className={input} value={target} onChange={e => setTarget(e.target.value)} /><GameButton disabled={busy} onClick={() => void run({ type: 'guild_invite', targetName: target })}>Enviar convite</GameButton>{myGuild.invitations?.map(i => <div key={i.id} className="flex flex-wrap gap-2 items-center"><span>{i.name}</span><GameButton size="sm" disabled={busy} onClick={() => void run({ type: 'guild_revoke', inviteId: i.id })}>Revogar convite</GameButton></div>)}</div>}
