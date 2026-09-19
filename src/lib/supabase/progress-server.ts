@@ -61,7 +61,7 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
 
   for (const m of materialRows) {
     const entry = map.get(m.playerId) ?? { quests: [], achievements: [], materials: [] };
-    entry.materials.push({ itemId: m.itemId, quantity: m.quantity });
+    (entry.materials ??= []).push({ itemId: m.itemId, quantity: m.quantity });
     map.set(m.playerId, entry);
   }
 
