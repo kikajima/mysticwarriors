@@ -42,6 +42,7 @@ import { IMPETO } from '../src/lib/game/impeto';
 import { POWER_SCALES } from '../src/lib/game/powerScale';
 import { TOURNAMENT_ROUNDS, TOURNAMENT_COOLDOWN_MS, TOURNAMENT_ENTRY_FEE } from '../src/lib/game/content/tournament';
 import { RACES } from '../src/lib/game/content/races';
+import { CRAFT_RECIPES, CRAFT_STACK_ITEMS } from '../src/lib/game/content/crafting';
 import {
   ATTACK_COOLDOWN_SEC,
   ATTACK_ENERGY_COST,
@@ -357,6 +358,20 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(t).toContain('um único teste ao concluir o turno');
     for (const material of PROFESSION_MATERIALS) {
       expect(t).toContain(material.name);
+    }
+  });
+
+  test('Oficina: wiki publica receitas, custos, tempos e blueprints reais', () => {
+    const t = wikiText('profissoes');
+    expect(t).toContain('Oficina');
+    expect(t).toContain('1% por nível');
+    expect(t).toContain('10%');
+    for (const recipe of CRAFT_RECIPES) {
+      expect(t).toContain(recipe.name);
+      expect(t).toContain(recipe.costZeni.toLocaleString('pt-BR'));
+    }
+    for (const blueprint of CRAFT_STACK_ITEMS) {
+      expect(t).toContain(blueprint.name);
     }
   });
 

@@ -14,7 +14,7 @@
 //
 // FONTE DA VERDADE: o DDL vivo (sqlite_master) — extraído em
 // 2026-09-15 com a query de FKs (a mesma família do scripts/fk-matrix
-// da v0.13.1). 17 constraints REAIS + 1 check LÓGICO:
+// da v0.13.1). A matriz acompanha também inventário/crafting adicionados depois.
 //
 //  ⚠ GuildDonation.guildId NÃO tem FK nesta base (tabela da era
 //    v0.9.20): o POSTGRES/SQLite não a protege — apagar a guilda sem
@@ -59,6 +59,8 @@ export const FK_MATRIX: Array<{
   { table: 'RequestDedup', column: 'playerId', target: 'Player', targetColumn: 'id', nullable: false, logical: false },
   { table: 'Account', column: 'activePlayerId', target: 'Player', targetColumn: 'id', nullable: true, logical: false },
   { table: 'Activity', column: 'playerId', target: 'Player', targetColumn: 'id', nullable: false, logical: false },
+  { table: 'InventoryStack', column: 'playerId', target: 'Player', targetColumn: 'id', nullable: false, logical: false },
+  { table: 'CraftJob', column: 'playerId', target: 'Player', targetColumn: 'id', nullable: false, logical: false },
   { table: 'Player', column: 'accountId', target: 'Account', targetColumn: 'id', nullable: true, logical: false },
   { table: 'Player', column: 'guildId', target: 'Guild', targetColumn: 'id', nullable: true, logical: false },
   // ⚠ check LÓGICO (sem FK no DDL — era v0.9.20): doação apontando para

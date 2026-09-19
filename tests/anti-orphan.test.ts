@@ -80,6 +80,17 @@ describe('anti-orfão · camada hermética (cascates do schema sob o reset)', ()
       await client.cosmeticOwned.create({ data: { accountId: account.id, cosmetic: 'aura_gold' } });
       await client.requestDedup.create({ data: { playerId: player.id, requestId: 'req-orphan-1' } });
       await client.activity.create({ data: { playerId: player.id, kind: 'train', endsAt: new Date(Date.now() + 60_000) } });
+      await client.inventoryStack.create({ data: { playerId: player.id, itemId: 'erva_medicinal', quantity: 2 } });
+      await client.craftJob.create({
+        data: {
+          playerId: player.id,
+          recipeId: 'capsula_recuperacao_simples',
+          outputItemId: 'capsula_recuperacao_simples',
+          outputQuantity: 1,
+          outputKind: 'player_item',
+          endsAt: new Date(Date.now() + 60_000),
+        },
+      });
       // doação com player E guild vivos (a célula LÓGICA precisa de linha)
       await client.guildDonation.create({ data: { playerId: player.id, guildId: guild.id, amount: 500 } });
       const boss = await client.worldBoss.create({

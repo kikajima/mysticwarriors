@@ -65,6 +65,7 @@ async function countAll(): Promise<Record<string, number>> {
     purchases,
     cosmetics,
     activities,
+    craftJobs,
     analytics,
     dedups,
   ] = await Promise.all([
@@ -84,6 +85,7 @@ async function countAll(): Promise<Record<string, number>> {
     db.purchase.count(),
     db.cosmeticOwned.count(),
     db.activity.count(),
+    db.craftJob.count(),
     db.analyticsEvent.count(),
     db.requestDedup.count(),
   ]);
@@ -104,6 +106,7 @@ async function countAll(): Promise<Record<string, number>> {
     compras: purchases,
     cosméticos: cosmetics,
     atividades: activities,
+    fabricacoes: craftJobs,
     eventos_analytics: analytics,
     dedups: dedups,
   };
@@ -200,6 +203,7 @@ export async function performServerReset(confirm: string): Promise<ServerResetRe
       await tx.session.deleteMany({});
       await tx.guildDonation.deleteMany({});
       await tx.activity.deleteMany({});
+      await tx.craftJob.deleteMany({});
       await tx.inventoryStack.deleteMany({});
       await tx.questProgress.deleteMany({});
       await tx.achievementState.deleteMany({});

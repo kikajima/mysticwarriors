@@ -44,6 +44,7 @@ import { RACES } from '@/lib/game/content/races';
 import { TECHNIQUES, STRATEGIES } from '@/lib/game/content/techniques';
 import { TRANSFORMATIONS } from '@/lib/game/content/transformations';
 import { PROFESSIONS, PROFESSION_MATERIALS, SHOP_ITEMS, MAX_CHARACTERS_PER_ACCOUNT } from '@/lib/game/content/world';
+import { CRAFTED_ITEMS, CRAFT_STACK_ITEMS, CRAFT_RECIPES, getCraftRecipe } from '@/lib/game/content/crafting';
 import { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS } from '@/lib/game/content/quests';
 import { TALENTS } from '@/lib/game/content/talents';
 import { TOURNAMENT_ROUNDS } from '@/lib/game/content/tournament';
@@ -111,6 +112,16 @@ export interface CloudMaterialSnapshot {
   quantity: number;
 }
 
+export interface CloudCraftJobSnapshot {
+  recipeId: string;
+  outputItemId: string;
+  outputQuantity: number;
+  outputKind: 'stack' | 'player_item';
+  academicLevelStart: number;
+  startedAt: string;
+  endsAt: string;
+}
+
 export interface CloudCharacterSnapshot {
   /** v0.9.6: id do personagem (chave da linha em `personagens` e do Player
    * local — o mesmo nos dois lados). null = dado legado (v2) sem id. */
@@ -158,6 +169,8 @@ export interface CloudCharacterSnapshot {
   missionHours?: 1 | 2 | 4 | 8 | null;
   /** Materiais profissionais relacionais espelhados para recuperação. */
   materials?: CloudMaterialSnapshot[];
+  /** Fabricação em andamento; ingredientes já foram consumidos no início. */
+  craftJob?: CloudCraftJobSnapshot | null;
   /** Relógios de regeneração (energia/vida continuam contando offline). */
   lastRegen: string;
   lastRegenHp: string | null;
@@ -203,9 +216,10 @@ const KNOWN = {
   races: new Set(Object.keys(RACES)),
   techniques: new Set(TECHNIQUES.map((t) => t.id)),
   transformations: new Set(TRANSFORMATIONS.map((t) => t.id)),
-  items: new Set(SHOP_ITEMS.map((i) => i.id)),
+  items: new Set([...SHOP_ITEMS, ...CRAFTED_ITEMS].map((i) => i.id)),
   professions: new Set<string>(PROFESSIONS.map((p) => p.id)),
-  materials: new Set(PROFESSION_MATERIALS.map((m) => m.id)),
+  materials: new Set([...PROFESSION_MATERIALS, ...CRAFT_STACK_ITEMS].map((m) => m.id)),
+  recipes: new Set(CRAFT_RECIPES.map((r) => r.id)),
   cosmetics: new Set(COSMETICS.map((c) => c.id)),
   strategies: new Set(Object.keys(STRATEGIES)),
   // v0.9.18 — talentos de Ímpeto (Cap. 7) dominados
@@ -351,6 +365,34 @@ function sanitizeMission(
   };
 }
 
+/** Fabricação em andamento vinda da nuvem — catálogo atual é autoritativo. */
+function sanitizeCraftJob(raw: unknown): CloudCraftJobSnapshot | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const c = raw as Record<string, unknown>;
+  const recipeId = asString(c.recipeId, 100);
+  if (!recipeId || !KNOWN.recipes.has(recipeId)) return null;
+  const recipe = getCraftRecipe(recipeId);
+  if (!recipe) return null;
+
+  // Craft máximo atual = 12h. Janela ampla tolera jobs vencidos/offline,
+  // sem aceitar datas absurdas trazidas de JSON editável pelo cliente.
+  const endsAt = sanitizeIsoDate(c.endsAt, 14 * 86400_000, 36 * 3600_000);
+  if (!endsAt) return null;
+  const startedAt =
+    sanitizeIsoDate(c.startedAt, 14 * 86400_000, 5 * 60_000) ??
+    new Date(endsAt.getTime() - recipe.baseDurationMin * 60_000);
+
+  return {
+    recipeId: recipe.id,
+    outputItemId: recipe.outputItemId,
+    outputQuantity: recipe.outputQuantity,
+    outputKind: recipe.outputKind,
+    academicLevelStart: clampInt(c.academicLevelStart, [0, 10]),
+    startedAt: startedAt.toISOString(),
+    endsAt: endsAt.toISOString(),
+  };
+}
+
 // =====================================================================
 // SERIALIZAÇÃO: entidades Prisma → snapshot (fonte: servidor do jogo)
 // =====================================================================
@@ -360,6 +402,7 @@ export interface CharacterExtras {
   quests: CloudQuestSnapshot[];
   achievements: CloudAchievementSnapshot[];
   materials?: CloudMaterialSnapshot[];
+  craftJob?: CloudCraftJobSnapshot | null;
 }
 
 export function serializeCharacterForCloud(
@@ -405,6 +448,7 @@ export function serializeCharacterForCloud(
     missionEndsAt: player.missionEndsAt ? player.missionEndsAt.toISOString() : null,
     missionHours: ([1, 2, 4, 8].includes(player.missionHours ?? 0) ? player.missionHours : null) as 1 | 2 | 4 | 8 | null,
     materials: extras?.materials ?? [],
+    craftJob: extras?.craftJob ?? null,
     lastRegen: player.lastRegen ? new Date(player.lastRegen).toISOString() : new Date().toISOString(),
     lastRegenHp: player.lastRegenHp ? new Date(player.lastRegenHp).toISOString() : null,
     quests: extras?.quests ?? [],
@@ -653,6 +697,7 @@ function sanitizeCharacter(raw: unknown, accountCosmetics: string[]): CloudChara
     missionEndsAt: mission?.missionEndsAt ?? null,
     missionHours: mission?.missionHours ?? null,
     materials: sanitizeMaterials(c.materials),
+    craftJob: sanitizeCraftJob(c.craftJob),
     lastRegen: lastRegen.toISOString(),
     lastRegenHp: lastRegenHp ? lastRegenHp.toISOString() : null,
     quests: sanitizeQuests(c.quests),

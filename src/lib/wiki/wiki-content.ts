@@ -45,6 +45,7 @@ import {
 } from '@/lib/game/content/tournament';
 import { ACHIEVEMENTS, DAILY_QUESTS, WEEKLY_QUESTS } from '@/lib/game/content/quests';
 import { TALENTS } from '@/lib/game/content/talents';
+import { CRAFT_RECIPES, CRAFT_STACK_ITEMS } from '@/lib/game/content/crafting';
 import {
   ENEMIES,
   SHOP_ITEMS,
@@ -991,14 +992,14 @@ export const WIKI_SECTIONS: WikiSection[] = [
   // ================================================================
   {
     id: 'profissoes',
-    title: 'Profissões, Carreira e Loot',
+    title: 'Profissões, Carreira, Loot e Oficina',
     icon: '🌾',
     group: 'Progressão',
-    summary: '5 profissões, carreira do Nível 1 ao 10, turnos de 1h a 8h e materiais exclusivos.',
+    summary: '5 profissões, carreira do Nível 1 ao 10, loot exclusivo e Oficina de crafting cross-profession.',
     resumo: [
       'Escolha turnos de **1h, 2h, 4h ou 8h** — trabalhar continua **sem custo de energia**.',
-      'Cada hora rende Zeni, progresso de carreira e **1–2 materiais comuns garantidos**; materiais raros usam uma chance por hora.',
-      'Atleta/Policial/Agricultor/Cientista fortalecem um atributo até 999; Acadêmico aumenta o **XP global**.',
+      'Cada hora rende **1–2 materiais comuns garantidos**; a **Oficina** combina insumos de profissões diferentes em itens e blueprints.',
+      'Acadêmico aumenta o **XP global**, fabrica blueprints e reduz o tempo de crafting em **1% por nível** (até 10%).',
     ],
     blocks: [
       {
@@ -1083,6 +1084,47 @@ export const WIKI_SECTIONS: WikiSection[] = [
                 ];
               }),
             },
+          },
+        ],
+      },
+      {
+        kind: 'details',
+        summary: '🔧 Oficina e Crafting Cross-Profession',
+        blocks: [
+          {
+            kind: 'text',
+            text: 'A Oficina fabrica um item por vez e continua contando offline. Os ingredientes e o Zeni são consumidos **ao iniciar** a fabricação; o resultado entra no inventário somente na coleta. Trabalhar não bloqueia a Oficina. O Acadêmico reduz o tempo em **1% por nível** (até **10%** no Nível 10). Blueprints exigem que você já tenha concluído ao menos 1h como Acadêmico.',
+          },
+          {
+            kind: 'table',
+            table: {
+              caption: 'Receitas da Oficina (ORIGEM: content/crafting.ts — CRAFT_RECIPES)',
+              headers: ['Tier', 'Receita', 'Custo', 'Tempo base', 'Ingredientes'],
+              rows: CRAFT_RECIPES.map((r) => [
+                String(r.tier),
+                `${r.icon} ${r.name}`,
+                `${br(r.costZeni)} Zeni`,
+                r.baseDurationMin >= 60
+                  ? `${Math.floor(r.baseDurationMin / 60)}h${r.baseDurationMin % 60 ? ` ${r.baseDurationMin % 60}min` : ''}`
+                  : `${r.baseDurationMin}min`,
+                r.ingredients
+                  .map((i) => {
+                    const material = PROFESSION_MATERIALS.find((m) => m.id === i.itemId);
+                    const blueprint = CRAFT_STACK_ITEMS.find((m) => m.id === i.itemId);
+                    return `${i.quantity}× ${material?.name ?? blueprint?.name ?? i.itemId}`;
+                  })
+                  .join(' + '),
+              ]),
+            },
+          },
+          {
+            kind: 'list',
+            items: [
+              'Tier 3 ou superior sempre usa insumos ligados a **pelo menos duas profissões**.',
+              'Os itens principais de Tier 3+ exigem um **blueprint Acadêmico**.',
+              'Itens fabricados não são revendidos para a loja NPC; eles ficam reservados para uso próprio e, na etapa seguinte, para o **Mercado entre jogadores**.',
+              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+35 Defesa** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
+            ],
           },
         ],
       },

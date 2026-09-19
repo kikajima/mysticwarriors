@@ -235,6 +235,24 @@ export async function POST(request: Request) {
           });
         }
 
+        // ===== fabricação em andamento =====
+        // Ingredientes foram consumidos ANTES do snapshot; restauramos apenas
+        // a fila, com saída/timestamps já sanitizados contra o catálogo.
+        if (char.craftJob) {
+          await tx.craftJob.create({
+            data: {
+              playerId: created.id,
+              recipeId: char.craftJob.recipeId,
+              outputItemId: char.craftJob.outputItemId,
+              outputQuantity: char.craftJob.outputQuantity,
+              outputKind: char.craftJob.outputKind,
+              academicLevelStart: char.craftJob.academicLevelStart,
+              startedAt: new Date(char.craftJob.startedAt),
+              endsAt: new Date(char.craftJob.endsAt),
+            },
+          });
+        }
+
         // ===== quests do período atual =====
         // Alvos e RECOMPENSAS vêm sempre dos catálogos do jogo — a nuvem
         // só entrega progresso/coletado (defesa em profundidade).

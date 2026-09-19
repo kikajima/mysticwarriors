@@ -1,3 +1,4 @@
+import { CRAFTED_ITEMS } from './crafting';
 import type {
   Enemy,
   ProfessionDef,
@@ -321,7 +322,7 @@ export const SHOP_ITEMS: ShopItem[] = [
 ];
 
 export function getItem(id: string): ShopItem | undefined {
-  return SHOP_ITEMS.find((i) => i.id === id);
+  return SHOP_ITEMS.find((i) => i.id === id) ?? CRAFTED_ITEMS.find((i) => i.id === id);
 }
 
 /**

@@ -56,10 +56,19 @@ export {
   professionShiftRewards,
   academicXpMultiplier,
   academicXpBonusPct,
+  academicCraftTimeMultiplier,
   parseProfessions,
   serializeProfessions,
   rollProfessionLoot,
 } from './professionCareer';
+export {
+  CRAFT_RECIPES,
+  CRAFT_STACK_ITEMS,
+  CRAFTED_ITEMS,
+  getCraftRecipe,
+  getCraftedItem,
+  getCraftStackItem,
+} from './content/crafting';
 export { TRANSFORMATIONS, getTransformation, transformationsForRace } from './content/transformations';
 export { randomWarriorName, BOTS } from './content/names';
 export { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS, getAchievement } from './content/quests';

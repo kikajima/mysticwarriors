@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { ok, toErrorResponse } from '@/lib/api';
 import { requireAuth, requirePlayer } from '@/lib/auth';
 import { getProfessionMaterial } from '@/lib/game/content/world';
+import { getCraftStackItem } from '@/lib/game/content/crafting';
 
 // =====================================================================
 // GET /api/game/professions?playerId=...
@@ -24,14 +25,15 @@ export async function GET(request: Request) {
     return ok({
       materials: rows.map((row) => {
         const def = getProfessionMaterial(row.itemId);
+        const blueprint = getCraftStackItem(row.itemId);
         return {
           itemId: row.itemId,
           quantity: row.quantity,
-          name: def?.name ?? row.itemId,
-          professionId: def?.professionId ?? null,
-          rarity: def?.rarity ?? null,
-          tier: def?.tier ?? null,
-          icon: def?.icon ?? '📦',
+          name: def?.name ?? blueprint?.name ?? row.itemId,
+          professionId: def?.professionId ?? (blueprint ? 'academico' : null),
+          rarity: def?.rarity ?? (blueprint ? 'rare' : null),
+          tier: def?.tier ?? blueprint?.tier ?? null,
+          icon: def?.icon ?? blueprint?.icon ?? '📦',
         };
       }),
     });

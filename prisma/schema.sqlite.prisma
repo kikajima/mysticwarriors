@@ -230,6 +230,7 @@ model Player {
   requestDedups    RequestDedup[]
   activities       Activity[]
   inventoryStacks  InventoryStack[]
+  craftJob         CraftJob?
   accountActive    Account?  @relation("ActivePlayer")
 
   @@index([accountId])
@@ -252,6 +253,24 @@ model InventoryStack {
 
   @@id([playerId, itemId])
   @@index([itemId])
+}
+
+// ===== Fabricação persistente (uma fila por personagem) =====
+
+model CraftJob {
+  id                 String   @id @default(cuid())
+  playerId           String   @unique
+  recipeId           String
+  outputItemId       String
+  outputQuantity     Int      @default(1)
+  outputKind         String
+  academicLevelStart Int      @default(0)
+  startedAt          DateTime @default(now())
+  endsAt             DateTime
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([endsAt])
 }
 
 // ===== Ledger da economia (auditoria de Zeni/cristais) =====

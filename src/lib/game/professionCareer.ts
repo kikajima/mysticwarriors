@@ -201,6 +201,12 @@ export function academicXpBonusPct(professions: ProfessionsMap): number {
   return Math.round((academicXpMultiplier(professions) - 1) * 10_000) / 100;
 }
 
+/** Mestria de fabricação: -1% de tempo por nível Acadêmico, até -10%. */
+export function academicCraftTimeMultiplier(levelRaw: number): number {
+  const level = Math.max(0, Math.min(10, Math.trunc(levelRaw || 0)));
+  return 1 - level * 0.01;
+}
+
 export function rollProfessionLoot(
   professionId: ProfessionId,
   hourLevels: number[],
