@@ -31,6 +31,7 @@
 import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { buildPlayerCombatant, simulateBattle, makeRng, MAX_ROUNDS } from '../src/lib/game/engine';
+import { MAX_ACTION_ENERGY } from '../src/lib/game/rules';
 import type { Player } from '@prisma/client';
 import type { RaceId } from '../src/lib/game/types';
 
@@ -46,6 +47,7 @@ const RACE_PT: Record<RaceId, string> = {
 };
 
 const SEEDS = 250; // × 2 arranjos de lado = 500 lutas por par (mín. exigido: 200)
+const GUILD_SIM_LEVEL = Number(process.env.GUILD_SIM_LEVEL ?? 0);
 
 const NO_ITEMS = '{"weapon":null,"armor":null,"accessory":null,"owned":[],"consumables":{}}';
 const NO_TECH = '[]';
@@ -115,7 +117,7 @@ function makePlayer(race: RaceId, cfg: ConfigDef, tag: string): Player {
     defense: attr,
     speed: attr,
     ki: attr,
-    energy: 80 + attr * 2, // maxEnergy = 80 + ki×2
+    energy: MAX_ACTION_ENERGY, // teto real do jogo: energia de ações é fixa em 100
     battlesWon: 0,
     battlesLost: 0,
     pvpWins: 0,
@@ -241,8 +243,8 @@ function runConfig(cfg: ConfigDef, seedBase = 0): ConfigResult {
         {
           const pa = makePlayer(a, cfg, `${seed}-L1`);
           const pb = makePlayer(b, cfg, `${seed}-L1`);
-          const ca = buildPlayerCombatant({ ...pa, guild: process.env.GUILD_SIM_LEVEL ? { level: Number(process.env.GUILD_SIM_LEVEL) } : null });
-          const cb = buildPlayerCombatant({ ...pb, guild: process.env.GUILD_SIM_LEVEL ? { level: Number(process.env.GUILD_SIM_LEVEL) } : null });
+          const ca = buildPlayerCombatant({ ...pa, guild: GUILD_SIM_LEVEL > 0 ? { level: GUILD_SIM_LEVEL } : null });
+          const cb = buildPlayerCombatant({ ...pb, guild: GUILD_SIM_LEVEL > 0 ? { level: GUILD_SIM_LEVEL } : null });
           const sim = simulateBattle(ca, cb, { playerStartHp: ca.maxHp, rng: makeRng(seed) });
           totalFights++;
           roundsTotal += sim.rounds.length;
@@ -259,8 +261,8 @@ function runConfig(cfg: ConfigDef, seedBase = 0): ConfigResult {
         {
           const pa = makePlayer(a, cfg, `${seed}-L2`);
           const pb = makePlayer(b, cfg, `${seed}-L2`);
-          const ca = buildPlayerCombatant({ ...pa, guild: process.env.GUILD_SIM_LEVEL ? { level: Number(process.env.GUILD_SIM_LEVEL) } : null });
-          const cb = buildPlayerCombatant({ ...pb, guild: process.env.GUILD_SIM_LEVEL ? { level: Number(process.env.GUILD_SIM_LEVEL) } : null });
+          const ca = buildPlayerCombatant({ ...pa, guild: GUILD_SIM_LEVEL > 0 ? { level: GUILD_SIM_LEVEL } : null });
+          const cb = buildPlayerCombatant({ ...pb, guild: GUILD_SIM_LEVEL > 0 ? { level: GUILD_SIM_LEVEL } : null });
           const sim = simulateBattle(cb, ca, { playerStartHp: cb.maxHp, rng: makeRng(seed) });
           totalFights++;
           roundsTotal += sim.rounds.length;
@@ -596,7 +598,8 @@ md.push('');
   md.push('> Nenhuma alteração de balanceamento foi feita nesta auditoria — os dados acima (script `scripts/sim-audit-racial.ts`, reutilizável) ficam a cargo do agente principal para eventuais decisões de ajuste.');
 }
 
-writeFileSync((process.env.GUILD_SIM_LEVEL ? 'download/guildas-f3-racial.md' : 'download/auditoria-f3-racial.md'), md.join('\n') + '\n', 'utf-8');
+const reportPath = GUILD_SIM_LEVEL > 0 ? 'download/guildas-f3-racial.md' : 'download/auditoria-f3-racial.md';
+writeFileSync(reportPath, md.join('\n') + '\n', 'utf-8');
 
 // ---- Resumo no console ----
 console.log('');
@@ -611,4 +614,13 @@ for (const res of results) {
     console.log(`  ${RACE_PT[r].padEnd(14)} ${pct(s.wins / s.parts).padStart(8)}  (n=${s.parts})`);
   }
 }
-console.log(`\nRelatório salvo em download/auditoria-f3-racial.md`);
+console.log(`\nRelatório salvo em ${reportPath}`);
+if (GUILD_SIM_LEVEL > 0) {
+  const failed = results.filter((res) => dispersion(res).outliers.length > 0);
+  if (failed.length > 0) {
+    console.error(`\nFALHA DE CONTRATO: guilda nv${GUILD_SIM_LEVEL} saiu do corredor ±15pp em: ${failed.map((res) => res.cfg.id).join(', ')}`);
+    process.exitCode = 1;
+  } else {
+    console.log(`CONTRATO OK: ambos os lados em guilda nv${GUILD_SIM_LEVEL}; todas as configurações permaneceram no corredor ±15pp.`);
+  }
+}
