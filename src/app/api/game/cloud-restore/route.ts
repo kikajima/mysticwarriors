@@ -225,7 +225,7 @@ export async function POST(request: Request) {
         // ===== materiais profissionais =====
         // A tabela relacional é autoritativa no jogo; o snapshot é apenas
         // recuperação. IDs e quantidades já foram sanitizados em progress.ts.
-        for (const material of char.materials) {
+        for (const material of char.materials ?? []) {
           await tx.inventoryStack.create({
             data: {
               playerId: created.id,
