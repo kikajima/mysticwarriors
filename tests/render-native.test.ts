@@ -36,7 +36,7 @@ test('Render Free usa Supabase PostgreSQL sem Persistent Disk', () => {
   expect(render).toContain('bun install --frozen-lockfile && bun run db:generate && bun run build');
   expect(render).toContain('startCommand: bun run start');
   expect(render).toContain('healthCheckPath: /api/health');
-  expect(render).toContain('autoDeployTrigger: checksPass');
+  expect(render).toContain('autoDeployTrigger: off');
   expect(render).toContain('- key: DATABASE_URL');
   expect(render).toContain('sync: false');
   expect(render).not.toContain('mountPath:');
