@@ -52,40 +52,49 @@ export async function scoreSeasonVictory(tx: Prisma.TransactionClient, player: P
 
 /** View da temporada atual para o jogador. */
 export async function getSeasonView(playerId: string | null): Promise<SeasonView | null> {
-  return db.$transaction(
-    async (tx) => {
-    await ensureActiveSeason(tx);
-    const season = await tx.season.findFirst({ where: { status: 'active' } });
-    if (!season) return null;
+  const now = new Date();
 
-    let myPoints = 0;
-    let myPosition: number | null = null;
-    if (playerId) {
-      const entry = await tx.seasonRankEntry.findUnique({
-        where: { seasonId_playerId: { seasonId: season.id, playerId } },
-      });
-      myPoints = entry?.points ?? 0;
-      if (entry) {
-        myPosition =
-          (await tx.seasonRankEntry.count({
-            where: { seasonId: season.id, points: { gt: entry.points } },
-          })) + 1;
-      }
+  // Caminho quente: temporada ativa e ainda válida é somente leitura.
+  // Antes toda abertura da Ameaça Universal iniciava transação, fazia
+  // updateMany de expiração e procurava a temporada duas vezes.
+  let season = await db.season.findFirst({
+    where: { status: 'active', endsAt: { gt: now } },
+  });
+
+  if (!season) {
+    await db.$transaction(
+      async (tx) => ensureActiveSeason(tx),
+      { timeout: 15_000, maxWait: 5_000 }
+    );
+    season = await db.season.findFirst({ where: { status: 'active' } });
+  }
+  if (!season) return null;
+
+  let myPoints = 0;
+  let myPosition: number | null = null;
+  if (playerId) {
+    const entry = await db.seasonRankEntry.findUnique({
+      where: { seasonId_playerId: { seasonId: season.id, playerId } },
+    });
+    myPoints = entry?.points ?? 0;
+    if (entry) {
+      myPosition =
+        (await db.seasonRankEntry.count({
+          where: { seasonId: season.id, points: { gt: entry.points } },
+        })) + 1;
     }
+  }
 
-    const daysLeft = Math.max(0, Math.ceil((season.endsAt.getTime() - Date.now()) / 86400000));
-    return {
-      id: season.id,
-      name: season.name,
-      number: season.number,
-      startsAt: season.startsAt.toISOString(),
-      endsAt: season.endsAt.toISOString(),
-      status: season.status,
-      daysLeft,
-      myPoints,
-      myPosition,
-    };
-    },
-    { timeout: 15_000, maxWait: 5_000 }
-  );
+  const daysLeft = Math.max(0, Math.ceil((season.endsAt.getTime() - Date.now()) / 86400000));
+  return {
+    id: season.id,
+    name: season.name,
+    number: season.number,
+    startsAt: season.startsAt.toISOString(),
+    endsAt: season.endsAt.toISOString(),
+    status: season.status,
+    daysLeft,
+    myPoints,
+    myPosition,
+  };
 }
