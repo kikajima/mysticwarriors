@@ -25,17 +25,21 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
   if (playerIds.length === 0) return map;
 
   const periods = [dailyPeriod(), weeklyPeriod()];
-  const [questRows, achievementRows] = await Promise.all([
+  const [questRows, achievementRows, materialRows] = await Promise.all([
     db.questProgress.findMany({
       where: { playerId: { in: playerIds }, period: { in: periods } },
     }),
     db.achievementState.findMany({
       where: { playerId: { in: playerIds }, claimedAt: { not: null } },
     }),
+    db.inventoryStack.findMany({
+      where: { playerId: { in: playerIds }, quantity: { gt: 0 } },
+      select: { playerId: true, itemId: true, quantity: true },
+    }),
   ]);
 
   for (const q of questRows) {
-    const entry = map.get(q.playerId) ?? { quests: [], achievements: [] };
+    const entry = map.get(q.playerId) ?? { quests: [], achievements: [], materials: [] };
     entry.quests.push({
       questId: q.questId,
       kind: q.kind === 'weekly' ? 'weekly' : 'daily',
@@ -47,12 +51,18 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
   }
 
   for (const a of achievementRows) {
-    const entry = map.get(a.playerId) ?? { quests: [], achievements: [] };
+    const entry = map.get(a.playerId) ?? { quests: [], achievements: [], materials: [] };
     entry.achievements.push({
       achievementId: a.achievementId,
       claimedAt: a.claimedAt ? a.claimedAt.toISOString() : null,
     });
     map.set(a.playerId, entry);
+  }
+
+  for (const m of materialRows) {
+    const entry = map.get(m.playerId) ?? { quests: [], achievements: [], materials: [] };
+    entry.materials.push({ itemId: m.itemId, quantity: m.quantity });
+    map.set(m.playerId, entry);
   }
 
   return map;
