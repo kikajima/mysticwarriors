@@ -175,8 +175,8 @@ export async function executeGameAction(
     // ===== BLOQUEIO CENTRAL: personagem em missão ativa =====
     // O frontend só DESABILITA botões — quem decide é o servidor.
     // v0.16 — MATRIZ DEFINITIVA (3ª ordem): durante trabalho ativo SÓ
-    // treino, batalha PvE e torneio são negados (MISSION_BLOCKED_ACTIONS).
-    // Tudo mais passa: loja, guilda, hospital, coletas, PvP, chefe
+    // batalha PvE e torneio são negados (MISSION_BLOCKED_ACTIONS).
+    // Tudo mais passa: treino, Oficina, loja, guilda, hospital, coletas, PvP, chefe
     // mundial, equipamento, perfil, Shenron, cosméticos, talentos…
     assertPlayerAvailableForAction(player, type);
 
