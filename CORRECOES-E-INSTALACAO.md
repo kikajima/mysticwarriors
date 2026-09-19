@@ -1,47 +1,181 @@
-# Mystic Warriors — correções e aplicação
+# Mystic Warriors — operação, deploy e persistência
 
-## Aplicar no projeto atual
+## Stack oficial
 
-1. Faça uma cópia do projeto atual. Extraia `mystic-warriors-alterados.zip` na raiz, substituindo os arquivos de mesmo caminho.
-2. Preserve seu `.env` e a pasta `db/`. Esses arquivos privados não acompanham os ZIPs. O arquivo completo contém o código-fonte; para abrir uma instalação local nova com seus jogadores, use o banco e os avatares do projeto original.
-3. No `.env` ou nas variáveis privadas da hospedagem, adicione `ADMIN_EMAIL` com o e-mail da sua conta administradora. Ela também precisa continuar autorizada em `public.admins` no Supabase. Sem essa configuração, o painel administrativo nega acesso.
-4. Na raiz: `bun install --frozen-lockfile`, `bun run db:generate` e `bun run dev` para o preview local.
+O fluxo atual do projeto é:
 
-## Antes de publicar
+**Visual Studio Code → GitHub → Render → Supabase**
 
-- SQLite e SQL do Supabase são bancos diferentes. Não cole arquivos TypeScript, scripts de shell ou SQL do Supabase no editor SQLite.
-- Monte um volume persistente no servidor. Restaure nele um backup consistente do banco ativo e os avatares antes do início. Use backup do SQLite; não copie somente o arquivo `.db` enquanto houver gravações/WAL ativos.
-- Configure `DATABASE_URL=file:/data/mystic-warriors/custom.db` (ajuste ao volume real). O arquivo deve existir fora da pasta da aplicação. Configuração ausente ou arquivo inexistente causa erro, em vez de selecionar silenciosamente outro banco.
-- Configure também `ADMIN_EMAIL`, `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`; o modelo está em `.env.example`. As variáveis NEXT_PUBLIC devem existir no build. Nunca coloque uma service_role nelas.
-- Rode `bun run build` e inicie com `bun run start`. Migrações pendentes são aplicadas pelo mecanismo de inicialização existente. Nenhum reset é necessário.
-- O caminho externo não cria um volume: a hospedagem precisa preservar esse volume entre reinícios e deploys. Use uma instância de aplicação com SQLite compartilhado localmente; múltiplas réplicas independentes teriam bancos diferentes.
-- O pacote de deploy não inclui mais banco, snapshots ou segredos. A restauração automática por “quantidade de contas” foi desativada em produção. Os scripts de publicação da plataforma seguem a mesma regra.
-- GitHub guarda código; acesso remoto exige hospedar o servidor. Este trabalho não publica nem migra o ambiente de produção.
+- **GitHub**: código-fonte, branches, pull requests e CI.
+- **Render**: aplicação Next.js e SQLite autoritativo em Persistent Disk.
+- **Supabase**: autenticação e espelho dos personagens/dados previstos pelo jogo.
+- **Bun 1.4.2**: instalação, testes e build.
+- **Node.js**: processo do servidor standalone gerado pelo Next.js.
 
-## O que foi corrigido
+A infraestrutura antiga de preview/publicação não faz parte do runtime nem do deploy atual.
 
-- Produção exige caminho explícito para o SQLite e não adota uma cópia antiga por fallback ou reconciliação de seed.
-- Builds deixam de embutir dados e configurações privadas, inclusive nos scripts da plataforma.
-- E-mail administrativo saiu do código público e passou para configuração privada. A interface consulta a autorização no servidor, que mantém a verificação de administrador do Supabase.
-- Wiki e testes antigos foram alinhados à permissão de treinar enquanto trabalha e ao limite fixo de 100 de energia, independente de Ki.
-- Foram adicionados testes para configuração de produção, identidade administrativa e persistência do dano após reabrir o mesmo SQLite.
+## Desenvolvimento local
 
-## O que já estava correto no RAR e foi preservado
+Na raiz do projeto:
 
-- Energia máxima de ações em 100; Ki não aumenta essa energia.
-- Treino, PvP, chefe, guildas e coletas permitidos durante trabalho; PvE e torneio permanecem bloqueados durante o turno.
-- Jogador pode ser alvo de PvP trabalhando ou offline, respeitando as demais regras de combate existentes.
-- Proteções contra replay duplicado e resultado visual antecipado; controle de respostas antigas no painel do chefe.
-- Remoção de gênero e guildas de sistema já presente no código e nas migrações do SQLite fornecido. Os relatórios anexos não comprovavam ausência dessas implementações.
-- Exclusão administrativa limpa doações dentro da transação; snapshots legados não restauram gênero/guilda obsoletos.
+```sh
+bun install --frozen-lockfile
+bun run db:generate
+bun run dev
+```
 
-## Validação realizada
+Use um `.env` privado. Nunca versione credenciais, banco de jogadores ou arquivos de avatar.
 
-- 461 testes automatizados passaram, sem falhas.
-- Verificação TypeScript e build de produção concluídos sem erros.
-- 53 verificações HTTP locais passaram: sessões, isolamento entre contas, economia, combate/PvP, recompensas, chefe, guildas e ledger. Servidor usado nessa auditoria: Node com o build standalone.
-- A rota de capacidades administrativas sem credenciais retornou 404, conforme a política de ocultar o painel.
-- Registro de dano/HP do chefe permaneceu após desconectar e reconectar ao mesmo arquivo SQLite de teste.
-- Testes executados com bancos temporários, sem alteração do banco ativo de produção. O arquivo principal do banco anexado manteve o mesmo SHA-256.
+## Serviço Render
 
-Ainda depende do ambiente de destino: confirmar preservação do volume após redeploy real, autenticação administrativa com uma sessão válida do Supabase e inspeção visual do replay com latência. O teste de reabertura do SQLite não substitui esse teste de hospedagem.
+Configuração de referência do serviço:
+
+```text
+Repositorio: kikajima/mysticwarriors
+Branch: master
+Build: bun install --frozen-lockfile && bun run db:generate && bun run build
+Start: bun run start
+Health check: /api/health
+Auto-deploy: After CI Checks Pass
+Instâncias: 1
+Persistent Disk mount: /var/data
+SQLite: file:/var/data/custom.db
+```
+
+O arquivo `render.yaml` contém a configuração declarativa de referência.
+
+### Persistent Disk
+
+O filesystem normal do Render é efêmero. Somente arquivos gravados sob o
+mount do Persistent Disk sobrevivem a deploys e reinicializações.
+
+Para este projeto:
+
+```text
+/var/data
+└── custom.db
+    avatars/
+    backups/
+```
+
+O SQLite autoritativo deve ser:
+
+```text
+DATABASE_URL=file:/var/data/custom.db
+```
+
+O serviço deve permanecer com **uma única instância** enquanto utilizar SQLite.
+
+## Variáveis de ambiente
+
+Obrigatórias:
+
+```text
+NODE_ENV=production
+BUN_VERSION=1.4.2
+DATABASE_URL=file:/var/data/custom.db
+ALLOW_EMPTY_DB_INIT=false
+ADMIN_EMAIL=<configuração privada>
+NEXT_PUBLIC_SUPABASE_URL=<URL do projeto Supabase>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<chave publicável/anon>
+```
+
+Não use `service_role` em variável `NEXT_PUBLIC_*`.
+
+`GM_ADMIN_EXPORT_SECRET` é opcional e serve apenas para habilitar a rota
+administrativa de exportação do backup. Se não for configurado, essa rota
+permanece recusando acesso.
+
+## Regra crítica: nunca criar banco vazio sobre um serviço existente
+
+Para serviço com jogadores reais:
+
+```text
+ALLOW_EMPTY_DB_INIT=false
+```
+
+Se `/var/data/custom.db` não existir, o processo deve **falhar**. Isso é
+intencional: é preferível interromper o deploy a iniciar um servidor vazio.
+
+`ALLOW_EMPTY_DB_INIT=true` só pode ser usado no primeiro boot de uma
+instalação realmente nova, sem dados anteriores. Depois do primeiro boot,
+volte imediatamente para `false`.
+
+Não execute `prisma migrate reset` em produção. O atalho correspondente foi
+removido do `package.json`.
+
+## Migrações
+
+As migrations versionadas ficam em `prisma/migrations`.
+
+No boot, o servidor aplica apenas migrations pendentes de forma idempotente.
+O fluxo normal de deploy não apaga contas, personagens, guildas ou histórico.
+
+Para desenvolvimento de uma migration nova:
+
+```sh
+bun run db:migrate
+```
+
+Para gerar o Prisma Client:
+
+```sh
+bun run db:generate
+```
+
+## Primeiro deploy no serviço Render já existente
+
+Antes de publicar uma mudança de infraestrutura:
+
+1. Confirme que o serviço Render está ligado ao repositório
+   `kikajima/mysticwarriors` e à branch `master`.
+2. Confirme que existe Persistent Disk montado em `/var/data`.
+3. Confirme que `/var/data/custom.db` é o banco que contém os jogadores
+   atuais.
+4. Confirme `DATABASE_URL=file:/var/data/custom.db`.
+5. Confirme `ALLOW_EMPTY_DB_INIT=false`.
+6. Confirme as variáveis do Supabase.
+7. Confirme auto-deploy como **After CI Checks Pass**.
+8. Só então execute o deploy.
+
+Não crie um segundo serviço ou um segundo disco se já existir um serviço de
+produção com os jogadores atuais.
+
+## Checklist pós-deploy
+
+Após o deploy:
+
+1. Abra `/api/health` e confirme `ok: true`.
+2. Confira os logs de boot e migrations; não deve existir mensagem de banco
+   ausente.
+3. Faça login com uma conta existente.
+4. Confirme personagens, Zeni, inventário e progresso.
+5. Abra guildas e confirme membros/convites.
+6. Teste convite para um guerreiro offline.
+7. Faça uma ação simples e recarregue a página para confirmar persistência.
+8. Verifique o ranking/nuvem do Supabase.
+
+## Backup
+
+Antes de alterações sensíveis no disco, prefira um backup consistente do
+SQLite. Não copie somente `custom.db` enquanto houver gravações/WAL ativos.
+
+O jogo mantém utilitários de backup e checkpoint. O Persistent Disk do Render
+é a fonte autoritativa do banco local; o Supabase não deve ser tratado como
+substituto irrestrito desse arquivo.
+
+## Validação atual
+
+Na migração para a infraestrutura Render-native foram validados:
+
+- **491 testes automatizados**;
+- TypeScript;
+- ESLint;
+- build de produção;
+- instalação com lockfile;
+- health check;
+- proteção contra criação acidental de banco vazio;
+- ausência de dependências operacionais da infraestrutura antiga.
+
+O teste automatizado não substitui a confirmação do **Persistent Disk real**
+no dashboard do Render antes do primeiro deploy dessa configuração.
