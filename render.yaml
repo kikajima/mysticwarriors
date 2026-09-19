@@ -20,8 +20,6 @@ services:
         value: file:/var/data/custom.db
       - key: ALLOW_EMPTY_DB_INIT
         value: "false"
-      - key: ADMIN_EMAIL
-        sync: false
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
