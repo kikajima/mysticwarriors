@@ -97,6 +97,34 @@ async function main() {
     const [id] = args; await qaPlayer(id);
     console.log(await db.walletTransaction.count({ where: { playerId: id } })); return;
   }
+  if (command === 'cleanup-run') {
+    const [ts] = args;
+    if (!/^\d+$/.test(ts)) throw new Error('invalid QA run id');
+    const qaNames = [`AuditA${ts}`, `AuditB${ts}`, `GuestAudit${ts}`];
+    const players = await db.player.findMany({
+      where: { name: { in: qaNames } },
+      select: { id: true, accountId: true, guildId: true },
+    });
+    const playerIds = players.map((p) => p.id);
+    const accountIds = [...new Set(players.map((p) => p.accountId).filter((id): id is string => !!id))];
+    const guildIds = [...new Set(players.map((p) => p.guildId).filter((id): id is string => !!id))];
+
+    if (guildIds.length) {
+      await db.guildInvitation.deleteMany({ where: { guildId: { in: guildIds } } });
+      await db.guildRole.deleteMany({ where: { guildId: { in: guildIds } } });
+      await db.guildDonation.deleteMany({ where: { guildId: { in: guildIds } } });
+    }
+    if (playerIds.length) await db.player.deleteMany({ where: { id: { in: playerIds } } });
+    if (guildIds.length) await db.guild.deleteMany({ where: { id: { in: guildIds } } });
+    if (accountIds.length) {
+      for (const accountId of accountIds) {
+        const remaining = await db.player.count({ where: { accountId } });
+        if (remaining === 0) await db.account.deleteMany({ where: { id: accountId } });
+      }
+    }
+    console.log(`cleanup QA ${ts}: ${playerIds.length} player(s)`);
+    return;
+  }
 
   throw new Error(`unknown command: ${command}`);
 }
