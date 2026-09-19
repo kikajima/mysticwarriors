@@ -446,6 +446,41 @@ model Activity {
   @@index([endsAt])
 }
 
+
+// ===== Chat persistente =====
+//
+// ChatMessage não possui FKs de propósito. O histórico deve sobreviver à
+// exclusão de personagem/guilda, reset do mundo e deploys. Somente o comando
+// administrativo explícito de limpeza do chat remove estas linhas.
+model ChatMessage {
+  id                String   @id @default(cuid())
+  channel           String   // "global" | "guild" | "private"
+  senderPlayerId    String
+  senderName        String   // snapshot histórico do nome
+  recipientPlayerId String?
+  recipientName     String?
+  guildId           String?
+  guildName         String?
+  body              String
+  createdAt         DateTime @default(now())
+
+  @@index([channel, createdAt])
+  @@index([senderPlayerId, createdAt])
+  @@index([recipientPlayerId, createdAt])
+  @@index([guildId, createdAt])
+}
+
+model ChatMute {
+  id              String   @id @default(cuid())
+  playerId        String
+  mutedPlayerId   String
+  mutedPlayerName String
+  createdAt       DateTime @default(now())
+
+  @@unique([playerId, mutedPlayerId])
+  @@index([playerId])
+}
+
 // ===== Auditoria administrativa (v0.14) =====
 //
 // REGISTRO DAS AÇÕES DESTRUTIVAS do painel admin (excluir personagem /
