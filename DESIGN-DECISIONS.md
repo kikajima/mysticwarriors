@@ -261,3 +261,31 @@
 - **Blindagem:** `tests/chat.test.ts` vigia persistência, unicidade do mute,
   ausência do chat no layout público, montagem somente no jogo, sincronização
   por `playerId`, diretório privado e o comando admin de limpeza.
+
+
+## ⚡ LATÊNCIA DE AÇÕES + REGEN AO VIVO (2026-09-19)
+
+- **PostgreSQL nunca usa fila global de ações do processo.** A antiga
+  `actionChain` global existia exclusivamente para o SQLite single-writer.
+  Em produção PostgreSQL, serialização é somente por `playerId`: ações do
+  mesmo guerreiro continuam ordenadas; guerreiros diferentes podem agir em
+  paralelo. Testes SQLite preservam a fila global para continuar cobrindo
+  contenção/P1008.
+- **Caminho quente não faz manutenção redundante:** criação/verificação das
+  quests do período é cacheada por personagem+período no processo e
+  `ensureBalanceVersion` não bloqueia mais a resposta da ação.
+- **Regen sem write vazio:** `Player` só recebe UPDATE de HP/energia/relógios
+  quando `applyRegen()` realmente alterou algum valor.
+- **Estado pessoal paraleliza leituras independentes** de ranking, total de
+  jogadores, quests, atividade/guilda e convites, evitando somar várias
+  latências de rede sequenciais contra o PostgreSQL remoto.
+- **Energia e vida aparecem ao vivo no cliente:** a UI projeta a regeneração
+  a cada 1s usando exclusivamente `lastRegenAt`, `lastRegenHpAt` e os
+  intervalos enviados pelo servidor. Isso é apenas apresentação; toda ação
+  segue recalculando/validando a regeneração no servidor autoritativo.
+- **Sem banco de tempo ao gastar a partir de 100%:** o delta otimista reinicia
+  o relógio local de energia quando o jogador gasta partindo do máximo,
+  espelhando a regra do servidor.
+- **Observabilidade:** respostas de `/api/game/action` expõem
+  `Server-Timing` (total/fila/execução) e ações acima de 1s geram log
+  `[perf][action]` no Render para diagnóstico objetivo.
