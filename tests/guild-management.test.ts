@@ -89,11 +89,15 @@ test('convite aceita guerreiro materializado da nuvem sem criar sessão', async 
   if (restored?.accountId) await db.account.delete({ where: { id: restored.accountId } });
 });
 
-test('executor possui fallback de nuvem para guild_invite por nome', async () => {
+test('executor e cliente suportam fallback de nuvem para guild_invite por nome', async () => {
   const source = await Bun.file(path.join(process.cwd(), 'src/lib/game/actions.ts')).text();
   expect(source).toContain("type === 'guild_invite'");
   expect(source).toContain('guildOffline = await fetchOfflineOpponent(guildInviteName, accessToken)');
   expect(source).toContain('restoreOfflineOpponent(tx, guildOffline, guildInviteName)');
+
+  const page = await Bun.file(path.join(process.cwd(), 'src/app/jogar/page.tsx')).text();
+  expect(page).toContain("['attack_player', 'guild_invite'].includes(String(payload.type))");
+  expect(page).toContain('Authorization: `Bearer ${session.access_token}`');
 });
 
 test('convites offline, recusa, expiração e revalidação de vagas no aceite', async () => {
