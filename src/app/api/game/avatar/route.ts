@@ -10,6 +10,7 @@ import {
   validateImageBytes,
 } from '@/lib/avatars';
 import { SUPABASE_URL } from '@/lib/supabase/config';
+import { isPostgresDatabase } from '@/lib/game/persistence';
 
 // =====================================================================
 // POST /api/game/avatar — troca REAL do avatar do personagem
@@ -19,9 +20,9 @@ import { SUPABASE_URL } from '@/lib/supabase/config';
 //  * JSON { playerId, type: 'url', url }
 //      → o servidor BAIXA a imagem (https, anti-SSRF, timeout 8s,
 //        teto 5MB, Content-Type), valida a decodificação real (sharp)
-//        e ESPELHA localmente. Link de página, imagem inexistente,
-//        conteúdo inválido, timeout e bloqueio de provedor são
-//        detectados AGORA — o retrato nunca fica quebrado depois.
+//        e valida o conteúdo. Em PostgreSQL preserva a URL HTTPS; no
+//        SQLite legado pode espelhar localmente. Conteúdo inválido,
+ //        timeout e bloqueio de provedor são detectados imediatamente.
 //
 //  * FormData { playerId, type: 'upload', file }
 //      → JPG/PNG/WebP até 5MB, magic bytes + decodificação completa
@@ -132,8 +133,10 @@ export async function POST(request: Request) {
         const bytes = await fetchExternalImage(parsed.toString());
         const kind = await validateImageBytes(bytes);
 
-        // espelha localmente: o retrato não depende mais do provedor externo
-        newAvatarUrl = await saveAvatarFile(player.id, kind, bytes);
+        // PostgreSQL/Render Free não tem filesystem persistente. Depois de
+        // validar integralmente a imagem, preservamos a URL HTTPS original.
+        // Uploads de arquivo continuam preferindo Supabase Storage no cliente.
+        newAvatarUrl = isPostgresDatabase() ? parsed.toString() : await saveAvatarFile(player.id, kind, bytes);
       }
       await db.player.update({ where: { id: player.id }, data: { avatarUrl: newAvatarUrl } });
       await trackEvent('avatar_updated', { playerId: player.id, accountId: auth.account.id, metadata: { mode } });

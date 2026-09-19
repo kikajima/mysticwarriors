@@ -55,3 +55,28 @@ test('backup completo exige autorização administrativa', () => {
   expect(route).toContain('requirePanelAdmin(request)');
   expect(route).not.toContain('requireAuth()');
 });
+
+test('primeiro boot PostgreSQL garante bots e temporada', () => {
+  const persistence = readFileSync(path.join(root, 'src/lib/game/persistence.ts'), 'utf8');
+  expect(persistence).toContain("const { ensureSeed } = await import('./engine')");
+  expect(persistence).toContain('await ensureSeed()');
+  expect(persistence).toContain("const { ensureActiveSeason } = await import('@/lib/seasons')");
+  expect(persistence).toContain('ensureActiveSeason(tx)');
+});
+
+test('reset PostgreSQL cria backup lógico persistente antes do wipe', () => {
+  const reset = readFileSync(path.join(root, 'src/lib/game/serverReset.ts'), 'utf8');
+  const prodSchema = readFileSync(path.join(root, 'prisma/schema.prisma'), 'utf8');
+  expect(prodSchema).toContain('model ServerResetBackup');
+  expect(reset).toContain("makeBackupTarGz('user-backup', 'server-reset')");
+  expect(reset).toContain('db.serverResetBackup.create');
+  expect(reset).toContain('postgres:ServerResetBackup:');
+});
+
+test('Render Free não usa filesystem como fallback persistente de avatar', () => {
+  const avatars = readFileSync(path.join(root, 'src/lib/avatars.ts'), 'utf8');
+  const route = readFileSync(path.join(root, 'src/app/api/game/avatar/route.ts'), 'utf8');
+  expect(avatars).toContain('productionUsesPostgres()');
+  expect(avatars).toContain('Supabase Storage');
+  expect(route).toContain('isPostgresDatabase() ? parsed.toString()');
+});

@@ -32,6 +32,10 @@ import { resolveDbFilePath } from '@/lib/db-path';
 
 export const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB
 
+function productionUsesPostgres(): boolean {
+  return process.env.NODE_ENV === 'production' && /^postgres(?:ql)?:\/\//i.test(process.env.DATABASE_URL ?? '');
+}
+
 /** Nome de arquivo válido de avatar (gerado SEMPRE pelo servidor). */
 const AVATAR_NAME_RE = /^avatar_[A-Za-z0-9_-]+\.(jpg|png|webp)$/;
 
@@ -42,6 +46,12 @@ const AVATAR_NAME_RE = /^avatar_[A-Za-z0-9_-]+\.(jpg|png|webp)$/;
 export function avatarDataDir(): string {
   const env = process.env.AVATAR_DATA_DIR;
   if (env) return env;
+  if (productionUsesPostgres()) {
+    throw new ApiError(
+      'AVATAR_STORAGE_UNAVAILABLE',
+      'Uploads persistentes usam o Supabase Storage. Entre/salve sua conta e tente novamente.'
+    );
+  }
   // v0.9.14 — caminho resolvido de forma PORTÁVEL (candidates que existem
   // no disco), não o DATABASE_URL cru (absoluto do sandbox de dev).
   return path.join(path.dirname(resolveDbFilePath()), 'avatars');
@@ -63,7 +73,13 @@ function avatarDirCandidates(): string[] {
     if (d && !dirs.includes(d)) dirs.push(d);
   };
   add(process.env.AVATAR_DATA_DIR || undefined);
-  // v0.9.14 — irmão do banco RESOLVIDO (portátil p/ deploy)
+
+  // Render Free + PostgreSQL não possui filesystem persistente. URLs
+  // legadas /api/game/avatars/* simplesmente retornam 404 se não houver
+  // AVATAR_DATA_DIR explícito; novos uploads autenticados usam Storage.
+  if (productionUsesPostgres()) return dirs;
+
+  // SQLite local/legado: irmão do banco resolvido.
   add(path.join(path.dirname(resolveDbFilePath()), 'avatars'));
   // volumes externos do start.sh (produção)
   add('/app-data/guerreiros/avatars');
@@ -144,6 +160,12 @@ export async function validateImageBytes(bytes: Buffer): Promise<'jpg' | 'png' |
 
 /** Salva os bytes validados e devolve a URL pública estável. */
 export async function saveAvatarFile(playerId: string, kind: 'jpg' | 'png' | 'webp', bytes: Buffer): Promise<string> {
+  if (productionUsesPostgres()) {
+    throw new ApiError(
+      'AVATAR_STORAGE_UNAVAILABLE',
+      'No Render Free, o avatar deve ser salvo no Supabase Storage. Entre/salve sua conta e tente novamente.'
+    );
+  }
   const dir = await ensureAvatarDir();
   const safeId = playerId.replace(/[^a-zA-Z0-9_-]/g, '');
   const filename = `avatar_${safeId}_${Date.now()}.${kind}`;
