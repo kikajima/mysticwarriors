@@ -203,42 +203,21 @@ export async function POST(request: Request) {
     let result: ActionResult | undefined;
     let deduplicated = false;
 
-    if (requestId) {
-      // v0.9.2 — limpeza de registros expirados PROBABILÍSTICA (~1 em 8
-      // ações): era uma transação de escrita a CADA ação (fsync em disco
-      // lento da hospedagem = parte do "delay" ao coletar recompensas).
-      // Registros são minúsculos e o TTL continua valendo na leitura —
-      // limpar de vez em quando basta.
-      if (Math.random() < 0.125) {
-        await db.requestDedup.deleteMany({
-          where: { createdAt: { lt: new Date(Date.now() - DEDUP_TTL_MS) } },
-        }).catch(() => undefined);
-      }
-
-      // FAST PATH (leitura, sem lock): retry de rede com resultado já em
-      // cache → devolve direto, sem entrar na fila de ações
-      const cached = await db.requestDedup
-        .findUnique({ where: { playerId_requestId: { playerId, requestId } } })
-        .catch(() => null);
-      if (cached) {
-        if (cached.result && Date.now() - cached.createdAt.getTime() < DEDUP_TTL_MS) {
-          // replay dentro do TTL → devolve o MESMO resultado (sem re-executar)
-          result = JSON.parse(cached.result) as ActionResult;
-          deduplicated = true;
-        } else if (!cached.result) {
-          // linha sem resultado: outra tentativa com o MESMO id ainda está
-          // na fila global (ou sobra benigna) — o TTL de 5 min resolve
-          throw new ApiError('CONFLICT', 'Requisição duplicada em processamento — aguarde um instante.');
-        }
-      }
+    if (requestId && Math.random() < 0.125) {
+      // Higiene fora do caminho crítico. A linha expirada nunca altera a
+      // semântica do request atual; esperar por este DELETE adicionava uma
+      // viagem ao PostgreSQL em ~1/8 dos cliques.
+      void db.requestDedup.deleteMany({
+        where: { createdAt: { lt: new Date(Date.now() - DEDUP_TTL_MS) } },
+      }).catch(() => undefined);
     }
 
-    if (!deduplicated) {
-      // v-auditoria F4: TODO o fluxo roda dentro da MESMA fila global —
-      // inclusive o LOCK do dedup (o INSERT concorrente de N rajadas não
-      // disputa o escritor único do SQLite com transações de ação; era a
-      // última fonte de P1008/500 pré-ação). Uma ação confirmada NUNCA
-      // devolve 500 por contenção; uma rajada inteira entra em fila.
+    {
+      // O INSERT único do RequestDedup é também a PRIMEIRA consulta de
+      // deduplicação. Antes fazíamos findUnique + create em todo request
+      // novo; como UUID novo é o caso esmagadoramente comum, essa leitura
+      // apenas acrescentava uma viagem de rede. Replay cai no P2002 e lê o
+      // resultado já gravado, preservando a mesma idempotência.
       const waitingSince = Date.now();
       result = await withActionLock(playerId, async () => {
         queueWaitMs = Date.now() - waitingSince;
@@ -248,7 +227,7 @@ export async function POST(request: Request) {
           // uma consulta do caminho quente, a primeira ação do dia já conta.
           await ensureQuestsForAction(playerId).catch(() => undefined);
 
-        if (requestId && !result) {
+        if (requestId) {
           // LOCK: cria o registro antes de executar. Unique violation
           // (P2002) = outro request com o MESMO id já passou por aqui.
           try {
@@ -263,23 +242,12 @@ export async function POST(request: Request) {
                 deduplicated = true;
                 return JSON.parse(existing.result) as ActionResult;
               }
-              throw new ApiError('CONFLICT', 'Requisição duplicada em processamento — aguarde um instante.');
+              throw new ApiError('CONFLICT', 'Requisição duplicada ainda em processamento — aguarde um instante.');
             }
             throw e;
           }
         }
         const r = await executeActionWithRetry(auth, playerId, type, { ...args, requestId }, extractBearerToken(request));
-        if (dedupRef.current) {
-          // cacheia o resultado para retries futuros com o mesmo requestId
-          const dedupKey = dedupRef.current;
-          await db.requestDedup
-            .update({
-              where: { playerId_requestId: dedupKey },
-              data: { result: JSON.stringify(r) },
-            })
-            .catch(() => undefined);
-          dedupRef.current = null; // registrado (ou falhou benignamente) — não limpar no finally
-        }
         return r;
         } finally {
           actionExecMs = Date.now() - execStartedAt;
@@ -292,24 +260,41 @@ export async function POST(request: Request) {
     // caminho crítico: não há motivo para o clique esperar por ela.
     void ensureBalanceVersion().catch(() => undefined);
 
-    // estado fresco do personagem (pós-transação) — inclui atividade em
-    // andamento + cosméticos da conta (posse) e do personagem (equipados).
-    // Retry curto: sob qualquer contenção residual, tenta 3× antes de
-    // desistir (o cliente re-sincroniza pelo polling de estado).
-    let fresh: Awaited<ReturnType<typeof db.player.findUnique>> = null;
-    for (let attempt = 0; attempt < 3 && !fresh; attempt++) {
-      try {
-        fresh = await db.player.findUnique({
-          where: { id: playerId },
-          include: {
-            guild: true,
-            activities: { where: { completedAt: null, endsAt: { gt: new Date() } }, take: 1 },
-          },
-        });
-      } catch {
-        await new Promise((res) => setTimeout(res, 150 * (attempt + 1)));
+    // Cache do resultado de idempotência e leitura fresca são independentes
+    // depois do COMMIT da ação: executá-los em paralelo economiza mais uma
+    // ida/volta serial ao banco. A linha RequestDedup já existe, portanto um
+    // retry que chegue neste intervalo recebe CONFLICT, nunca duplica a ação.
+    const dedupKey = dedupRef.current;
+    dedupRef.current = null; // ação já commitou: nunca apagar este lock no catch
+
+    const cacheResultPromise = dedupKey
+      ? db.requestDedup
+          .update({
+            where: { playerId_requestId: dedupKey },
+            data: { result: JSON.stringify(result) },
+          })
+          .catch(() => undefined)
+      : Promise.resolve(undefined);
+
+    const loadFresh = async () => {
+      let fresh: Awaited<ReturnType<typeof db.player.findUnique>> = null;
+      for (let attempt = 0; attempt < 3 && !fresh; attempt++) {
+        try {
+          fresh = await db.player.findUnique({
+            where: { id: playerId },
+            include: {
+              guild: true,
+              activities: { where: { completedAt: null, endsAt: { gt: new Date() } }, take: 1 },
+            },
+          });
+        } catch {
+          await new Promise((res) => setTimeout(res, 150 * (attempt + 1)));
+        }
       }
-    }
+      return fresh;
+    };
+
+    const [fresh] = await Promise.all([loadFresh(), cacheResultPromise]);
     if (!fresh) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado (sincronize pelo painel).');
 
     const totalMs = Date.now() - requestStartedAt;
