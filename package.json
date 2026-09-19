@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "bun test tests/",
     "test:concurrency": "bun scripts/concurrency-test.ts",
-    "test:e2e": "bash scripts/e2e-audit.sh",
+    "test:e2e": "node scripts/run-e2e.mjs",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
