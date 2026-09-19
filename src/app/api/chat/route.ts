@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { getAuth, requireAuth } from '@/lib/auth';
 import { ApiError, ok, toErrorResponse } from '@/lib/api';
 import { db } from '@/lib/db';
@@ -54,11 +55,11 @@ async function listMessages(request: Request) {
 
   const before = parseBefore(url.searchParams.get('before'));
   const muted = await mutedIds(player.id);
-  const visibleSender = muted.length
+  const visibleSender: Prisma.ChatMessageWhereInput | undefined = muted.length
     ? { OR: [{ senderPlayerId: player.id }, { senderPlayerId: { notIn: muted } }] }
     : undefined;
 
-  let channelWhere: Record<string, unknown>;
+  let channelWhere: Prisma.ChatMessageWhereInput;
   if (channel === 'global') {
     channelWhere = { channel: 'global' };
   } else if (channel === 'guild') {
