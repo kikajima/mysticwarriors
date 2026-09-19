@@ -8,14 +8,16 @@ export const CHAT_PAGE_SIZE = 60;
 export const CHAT_CHANNELS = ['global', 'guild', 'private'] as const;
 export type ChatChannel = (typeof CHAT_CHANNELS)[number];
 
-export async function getActiveChatPlayer(
+export async function getChatPlayer(
   auth: AuthContext,
+  playerId?: string | null,
   client: Prisma.TransactionClient = db as unknown as Prisma.TransactionClient
 ) {
-  const activePlayerId = auth.account.activePlayerId;
-  if (!activePlayerId) return null;
+  const targetId = playerId ?? auth.account.activePlayerId;
+  if (!targetId) return null;
+
   return client.player.findFirst({
-    where: { id: activePlayerId, accountId: auth.account.id, isBot: false },
+    where: { id: targetId, accountId: auth.account.id, isBot: false },
     select: {
       id: true,
       name: true,
@@ -25,6 +27,28 @@ export async function getActiveChatPlayer(
       guild: { select: { id: true, name: true } },
     },
   });
+}
+
+export async function requireChatPlayer(
+  auth: AuthContext,
+  playerId?: string | null,
+  client: Prisma.TransactionClient = db as unknown as Prisma.TransactionClient
+) {
+  const player = await getChatPlayer(auth, playerId, client);
+  if (!player) {
+    throw new ApiError('FORBIDDEN', 'Este guerreiro não pertence à sua conta ou não está disponível.');
+  }
+  return player;
+}
+
+// Compatibilidade interna com chamadas antigas: sem playerId explícito, usa o
+// personagem ativo da conta. O widget novo sempre envia playerId para trocar
+// de personagem sem esperar o polling do activePlayerId.
+export async function getActiveChatPlayer(
+  auth: AuthContext,
+  client: Prisma.TransactionClient = db as unknown as Prisma.TransactionClient
+) {
+  return getChatPlayer(auth, null, client);
 }
 
 export async function requireActiveChatPlayer(
