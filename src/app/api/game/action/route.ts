@@ -128,6 +128,7 @@ const actionSchema = z.object({
   enemyId: z.string().optional(),
   targetId: z.string().optional(),
   itemId: z.string().optional(),
+  recipeId: z.string().max(100).optional(),
   slot: z.string().optional(),
   // v0.9.10 (Mudança 2): quantidade para compra/venda na loja — inteiro
   // 1..99 (a ação valida de novo no executor; o servidor nunca confia no
