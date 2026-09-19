@@ -9,9 +9,9 @@ import {
   CHAT_MAX_MESSAGE,
   CHAT_PAGE_SIZE,
   chatMessageView,
-  getActiveChatPlayer,
+  getChatPlayer,
   normalizeChatBody,
-  requireActiveChatPlayer,
+  requireChatPlayer,
   type ChatChannel,
 } from '@/lib/chat';
 
@@ -20,6 +20,7 @@ export const dynamic = 'force-dynamic';
 
 const sendSchema = z.object({
   action: z.literal('send'),
+  playerId: z.string().min(1).max(80).optional(),
   channel: z.enum(CHAT_CHANNELS),
   body: z.string().max(CHAT_MAX_MESSAGE),
   targetId: z.string().min(1).max(80).optional(),
@@ -27,6 +28,7 @@ const sendSchema = z.object({
 
 const muteSchema = z.object({
   action: z.enum(['mute', 'unmute']),
+  playerId: z.string().min(1).max(80).optional(),
   targetId: z.string().min(1).max(80),
 });
 
@@ -34,6 +36,10 @@ function parseBefore(value: string | null): Date | null {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function requestPlayerId(request: Request): string | null {
+  return new URL(request.url).searchParams.get('playerId');
 }
 
 async function mutedIds(playerId: string): Promise<string[]> {
@@ -46,7 +52,7 @@ async function mutedIds(playerId: string): Promise<string[]> {
 
 async function listMessages(request: Request) {
   const auth = await requireAuth();
-  const player = await requireActiveChatPlayer(auth);
+  const player = await requireChatPlayer(auth, requestPlayerId(request));
   const url = new URL(request.url);
   const channel = url.searchParams.get('channel') as ChatChannel | null;
   if (!channel || !CHAT_CHANNELS.includes(channel)) {
@@ -96,9 +102,9 @@ async function listMessages(request: Request) {
   });
 }
 
-async function listConversations() {
+async function listConversations(request: Request) {
   const auth = await requireAuth();
-  const player = await requireActiveChatPlayer(auth);
+  const player = await requireChatPlayer(auth, requestPlayerId(request));
   const muted = new Set(await mutedIds(player.id));
   const rows = await db.chatMessage.findMany({
     where: {
@@ -138,29 +144,34 @@ async function listConversations() {
 
 async function searchPlayers(request: Request) {
   const auth = await requireAuth();
-  const player = await requireActiveChatPlayer(auth);
+  const player = await requireChatPlayer(auth, requestPlayerId(request));
   const q = new URL(request.url).searchParams.get('q')?.trim() ?? '';
-  if (q.length < 2) return ok({ players: [] });
   if (q.length > 30) throw new ApiError('VALIDATION_ERROR', 'Busca muito longa.');
 
   const rows = await db.player.findMany({
     where: {
       isBot: false,
       id: { not: player.id },
-      name: { contains: q },
+      ...(q ? { name: { contains: q } } : {}),
     },
     select: { id: true, name: true, level: true, race: true, guildId: true },
     orderBy: { name: 'asc' },
-    take: 20,
+    take: q ? 50 : 200,
   });
   return ok({ players: rows });
 }
 
-async function context() {
+async function context(request: Request) {
   const auth = await getAuth();
   if (!auth) return ok({ authenticated: false, player: null, muted: [] });
-  const player = await getActiveChatPlayer(auth);
+
+  const explicitPlayerId = requestPlayerId(request);
+  const player = explicitPlayerId
+    ? await requireChatPlayer(auth, explicitPlayerId)
+    : await getChatPlayer(auth);
+
   if (!player) return ok({ authenticated: true, player: null, muted: [] });
+
   const muted = await db.chatMute.findMany({
     where: { playerId: player.id },
     select: { mutedPlayerId: true, mutedPlayerName: true, createdAt: true },
@@ -183,9 +194,9 @@ async function context() {
   });
 }
 
-async function sendMessage(request: Request, data: z.infer<typeof sendSchema>) {
+async function sendMessage(data: z.infer<typeof sendSchema>) {
   const auth = await requireAuth();
-  const player = await requireActiveChatPlayer(auth);
+  const player = await requireChatPlayer(auth, data.playerId);
   const rl = rateLimit(`chat-send:${player.id}`, 12, 30_000);
   if (!rl.allowed) {
     throw new ApiError('RATE_LIMITED', `Muitas mensagens seguidas. Aguarde ${rl.retryAfterSec}s.`);
@@ -247,7 +258,7 @@ async function sendMessage(request: Request, data: z.infer<typeof sendSchema>) {
 
 async function changeMute(data: z.infer<typeof muteSchema>) {
   const auth = await requireAuth();
-  const player = await requireActiveChatPlayer(auth);
+  const player = await requireChatPlayer(auth, data.playerId);
   if (data.targetId === player.id) throw new ApiError('VALIDATION_ERROR', 'Você não pode silenciar a si mesmo.');
 
   if (data.action === 'unmute') {
@@ -278,9 +289,9 @@ async function changeMute(data: z.infer<typeof muteSchema>) {
 export async function GET(request: Request) {
   try {
     const view = new URL(request.url).searchParams.get('view') ?? 'context';
-    if (view === 'context') return await context();
+    if (view === 'context') return await context(request);
     if (view === 'messages') return await listMessages(request);
-    if (view === 'conversations') return await listConversations();
+    if (view === 'conversations') return await listConversations(request);
     if (view === 'players') return await searchPlayers(request);
     throw new ApiError('NOT_FOUND', 'Visão de chat não encontrada.');
   } catch (error) {
@@ -294,7 +305,7 @@ export async function POST(request: Request) {
     if (raw?.action === 'send') {
       const parsed = sendSchema.safeParse(raw);
       if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message);
-      return await sendMessage(request, parsed.data);
+      return await sendMessage(parsed.data);
     }
     const parsed = muteSchema.safeParse(raw);
     if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Ação inválida.');

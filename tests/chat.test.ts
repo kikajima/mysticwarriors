@@ -39,15 +39,22 @@ test('silêncio é unilateral e único por par', async () => {
   expect(await db.chatMute.count({ where: { playerId: 'p2' } })).toBe(1);
 });
 
-test('contrato: widget global e limpeza administrativa existem', async () => {
+test('contrato: chat só existe dentro do jogo e mantém limpeza administrativa', async () => {
   const layout = await Bun.file(path.join(process.cwd(), 'src/app/layout.tsx')).text();
+  const page = await Bun.file(path.join(process.cwd(), 'src/app/jogar/page.tsx')).text();
   const widget = await Bun.file(path.join(process.cwd(), 'src/components/ChatWidget.tsx')).text();
+  const api = await Bun.file(path.join(process.cwd(), 'src/app/api/chat/route.ts')).text();
   const admin = await Bun.file(path.join(process.cwd(), 'src/app/api/admin/chat/route.ts')).text();
-  expect(layout).toContain('<ChatWidget />');
+
+  expect(layout).not.toContain('<ChatWidget />');
+  expect(page).toContain('<ChatWidget key={player.id} player={player} />');
   expect(widget).toContain("fixed bottom-20 sm:bottom-4 left-4");
-  expect(widget).toContain("'global'");
-  expect(widget).toContain("'guild'");
-  expect(widget).toContain("'private'");
+  expect(widget).toContain("loadMessages(false, false)");
+  expect(widget).toContain("Todos os guerreiros");
+  expect(widget).toContain("onFocus={() =>");
+  expect(widget).toContain("playerId: player.id");
+  expect(api).toContain("playerId: z.string().min(1).max(80).optional()");
+  expect(api).toContain("take: q ? 50 : 200");
   expect(admin).toContain("z.literal('LIMPAR CHAT'");
   expect(admin).toContain('chatMessage.deleteMany');
 });

@@ -8,7 +8,6 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { PwaBootstrap } from "@/components/PwaBootstrap";
-import { ChatWidget } from "@/components/ChatWidget";
 
 const geistSans = localFont({
   src: "../fonts/Geist-Variable.woff2",
@@ -121,7 +120,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} ${russoOne.variable} antialiased bg-background text-foreground`}
       >
         {children}
-        <ChatWidget />
         <Toaster />
         <PwaBootstrap />
       </body>
