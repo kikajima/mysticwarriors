@@ -43,7 +43,7 @@ import { COSMETICS, COSMETIC_SLOTS } from '@/lib/game/content/cosmetics';
 import { RACES } from '@/lib/game/content/races';
 import { TECHNIQUES, STRATEGIES } from '@/lib/game/content/techniques';
 import { TRANSFORMATIONS } from '@/lib/game/content/transformations';
-import { PROFESSIONS, SHOP_ITEMS, MAX_CHARACTERS_PER_ACCOUNT } from '@/lib/game/content/world';
+import { PROFESSIONS, PROFESSION_MATERIALS, SHOP_ITEMS, MAX_CHARACTERS_PER_ACCOUNT } from '@/lib/game/content/world';
 import { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS } from '@/lib/game/content/quests';
 import { TALENTS } from '@/lib/game/content/talents';
 import { TOURNAMENT_ROUNDS } from '@/lib/game/content/tournament';
@@ -55,6 +55,7 @@ import {
   parseProfessions,
   parseCosmeticsOwned,
 } from '@/lib/game/engine';
+import { sanitizeProfessionsObject } from '@/lib/game/professionCareer';
 import { CLOUD_PROGRESS_VERSION } from './config';
 
 export { CLOUD_PROGRESS_VERSION };
@@ -74,6 +75,8 @@ const CLAMP = {
   dragonBalls: [0, 7],
   consumableCount: [0, 999],
   professionCompletions: [0, 999],
+  professionHours: [0, 10_000_000],
+  materialQuantity: [0, 1_000_000],
   maxTechniques: 50,
   maxTransformations: 30,
   maxCosmetics: 100,
@@ -101,6 +104,11 @@ export interface CloudQuestSnapshot {
 export interface CloudAchievementSnapshot {
   achievementId: string;
   claimedAt: string | null;
+}
+
+export interface CloudMaterialSnapshot {
+  itemId: string;
+  quantity: number;
 }
 
 export interface CloudCharacterSnapshot {
@@ -143,9 +151,13 @@ export interface CloudCharacterSnapshot {
   /** v0.9.6: cosméticos COMPRADOS por ESTE personagem (posse própria). */
   cosmeticsOwned: string[];
   // ===== v0.9.4 — estado que antes ficava só no servidor =====
-  /** Turno de profissão em andamento (id do catálogo + término). */
+  /** Turno de profissão em andamento (id + início + duração + término). */
   missionId: string | null;
+  missionStartedAt: string | null;
   missionEndsAt: string | null;
+  missionHours: 1 | 2 | 4 | 8 | null;
+  /** Materiais profissionais relacionais espelhados para recuperação. */
+  materials: CloudMaterialSnapshot[];
   /** Relógios de regeneração (energia/vida continuam contando offline). */
   lastRegen: string;
   lastRegenHp: string | null;
@@ -193,6 +205,7 @@ const KNOWN = {
   transformations: new Set(TRANSFORMATIONS.map((t) => t.id)),
   items: new Set(SHOP_ITEMS.map((i) => i.id)),
   professions: new Set(PROFESSIONS.map((p) => p.id)),
+  materials: new Set(PROFESSION_MATERIALS.map((m) => m.id)),
   cosmetics: new Set(COSMETICS.map((c) => c.id)),
   strategies: new Set(Object.keys(STRATEGIES)),
   // v0.9.18 — talentos de Ímpeto (Cap. 7) dominados
@@ -313,14 +326,29 @@ function sanitizeAchievementsClaimed(raw: unknown): CloudAchievementSnapshot[] {
 }
 
 /** Turno de profissão em andamento — id válido + término dentro da janela. */
-function sanitizeMission(rawId: unknown, rawEndsAt: unknown): { missionId: string; missionEndsAt: string } | null {
+function sanitizeMission(
+  rawId: unknown,
+  rawStartedAt: unknown,
+  rawEndsAt: unknown,
+  rawHours: unknown
+): { missionId: string; missionStartedAt: string; missionEndsAt: string; missionHours: 1 | 2 | 4 | 8 } | null {
   const missionId = asString(rawId, 64);
   if (!missionId || !KNOWN.professions.has(missionId)) return null;
-  // turnos duram no máximo 60min; janela generosa: até 7d atrás (vencido,
-  // coletável na hora) ou 48h no futuro (descarta datas absurdas)
+  // Janela generosa: turno máximo é 8h; aceitamos vencidos de até 7 dias e
+  // até 48h no futuro para tolerar relógios/abas antigas sem aceitar absurdo.
   const endsAt = sanitizeIsoDate(rawEndsAt, 7 * 86400_000, 48 * 3600_000);
   if (!endsAt) return null;
-  return { missionId, missionEndsAt: endsAt.toISOString() };
+  const parsedHours = Math.trunc(Number(rawHours));
+  const missionHours = ([1, 2, 4, 8].includes(parsedHours) ? parsedHours : 1) as 1 | 2 | 4 | 8;
+  const startedAt =
+    sanitizeIsoDate(rawStartedAt, 7 * 86400_000, 5 * 60_000) ??
+    new Date(endsAt.getTime() - missionHours * 3600_000);
+  return {
+    missionId,
+    missionStartedAt: startedAt.toISOString(),
+    missionEndsAt: endsAt.toISOString(),
+    missionHours,
+  };
 }
 
 // =====================================================================
@@ -331,6 +359,7 @@ function sanitizeMission(rawId: unknown, rawEndsAt: unknown): { missionId: strin
 export interface CharacterExtras {
   quests: CloudQuestSnapshot[];
   achievements: CloudAchievementSnapshot[];
+  materials: CloudMaterialSnapshot[];
 }
 
 export function serializeCharacterForCloud(
@@ -372,7 +401,10 @@ export function serializeCharacterForCloud(
     cosmeticsOwned: parseCosmeticsOwned(player.cosmeticsOwned),
     // v0.9.4
     missionId: player.missionId ?? null,
+    missionStartedAt: player.missionStartedAt ? player.missionStartedAt.toISOString() : null,
     missionEndsAt: player.missionEndsAt ? player.missionEndsAt.toISOString() : null,
+    missionHours: ([1, 2, 4, 8].includes(player.missionHours ?? 0) ? player.missionHours : null) as 1 | 2 | 4 | 8 | null,
+    materials: extras?.materials ?? [],
     lastRegen: player.lastRegen ? new Date(player.lastRegen).toISOString() : new Date().toISOString(),
     lastRegenHp: player.lastRegenHp ? new Date(player.lastRegenHp).toISOString() : null,
     quests: extras?.quests ?? [],
@@ -520,19 +552,22 @@ function sanitizeLoadout(raw: unknown, techniques: string[]): Loadout {
 }
 
 function sanitizeProfessions(raw: unknown): ProfessionsMap {
-  const src = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const out: ProfessionsMap = {};
-  for (const profession of PROFESSIONS) {
-    const entry = src[profession.id];
-    if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
-      const e = entry as Record<string, unknown>;
-      out[profession.id] = {
-        rank: clampInt(e.rank, [1, profession.rankNames.length]),
-        completions: clampInt(e.completions, CLAMP.professionCompletions),
-      };
-    }
+  return sanitizeProfessionsObject(raw);
+}
+
+function sanitizeMaterials(raw: unknown): CloudMaterialSnapshot[] {
+  if (!Array.isArray(raw)) return [];
+  const totals = new Map<string, number>();
+  for (const entry of raw.slice(0, 200)) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    const row = entry as Record<string, unknown>;
+    const itemId = asString(row.itemId, 64);
+    if (!itemId || !KNOWN.materials.has(itemId)) continue;
+    const quantity = clampInt(row.quantity, CLAMP.materialQuantity);
+    if (quantity <= 0) continue;
+    totals.set(itemId, Math.min(CLAMP.materialQuantity[1], (totals.get(itemId) ?? 0) + quantity));
   }
-  return out;
+  return Array.from(totals, ([itemId, quantity]) => ({ itemId, quantity }));
 }
 
 function sanitizeCharacter(raw: unknown, accountCosmetics: string[]): CloudCharacterSnapshot {
@@ -575,7 +610,7 @@ function sanitizeCharacter(raw: unknown, accountCosmetics: string[]): CloudChara
   const strategy: StrategyId = strategyRaw && KNOWN.strategies.has(strategyRaw) ? (strategyRaw as StrategyId) : 'balanced';
 
   // v0.9.4 — turno em andamento, relógios, quests e conquistas
-  const mission = sanitizeMission(c.missionId, c.missionEndsAt);
+  const mission = sanitizeMission(c.missionId, c.missionStartedAt, c.missionEndsAt, c.missionHours);
   const lastRegen = sanitizeIsoDate(c.lastRegen, 30 * 86400_000, 5 * 60_000) ?? new Date();
   const lastRegenHp = sanitizeIsoDate(c.lastRegenHp, 30 * 86400_000, 5 * 60_000);
 
@@ -614,7 +649,10 @@ function sanitizeCharacter(raw: unknown, accountCosmetics: string[]): CloudChara
     cosmeticsEquipped: equipped,
     cosmeticsOwned,
     missionId: mission?.missionId ?? null,
+    missionStartedAt: mission?.missionStartedAt ?? null,
     missionEndsAt: mission?.missionEndsAt ?? null,
+    missionHours: mission?.missionHours ?? null,
+    materials: sanitizeMaterials(c.materials),
     lastRegen: lastRegen.toISOString(),
     lastRegenHp: lastRegenHp ? lastRegenHp.toISOString() : null,
     quests: sanitizeQuests(c.quests),
@@ -729,7 +767,9 @@ export function cloudCharacterToPlayerData(char: CloudCharacterSnapshot, nameOve
   cosmeticsEquipped: string;
   cosmeticsOwned: string;
   missionId: string | null;
+  missionStartedAt: Date | null;
   missionEndsAt: Date | null;
+  missionHours: number | null;
   lastRegen: Date;
   lastRegenHp: Date | null;
   talents: string;
@@ -775,7 +815,9 @@ export function cloudCharacterToPlayerData(char: CloudCharacterSnapshot, nameOve
     cosmeticsEquipped: JSON.stringify(char.cosmeticsEquipped),
     cosmeticsOwned: JSON.stringify(char.cosmeticsOwned),
     missionId: char.missionId,
+    missionStartedAt: char.missionStartedAt ? new Date(char.missionStartedAt) : null,
     missionEndsAt: char.missionEndsAt ? new Date(char.missionEndsAt) : null,
+    missionHours: char.missionHours,
     lastRegen: new Date(char.lastRegen),
     lastRegenHp: char.lastRegenHp ? new Date(char.lastRegenHp) : null,
     // v0.9.15–v0.9.18 — talentos, narrativas e torneio sobrevivem à nuvem
