@@ -1,33 +1,25 @@
-import { closeSync, existsSync, mkdirSync, openSync } from 'node:fs';
 import { spawn } from 'node:child_process';
-import path from 'node:path';
 
-function configuredDbPath() {
+function assertProductionDatabaseUrl() {
+  if (process.env.NODE_ENV !== 'production') return;
   const raw = process.env.DATABASE_URL ?? '';
-  const match = raw.match(/^file:(\/[^?]+)(?:\?.*)?$/i);
-  return match?.[1] ?? null;
-}
-
-if (process.env.NODE_ENV === 'production') {
-  const dbPath = configuredDbPath();
-  if (!dbPath) {
-    throw new Error('Produção exige DATABASE_URL=file:/caminho/absoluto/custom.db');
+  if (!/^postgres(?:ql)?:\/\//i.test(raw)) {
+    throw new Error(
+      'Produção exige DATABASE_URL PostgreSQL do Supabase. SQLite/file: não é aceito no Render Free.'
+    );
   }
-
-  const dir = path.dirname(dbPath);
-  if (!existsSync(dbPath)) {
-    if (process.env.ALLOW_EMPTY_DB_INIT !== 'true') {
-      throw new Error(
-        `Banco de produção ausente em ${dbPath}. Monte/restaure o Persistent Disk. ` +
-        'Para uma instalação realmente nova, use ALLOW_EMPTY_DB_INIT=true apenas no primeiro boot.'
-      );
-    }
-    mkdirSync(dir, { recursive: true });
-    closeSync(openSync(dbPath, 'a'));
-    console.log(`[startup] SQLite vazio criado em ${dbPath}; migrations serão aplicadas no boot.`);
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error('DATABASE_URL PostgreSQL inválida.');
+  }
+  if (parsed.searchParams.get('schema') !== 'game') {
+    throw new Error('DATABASE_URL deve incluir schema=game para isolar as tabelas autoritativas.');
   }
 }
 
+assertProductionDatabaseUrl();
 process.env.HOSTNAME ||= '0.0.0.0';
 
 const child = spawn('node', ['.next/standalone/server.js'], {
@@ -46,6 +38,4 @@ for (const signal of ['SIGTERM', 'SIGINT']) {
   });
 }
 
-child.on('exit', (code) => {
-  process.exit(code ?? 0);
-});
+child.on('exit', (code) => process.exit(code ?? 0));
