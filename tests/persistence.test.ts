@@ -16,6 +16,19 @@ import {
   checkpointWal,
 } from '../src/lib/game/persistence';
 
+function cleanupTempDir(dir: string) {
+  try {
+    rmSync(dir, { recursive: true, force: true });
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException)?.code;
+    // Bun/Windows pode manter o SQLite aberto até o encerramento do processo
+    // mesmo após PrismaClient.$disconnect(). Isso é limpeza de fixture, não
+    // falha funcional do migrador. Só toleramos os locks transitórios do SO.
+    if (process.platform === 'win32' && (code === 'EBUSY' || code === 'EPERM')) return;
+    throw err;
+  }
+}
+
 // =====================================================================
 // PERSISTÊNCIA v0.7 — testes unitários
 // =====================================================================
@@ -130,7 +143,7 @@ describe('snapshotDbCounts', () => {
       writeFileSync(fake, 'isto não é sqlite');
       expect(await snapshotDbCounts(fake)).toBeNull();
     } finally {
-      rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
+      cleanupTempDir(dir);
     }
   });
 
@@ -200,7 +213,7 @@ describe('applyPendingMigrations (migrador de boot)', () => {
 
       await client.$disconnect();
     } finally {
-      rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
+      cleanupTempDir(dir);
     }
   });
 
@@ -229,7 +242,7 @@ describe('applyPendingMigrations (migrador de boot)', () => {
       expect(players).toBeLessThanOrEqual(17);
       await client.$disconnect();
     } finally {
-      rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
+      cleanupTempDir(dir);
     }
   });
 });
