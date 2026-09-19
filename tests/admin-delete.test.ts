@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, setDefaultTimeout, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
@@ -34,6 +34,11 @@ import { ApiError } from '../src/lib/api';
 //  * auditoria: toda tentativa (ok/partial/failed/blocked) registrada;
 //  * matriz anti-órfã pós-operação (inclui check LÓGICO de doações).
 // =====================================================================
+
+// Esta suíte cria bancos temporários e reaplica a cadeia completa de migrations.
+// Em runners compartilhados do GitHub, 5 s é apertado e gerava flakes exatos
+// em 5000 ms. Mantemos uma margem explícita apenas neste arquivo pesado.
+setDefaultTimeout(15_000);
 
 const ADMIN_EMAIL = 'alicomprasbbbb@gmail.com';
 const ADMIN_UUID = '00000000-0000-0000-0000-0000000000aa';
