@@ -49,7 +49,7 @@ export async function restoreOfflineOpponent(tx: Prisma.TransactionClient, snaps
     }
     const char = { ...sanitizeCloudCharacterState(row.estado), id: row.id, name: row.nome };
     const created = await tx.player.create({ data: { ...cloudCharacterToPlayerData(char), accountId: account.id } });
-    for (const material of char.materials) {
+    for (const material of char.materials ?? []) {
       await tx.inventoryStack.upsert({
         where: { playerId_itemId: { playerId: created.id, itemId: material.itemId } },
         update: { quantity: material.quantity },
