@@ -5,13 +5,14 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { applyPendingMigrations, splitSqlStatements } from '../src/lib/game/persistence';
-import { initialPlayerData } from '../src/lib/game/characterInitial';
+import { initialCloudCharacterState, initialPlayerData } from '../src/lib/game/characterInitial';
 import { runGuildOnce } from '../src/lib/game/guilds';
 import { guildBonuses, guildThreshold, guildCapacity, GUILD_UPGRADE_COSTS, GUILD_PERMISSIONS, GUILD_BONUS_TABLE } from '../src/lib/game/guildRules';
 import { grantRewards, transferZeniPvp } from '../src/lib/economy';
 import { applyRegen, buildPlayerCombatant, playerToView } from '../src/lib/game/engine';
 import { WIKI_SECTIONS } from '../src/lib/wiki/wiki-content';
 import { isOnline, touchPresence } from '../src/lib/game/presence';
+import { restoreOfflineOpponent, type OfflineOpponent } from '../src/lib/supabase/offline-pvp';
 
 const dir = mkdtempSync(path.join(tmpdir(), 'mw-guild-tests-'));
 const db = new PrismaClient({ datasources: { db: { url: `file:${path.join(dir, 'test.db')}?connection_limit=1` } } });
@@ -60,6 +61,41 @@ test('fundação atômica e replay: exatamente uma guilda e um débito', async (
   const p = await db.player.findUniqueOrThrow({ where: { id: ids[0] } });
   expect(p.zeni).toBe(2_995_000); guildId = p.guildId!;
 });
+test('convite aceita guerreiro materializado da nuvem sem criar sessão', async () => {
+  const remoteName = `QA_Remote_${randomUUID().slice(0, 8)}`;
+  const remoteId = `qa-remote-${randomUUID()}`;
+  const snapshot: OfflineOpponent = {
+    user_id: randomUUID(),
+    personagens: [{
+      id: remoteId,
+      nome: remoteName,
+      ativo: true,
+      atualizado_em: new Date().toISOString(),
+      estado: initialCloudCharacterState({ id: remoteId, name: remoteName, race: 'humano' }),
+    }],
+  };
+
+  const restored = await db.$transaction((tx) => restoreOfflineOpponent(tx, snapshot, remoteName));
+  expect(restored?.id).toBe(remoteId);
+  expect(await db.session.count({ where: { accountId: restored!.accountId! } })).toBe(0);
+
+  await act(0, 'guild_invite', { targetName: remoteName });
+  const invite = await db.guildInvitation.findFirstOrThrow({ where: { playerId: remoteId } });
+  expect(invite.guildId).toBe(guildId);
+
+  // fixture isolada: remove apenas o alvo remoto deste teste.
+  await db.guildInvitation.delete({ where: { id: invite.id } });
+  await db.player.delete({ where: { id: remoteId } });
+  if (restored?.accountId) await db.account.delete({ where: { id: restored.accountId } });
+});
+
+test('executor possui fallback de nuvem para guild_invite por nome', async () => {
+  const source = await Bun.file(path.join(process.cwd(), 'src/lib/game/actions.ts')).text();
+  expect(source).toContain("type === 'guild_invite'");
+  expect(source).toContain('guildOffline = await fetchOfflineOpponent(guildInviteName, accessToken)');
+  expect(source).toContain('restoreOfflineOpponent(tx, guildOffline, guildInviteName)');
+});
+
 test('convites offline, recusa, expiração e revalidação de vagas no aceite', async () => {
   await expect(act(1, 'join_guild', { targetId: guildId })).rejects.toThrow('convite');
   await act(0, 'guild_invite', { targetId: ids[5] });
