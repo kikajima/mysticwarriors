@@ -263,7 +263,7 @@ describe('v0.8 — translateSupabaseAuthError (mensagens amigáveis)', () => {
   test('códigos reais do projeto viram mensagens em português', () => {
     expect(translateSupabaseAuthError({ code: 'invalid_credentials' }).message).toContain('incorretos');
     expect(translateSupabaseAuthError({ code: 'email_not_confirmed' }).message).toContain('confirmado');
-    expect(translateSupabaseAuthError({ code: 'user_already_registered' }).message).toContain('já tem conta');
+    expect(translateSupabaseAuthError({ code: 'user_already_registered' }).message).toContain('já tem uma conta');
     expect(translateSupabaseAuthError({ code: 'weak_password' }).message).toContain('8 caracteres');
     const emailRateLimit = translateSupabaseAuthError({ code: 'over_email_send_rate_limit' });
     expect(emailRateLimit.message).toContain('cadastro');
