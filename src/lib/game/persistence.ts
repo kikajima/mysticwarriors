@@ -466,6 +466,7 @@ async function makePostgresLogicalBackup(
     chatMessages,
     chatMutes,
     inventoryStacks,
+    craftJobs,
   ] = await Promise.all([
     db.account.findMany(),
     db.player.findMany(),
@@ -493,6 +494,7 @@ async function makePostgresLogicalBackup(
     db.chatMessage.findMany(),
     db.chatMute.findMany(),
     db.inventoryStack.findMany(),
+    db.craftJob.findMany(),
   ]);
 
   const humans = players.filter((player) => !player.isBot).length;
@@ -536,6 +538,7 @@ async function makePostgresLogicalBackup(
       ChatMessage: chatMessages,
       ChatMute: chatMutes,
       InventoryStack: inventoryStacks,
+      CraftJob: craftJobs,
     },
   };
 
