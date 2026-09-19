@@ -200,6 +200,7 @@ export async function performServerReset(confirm: string): Promise<ServerResetRe
       await tx.session.deleteMany({});
       await tx.guildDonation.deleteMany({});
       await tx.activity.deleteMany({});
+      await tx.inventoryStack.deleteMany({});
       await tx.questProgress.deleteMany({});
       await tx.achievementState.deleteMany({});
       await tx.requestDedup.deleteMany({});
