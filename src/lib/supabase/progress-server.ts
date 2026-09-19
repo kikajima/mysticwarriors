@@ -25,7 +25,7 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
   if (playerIds.length === 0) return map;
 
   const periods = [dailyPeriod(), weeklyPeriod()];
-  const [questRows, achievementRows, materialRows] = await Promise.all([
+  const [questRows, achievementRows, materialRows, craftRows] = await Promise.all([
     db.questProgress.findMany({
       where: { playerId: { in: playerIds }, period: { in: periods } },
     }),
@@ -35,6 +35,19 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
     db.inventoryStack.findMany({
       where: { playerId: { in: playerIds }, quantity: { gt: 0 } },
       select: { playerId: true, itemId: true, quantity: true },
+    }),
+    db.craftJob.findMany({
+      where: { playerId: { in: playerIds } },
+      select: {
+        playerId: true,
+        recipeId: true,
+        outputItemId: true,
+        outputQuantity: true,
+        outputKind: true,
+        academicLevelStart: true,
+        startedAt: true,
+        endsAt: true,
+      },
     }),
   ]);
 
@@ -63,6 +76,20 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
     const entry = map.get(m.playerId) ?? { quests: [], achievements: [], materials: [] };
     (entry.materials ??= []).push({ itemId: m.itemId, quantity: m.quantity });
     map.set(m.playerId, entry);
+  }
+
+  for (const job of craftRows) {
+    const entry = map.get(job.playerId) ?? { quests: [], achievements: [], materials: [] };
+    entry.craftJob = {
+      recipeId: job.recipeId,
+      outputItemId: job.outputItemId,
+      outputQuantity: job.outputQuantity,
+      outputKind: job.outputKind === 'stack' ? 'stack' : 'player_item',
+      academicLevelStart: job.academicLevelStart,
+      startedAt: job.startedAt.toISOString(),
+      endsAt: job.endsAt.toISOString(),
+    };
+    map.set(job.playerId, entry);
   }
 
   return map;
