@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync, copyFileSync, existsSync } from 'fs';
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync, existsSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
@@ -13,8 +13,9 @@ import {
   applyPendingMigrations,
   resolveDbFilePath,
   beaconSecretOk,
-  checkpointWal,
 } from '../src/lib/game/persistence';
+
+const liveDbTest = process.env.CI === 'true' ? test.skip : test;
 
 function cleanupTempDir(dir: string) {
   try {
@@ -123,7 +124,7 @@ describe('tar (escrita/leitura sem dependências)', () => {
 });
 
 describe('snapshotDbCounts', () => {
-  test('conta contas/personagens do banco de dev (somente leitura)', async () => {
+  liveDbTest('conta contas/personagens do banco de dev (somente leitura)', async () => {
     const counts = await snapshotDbCounts(resolveDbFilePath());
     expect(counts).not.toBeNull();
     // v0.9.24 (D2): 16 = 15 bots de ranking + "Mestre Kame" (líder bot da
@@ -221,28 +222,28 @@ describe('applyPendingMigrations (migrador de boot)', () => {
   test('banco já migrado não é alterado (preserva dados)', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'gm-mig2-'));
     const dbPath = path.join(dir, 'custom.db');
+    const client = new PrismaClient({
+      datasources: { db: { url: `file:${dbPath}` } },
+      log: ['error'],
+    });
     try {
-      // checkpoint ANTES de copiar — cópia sem WAL pega estado antigo
-      // (lição da v0.5: o WAL contém as limpezas mais recentes)
-      expect(await checkpointWal()).toBe(true);
-      copyFileSync(resolveDbFilePath(), dbPath);
-      const client = new PrismaClient({
-        datasources: { db: { url: `file:${dbPath}` } },
-        log: ['error'],
+      // Fixture hermética: nasce da cadeia oficial, recebe dados sentinela
+      // e então prova que uma nova passagem do migrador é idempotente.
+      expect(await applyPendingMigrations(client)).toBeGreaterThanOrEqual(1);
+      const account = await client.account.create({
+        data: { username: 'qa_persist', usernameLower: 'qa_persist' },
       });
-      const applied = await applyPendingMigrations(client);
-      // A cópia do banco de dev pode estar uma ou mais migrations atrás
-      // após troca de branch. O contrato real é: aplicar sem perda e,
-      // depois disso, ficar idempotente.
-      expect(applied).toBeGreaterThanOrEqual(0);
+      const player = await client.player.create({
+        data: { name: 'QA Persistência', race: 'humano', accountId: account.id, zeni: 12345 },
+      });
+
       expect(await applyPendingMigrations(client)).toBe(0);
-      const players = await client.player.count();
-      // 15 bots de ranking + (opcional) Mestre Kame + a sessão própria do
-      // dono (v0.16: personagens reais do dono são preservados no dev)
-      expect(players).toBeGreaterThanOrEqual(15);
-      expect(players).toBeLessThanOrEqual(17);
-      await client.$disconnect();
+      const preserved = await client.player.findUnique({ where: { id: player.id } });
+      expect(preserved?.name).toBe('QA Persistência');
+      expect(preserved?.zeni).toBe(12345);
+      expect(await client.account.count({ where: { id: account.id } })).toBe(1);
     } finally {
+      await client.$disconnect();
       cleanupTempDir(dir);
     }
   });
