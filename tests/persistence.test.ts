@@ -130,7 +130,7 @@ describe('snapshotDbCounts', () => {
       writeFileSync(fake, 'isto não é sqlite');
       expect(await snapshotDbCounts(fake)).toBeNull();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
     }
   });
 
@@ -200,7 +200,7 @@ describe('applyPendingMigrations (migrador de boot)', () => {
 
       await client.$disconnect();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
     }
   });
 
@@ -229,7 +229,7 @@ describe('applyPendingMigrations (migrador de boot)', () => {
       expect(players).toBeLessThanOrEqual(17);
       await client.$disconnect();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
     }
   });
 });
