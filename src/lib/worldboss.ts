@@ -202,49 +202,71 @@ export async function ensureActiveBoss(tx: Prisma.TransactionClient, newEncounte
 
 /** View do boss atual para o jogador. */
 export async function getBossView(playerId: string | null): Promise<WorldBossView | null> {
-  return db.$transaction(
-    async (tx) => {
-      if (!(await universalThreatIsAvailable(tx))) return null;
-      await ensureActiveBoss(tx);
-      const boss = await tx.worldBoss.findFirst({
-        where: { status: 'active' },
-        include: { damages: { orderBy: { damage: 'desc' }, take: 10, include: { player: { select: { name: true } } } } },
-      });
-      if (!boss) return null;
+  const now = new Date();
 
-      const totalAttackers = await tx.worldBossDamage.count({ where: { bossId: boss.id } });
-      const mine = playerId
-        ? await tx.worldBossDamage.findUnique({
-            where: { bossId_playerId: { bossId: boss.id, playerId } },
-          })
-        : null;
-      const myPosition = mine
-        ? (await tx.worldBossDamage.count({ where: { bossId: boss.id, damage: { gt: mine.damage } } })) + 1
-        : null;
+  const loadActive = () =>
+    db.worldBoss.findFirst({
+      where: { status: 'active', endsAt: { gt: now } },
+      include: {
+        damages: {
+          orderBy: { damage: 'desc' },
+          take: 10,
+          include: { player: { select: { name: true } } },
+        },
+        _count: { select: { damages: true } },
+      },
+    });
 
-      return {
-        id: boss.id,
-        name: boss.name,
-        emoji: boss.emoji,
-        description: boss.description,
-        maxHp: boss.maxHp,
-        currentHp: Math.max(0, boss.currentHp),
-        endsAt: boss.endsAt.toISOString(),
-        status: boss.status,
-        level: boss.level,
-        power: UNIVERSAL_THREAT.power,
-        zeniReward: boss.zeniReward,
-        xpReward: boss.xpReward,
-        crystalReward: boss.crystalReward,
-        myDamage: mine?.damage ?? 0,
-        myPosition,
-        topDamage: boss.damages.map((d) => ({ name: d.player.name, damage: d.damage, isMe: d.playerId === playerId })),
-        totalAttackers,
-        canAttackAt: mine ? new Date(mine.lastAttackedAt.getTime() + ATTACK_COOLDOWN_SEC * 1000).toISOString() : null,
-      };
-    },
-    { timeout: 60_000, maxWait: 30_000 }
-  );
+  // Caminho quente é SOMENTE leitura. Antes cada abertura fazia:
+  // GameMeta -> ensureActiveBoss -> updateMany -> findFirst -> boss...
+  // mesmo quando já havia um boss perfeitamente válido.
+  let boss = await loadActive();
+  if (!boss) {
+    await db.$transaction(
+      async (tx) => ensureActiveBoss(tx),
+      { timeout: 60_000, maxWait: 30_000 }
+    );
+    boss = await loadActive();
+  }
+  if (!boss) return null;
+
+  const mine = playerId
+    ? await db.worldBossDamage.findUnique({
+        where: { bossId_playerId: { bossId: boss.id, playerId } },
+      })
+    : null;
+  const myPosition = mine
+    ? (await db.worldBossDamage.count({
+        where: { bossId: boss.id, damage: { gt: mine.damage } },
+      })) + 1
+    : null;
+
+  return {
+    id: boss.id,
+    name: boss.name,
+    emoji: boss.emoji,
+    description: boss.description,
+    maxHp: boss.maxHp,
+    currentHp: Math.max(0, boss.currentHp),
+    endsAt: boss.endsAt.toISOString(),
+    status: boss.status,
+    level: boss.level,
+    power: UNIVERSAL_THREAT.power,
+    zeniReward: boss.zeniReward,
+    xpReward: boss.xpReward,
+    crystalReward: boss.crystalReward,
+    myDamage: mine?.damage ?? 0,
+    myPosition,
+    topDamage: boss.damages.map((d) => ({
+      name: d.player.name,
+      damage: d.damage,
+      isMe: d.playerId === playerId,
+    })),
+    totalAttackers: boss._count.damages,
+    canAttackAt: mine
+      ? new Date(mine.lastAttackedAt.getTime() + ATTACK_COOLDOWN_SEC * 1000).toISOString()
+      : null,
+  };
 }
 
 export interface BossAttackResult {
