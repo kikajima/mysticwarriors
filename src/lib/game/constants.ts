@@ -16,11 +16,13 @@ export {
 } from './content/techniques';
 export {
   PROFESSIONS,
-  PROFESSION_RANKS,
-  PROFESSION_MAX_RANK,
+  PROFESSION_LEVELS,
+  PROFESSION_MAX_LEVEL,
+  PROFESSION_MASTERY_HOURS,
+  PROFESSION_SHIFTS,
+  PROFESSION_MATERIALS,
   getProfession,
-  professionRankTitle,
-  professionXpReward,
+  getProfessionMaterial,
   ENEMIES,
   SHOP_ITEMS,
   REGEN,
@@ -43,6 +45,21 @@ export {
   getEnemy,
   npcCombatPower,
 } from './content/world';
+export {
+  professionLevel,
+  professionLevelForHours,
+  professionLevelTitle,
+  professionLevelDef,
+  professionHoursIntoLevel,
+  professionShift,
+  professionXpPerHour,
+  professionShiftRewards,
+  academicXpMultiplier,
+  academicXpBonusPct,
+  parseProfessions,
+  serializeProfessions,
+  rollProfessionLoot,
+} from './professionCareer';
 export { TRANSFORMATIONS, getTransformation, transformationsForRace } from './content/transformations';
 export { randomWarriorName, BOTS } from './content/names';
 export { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS, getAchievement } from './content/quests';
