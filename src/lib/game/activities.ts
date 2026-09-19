@@ -210,10 +210,16 @@ export async function resolveDueActivities(tx: Tx, player: Player): Promise<Appl
 export async function applyTrainResult(
   tx: Tx,
   player: Player,
-  payload: TrainActivityResult
+  payload: TrainActivityResult,
+  options: { playerIsFresh?: boolean } = {}
 ): Promise<{ message: string; levelsGained: number }> {
   const { stat, gain } = payload.apply;
-  const fresh = await tx.player.findUniqueOrThrow({ where: { id: player.id } });
+  // Treino instantâneo acabou de carregar o Player dentro da MESMA
+  // transação e fila por personagem: reler a linha aqui só acrescentava um
+  // round-trip ao PostgreSQL. Atividades legadas continuam usando refresh.
+  const fresh = options.playerIsFresh
+    ? player
+    : await tx.player.findUniqueOrThrow({ where: { id: player.id } });
   addStat(fresh, stat, gain);
   await tx.player.update({
     where: { id: fresh.id },
