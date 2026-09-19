@@ -62,7 +62,6 @@ pelo boot do aplicativo.
 Variáveis necessárias:
 
 - `DATABASE_URL`
-- `ADMIN_EMAIL`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 

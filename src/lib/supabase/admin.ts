@@ -5,15 +5,13 @@
 //
 // SEGURANÇA (modelo de confiança):
 //  * Nenhuma chave secreta/service_role — apenas a PUBLICÁVEL;
-//  * toda chamada usa o ACCESS TOKEN do próprio usuário logado, enviado
-//    pelo painel ao backend do jogo e REPASSADO aqui. O Supabase resolve
-//    auth.uid() a partir dele e as RPCs verificam is_admin() internamente;
-//  * se o token não for do admin, cada RPC devolve vazio/erro e nada
-//    acontece — o backend do jogo trata como "não é admin" (404).
+//  * toda chamada usa o ACCESS TOKEN do próprio usuário logado;
+//  * a autorização administrativa tem FONTE ÚNICA no Supabase:
+//    public.is_admin() cruza auth.uid() + auth.users.email + public.admins;
+//  * não existe segunda lista de admins em variável de ambiente do Render.
 // =====================================================================
 
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, supabaseUserEndpoint } from './config';
-import { isAdminEmail } from '@/lib/adminIdentity';
 
 interface RpcResult<T> {
   ok: boolean;
@@ -342,14 +340,11 @@ export function explainCloudResetProbe(status: CloudResetRpcStatus): string {
 }
 
 // =====================================================================
-// IDENTIDADE DA SESSÃO (v0.14 — autorização por E-MAIL)
+// IDENTIDADE DA SESSÃO
 // ---------------------------------------------------------------------
-// O e-mail da sessão autenticada é resolvido consultando o endpoint
-// público /auth/v1/user com o PRÓPRIO token do usuário (mesma técnica
-// da ponte /api/auth/supabase — apenas chave publicável, nenhum
-// segredo). A AUTORIZAÇÃO das ações destrutivas do painel compara este
-// e-mail com ADMIN_EMAIL (src/lib/adminIdentity.ts — constante única
-// central, v1 do sistema de permissão).
+// O e-mail da sessão autenticada é resolvido consultando /auth/v1/user.
+// A autorização já foi concluída por public.is_admin() no Supabase; aqui
+// o e-mail serve apenas para auditoria das ações administrativas.
 // =====================================================================
 
 export interface SupabaseUserIdentity {
@@ -383,18 +378,11 @@ export async function resolveSupabaseUser(accessToken: string): Promise<Supabase
 }
 
 // =====================================================================
-// GUARDA DAS AÇÕES DESTRUTIVAS (v0.14)
+// GUARDA DAS AÇÕES ADMINISTRATIVAS
 // ---------------------------------------------------------------------
-// Barreiras em ORDEM (todas server-side, sempre):
-//  1. TRANSPORTE — Bearer token presente e RPC is_admin() do Supabase
-//     confirma a conta administradora (modelo vigente desde a v0.9);
-//  2. AUTORIZAÇÃO — o E-MAIL da sessão autenticada === ADMIN_EMAIL.
-//
-// Semântica de status (decisão documentada):
-//  * sem token / token inválido → 404 — a rota simplesmente NÃO EXISTE
-//    para quem não se autenticou (fail-safe igual às demais /api/admin);
-//  * autenticado que não é admin (is_admin false OU e-mail diferente) →
-//    403 — a funcionalidade existe, mas é proibida para ele.
+// Fonte única: public.is_admin() no Supabase, que valida o auth.uid() do
+// Bearer token contra public.admins através de auth.users.
+// Sem token → 404; token autenticado sem privilégio admin → 403.
 // =====================================================================
 
 export type PanelAdminGuard =
@@ -415,8 +403,8 @@ export async function requirePanelAdmin(request: Request): Promise<PanelAdminGua
     return { ok: false, status: 403, code: 'FORBIDDEN', message: 'Ação administrativa restrita.' };
   }
   const user = await resolveSupabaseUser(token);
-  if (!user || !isAdminEmail(user.email)) {
-    return { ok: false, status: 403, code: 'FORBIDDEN', message: 'Ação administrativa restrita a esta conta.' };
+  if (!user || !user.email) {
+    return { ok: false, status: 403, code: 'FORBIDDEN', message: 'Não foi possível validar a identidade administrativa.' };
   }
   return { ok: true, token, email: user.email, supabaseUserId: user.id };
 }

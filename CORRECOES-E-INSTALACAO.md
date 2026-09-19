@@ -81,12 +81,13 @@ NODE_ENV=production
 BUN_VERSION=1.4.2
 DATABASE_URL=file:/var/data/custom.db
 ALLOW_EMPTY_DB_INIT=false
-ADMIN_EMAIL=<configuração privada>
 NEXT_PUBLIC_SUPABASE_URL=<URL do projeto Supabase>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<chave publicável/anon>
 ```
 
 Não use `service_role` em variável `NEXT_PUBLIC_*`.
+
+A administração é autorizada pela tabela `public.admins` do Supabase através da função `public.is_admin()`; não existe lista paralela de e-mails no Render.
 
 `GM_ADMIN_EXPORT_SECRET` é opcional e serve apenas para habilitar a rota
 administrativa de exportação do backup. Se não for configurado, essa rota

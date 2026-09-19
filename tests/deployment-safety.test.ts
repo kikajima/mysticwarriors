@@ -3,7 +3,6 @@ import { mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { resolveDbFilePath } from '../src/lib/db-path';
-import { isAdminEmail } from '../src/lib/adminIdentity';
 
 test('produção exige banco explícito externo e não escolhe cópia velha', () => {
   const env = (process.env as Record<string, string | undefined>).NODE_ENV, url = process.env.DATABASE_URL;
@@ -26,15 +25,3 @@ test('produção exige banco explícito externo e não escolhe cópia velha', ()
   }
 });
 
-test('identidade administrativa privada: configuração ausente nega', () => {
-  const old = process.env.ADMIN_EMAIL;
-  try {
-    delete process.env.ADMIN_EMAIL;
-    expect(isAdminEmail('admin@example.test')).toBe(false);
-    process.env.ADMIN_EMAIL = 'admin@example.test';
-    expect(isAdminEmail(' ADMIN@EXAMPLE.TEST ')).toBe(true);
-    expect(isAdminEmail('player@example.test')).toBe(false);
-  } finally {
-    if (old === undefined) delete process.env.ADMIN_EMAIL; else process.env.ADMIN_EMAIL = old;
-  }
-});
