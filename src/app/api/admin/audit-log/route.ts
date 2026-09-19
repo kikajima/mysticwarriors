@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 // "apagaram e ninguém sabe quem".
 //
 // AUTORIZAÇÃO: mesma guarda das ações destrutivas (transporte is_admin
-// + e-mail ADMIN_EMAIL). Sem/invalid token → 404; não admin → 403.
+// via public.is_admin() no Supabase. Sem/invalid token → 404; não admin → 403.
 // =====================================================================
 
 export async function GET(request: Request) {
