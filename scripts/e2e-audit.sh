@@ -350,15 +350,31 @@ echo "==========================================="
 echo "RESULTADO: $PASS passaram / $FAIL falharam"
 echo "==========================================="
 
-# limpeza dos dados de auditoria
+# limpeza seletiva: SOMENTE entidades ligadas aos nomes QA desta execução.
+# Nunca use filtros amplos (ex.: username=null), pois poderiam atingir jogadores reais.
 bun -e "
 import { PrismaClient } from '@prisma/client';
 const db = new PrismaClient();
-await db.player.deleteMany({ where: { name: { in: ['AuditA$TS','AuditB$TS','GuestAudit$TS'] } } });
-await db.account.deleteMany({ where: { username: { in: ['audit_a_$TS','audit_b_$TS','converted_$TS'] } } });
-await db.guild.deleteMany({ where: { name: 'Audit Guild $TS' } });
+const qaNames = ['AuditA$TS','AuditB$TS','GuestAudit$TS'];
+const players = await db.player.findMany({
+  where: { name: { in: qaNames } },
+  select: { id: true, accountId: true, guildId: true },
+});
+const playerIds = players.map(p => p.id);
+const accountIds = [...new Set(players.map(p => p.accountId))];
+const guildIds = [...new Set(players.map(p => p.guildId).filter(Boolean))];
+
+if (guildIds.length) {
+  await db.guildInvitation.deleteMany({ where: { guildId: { in: guildIds } } });
+  await db.guildRole.deleteMany({ where: { guildId: { in: guildIds } } });
+  await db.guildDonation.deleteMany({ where: { guildId: { in: guildIds } } });
+}
+if (playerIds.length) await db.player.deleteMany({ where: { id: { in: playerIds } } });
+if (guildIds.length) await db.guild.deleteMany({ where: { id: { in: guildIds } } });
+if (accountIds.length) await db.account.deleteMany({ where: { id: { in: accountIds } } });
+
 await db.\$disconnect();
-console.log('cleanup ok');
+console.log('cleanup QA seletivo ok');
 " 2>/dev/null
 
 rm -f $JAR_A $JAR_B $JAR_G
