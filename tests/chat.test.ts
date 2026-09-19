@@ -29,9 +29,13 @@ test('chat persiste mensagens globais, privadas e de guilda sem FK destrutiva', 
 
 test('silêncio é unilateral e único por par', async () => {
   await db.chatMute.create({ data: { playerId: 'p2', mutedPlayerId: 'p1', mutedPlayerName: 'Alpha' } });
-  await expect(
-    db.chatMute.create({ data: { playerId: 'p2', mutedPlayerId: 'p1', mutedPlayerName: 'Alpha' } })
-  ).rejects.toThrow();
+  let duplicateRejected = false;
+  try {
+    await db.chatMute.create({ data: { playerId: 'p2', mutedPlayerId: 'p1', mutedPlayerName: 'Alpha' } });
+  } catch {
+    duplicateRejected = true;
+  }
+  expect(duplicateRejected).toBe(true);
   expect(await db.chatMute.count({ where: { playerId: 'p2' } })).toBe(1);
 });
 
