@@ -169,8 +169,10 @@ model Player {
   techniques    String    @default("[]")
   loadout       String    @default("{\"1\":null,\"2\":null,\"3\":null,\"S\":null}")
   strategy      String    @default("balanced")
-  missionId     String?
-  missionEndsAt DateTime?
+  missionId        String?
+  missionStartedAt DateTime?
+  missionEndsAt    DateTime?
+  missionHours     Int?
   missionsCompleted String   @default("[]") // histórico de ids de missões/profissões concluídas
   // v0.6 — progresso nas PROFISSÕES: JSON {professionId: {rank, completions}}.
   // O trabalho ativo continua em missionId/missionEndsAt (mesma maquinaria
@@ -227,6 +229,7 @@ model Player {
   guildDonations   GuildDonation[]
   requestDedups    RequestDedup[]
   activities       Activity[]
+  inventoryStacks  InventoryStack[]
   accountActive    Account?  @relation("ActivePlayer")
 
   @@index([accountId])
@@ -234,6 +237,21 @@ model Player {
   @@index([level, battlesWon, xp])
   @@index([isBot])
   @@index([transformationId])
+}
+
+// ===== Inventário relacional de materiais profissionais =====
+
+model InventoryStack {
+  playerId  String
+  itemId    String
+  quantity  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@id([playerId, itemId])
+  @@index([itemId])
 }
 
 // ===== Ledger da economia (auditoria de Zeni/cristais) =====
