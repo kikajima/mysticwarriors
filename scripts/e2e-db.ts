@@ -2,11 +2,22 @@ import { db } from '../src/lib/db';
 
 const [, , command, ...args] = process.argv;
 
+function activeRunId(): string {
+  const runId = process.env.MW_E2E_RUN_ID ?? '';
+  if (!/^\d+$/.test(runId)) throw new Error('MW_E2E_RUN_ID ausente/inválido');
+  return runId;
+}
+
+function namesForRun(runId: string): string[] {
+  return [`AuditA${runId}`, `AuditB${runId}`, `GuestAudit${runId}`];
+}
+
 async function qaPlayer(id: string) {
+  const runId = activeRunId();
   const player = await db.player.findUnique({ where: { id } });
   if (!player) throw new Error('QA player not found');
-  if (!/^(AuditA|AuditB|GuestAudit)/.test(player.name)) {
-    throw new Error(`Refusing to mutate non-QA player: ${player.name}`);
+  if (!namesForRun(runId).includes(player.name)) {
+    throw new Error(`Refusing to mutate player outside E2E run ${runId}: ${player.name}`);
   }
   return player;
 }
@@ -100,7 +111,7 @@ async function main() {
   if (command === 'cleanup-run') {
     const [ts] = args;
     if (!/^\d+$/.test(ts)) throw new Error('invalid QA run id');
-    const qaNames = [`AuditA${ts}`, `AuditB${ts}`, `GuestAudit${ts}`];
+    const qaNames = namesForRun(ts);
     const players = await db.player.findMany({
       where: { name: { in: qaNames } },
       select: { id: true, accountId: true, guildId: true },
@@ -110,6 +121,15 @@ async function main() {
     const guildIds = [...new Set(players.map((p) => p.guildId).filter((id): id is string => !!id))];
 
     if (guildIds.length) {
+      const guilds = await db.guild.findMany({
+        where: { id: { in: guildIds } },
+        select: { id: true, name: true },
+      });
+      const expectedGuild = `Audit Guild ${ts}`;
+      const unsafe = guilds.find((g) => g.name !== expectedGuild);
+      if (unsafe) {
+        throw new Error(`Refusing cleanup: QA player linked to non-QA guild "${unsafe.name}"`);
+      }
       await db.guildInvitation.deleteMany({ where: { guildId: { in: guildIds } } });
       await db.guildRole.deleteMany({ where: { guildId: { in: guildIds } } });
       await db.guildDonation.deleteMany({ where: { guildId: { in: guildIds } } });
