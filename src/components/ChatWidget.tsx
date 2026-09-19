@@ -76,8 +76,11 @@ export function ChatWidget() {
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Person[]>([]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const messagesRef = useRef<Message[]>([]);
 
   const player = context?.player ?? null;
+  const playerId = player?.id ?? null;
+  const guildId = player?.guild?.id ?? null;
   const mutedIds = useMemo(() => new Set((context?.muted ?? []).map((m) => m.playerId)), [context?.muted]);
 
   const loadContext = useCallback(async () => {
@@ -87,23 +90,25 @@ export function ChatWidget() {
   }, []);
 
   const loadConversations = useCallback(async () => {
-    if (!player) return;
+    if (!playerId) return;
     const res = await fetch('/api/chat?view=conversations', { cache: 'no-store' });
     const data = await res.json();
     if (res.ok) setConversations(Array.isArray(data.conversations) ? data.conversations : []);
-  }, [player]);
+  }, [playerId]);
 
   const loadMessages = useCallback(async (older = false) => {
-    if (!player) return;
-    if (channel === 'guild' && !player.guild) return;
+    if (!playerId) return;
+    if (channel === 'guild' && !guildId) return;
     if (channel === 'private' && !privateTarget) {
+      messagesRef.current = [];
       setMessages([]);
       return;
     }
 
+    const currentMessages = messagesRef.current;
     const params = new URLSearchParams({ view: 'messages', channel });
     if (channel === 'private' && privateTarget) params.set('targetId', privateTarget.id);
-    if (older && messages.length > 0) params.set('before', messages[0].createdAt);
+    if (older && currentMessages.length > 0) params.set('before', currentMessages[0].createdAt);
 
     if (!older) setLoading(true);
     try {
@@ -116,17 +121,17 @@ export function ChatWidget() {
       const incoming: Message[] = Array.isArray(data.messages) ? data.messages : [];
       setHasMore(Boolean(data.hasMore));
       setMessages((current) => {
-        if (older) {
-          const ids = new Set(current.map((m) => m.id));
-          return [...incoming.filter((m) => !ids.has(m.id)), ...current];
-        }
-        return incoming;
+        const next = older
+          ? [...incoming.filter((m) => !new Set(current.map((item) => item.id)).has(m.id)), ...current]
+          : incoming;
+        messagesRef.current = next;
+        return next;
       });
       setError(null);
     } finally {
       if (!older) setLoading(false);
     }
-  }, [player, channel, privateTarget, messages]);
+  }, [playerId, guildId, channel, privateTarget]);
 
   useEffect(() => {
     if (!open) return;
@@ -134,20 +139,20 @@ export function ChatWidget() {
   }, [open, loadContext]);
 
   useEffect(() => {
-    if (!open || !player) return;
+    if (!open || !playerId) return;
     void loadMessages(false);
     if (channel === 'private') void loadConversations();
-  }, [open, player?.id, channel, privateTarget?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, playerId, channel, privateTarget?.id, loadMessages, loadConversations]);
 
   useEffect(() => {
-    if (!open || !player) return;
+    if (!open || !playerId) return;
     const timer = window.setInterval(() => {
       void loadContext();
       if (channel === 'private' && !privateTarget) void loadConversations();
       else void loadMessages(false);
     }, 4000);
     return () => window.clearInterval(timer);
-  }, [open, player?.id, channel, privateTarget?.id, loadContext, loadConversations]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, playerId, channel, privateTarget, loadContext, loadConversations, loadMessages]);
 
   useEffect(() => {
     if (!open || channel !== 'private') return;
@@ -212,6 +217,7 @@ export function ChatWidget() {
     await loadContext();
     if (mute && privateTarget?.id === target.id) {
       setPrivateTarget(null);
+      messagesRef.current = [];
       setMessages([]);
     } else {
       await loadMessages(false);
