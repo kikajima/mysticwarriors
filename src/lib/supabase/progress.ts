@@ -359,7 +359,7 @@ function sanitizeMission(
 export interface CharacterExtras {
   quests: CloudQuestSnapshot[];
   achievements: CloudAchievementSnapshot[];
-  materials?: CloudMaterialSnapshot[];
+  materials: CloudMaterialSnapshot[];
 }
 
 export function serializeCharacterForCloud(
@@ -817,7 +817,7 @@ export function cloudCharacterToPlayerData(char: CloudCharacterSnapshot, nameOve
     missionId: char.missionId,
     missionStartedAt: char.missionStartedAt ? new Date(char.missionStartedAt) : null,
     missionEndsAt: char.missionEndsAt ? new Date(char.missionEndsAt) : null,
-    missionHours: char.missionHours,
+    missionHours: char.missionHours ?? null,
     lastRegen: new Date(char.lastRegen),
     lastRegenHp: char.lastRegenHp ? new Date(char.lastRegenHp) : null,
     // v0.9.15–v0.9.18 — talentos, narrativas e torneio sobrevivem à nuvem
