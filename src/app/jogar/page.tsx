@@ -29,6 +29,7 @@ import {
 import { WikiIconLink } from '@/components/game/WikiIconLink';
 import { SaveWarriorDialog } from '@/components/game/SaveWarriorDialog';
 import { AvatarDialog } from '@/components/game/AvatarDialog';
+import { ChatWidget } from '@/components/ChatWidget';
 import { equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { noteServerTime, serverNowMs } from '@/lib/game/clock';
 import {
@@ -1547,6 +1548,11 @@ export default function PlayPage() {
           </Sheet>
         </div>
       </nav>
+
+      {/* Chat existe somente dentro do jogo. Login, criação e seleção de
+          personagem não montam o widget nem fazem polling. O key força uma
+          instância limpa e imediata ao trocar de guerreiro. */}
+      <ChatWidget key={player.id} player={player} />
 
       {/* v0.9 — PAINEL DO ADMINISTRADOR: montado SOMENTE quando a RPC
           is_admin() (Supabase) confirmou a conta administradora. Para os
