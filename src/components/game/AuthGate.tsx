@@ -14,7 +14,6 @@ import {
   supabaseResetPassword,
   supabaseUpdatePassword,
 } from '@/lib/supabase/client';
-import { requestStorageAccessSafely } from '@/lib/iframe-storage';
 
 type Mode = 'login' | 'register' | 'check-email' | 'reset-password' | 'set-password';
 
@@ -136,9 +135,6 @@ export function AuthGate({
     if (!validateRegister()) return;
     setLoading(true);
     try {
-      // v0.9.12: gesto do usuário — janela para desbloquear cookies no
-      // painel de visualização (iframe cross-site) ANTES do login
-      await requestStorageAccessSafely();
       const outcome = await supabaseSignUp({
         email: email.trim(),
         password,
@@ -178,9 +174,6 @@ export function AuthGate({
     }
     setLoading(true);
     try {
-      // v0.9.12: gesto do usuário — desbloqueia cookies no painel antes
-      // de abrir a sessão (ver requestStorageAccessSafely)
-      await requestStorageAccessSafely();
       const outcome = await supabaseSignIn(email.trim(), password);
       if (outcome.status === 'error') {
         setError(outcome.message);
@@ -252,9 +245,6 @@ export function AuthGate({
     setError(null);
     setLoading(true);
     try {
-      // v0.9.12: gesto do clique — desbloqueia cookies de terceiros no
-      // painel de visualização antes de criar a sessão de convidado
-      await requestStorageAccessSafely();
       const res = await fetch('/api/auth/guest', { method: 'POST' });
       const data = await res.json();
       if (!res.ok || data.success === false) {

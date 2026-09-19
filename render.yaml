@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: mystic-warriors
+    runtime: node
+    branch: master
+    buildCommand: bun install --frozen-lockfile && bun run db:generate && bun run build
+    startCommand: bun run start
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BUN_VERSION
+        value: 1.4.2
+      - key: DATABASE_URL
+        value: file:/var/data/custom.db
+      - key: ALLOW_EMPTY_DB_INIT
+        value: "false"
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+    disk:
+      name: mystic-warriors-data
+      mountPath: /var/data
+      sizeGB: 1

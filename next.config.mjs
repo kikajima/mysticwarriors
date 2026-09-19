@@ -15,7 +15,6 @@ const deployTracingExcludes = [
   "./examples/**",
   "./tests/**",
   "./mini-services/**",
-  "./.zscripts/**",
   "./.git/**",
   "./src/**",
   "./worklog.md",
@@ -39,7 +38,6 @@ const nextConfig = {
   output: "standalone",
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   reactStrictMode: false,
-  allowedDevOrigins: ["*.space-z.ai"],
   outputFileTracingExcludes: {
     "*": deployTracingExcludes,
     "/**": deployTracingExcludes,
