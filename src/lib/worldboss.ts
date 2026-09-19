@@ -359,7 +359,6 @@ export async function attackWorldBoss(
     throw new ApiError('INSUFFICIENT_ENERGY', `Cada ataque custa ${ATTACK_ENERGY_COST} de energia.`);
   }
   player.energy -= ATTACK_ENERGY_COST;
-  player.hp = hpAfter;
 
   // ===== cálculo do dano (100% server-side, rng próprio) =====
   // v0.4: usa o MESMO PIPELINE do combate comum — estratégia, loadout de
@@ -490,6 +489,10 @@ export async function attackWorldBoss(
     update: { damage: { increment: damage }, attacks: { increment: 1 }, lastAttackedAt: now },
     create: { bossId: boss.id, playerId: player.id, damage, attacks: 1, lastAttackedAt: now },
   });
+
+  // Mantém a mesma semântica anterior: o cálculo do golpe usa o HP de
+  // entrada; o desgaste passa a valer depois do ataque.
+  player.hp = hpAfter;
 
   // XP proporcional ao dano
   const xpGain = Math.max(20, Math.round(damage / 200));
