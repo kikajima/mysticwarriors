@@ -225,3 +225,28 @@
   contrato dos SETS (exatamente 3 bloqueios de missão; claim_* ausentes
   dos dois sets). A WIKI publica a tabela consolidada ação × estado
   (seção "Ações, Custos e Ocupação") e o teste de contrato da wiki vigia.
+
+
+## 💬 CHAT PERSISTENTE — HISTÓRICO FORA DAS CASCATAS (2026-09-19)
+
+- **Canais permanentes:** Global, Guilda e Privado. Mensagens privadas são
+  assíncronas: o destinatário pode estar offline e lê o histórico quando
+  voltar.
+- **Fonte de verdade:** tabelas `game."ChatMessage"` e `game."ChatMute"`
+  no PostgreSQL autoritativo. O Render não guarda histórico em memória ou
+  disco efêmero.
+- **Histórico deliberadamente SEM FK destrutiva para Player/Guild:** nomes e
+  ids de remetente/destinatário/guilda são snapshots históricos. Excluir um
+  personagem, dissolver uma guilda, resetar o mundo ou publicar um deploy
+  NÃO apaga mensagens antigas.
+- **Regra de exclusão:** `ChatMessage` só pode ser limpo pelo comando
+  administrativo explícito do painel, mediante confirmação literal
+  `LIMPAR CHAT`. A limpeza é registrada em `AdminActionLog`.
+- **Silenciamento é unilateral:** cada personagem mantém sua própria lista
+  em `ChatMute`; silenciar oculta mensagens daquele remetente para quem o
+  silenciou, sem apagar o histórico e sem afetar outros jogadores. Remover
+  o silêncio torna o histórico visível novamente.
+- **UI global e minimizável:** o widget é montado no layout raiz e fica no
+  canto inferior esquerdo, mas só faz polling enquanto estiver aberto.
+- **Blindagem:** `tests/chat.test.ts` vigia persistência, unicidade do mute,
+  presença global do widget e a existência do comando admin de limpeza.
