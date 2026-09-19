@@ -468,6 +468,10 @@ export async function makeBackupTarGz(
 
 const MAX_AVATAR_FILE_BYTES = 8 * 1024 * 1024;
 
+const globalForPersistence = globalThis as unknown as {
+  __gmPersistenceBooted?: boolean;
+};
+
 // =====================================================================
 // Orquestração de boot (src/instrumentation.ts chama isto UMA vez)
 // =====================================================================
