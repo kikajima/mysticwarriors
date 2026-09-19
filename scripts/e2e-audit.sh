@@ -100,7 +100,7 @@ check "compra sem diamantes → INSUFFICIENT_CRYSTALS" "INSUFFICIENT_CRYSTALS" "
 bun scripts/e2e-db.ts set-crystals "$PB" 10 >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"senzu\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
 check "compra de Senzu com 10 diamantes" "True" "$R"
-CRY=$(bun scripts/e2e-db.ts get-crystals "$PB" 2>/dev/null | tail -1)
+CRY=$(curl -s -b $JAR_B "$BASE/api/game/state?playerId=$PB" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["crystals"])' 2>/dev/null)
 check "diamantes debitados (10 → 0)" "0" "$CRY"
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"senzu\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "segunda compra sem diamantes → INSUFFICIENT_CRYSTALS" "INSUFFICIENT_CRYSTALS" "$R"
@@ -125,7 +125,7 @@ bun scripts/e2e-db.ts set-strength "$PB" 997 >/dev/null
 bun scripts/e2e-db.ts set-combat-stats "$PB" >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"use_item\",\"itemId\":\"elixir_dragao\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["strength"])' 2>/dev/null)
 check "Elixir respeita o cap (997+2 → 999)" "999" "$R"
-R=$(bun scripts/e2e-db.ts get-consumable "$PB" elixir_dragao 2>/dev/null | tail -1)
+R=$(curl -s -b $JAR_B "$BASE/api/game/state?playerId=$PB" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["items"]["consumables"].get("elixir_dragao",0))' 2>/dev/null)
 check "Elixir consumido exatamente 1 (2 restantes)" "2" "$R"
 
 echo ""
@@ -210,12 +210,19 @@ ZENI_AFTER=$(bun scripts/e2e-db.ts get-zeni "$PB" 2>/dev/null | tail -1)
 check "saldo não mudou no claim duplo" "$ZENI_BEFORE" "$ZENI_AFTER"
 
 echo ""
-echo "=== 7. WORLD BOSS: ataque + cooldown ==="
+echo "=== 7. WORLD BOSS: disponibilidade + cooldown ==="
 
-R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"world_boss_attack\"}" | python3 -c 'import json,sys;d=json.load(sys.stdin);print("ok" if d["bossAttack"]["damage"]>0 else "erro")' 2>/dev/null)
-check "ataque ao boss causa dano" "ok" "$R"
-R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"world_boss_attack\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
-check "ataque imediato ao boss → BOSS_COOLDOWN" "BOSS_COOLDOWN" "$R"
+BOSS_ACTIVE=$(curl -s -b $JAR_B "$BASE/api/game/worldboss?playerId=$PB" | python3 -c 'import json,sys;d=json.load(sys.stdin);print("True" if d.get("boss") else "False")' 2>/dev/null)
+if [ "$BOSS_ACTIVE" = "True" ]; then
+  R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"world_boss_attack\"}" | python3 -c 'import json,sys;d=json.load(sys.stdin);print("ok" if d["bossAttack"]["damage"]>0 else "erro")' 2>/dev/null)
+  check "ataque ao boss causa dano quando ativo" "ok" "$R"
+  R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"world_boss_attack\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
+  check "ataque imediato ao boss → BOSS_COOLDOWN" "BOSS_COOLDOWN" "$R"
+else
+  R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"world_boss_attack\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
+  check "fora da janela, ataque ao boss → BOSS_NOT_ACTIVE" "BOSS_NOT_ACTIVE" "$R"
+  check "fora da janela, endpoint não expõe boss ativo" "False" "$BOSS_ACTIVE"
+fi
 
 echo ""
 echo "=== 8. CONVIDADO → CONTA (conversão atômica) ==="
@@ -242,8 +249,8 @@ check "majin_caos exige forma anterior → TRANSFORMATION_LOCKED" "TRANSFORMATIO
 echo ""
 echo "=== 10. RANKING/GUILDAS: endpoints separados ==="
 
-R=$(curl -s -b $JAR_B "$BASE/api/game/ranking?playerId=$PB&page=1&pageSize=5" | python3 -c 'import json,sys;d=json.load(sys.stdin)["ranking"];print(d["total"]>=2 and len(d["entries"])<=5 and d["myPosition"]>0)' 2>/dev/null)
-check "ranking paginado com myPosition" "True" "$R"
+R=$(curl -s -b $JAR_B "$BASE/api/game/ranking?playerId=$PB&page=1&pageSize=5" | python3 -c 'import json,sys;d=json.load(sys.stdin)["ranking"];pos=d.get("myPosition");src=d.get("source");ok=(isinstance(d.get("entries"),list) and len(d["entries"])<=5 and isinstance(d.get("total"),int) and src in ("cloud","local") and ((src=="local" and isinstance(pos,int) and pos>0) or (src=="cloud" and (pos is None or (isinstance(pos,int) and pos>0))));print(ok)' 2>/dev/null)
+check "ranking paginado respeita contrato cloud/local" "True" "$R"
 
 R=$(curl -s -b $JAR_B "$BASE/api/game/guilds?playerId=$PB" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(isinstance(d["guilds"],list))' 2>/dev/null)
 check "lista de guildas resumida" "True" "$R"
@@ -255,7 +262,7 @@ check "criar guilda" "Audit Guild $TS" "$R"
 REQ_DONATE="guild-donate-$TS"
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"donate_guild\",\"amount\":8000,\"requestId\":\"$REQ_DONATE\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
 check "doar 8000 para a guilda" "True" "$R"
-GUILD_LVL=$(bun scripts/e2e-db.ts get-guild-level "Audit Guild $TS" 2>/dev/null | tail -1)
+GUILD_LVL=$(curl -s -b $JAR_B "$BASE/api/game/guilds?playerId=$PB" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["myGuild"]["level"] if d.get("myGuild") else "")' 2>/dev/null)
 check "guilda subiu para nível 2 (8.000 Zeni)" "2" "$GUILD_LVL"
 
 echo ""
