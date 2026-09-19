@@ -3,9 +3,9 @@ services:
     name: mysticwarriors
     runtime: node
     branch: master
-    # O Persistent Disk não está disponível durante o build. Use um SQLite
-    # temporário apenas para satisfazer imports/geração estática nesta fase.
-    buildCommand: mkdir -p /tmp/mystic-warriors-build && touch /tmp/mystic-warriors-build/custom.db && export DATABASE_URL=file:/tmp/mystic-warriors-build/custom.db && bun install --frozen-lockfile && bun run db:generate && bun run build
+    # O build NÃO consulta produção. A URL abaixo é apenas sintaticamente
+    # válida para gerar o Prisma Client e compilar o Next.js.
+    buildCommand: export MW_BUILD_PHASE=1 && export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:5432/postgres?schema=game&sslmode=require' && bun install --frozen-lockfile && bun run db:generate && bun run build
     startCommand: bun run start
     healthCheckPath: /api/health
     autoDeployTrigger: checksPass
@@ -16,17 +16,11 @@ services:
         value: production
       - key: BUN_VERSION
         value: 1.4.2
+      # Configure no painel com o Session Pooler (porta 5432) do Supabase:
+      # postgresql://postgres.PROJECT_REF:PASSWORD@...pooler.supabase.com:5432/postgres?schema=game&sslmode=require
       - key: DATABASE_URL
-        value: file:/var/data/custom.db
-      - key: ALLOW_EMPTY_DB_INIT
-        value: "false"
+        sync: false
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
-    # Persistent Disk requer instância paga no Render. O serviço Free não
-    # preserva SQLite local entre deploys/restarts.
-    disk:
-      name: mystic-warriors-data
-      mountPath: /var/data
-      sizeGB: 1

@@ -5,9 +5,9 @@ import { requirePanelAdmin } from '@/lib/supabase/admin';
 // =====================================================================
 // GET /api/game/backup — backup administrativo do banco completo
 // ---------------------------------------------------------------------
-// O tar.gz contém o SQLite inteiro e avatares. Por isso uma sessão comum
-// do jogo NÃO é suficiente: exige o mesmo Bearer token Supabase + dupla
-// autorização usada pelo painel administrativo.
+// PostgreSQL: export lógico tar.gz (game.json + manifest.json).
+// SQLite legado/teste: custom.db + manifest + avatares.
+// Exige a mesma autorização Supabase do painel administrativo.
 // =====================================================================
 
 export const runtime = 'nodejs';

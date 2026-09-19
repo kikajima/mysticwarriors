@@ -1,15 +1,17 @@
 // Guerreiros Místicos — Schema Prisma
 // ---------------------------------------------------------------------
-// PRODUÇÃO: PostgreSQL do Supabase (schema "game").
-// O DATABASE_URL do Render deve usar o Session Pooler do Supabase
-// (porta 5432) e incluir ?schema=game&sslmode=require.
+// DESENVOLVIMENTO: SQLite (padrão, zero configuração).
+// PRODUÇÃO (PostgreSQL): troque o provider abaixo e aponte DATABASE_URL
+//   para o Postgres, depois rode `prisma migrate deploy`:
 //
-// TESTES/CI continuam usando prisma/schema.sqlite.prisma para manter a
-// suíte hermética e rápida sem depender de rede. Os modelos são idênticos
-// entre os dois schemas; somente o provider muda.
+//   datasource db {
+//     provider = "postgresql"
+//     url      = env("DATABASE_URL")
+//   }
 //
-// As tabelas autoritativas ficam no schema PostgreSQL "game", separado do
-// schema "public" usado por Auth/snapshots legados do Supabase.
+// Nenhum campo usa tipos exclusivos de SQLite — todas as colunas JSON são
+// `String` com conteúdo JSON válido, compatível com os dois provedores.
+// Índices cobrem as consultas de ranking, guildas e auditoria.
 // =====================================================================
 
 generator client {
@@ -17,7 +19,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 

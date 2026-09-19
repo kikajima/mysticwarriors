@@ -20,6 +20,10 @@ function log(...args: unknown[]) {
   console.log(LOG_PREFIX, ...args);
 }
 
+export function isPostgresDatabase(url = process.env.DATABASE_URL ?? ''): boolean {
+  return /^postgres(?:ql)?:\/\//i.test(url);
+}
+
 // ===== Limites =====
 const MAX_TAR_BYTES = 60 * 1024 * 1024; // teto do pacote de backup/beacon
 
@@ -411,6 +415,7 @@ export function extractTarGz(buf: Buffer): TarEntry[] {
 // =====================================================================
 
 export async function checkpointWal(): Promise<boolean> {
+  if (isPostgresDatabase()) return true;
   try {
     const res = (await db.$queryRawUnsafe('PRAGMA wal_checkpoint(TRUNCATE);')) as Array<{
       busy: number;
@@ -430,10 +435,118 @@ export interface BackupManifest {
   purpose: 'export' | 'user-backup';
 }
 
+async function makePostgresLogicalBackup(
+  purpose: BackupManifest['purpose'],
+  origin: string
+): Promise<{ body: Buffer; manifest: BackupManifest }> {
+  const [
+    accounts,
+    players,
+    sessions,
+    guilds,
+    guildRoles,
+    guildRoleAssignments,
+    guildInvitations,
+    guildActionReceipts,
+    walletTransactions,
+    questProgress,
+    achievementStates,
+    worldBosses,
+    worldBossDamage,
+    seasons,
+    seasonRankEntries,
+    guildDonations,
+    purchases,
+    cosmeticsOwned,
+    gameMeta,
+    requestDedups,
+    activities,
+    adminActionLogs,
+    analyticsEvents,
+  ] = await Promise.all([
+    db.account.findMany(),
+    db.player.findMany(),
+    db.session.findMany(),
+    db.guild.findMany(),
+    db.guildRole.findMany(),
+    db.guildRoleAssignment.findMany(),
+    db.guildInvitation.findMany(),
+    db.guildActionReceipt.findMany(),
+    db.walletTransaction.findMany(),
+    db.questProgress.findMany(),
+    db.achievementState.findMany(),
+    db.worldBoss.findMany(),
+    db.worldBossDamage.findMany(),
+    db.season.findMany(),
+    db.seasonRankEntry.findMany(),
+    db.guildDonation.findMany(),
+    db.purchase.findMany(),
+    db.cosmeticOwned.findMany(),
+    db.gameMeta.findMany(),
+    db.requestDedup.findMany(),
+    db.activity.findMany(),
+    db.adminActionLog.findMany(),
+    db.analyticsEvent.findMany(),
+  ]);
+
+  const humans = players.filter((player) => !player.isBot).length;
+  const bots = players.length - humans;
+  const manifest: BackupManifest = {
+    origin,
+    sentAt: new Date().toISOString(),
+    accounts: accounts.length,
+    humanPlayers: humans,
+    bots,
+    purpose,
+  };
+
+  const logical = {
+    format: 'mystic-warriors-postgres-v1',
+    exportedAt: manifest.sentAt,
+    tables: {
+      Account: accounts,
+      Player: players,
+      Session: sessions,
+      Guild: guilds,
+      GuildRole: guildRoles,
+      GuildRoleAssignment: guildRoleAssignments,
+      GuildInvitation: guildInvitations,
+      GuildActionReceipt: guildActionReceipts,
+      WalletTransaction: walletTransactions,
+      QuestProgress: questProgress,
+      AchievementState: achievementStates,
+      WorldBoss: worldBosses,
+      WorldBossDamage: worldBossDamage,
+      Season: seasons,
+      SeasonRankEntry: seasonRankEntries,
+      GuildDonation: guildDonations,
+      Purchase: purchases,
+      CosmeticOwned: cosmeticsOwned,
+      GameMeta: gameMeta,
+      RequestDedup: requestDedups,
+      Activity: activities,
+      AdminActionLog: adminActionLogs,
+      AnalyticsEvent: analyticsEvents,
+    },
+  };
+
+  const entries: TarEntry[] = [
+    { name: 'game.json', data: Buffer.from(JSON.stringify(logical, null, 2)) },
+    { name: 'manifest.json', data: Buffer.from(JSON.stringify(manifest, null, 2)) },
+  ];
+  const body = makeTarGz(entries);
+  if (body.length > MAX_TAR_BYTES) throw new Error(`backup excede ${MAX_TAR_BYTES} bytes`);
+  return { body, manifest };
+}
+
 export async function makeBackupTarGz(
   purpose: BackupManifest['purpose'],
   origin = ''
 ): Promise<{ body: Buffer; manifest: BackupManifest }> {
+  if (isPostgresDatabase()) {
+    return makePostgresLogicalBackup(purpose, origin);
+  }
+
   await checkpointWal();
   const dbPath = resolveDbFilePath();
   const dbBytes = await readFile(dbPath);
@@ -479,7 +592,25 @@ const globalForPersistence = globalThis as unknown as {
 export async function bootPersistence(): Promise<void> {
   if (globalForPersistence.__gmPersistenceBooted) return;
   globalForPersistence.__gmPersistenceBooted = true;
+
+  if (process.env.MW_BUILD_PHASE === '1') {
+    log('build phase — boot de persistência ignorado');
+    return;
+  }
+
   try {
+    if (isPostgresDatabase()) {
+      try {
+        const { ensureBalanceVersion } = await import('./balance');
+        await ensureBalanceVersion();
+      } catch {
+        // a primeira rota tentará novamente
+      }
+      log('boot concluído (Supabase PostgreSQL, schema game)');
+      return;
+    }
+
+    // Caminho legado/teste SQLite.
     await reconcileDataOnBoot();
     const applied = await applyPendingMigrations();
     if (applied > 0) log(`${applied} migração(ões) aplicada(s) no boot`);
@@ -491,7 +622,7 @@ export async function bootPersistence(): Promise<void> {
       // a primeira rota tentará novamente
     }
 
-    log(`boot concluído (db=${resolveDbFilePath()})`);
+    log(`boot concluído (SQLite=${resolveDbFilePath()})`);
   } catch (err) {
     console.error(LOG_PREFIX, 'falha no boot de persistência (app segue):', err);
   }
