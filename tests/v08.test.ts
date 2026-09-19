@@ -265,9 +265,9 @@ describe('v0.8 — translateSupabaseAuthError (mensagens amigáveis)', () => {
     expect(translateSupabaseAuthError({ code: 'email_not_confirmed' }).message).toContain('confirmado');
     expect(translateSupabaseAuthError({ code: 'user_already_registered' }).message).toContain('já tem conta');
     expect(translateSupabaseAuthError({ code: 'weak_password' }).message).toContain('8 caracteres');
-    expect(translateSupabaseAuthError({ code: 'over_email_send_rate_limit' }).message).toContain(
-      'Muitas tentativas'
-    );
+    const emailRateLimit = translateSupabaseAuthError({ code: 'over_email_send_rate_limit' });
+    expect(emailRateLimit.message).toContain('cadastro');
+    expect(emailRateLimit.message).not.toContain('over_email_send_rate_limit');
     expect(translateSupabaseAuthError({ code: 'email_address_invalid' }).message).toContain('não parece válido');
   });
 
