@@ -35,13 +35,17 @@ const child = spawn('node', ['.next/standalone/server.js'], {
   env: process.env,
 });
 
+let shuttingDown = false;
 for (const signal of ['SIGTERM', 'SIGINT']) {
   process.on(signal, () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
     if (!child.killed) child.kill(signal);
+    const guard = setTimeout(() => process.exit(0), 10_000);
+    guard.unref?.();
   });
 }
 
-child.on('exit', (code, signal) => {
-  if (signal) process.kill(process.pid, signal);
-  else process.exit(code ?? 0);
+child.on('exit', (code) => {
+  process.exit(code ?? 0);
 });
