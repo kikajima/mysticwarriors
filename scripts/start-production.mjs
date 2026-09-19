@@ -20,7 +20,10 @@ function assertProductionDatabaseUrl() {
 }
 
 assertProductionDatabaseUrl();
-process.env.HOSTNAME ||= '0.0.0.0';
+// Render exige bind em todas as interfaces para o proxy público alcançar o serviço.
+// O ambiente pode fornecer HOSTNAME com o nome interno do container; por isso
+// sobrescrevemos deliberadamente em vez de usar ||=.
+process.env.HOSTNAME = '0.0.0.0';
 
 const child = spawn('node', ['.next/standalone/server.js'], {
   stdio: 'inherit',
