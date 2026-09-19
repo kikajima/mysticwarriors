@@ -123,4 +123,30 @@ describe('contratos anti-regressão de latência', () => {
     expect(page).toContain('projectPlayerRegen(prev, serverNowMs())');
     expect(page).toContain('window.setInterval(tick, 1000)');
   });
+
+  test('request novo não faz leitura de dedup antes do INSERT e pós-commit roda em paralelo', async () => {
+    const route = await Bun.file(path.join(process.cwd(), 'src/app/api/game/action/route.ts')).text();
+    expect(route).not.toContain('// FAST PATH (leitura, sem lock)');
+    expect(route).toContain('const [fresh] = await Promise.all([loadFresh(), cacheResultPromise])');
+    expect(route).toContain('void db.requestDedup.deleteMany');
+  });
+
+  test('Ameaça Universal usa fast path somente leitura e temporada carrega em paralelo', async () => {
+    const route = await Bun.file(path.join(process.cwd(), 'src/app/api/game/worldboss/route.ts')).text();
+    const boss = await Bun.file(path.join(process.cwd(), 'src/lib/worldboss.ts')).text();
+    const seasons = await Bun.file(path.join(process.cwd(), 'src/lib/seasons.ts')).text();
+
+    expect(route).toContain('const [boss, season] = await Promise.all([');
+    expect(boss).toContain("where: { status: 'active', endsAt: { gt: now } }");
+    expect(boss).toContain('_count: { select: { damages: true } }');
+    expect(boss).not.toContain('const membership = await tx.player.findUniqueOrThrow');
+    expect(seasons).toContain("where: { status: 'active', endsAt: { gt: now } }");
+  });
+
+  test('treino instantâneo reaproveita o Player já carregado na transação', async () => {
+    const activities = await Bun.file(path.join(process.cwd(), 'src/lib/game/activities.ts')).text();
+    const actions = await Bun.file(path.join(process.cwd(), 'src/lib/game/actions.ts')).text();
+    expect(activities).toContain('options: { playerIsFresh?: boolean } = {}');
+    expect(actions).toContain("applyTrainResult(tx, player, payload, { playerIsFresh: true })");
+  });
 });
