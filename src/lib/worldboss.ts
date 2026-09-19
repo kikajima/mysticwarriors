@@ -295,14 +295,25 @@ export interface BossAttackResult {
  */
 export async function attackWorldBoss(
   tx: Prisma.TransactionClient,
-  player: Player
+  player: Player & { guild?: { level: number } | null }
 ): Promise<BossAttackResult> {
-  if (!(await universalThreatIsAvailable(tx))) {
-    throw new ApiError('BOSS_NOT_ACTIVE', 'A Ameaça Universal está disponível apenas aos finais de semana.');
+  const now = new Date();
+
+  // Caminho quente: se já existe encontro ativo e não expirado, uma única
+  // leitura basta. ensureActiveBoss (GameMeta + updates de manutenção) fica
+  // reservado ao caso raro em que o encontro precisa nascer/virar.
+  let boss = await tx.worldBoss.findFirst({
+    where: { status: 'active', endsAt: { gt: now } },
+  });
+  if (!boss) {
+    await ensureActiveBoss(tx);
+    boss = await tx.worldBoss.findFirst({
+      where: { status: 'active', endsAt: { gt: now } },
+    });
   }
-  await ensureActiveBoss(tx);
-  const boss = await tx.worldBoss.findFirst({ where: { status: 'active' } });
-  if (!boss) throw new ApiError('BOSS_NOT_ACTIVE', 'Nenhuma ameaça universal ativa agora.');
+  if (!boss) {
+    throw new ApiError('BOSS_NOT_ACTIVE', 'A Ameaça Universal não está ativa agora.');
+  }
 
   // vida mínima para lutar
   const derived = computeDerived(player);
@@ -310,8 +321,6 @@ export async function attackWorldBoss(
   if (player.hp < minHp) {
     throw new ApiError('INSUFFICIENT_HP', `Você precisa de pelo menos ${minHp} de vida para enfrentar ${boss.name}.`);
   }
-
-  const now = new Date();
 
   // ===== cooldown por jogador: reivindica o direito de atacar =====
   // (v0.9.11 — verificado ANTES do débito de energia: um clique durante
@@ -335,15 +344,22 @@ export async function attackWorldBoss(
     }
   }
 
-  // ===== energia: debitada de forma CONDICIONAL (nunca negativa) =====
-  const energyRes = await tx.player.updateMany({
+  // ===== recursos: energia + desgaste de HP em UM único UPDATE =====
+  // O HP final depende apenas do HP de entrada; se qualquer etapa posterior
+  // falhar, a transação inteira reverte os dois recursos.
+  const hpAfter = Math.max(1, player.hp - Math.floor(player.hp * 0.15));
+  const resourceRes = await tx.player.updateMany({
     where: { id: player.id, energy: { gte: ATTACK_ENERGY_COST } },
-    data: { energy: { decrement: ATTACK_ENERGY_COST } },
+    data: {
+      energy: { decrement: ATTACK_ENERGY_COST },
+      hp: hpAfter,
+    },
   });
-  if (energyRes.count === 0) {
+  if (resourceRes.count === 0) {
     throw new ApiError('INSUFFICIENT_ENERGY', `Cada ataque custa ${ATTACK_ENERGY_COST} de energia.`);
   }
   player.energy -= ATTACK_ENERGY_COST;
+  player.hp = hpAfter;
 
   // ===== cálculo do dano (100% server-side, rng próprio) =====
   // v0.4: usa o MESMO PIPELINE do combate comum — estratégia, loadout de
@@ -430,9 +446,12 @@ export async function attackWorldBoss(
       total += Math.max(1, extra);
     }
   }
-  // escala para HP global de milhões: multiplicador de ameaça universal
-  const membership = await tx.player.findUniqueOrThrow({ where: { id: player.id }, select: { guild: { select: { level: true } } } });
-  const damage = Math.max(10, Math.round((total / hits) * 60 * guildBonuses(membership.guild?.level).bossDamage));
+  // requirePlayer já trouxe a guilda junto com o personagem. Reconsultar a
+  // mesma relação aqui custava mais um round-trip remoto por ataque.
+  const damage = Math.max(
+    10,
+    Math.round((total / hits) * 60 * guildBonuses(player.guild?.level).bossDamage)
+  );
   const impetoNote =
     combosEncadeados > 0
       ? ` 🔥 Ímpeto: ${combosEncadeados} combo${combosEncadeados === 1 ? '' : 's'} encadeado${combosEncadeados === 1 ? '' : 's'} (Cap. 7).`
@@ -471,14 +490,6 @@ export async function attackWorldBoss(
     update: { damage: { increment: damage }, attacks: { increment: 1 }, lastAttackedAt: now },
     create: { bossId: boss.id, playerId: player.id, damage, attacks: 1, lastAttackedAt: now },
   });
-
-  // gasta vida (batalha desgastante, mas não letal)
-  const hpAfter = Math.max(1, player.hp - Math.floor(player.hp * 0.15));
-  await tx.player.update({
-    where: { id: player.id },
-    data: { hp: hpAfter },
-  });
-  player.hp = hpAfter;
 
   // XP proporcional ao dano
   const xpGain = Math.max(20, Math.round(damage / 200));
