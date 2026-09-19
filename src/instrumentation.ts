@@ -1,6 +1,6 @@
-// Hook de instrumentação do Next.js — roda uma vez por processo servidor
-// e aplica a inicialização de persistência antes da primeira request.
-// Em produção o SQLite deve estar em Persistent Disk do Render.
+// Hook de instrumentação do Next.js — roda uma vez por processo servidor.
+// Em produção inicializa o PostgreSQL autoritativo do Supabase; em testes
+// SQLite, mantém o boot legado/migrador hermético.
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
   try {
