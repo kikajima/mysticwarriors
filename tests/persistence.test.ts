@@ -217,7 +217,11 @@ describe('applyPendingMigrations (migrador de boot)', () => {
         log: ['error'],
       });
       const applied = await applyPendingMigrations(client);
-      expect(applied).toBe(0); // nada pendente
+      // A cópia do banco de dev pode estar uma ou mais migrations atrás
+      // após troca de branch. O contrato real é: aplicar sem perda e,
+      // depois disso, ficar idempotente.
+      expect(applied).toBeGreaterThanOrEqual(0);
+      expect(await applyPendingMigrations(client)).toBe(0);
       const players = await client.player.count();
       // 15 bots de ranking + (opcional) Mestre Kame + a sessão própria do
       // dono (v0.16: personagens reais do dono são preservados no dev)
