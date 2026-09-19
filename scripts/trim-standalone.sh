@@ -5,15 +5,13 @@
 # POR QUÊ: o Node File Tracing (output: "standalone") copia o projeto
 # inteiro para dentro do standalone quando encontra fs dinâmicos
 # derivados de process.cwd() (db-path.ts / avatars.ts / persistence.ts).
-# Isso inflava o pacote de deploy da plataforma (.zscripts/build.sh) de
+# Isso inflava o pacote standalone de
 # ~68MB para 142MB. Os excludes declarados em next.config.ts
 # (outputFileTracingExcludes) são a correção semântica; este script é a
 # GARANTIA MECÂNICA — roda após o next build e remove os mesmos alvos,
 # imune a mudanças de comportamento do tracing entre versões do Next.
 #
-# Roda como último passo do script "build" do package.json, ANTES de a
-# plataforma empacotar (.zscripts/build.sh copia .next/standalone para
-# o pacote de deploy).
+# Roda como último passo do script "build" do package.json, antes de o artefato standalone ser publicado.
 #
 # O que FICA (necessário em runtime): node_modules traçado, .next/static,
 # public/, prisma/ (migrações de boot), server.js,

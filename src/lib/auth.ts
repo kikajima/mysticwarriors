@@ -133,44 +133,32 @@ export interface CookieOptions {
 
 /** Grava o cookie de sessão em uma resposta NextResponse.
  *
- * v0.9.12 — PAINEL DE VISUALIZAÇÃO (iframe cross-site):
- * o jogo roda EMBUTIDO no painel de preview do chat (origem
- * preview-chat-*.space-z.ai dentro da interface, um SITE diferente).
- * Cookies SameSite=Lax NUNCA são anexados a fetches cross-site vindos
- * de um iframe — o login "funcionava" (200 + Set-Cookie) e a chamada
- * seguinte chegava SEM cookie (401): o dono não conseguia criar
- * personagem pelo painel (diagnóstico em dev.log: guest 200 → create
- * 401; supabase 200 → create 401).
- *
- * SameSite=None é o padrão para apps embutidos em iframes de outro site;
- * a especificação EXIGE Secure. Navegadores modernos aceitam cookies
- * Secure em HTTPS (preview/produção) e tratam http://localhost como
- * origem confiável (exceção que mantém o fluxo local de dev/testes).
- * CSRF permanece mitigado: todas as mutações são POST application/json
- * (preflight CORS obrigatório, que a API não aprova para origens
- * estranhas) + autorização por sessão server-side.
+ * Deploy normal (Render/domínio próprio): cookie first-party, HttpOnly,
+ * SameSite=Lax e Secure apenas em produção. Não há dependência de iframe
+ * ou Storage Access API.
  */
 export function setSessionCookie(response: NextResponse, token: string, opts: CookieOptions = {}): NextResponse {
+  const secure = opts.secure ?? process.env.NODE_ENV === 'production';
   response.cookies.set({
     name: SESSION_COOKIE,
     value: token,
     httpOnly: true,
-    secure: opts.secure ?? true,
-    sameSite: 'none',
+    secure,
+    sameSite: 'lax',
     path: '/',
     maxAge: opts.maxAge ?? SESSION_TTL_DAYS * 24 * 60 * 60,
   });
   return response;
 }
 
-/** Limpa o cookie de sessão (mesmos atributos para casar com o ativo). */
+/** Limpa o cookie de sessão com os mesmos atributos do cookie ativo. */
 export function clearSessionCookie(response: NextResponse): NextResponse {
   response.cookies.set({
     name: SESSION_COOKIE,
     value: '',
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
     path: '/',
     maxAge: 0,
   });

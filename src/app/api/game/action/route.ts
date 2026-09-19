@@ -7,7 +7,6 @@ import { getAuth, requireAuth } from '@/lib/auth';
 import { executeGameAction, type ActionResult } from '@/lib/game/actions';
 import { playerToView } from '@/lib/game/engine';
 import { ensureBalanceVersion } from '@/lib/game/balance';
-import { maybeBeacon } from '@/lib/game/persistence';
 import { bossAttacksPerWindow } from '@/lib/worldboss';
 import { db } from '@/lib/db';
 import { ensureQuests } from '@/lib/progression';
@@ -132,8 +131,6 @@ export async function POST(request: Request) {
   const dedupRef: { current: { playerId: string; requestId: string } | null } = { current: null };
   try {
     const auth = await requireAuth();
-    // persistência: beacon dirigido por tráfego (fire-and-forget)
-    maybeBeacon(request);
 
     // rate limit por sessão + IP (proteção contra bots de ação)
     const ip = clientIp(request);

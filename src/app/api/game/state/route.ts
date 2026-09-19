@@ -4,7 +4,6 @@ import { ApiError, ok, toErrorResponse } from '@/lib/api';
 import { requireAuth, requirePlayer } from '@/lib/auth';
 import { applyRegen, playerToView } from '@/lib/game/engine';
 import { resolveDueActivities } from '@/lib/game/activities';
-import { maybeBeacon } from '@/lib/game/persistence';
 import { LIMITS, rateLimit } from '@/lib/rate-limit';
 
 // =====================================================================
@@ -30,8 +29,6 @@ import { LIMITS, rateLimit } from '@/lib/rate-limit';
 export async function GET(request: Request) {
   try {
     const auth = await requireAuth();
-    // persistência: beacon dirigido por tráfego (fire-and-forget)
-    maybeBeacon(request);
 
     // RATE LIMIT: 60 req/min por sessão (o polling do cliente é de 15s,
     // logo ~4/min — o teto só é atingido por uso anômalo/abuso).

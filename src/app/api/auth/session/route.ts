@@ -3,7 +3,6 @@ import { db } from '@/lib/db';
 import { getAuth, accountToView } from '@/lib/auth';
 import { playerToView } from '@/lib/game/engine';
 import { ensureBalanceVersion } from '@/lib/game/balance';
-import { maybeBeacon } from '@/lib/game/persistence';
 import { toErrorResponse } from '@/lib/api';
 
 /**
@@ -14,12 +13,10 @@ import { toErrorResponse } from '@/lib/api';
  * v0.3: inclui `activePlayerId` — o personagem em uso vive no SERVIDOR.
  * O cliente não persiste mais playerId em localStorage (anti-XSS).
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     // boot: garante versão de balanceamento (barato — 1 consulta/processo)
     await ensureBalanceVersion();
-    // persistência: beacon dirigido por tráfego (fire-and-forget; no-op no sandbox)
-    maybeBeacon(request);
 
     const auth = await getAuth();
     if (!auth) {

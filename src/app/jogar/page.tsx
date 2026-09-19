@@ -29,10 +29,8 @@ import {
 import { WikiIconLink } from '@/components/game/WikiIconLink';
 import { SaveWarriorDialog } from '@/components/game/SaveWarriorDialog';
 import { AvatarDialog } from '@/components/game/AvatarDialog';
-import { CookieBlockedDialog } from '@/components/game/CookieBlockedDialog';
 import { equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { noteServerTime, serverNowMs } from '@/lib/game/clock';
-import { sessionCookieWorks } from '@/lib/iframe-storage';
 import {
   getSupabaseSession,
   loadCloudProfile,
@@ -214,12 +212,6 @@ export default function PlayPage() {
   // A resposta vem do SUPABASE (RPC is_admin, security definer) com a
   // sessão do próprio usuário — nenhum e-mail fica embutido no jogo.
   const [isAdmin, setIsAdmin] = useState(false);
-  // ===== v0.9.12 — cookies bloqueados pelo painel de visualização? =====
-  // true quando um login respondeu 200 mas o cookie de sessão não
-  // "pegou" no navegador (iframe cross-site bloqueando cookies de
-  // terceiros) — o diálogo explica e oferece abrir em aba própria.
-  const [cookieBlocked, setCookieBlocked] = useState(false);
-
   useEffect(() => {
     let active = true;
     (async () => {
@@ -457,15 +449,6 @@ export default function PlayPage() {
   const handleAuthed = useCallback(
     async (account: AccountSession, chars: PlayerView[]) => {
       setAuth(account);
-
-      // v0.9.12 — verificação do cookie de sessão (diagnóstico do painel):
-      // o login ACABOU de responder 200; se o servidor não vê a sessão,
-      // o navegador descartou o Set-Cookie (cookies de terceiros no
-      // iframe do preview). Em vez de deixar a próxima ação falhar com
-      // 401 sem explicação, levantamos o diálogo com as saídas.
-      if (!(await sessionCookieWorks())) {
-        setCookieBlocked(true);
-      }
 
       let finalChars = chars;
 
@@ -1179,9 +1162,6 @@ export default function PlayPage() {
   }, [screen, playerId, saveToCloud]);
 
   // ===== Telas =====
-  const cookieDialog =
-    cookieBlocked && <CookieBlockedDialog onResolved={() => setCookieBlocked(false)} />;
-
   if (screen === 'boot') {
     return (
       <main className="min-h-screen bg-[#14100b] flex items-center justify-center">
@@ -1191,7 +1171,6 @@ export default function PlayPage() {
           </div>
           <p className="font-heading text-amber-200/70 animate-pulse">Carregando o universo...</p>
         </div>
-        {cookieDialog}
       </main>
     );
   }
@@ -1200,7 +1179,6 @@ export default function PlayPage() {
     return (
       <main className="min-h-screen bg-[#14100b]">
         <AuthGate onAuthed={handleAuthed} />
-        {cookieDialog}
       </main>
     );
   }
@@ -1216,7 +1194,6 @@ export default function PlayPage() {
           onLogout={logoutAccount}
           onDelete={deleteCharacter}
         />
-        {cookieDialog}
       </main>
     );
   }
@@ -1228,7 +1205,6 @@ export default function PlayPage() {
           onCreated={handleCreated}
           onBack={auth ? () => setScreen('select') : undefined}
         />
-        {cookieDialog}
       </main>
     );
   }
@@ -1622,9 +1598,6 @@ export default function PlayPage() {
           }}
         />
       )}
-
-      {/* v0.9.12 — cookies bloqueados pelo painel de visualização */}
-      {cookieDialog}
     </main>
   );
 }

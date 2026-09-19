@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Test, typecheck and lint
+    name: Test, typecheck, lint and build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -28,7 +28,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.2
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -44,3 +44,14 @@ jobs:
 
       - name: ESLint
         run: bun run lint
+
+      - name: Production build
+        env:
+          NODE_ENV: production
+          DATABASE_URL: file:/tmp/mystic-warriors-ci.db
+          ADMIN_EMAIL: ci@example.invalid
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+        run: |
+          touch /tmp/mystic-warriors-ci.db
+          bun run build

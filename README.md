@@ -1,29 +1,64 @@
 # Mystic Warriors
 
-Jogo de navegador com Next.js, React, Bun, Prisma/SQLite e integração Supabase.
+Jogo de navegador com Next.js, React, Bun, Prisma/SQLite e Supabase.
 
-## Desenvolvimento
+## Stack oficial
+
+- **Desenvolvimento:** Visual Studio Code + Bun
+- **Código e CI:** GitHub
+- **Hospedagem:** Render
+- **Autenticação e espelho em nuvem:** Supabase
+- **Banco autoritativo do servidor:** SQLite em Persistent Disk do Render
+
+O projeto não depende da Z.ai para build, preview ou deploy.
+
+## Desenvolvimento local
 
 ```sh
 bun install --frozen-lockfile
 bun run db:generate
 ```
 
-Configure `.env` a partir de `.env.example`. Para desenvolvimento, use um caminho absoluto para seu banco SQLite local. Preserve o banco e os avatares da instalação existente; eles não são versionados. Para uma instalação realmente nova, crie a pasta do banco e execute `bun run db:deploy` com DATABASE_URL apontando para o novo arquivo.
+Copie `.env.example` para `.env` e use um caminho local para o SQLite.
 
 ```sh
 bun run dev
 ```
 
-## Produção
+## Produção no Render
 
-Configure DATABASE_URL para um banco existente em volume persistente externo ao diretório do app. Configure ADMIN_EMAIL e as variáveis públicas do Supabase antes do build. Não inclua credenciais privadas nem dados dos jogadores no Git.
+O filesystem comum do Render é efêmero. O SQLite precisa ficar em um
+**Persistent Disk**. O Blueprint de referência está em `render.yaml` e usa:
+
+```text
+DATABASE_URL=file:/var/data/custom.db
+```
+
+Build:
 
 ```sh
-bun run build
+bun install --frozen-lockfile && bun run db:generate && bun run build
+```
+
+Start:
+
+```sh
 bun run start
 ```
 
-O GitHub armazena o código. Para disponibilizar o jogo na internet é necessário hospedar o servidor e o volume persistente. GitHub Pages não executa este backend.
+Para um serviço já existente, preserve o disco e o arquivo `custom.db`.
+Nunca use `prisma migrate reset` em produção.
 
-Consulte [CORRECOES-E-INSTALACAO.md](CORRECOES-E-INSTALACAO.md) para aplicação das correções, configuração, testes realizados e limitações.
+Para uma instalação realmente nova, `scripts/start-production.mjs` só
+cria um SQLite vazio quando `ALLOW_EMPTY_DB_INIT=true`. Depois do primeiro
+boot bem-sucedido, remova essa variável. Migrações pendentes são aplicadas
+pelo boot do aplicativo.
+
+Variáveis necessárias:
+
+- `DATABASE_URL`
+- `ADMIN_EMAIL`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+O health check público é `/api/health`.
