@@ -1,4 +1,5 @@
 import { guildBonuses } from './game/guildRules';
+import { parseProfessions, academicXpMultiplier } from '@/lib/game/professionCareer';
 import { MAX_ACTION_ENERGY } from '@/lib/game/rules';
 import type { Prisma, Player } from '@prisma/client';
 import { createHash, randomUUID } from 'crypto';
@@ -315,7 +316,12 @@ export async function grantRewards(
   const current = await tx.player.findUniqueOrThrow({ where: { id: player.id }, select: { guild: { select: { level: true } } } });
   const bonus = guildBonuses(current.guild?.level);
   const combat = ['pve', 'pvp', 'tournament', 'world_boss'].includes(info.source);
-  if (rewards.xp) rewards.xp = Math.round(rewards.xp * (combat ? bonus.combatXp : info.source === 'mission' ? bonus.workXp : 1));
+  if (rewards.xp) {
+    rewards.xp = Math.round(rewards.xp * (combat ? bonus.combatXp : info.source === 'mission' ? bonus.workXp : 1));
+    // Acadêmico: +0,5% de XP GLOBAL por nível conquistado na carreira,
+    // até +5% no nível 10. Sem hora acadêmica concluída, bônus = 0.
+    rewards.xp = Math.max(1, Math.round(rewards.xp * academicXpMultiplier(parseProfessions(player.professions))));
+  }
   if (rewards.zeni && info.source === 'mission') rewards.zeni = Math.round(rewards.zeni * bonus.workZeni);
   let levelsGained = 0;
   if (rewards.zeni && rewards.zeni > 0) {
