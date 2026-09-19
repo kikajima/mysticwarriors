@@ -48,3 +48,9 @@ test('documentação operacional usa apenas o volume atual do Render', () => {
   expect(guide).not.toContain('.zscripts');
   expect(guide).not.toContain('mystic-warriors-alterados.zip');
 });
+
+test('backup completo exige autorização administrativa', () => {
+  const route = readFileSync(path.join(root, 'src/app/api/game/backup/route.ts'), 'utf8');
+  expect(route).toContain('requirePanelAdmin(request)');
+  expect(route).not.toContain('requireAuth()');
+});
