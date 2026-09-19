@@ -222,6 +222,19 @@ export async function POST(request: Request) {
           await tx.player.update({ where: { id: created.id }, data: { hp, energy } });
         }
 
+        // ===== materiais profissionais =====
+        // A tabela relacional é autoritativa no jogo; o snapshot é apenas
+        // recuperação. IDs e quantidades já foram sanitizados em progress.ts.
+        for (const material of char.materials) {
+          await tx.inventoryStack.create({
+            data: {
+              playerId: created.id,
+              itemId: material.itemId,
+              quantity: material.quantity,
+            },
+          });
+        }
+
         // ===== quests do período atual =====
         // Alvos e RECOMPENSAS vêm sempre dos catálogos do jogo — a nuvem
         // só entrega progresso/coletado (defesa em profundidade).
