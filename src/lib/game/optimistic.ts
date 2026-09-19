@@ -57,7 +57,14 @@ export function applyOptimisticDelta(
     next.crystals = Math.max(0, next.crystals + delta.crystals);
   }
   if (delta.energy !== undefined) {
+    const wasFull = next.energy >= next.derived.maxEnergy;
     next.energy = Math.max(0, Math.min(next.derived.maxEnergy, next.energy + delta.energy));
+    // O servidor zera o "tempo acumulado" enquanto a energia está cheia.
+    // Se o cliente gasta a partir de 100%, reiniciamos o relógio local para
+    // não mostrar regeneração retroativa antes da resposta autoritativa.
+    if (wasFull && next.energy < next.derived.maxEnergy && delta.energy < 0) {
+      next.regen = { ...next.regen, lastRegenAt: new Date().toISOString() };
+    }
   }
   if (delta.hp !== undefined) {
     next.hp = Math.max(1, Math.min(next.derived.maxHp, delta.hp));

@@ -171,11 +171,15 @@ export async function executeGameAction(
     // coleta de recompensa NUNCA espera ocupação (regra da 3ª ordem).
     await assertNoRunningActivityTx(tx, player.id, type);
 
-    applyRegen(player); // regen em memória; persistido no update final
-    await tx.player.update({
-      where: { id: player.id },
-      data: { hp: player.hp, energy: player.energy, lastRegen: player.lastRegen, lastRegenHp: player.lastRegenHp },
-    });
+    // Regen só grava quando realmente mudou. No PostgreSQL remoto, evitar
+    // um UPDATE inútil em TODO clique elimina uma viagem de rede + WAL sem
+    // alterar a regra autoritativa.
+    if (applyRegen(player)) {
+      await tx.player.update({
+        where: { id: player.id },
+        data: { hp: player.hp, energy: player.energy, lastRegen: player.lastRegen, lastRegenHp: player.lastRegenHp },
+      });
+    }
 
     let result: ActionResult;
     switch (type) {
