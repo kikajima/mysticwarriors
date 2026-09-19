@@ -9,7 +9,10 @@ test('infra de produção não depende da Z.ai', () => {
   expect(existsSync(path.join(root, 'Caddyfile'))).toBe(false);
 
   const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  expect(pkg.name).toBe('mystic-warriors');
   expect(pkg.dependencies?.['z-ai-web-dev-sdk']).toBeUndefined();
+  expect(pkg.scripts?.['db:reset']).toBeUndefined();
+  expect(existsSync(path.join(root, 'ARQUIVOS-ALTERADOS.txt'))).toBe(false);
 
   const nextConfig = readFileSync(path.join(root, 'next.config.mjs'), 'utf8');
   expect(nextConfig).not.toContain('space-z.ai');
@@ -31,4 +34,12 @@ test('Render possui build, start, health check e disco persistente declarados', 
   const start = readFileSync(path.join(root, 'scripts/start-production.mjs'), 'utf8');
   expect(start).toContain('ALLOW_EMPTY_DB_INIT');
   expect(start).toContain(".next/standalone/server.js");
+});
+
+test('documentação operacional usa apenas o volume atual do Render', () => {
+  const guide = readFileSync(path.join(root, 'CORRECOES-E-INSTALACAO.md'), 'utf8');
+  expect(guide).toContain('file:/var/data/custom.db');
+  expect(guide).not.toContain('file:/data/mystic-warriors/custom.db');
+  expect(guide).not.toContain('.zscripts');
+  expect(guide).not.toContain('mystic-warriors-alterados.zip');
 });
