@@ -153,9 +153,9 @@ export interface CloudCharacterSnapshot {
   // ===== v0.9.4 — estado que antes ficava só no servidor =====
   /** Turno de profissão em andamento (id + início + duração + término). */
   missionId: string | null;
-  missionStartedAt: string | null;
+  missionStartedAt?: string | null;
   missionEndsAt: string | null;
-  missionHours: 1 | 2 | 4 | 8 | null;
+  missionHours?: 1 | 2 | 4 | 8 | null;
   /** Materiais profissionais relacionais espelhados para recuperação. */
   materials?: CloudMaterialSnapshot[];
   /** Relógios de regeneração (energia/vida continuam contando offline). */
@@ -359,7 +359,7 @@ function sanitizeMission(
 export interface CharacterExtras {
   quests: CloudQuestSnapshot[];
   achievements: CloudAchievementSnapshot[];
-  materials: CloudMaterialSnapshot[];
+  materials?: CloudMaterialSnapshot[];
 }
 
 export function serializeCharacterForCloud(
