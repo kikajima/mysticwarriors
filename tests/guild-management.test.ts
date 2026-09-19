@@ -11,6 +11,7 @@ import { guildBonuses, guildThreshold, guildCapacity, GUILD_UPGRADE_COSTS, GUILD
 import { grantRewards, transferZeniPvp } from '../src/lib/economy';
 import { applyRegen, buildPlayerCombatant, playerToView } from '../src/lib/game/engine';
 import { WIKI_SECTIONS } from '../src/lib/wiki/wiki-content';
+import { isOnline, touchPresence } from '../src/lib/game/presence';
 
 const dir = mkdtempSync(path.join(tmpdir(), 'mw-guild-tests-'));
 const db = new PrismaClient({ datasources: { db: { url: `file:${path.join(dir, 'test.db')}?connection_limit=1` } } });
@@ -34,6 +35,22 @@ async function inviteJoin(i: number, inviter = 0) {
   const invite = await db.guildInvitation.findFirstOrThrow({ where: { playerId: ids[i] } });
   await act(i, 'guild_accept', { inviteId: invite.id });
 }
+test('blindagem HTTP: rotas legadas de mutação não podem reaparecer', async () => {
+  for (const route of ['create', 'donate', 'invite', 'roles']) {
+    const file = Bun.file(path.join(process.cwd(), 'src/app/api/game/guilds', route, 'route.ts'));
+    expect(await file.exists()).toBe(false);
+  }
+});
+
+test('presença online/offline é apenas informativa e expira', () => {
+  const id = `QA_presence_${randomUUID()}`;
+  const now = Date.now();
+  expect(isOnline(id, now)).toBe(false);
+  expect(touchPresence(id)).toBe(true);
+  expect(isOnline(id, now + 60_000)).toBe(true);
+  expect(isOnline(id, now + 121_000)).toBe(false);
+});
+
 test('fundação atômica e replay: exatamente uma guilda e um débito', async () => {
   await expect(act(6, 'create_guild', { guildName: 'QA_Poor' })).rejects.toThrow();
   expect(await db.guild.count()).toBe(0);
