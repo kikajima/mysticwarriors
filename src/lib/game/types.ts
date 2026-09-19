@@ -42,44 +42,72 @@ export interface RaceInfo {
   economy: RaceEconomyDef;
 }
 
-// ===== Profissões (antigas missões temporizadas — v0.6) =====
+// ===== Profissões — Carreira 1–10 + loot =====
 
-/** Progresso do personagem em UMA profissão. */
+export type ProfessionId = 'agricultor' | 'cientista' | 'academico' | 'policial' | 'atleta';
+export type ProfessionAttribute = 'strength' | 'defense' | 'speed' | 'ki' | null;
+export type ProfessionMaterialRarity = 'common' | 'rare';
+
+/** Progresso persistido de UMA profissão. O nível é sempre DERIVADO das horas. */
 export interface ProfessionProgress {
-  /** rank atual (1 = inicial, 5 = última promoção) */
-  rank: number;
-  /** trabalhos concluídos no rank ATUAL (zera ao ser promovido) */
-  completions: number;
+  /** Horas acumuladas no ciclo atual de carreira (0..4450). */
+  hours: number;
+  /** Horas históricas, nunca diminuem; será usada por conquistas/Prestígio. */
+  lifetimeHours: number;
+  /** Reservado para a PR de Prestígio. Nesta fase começa em 0. */
+  prestige: number;
+  /** Fração de atributo em milésimos, para taxas como +1,3/h sem arredondar. */
+  statMilliRemainder: number;
+  /** Atributo realmente concedido neste ciclo; necessário para Prestígio futuro. */
+  cycleStatGranted: number;
 }
 
 /** Mapa professionId → progresso (JSON na coluna Player.professions). */
 export type ProfessionsMap = Record<string, ProfessionProgress>;
 
 export interface ProfessionDef {
-  id: string;
+  id: ProfessionId;
   name: string;
   description: string;
   icon: string;
-  /** energia gasta ao INICIAR um trabalho (com multiplicador racial) */
-  energyCost: number;
-  /** duração de cada trabalho (minutos) */
-  durationMin: number;
-  /** títulos das promoções (índice 0 = rank 1) */
-  rankNames: [string, string, string, string, string];
+  /** Atributo beneficiado pelo trabalho; Acadêmico é utilitário/meta. */
+  attribute: ProfessionAttribute;
 }
 
-/** Recompensas por rank (compartilhadas por todas as profissões — v0.6). */
-export interface ProfessionRankRewards {
-  /** Zeni por trabalho concluído (300 → 1500 = 5x, aumento gradual) */
-  zeni: number;
-  /** fração do XP exigido pelo nível ATUAL do personagem (0.10 → 0.25) */
-  xpPct: number;
-  /** chance de encontrar uma Esfera do Dragão por conclusão */
+/** Balanceamento compartilhado dos Níveis 1–10. */
+export interface ProfessionLevelRewards {
+  level: number;
+  hoursInLevel: number;
+  cumulativeHours: number;
+  zeniPerHour: number;
+  /** Ganho de atributo/hora em milésimos (1000 = +1,0). */
+  attributeMilliPerHour: number;
+  /** XP/hora como fração do XP necessário para o próximo nível do personagem. */
+  xpPctPerHour: number;
+  /** Chance de Esfera por TURNO concluído. */
   dragonBallChance: number;
-  /** trabalhos no rank atual para a próxima promoção */
-  completionsToPromote: number;
-  /** bônus único de Zeni ao SER PROMOVIDO para este rank (rank 1 = 0) */
-  promotionBonus: number;
+  /** Chance base de material raro por HORA, antes da eficiência do turno. */
+  rareChance: number;
+}
+
+export interface ProfessionShiftDef {
+  hours: 1 | 2 | 4 | 8;
+  /** Eficiência aplicada a XP e à chance de raro; demais ganhos são integrais. */
+  efficiency: number;
+}
+
+export interface ProfessionMaterialDef {
+  id: string;
+  name: string;
+  professionId: ProfessionId;
+  rarity: ProfessionMaterialRarity;
+  tier: 1 | 2 | 3 | 4 | 5;
+  icon: string;
+}
+
+export interface ProfessionLootEntry {
+  itemId: string;
+  quantity: number;
 }
 
 // ===== Inimigos (PvE) =====
@@ -480,12 +508,15 @@ export interface RegenInfo {
 
 export interface ActiveMission {
   missionId: string;
+  startedAt: string;
   endsAt: string;
+  hours: 1 | 2 | 4 | 8;
 }
 
 /** Missão concluída aguardando coleta (timer expirou). */
 export interface ClaimableMission {
   missionId: string;
+  hours: 1 | 2 | 4 | 8;
 }
 
 /**
