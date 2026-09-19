@@ -3,17 +3,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   PROFESSIONS,
-  PROFESSION_RANKS,
-  PROFESSION_MAX_RANK,
+  PROFESSION_LEVELS,
+  PROFESSION_MASTERY_HOURS,
+  PROFESSION_SHIFTS,
   getProfession,
-  professionRankTitle,
-  professionXpReward,
+  professionLevel,
+  professionLevelTitle,
+  professionHoursIntoLevel,
+  professionShiftRewards,
+  academicXpBonusPct,
 } from '@/lib/game/constants';
 import { useServerNow } from '@/lib/game/clock';
 import type { PlayerView, QuestView } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { fetchPanelJson, LoadFail, QuestsSkeleton } from './PanelLoad';
-import { Zap, Coins, Timer, Hourglass, Gift, CalendarDays, Loader2, TrendingUp, Award, Sparkles, XCircle } from 'lucide-react';
+import { Coins, Timer, Hourglass, Gift, CalendarDays, Loader2, TrendingUp, Sparkles, XCircle } from 'lucide-react';
 
 function formatCountdown(ms: number): string {
   if (ms <= 0) return 'pronto!';
@@ -30,6 +34,23 @@ function formatCountdown(ms: number): string {
 
 type Tab = 'professions' | 'quests';
 
+interface MaterialView {
+  itemId: string;
+  quantity: number;
+  name: string;
+  professionId: string | null;
+  rarity: 'common' | 'rare' | null;
+  tier: number | null;
+  icon: string;
+}
+
+const ATTRIBUTE_LABEL: Record<string, string> = {
+  strength: 'Força',
+  defense: 'Defesa',
+  speed: 'Velocidade',
+  ki: 'Ki',
+};
+
 export function ProfessionsPanel({
   player,
   onAction,
@@ -37,39 +58,31 @@ export function ProfessionsPanel({
   onRefresh,
 }: {
   player: PlayerView;
-  onAction: (payload: Record<string, unknown>) => void;
+  onAction: (payload: Record<string, unknown>) => void | Promise<boolean>;
   busy: boolean;
-  /** v0.9.2: busca estado fresco quando o turno acaba na tela — o botão
-   * "Receber pagamento" aparece em ~1s em vez de esperar o polling de 15s */
+  /** Busca estado fresco quando o turno acaba na tela. */
   onRefresh?: () => void;
 }) {
   const [tab, setTab] = useState<Tab>('professions');
-  // v0.9.6 (Mudança 1): contador pelo RELÓGIO DO SERVIDOR — o fim do
-  // turno é um timestamp do servidor (missionEndsAt, UTC); contar pelo
-  // relógio do navegador atrasava/adiantava o "pronto!" conforme o
-  // dispositivo. Refresco de 250ms: só atualiza o display, nunca conta
-  // ticks (aba em segundo plano não acumula erro — ao voltar, o restante
-  // é recalculado do timestamp real).
+  const [selectedHours, setSelectedHours] = useState<1 | 2 | 4 | 8>(1);
+  const [materials, setMaterials] = useState<MaterialView[] | null>(null);
+  const [materialsFailed, setMaterialsFailed] = useState(false);
   const now = useServerNow(250);
-  // v0.9.6 (Mudança 2): confirmação de cancelamento AMARRADA ao turno —
-  // se o turno muda (cancelado/coletado/expirou), a confirmação some
-  // sozinha (estado derivado, sem efeito colateral).
   const [confirmCancelKey, setConfirmCancelKey] = useState<string | null>(null);
 
-  // Interpretação UNIFICADA pelo servidor (mesma da v0.4):
-  //  * activeMission = timer do trabalho CORRENDO (bloqueia ações);
-  //  * claimableMission = terminou, aguardando coleta (NÃO bloqueia).
   const active = player.activeMission;
   const claimable = player.claimableMission;
   const missionKey = active ? `${active.missionId}:${active.endsAt}` : null;
-  // confirmação visível SÓ enquanto o MESMO turno estiver em andamento
   const confirmCancel = confirmCancelKey !== null && confirmCancelKey === missionKey;
   const runningProf = active ? getProfession(active.missionId) : null;
   const claimableProf = claimable ? getProfession(claimable.missionId) : null;
   const currentProf = runningProf ?? claimableProf ?? null;
+  const currentHours = active?.hours ?? claimable?.hours ?? 1;
   const jobDone = !!claimableProf;
   const remaining = active ? new Date(active.endsAt).getTime() - now : 0;
-  const totalMs = currentProf ? currentProf.durationMin * 60000 : 0;
+  const totalMs = active
+    ? Math.max(1, new Date(active.endsAt).getTime() - new Date(active.startedAt).getTime())
+    : currentHours * 3600_000;
   const progressPct =
     active && currentProf
       ? Math.max(0, Math.min(100, ((totalMs - remaining) / totalMs) * 100))
@@ -77,12 +90,25 @@ export function ProfessionsPanel({
         ? 100
         : 0;
 
-  // progresso por profissão (rank/completions) — fonte: servidor
   const profProgress = player.professions ?? {};
+  const academicBonus = academicXpBonusPct(profProgress);
 
-  // v0.9.2 — o cronômetro chegou a zero NA TELA: busca estado fresco UMA
-  // vez por turno para revelar o botão "Receber pagamento" na hora
-  // (antes: esperava silenciosamente o polling de 15s)
+  const loadMaterials = useCallback(async () => {
+    setMaterialsFailed(false);
+    try {
+      const res = await fetchPanelJson(`/api/game/professions?playerId=${player.id}`);
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json();
+      setMaterials(Array.isArray(data.materials) ? data.materials : []);
+    } catch {
+      setMaterialsFailed(true);
+    }
+  }, [player.id]);
+
+  useEffect(() => {
+    if (tab === 'professions') void loadMaterials();
+  }, [tab, loadMaterials]);
+
   const expiredRef = useRef<string | null>(null);
   useEffect(() => {
     if (!active || remaining > 0) return;
@@ -91,6 +117,20 @@ export function ProfessionsPanel({
     expiredRef.current = key;
     onRefresh?.();
   }, [active?.missionId, active?.endsAt, remaining, active, onRefresh]);
+
+  const currentProgress = currentProf
+    ? profProgress[currentProf.id] ?? {
+        hours: 0,
+        lifetimeHours: 0,
+        prestige: 0,
+        statMilliRemainder: 0,
+        cycleStatGranted: 0,
+      }
+    : null;
+  const currentPreview =
+    currentProf && currentProgress
+      ? professionShiftRewards(currentProgress.hours, currentHours, player.level)
+      : null;
 
   return (
     <div className="space-y-6">
@@ -121,9 +161,41 @@ export function ProfessionsPanel({
 
       {tab === 'professions' ? (
         <>
+          <GameCard className="p-4">
+            <div className="flex flex-col gap-3">
+              <div>
+                <h3 className="font-heading text-amber-100">Duração do próximo turno</h3>
+                <p className="text-xs text-amber-200/50 mt-1">
+                  Turnos longos mantêm Zeni, atributo, horas e materiais comuns integrais. A eficiência reduz apenas XP e chance de material raro.
+                </p>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {PROFESSION_SHIFTS.map((shift) => (
+                  <button
+                    key={shift.hours}
+                    type="button"
+                    disabled={!!active || !!claimable}
+                    onClick={() => setSelectedHours(shift.hours)}
+                    className={`rounded-lg border px-2 py-2 text-center transition-all disabled:opacity-40 ${
+                      selectedHours === shift.hours
+                        ? 'border-orange-400 bg-orange-950/60 text-orange-200'
+                        : 'border-amber-900/40 bg-black/20 text-amber-200/70 hover:border-amber-600/60'
+                    }`}
+                  >
+                    <span className="font-heading block">{shift.hours}h</span>
+                    <span className="text-[10px]">{Math.round(shift.efficiency * 100)}% XP/raros</span>
+                  </button>
+                ))}
+              </div>
+              {academicBonus > 0 && (
+                <p className="text-xs text-sky-300/80">
+                  🎓 Acadêmico: +{academicBonus.toLocaleString('pt-BR')}% de XP global ativo.
+                </p>
+              )}
+            </div>
+          </GameCard>
 
-          {/* Trabalho em andamento */}
-          {(active || claimable) && currentProf && (
+          {(active || claimable) && currentProf && currentProgress && currentPreview && (
             <GameCard className="p-5 border-orange-600/50" glow={jobDone}>
               <div className="flex items-start gap-4">
                 <div className="text-4xl shrink-0 mt-1" aria-hidden>
@@ -132,8 +204,7 @@ export function ProfessionsPanel({
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h3 className="font-heading text-amber-100 leading-tight">
-                      {currentProf.name} —{' '}
-                      {professionRankTitle(currentProf, profProgress[currentProf.id]?.rank ?? 1)}
+                      {currentProf.name} — {professionLevelTitle(professionLevel(currentProgress))}
                     </h3>
                     <Chip
                       className={
@@ -143,13 +214,15 @@ export function ProfessionsPanel({
                       }
                     >
                       {jobDone ? <Gift className="w-3 h-3" /> : <Hourglass className="w-3 h-3" />}
-                      {jobDone ? 'pagamento pronto!' : 'em turno'}
+                      {jobDone ? 'coleta pronta!' : `turno de ${currentHours}h`}
                     </Chip>
                   </div>
 
                   {!jobDone && (
                     <>
-                      <p className="font-heading text-2xl text-amber-200 tabular-nums my-2">⏳ {formatCountdown(remaining)}</p>
+                      <p className="font-heading text-2xl text-amber-200 tabular-nums my-2">
+                        ⏳ {formatCountdown(remaining)}
+                      </p>
                       <div className="h-3 bg-black/50 rounded-full overflow-hidden border border-amber-900/40 mb-3">
                         <div
                           className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-1000"
@@ -157,18 +230,13 @@ export function ProfessionsPanel({
                         />
                       </div>
                       <p className="text-[11px] text-amber-200/40">
-                        Volte quando o turno acabar para receber o pagamento.
+                        Base do turno: {currentPreview.zeni.toLocaleString('pt-BR')} Zeni · {currentPreview.xp.toLocaleString('pt-BR')} XP · eficiência {Math.round(currentPreview.efficiency * 100)}%.
                       </p>
-                      {/* v0.9.6 (Mudança 2): cancelar o turno em andamento —
-                          confirmação em DOIS cliques contra toque acidental.
-                          Sem recompensa alguma (nem parcial); a profissão
-                          fica livre para começar de novo na hora. */}
                       <div className="mt-3">
                         {confirmCancel ? (
                           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2">
                             <span className="text-xs text-red-200/90 leading-snug">
-                              Cancelar o turno? Você <b>não recebe nada</b> (nem parcial) e o trabalho fica livre para
-                              recomeçar.
+                              Cancelar o turno? Você <b>não recebe nada</b> e pode recomeçar imediatamente.
                             </span>
                             <div className="flex gap-2">
                               <GameButton
@@ -178,7 +246,7 @@ export function ProfessionsPanel({
                                 disabled={busy}
                                 onClick={() => {
                                   setConfirmCancelKey(null);
-                                  onAction({ type: 'cancel_mission' });
+                                  void onAction({ type: 'cancel_mission' });
                                 }}
                               >
                                 <XCircle className="w-3.5 h-3.5" /> Sim, cancelar
@@ -204,23 +272,21 @@ export function ProfessionsPanel({
                   {jobDone && (
                     <>
                       <p className="text-sm text-emerald-300/90 my-2">
-                        O turno foi concluído! Colete seu pagamento:{' '}
-                        <span className="text-yellow-300">
-                          +
-                          {(
-                            PROFESSION_RANKS[(profProgress[currentProf.id]?.rank ?? 1) - 1]?.zeni ?? 300
-                          ).toLocaleString('pt-BR')}{' '}
-                          Zeni
-                        </span>{' '}
-                        e{' '}
-                        <span className="text-orange-300">
-                          +
-                          {professionXpReward(profProgress[currentProf.id]?.rank ?? 1, player.level)} XP
-                        </span>
-                        .
+                        Turno de {currentHours}h concluído. Base prevista:{' '}
+                        <span className="text-yellow-300">+{currentPreview.zeni.toLocaleString('pt-BR')} Zeni</span>{' '}
+                        e <span className="text-orange-300">+{currentPreview.xp.toLocaleString('pt-BR')} XP</span>.
+                        Bônus raciais, de guilda e Acadêmico são fechados pelo servidor na coleta.
                       </p>
-                      <GameButton variant="gold" className="mt-1" onClick={() => onAction({ type: 'claim_mission' })} disabled={busy}>
-                        <Gift className="w-4 h-4" /> Receber pagamento
+                      <GameButton
+                        variant="gold"
+                        className="mt-1"
+                        onClick={async () => {
+                          const ok = await onAction({ type: 'claim_mission' });
+                          if (ok !== false) void loadMaterials();
+                        }}
+                        disabled={busy}
+                      >
+                        <Gift className="w-4 h-4" /> Receber pagamento e loot
                       </GameButton>
                     </>
                   )}
@@ -231,16 +297,26 @@ export function ProfessionsPanel({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {PROFESSIONS.map((prof) => {
-              const prog = profProgress[prof.id] ?? { rank: 1, completions: 0 };
-              const rank = prog?.rank ?? 1;
-              const completions = prog?.completions ?? 0;
-              const tier = PROFESSION_RANKS[rank - 1];
-              const maxRank = rank >= PROFESSION_MAX_RANK;
-              const xpReward = professionXpReward(rank, player.level);
+              const prog = profProgress[prof.id] ?? {
+                hours: 0,
+                lifetimeHours: 0,
+                prestige: 0,
+                statMilliRemainder: 0,
+                cycleStatGranted: 0,
+              };
+              const level = professionLevel(prog);
+              const tier = PROFESSION_LEVELS[level - 1];
+              const mastered = prog.hours >= PROFESSION_MASTERY_HOURS;
+              const hoursInto = professionHoursIntoLevel(prog.hours);
+              const progressTarget = tier.hoursInLevel;
+              const careerPct = mastered ? 100 : Math.min(100, (hoursInto / progressTarget) * 100);
+              const preview = professionShiftRewards(prog.hours, selectedHours, player.level);
+              const shift = PROFESSION_SHIFTS.find((s) => s.hours === selectedHours)!;
+              const rarePct = tier.rareChance * shift.efficiency * 100;
               const isActive = active?.missionId === prof.id || claimable?.missionId === prof.id;
               const blockedByActive = (!!active || !!claimable) && !isActive;
-              const canWork = !blockedByActive;
-              const promotePct = maxRank ? 100 : Math.min(100, (completions / tier.completionsToPromote) * 100);
+              const attributeLabel = prof.attribute ? ATTRIBUTE_LABEL[prof.attribute] : null;
+
               return (
                 <GameCard
                   key={prof.id}
@@ -249,88 +325,133 @@ export function ProfessionsPanel({
                   }`}
                 >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="text-3xl shrink-0 mt-1" aria-hidden>
-                      {prof.icon}
-                    </div>
+                    <div className="text-3xl shrink-0 mt-1" aria-hidden>{prof.icon}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <h3 className="font-heading text-amber-100 leading-tight">{prof.name}</h3>
                         <Chip className="bg-purple-950/50 text-purple-300 border-purple-800/50">
-                          <Award className="w-3 h-3" /> {professionRankTitle(prof, rank)}
+                          {professionLevelTitle(level)}
                         </Chip>
                       </div>
                       <p className="text-xs text-amber-200/50 mt-1 leading-relaxed">{prof.description}</p>
                     </div>
-                    {tier.dragonBallChance > 0 && (
-                      <Chip className="bg-yellow-950/60 text-yellow-300 border-yellow-700/50 shrink-0">
-                        <span title="Chance de Esfera do Dragão por turno">🔮 {Math.round(tier.dragonBallChance * 100)}%</span>
-                      </Chip>
-                    )}
+                    <Chip className="bg-yellow-950/60 text-yellow-300 border-yellow-700/50 shrink-0">
+                      🔮 {(tier.dragonBallChance * 100).toLocaleString('pt-BR')}%
+                    </Chip>
                   </div>
 
-                  {/* Progresso da promoção */}
                   <div className="mb-3">
-                    {maxRank ? (
-                      <div className="flex items-center gap-2 text-sm text-yellow-300 bg-yellow-950/30 rounded-lg px-3 py-2 border border-yellow-800/40">
-                        <Sparkles className="w-4 h-4" /> Rank máximo — salário pleno!
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex items-center justify-between text-[11px] text-amber-200/60 mb-1">
-                          <span className="flex items-center gap-1">
-                            <TrendingUp className="w-3 h-3" /> Próxima promoção: {professionRankTitle(prof, rank + 1)}
-                          </span>
-                          <span className="tabular-nums">
-                            {completions}/{tier.completionsToPromote} turnos
-                          </span>
-                        </div>
-                        <div className="h-2 bg-black/50 rounded-full overflow-hidden border border-amber-900/40">
-                          <div
-                            className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-400 rounded-full transition-all duration-500"
-                            style={{ width: `${promotePct}%` }}
-                          />
-                        </div>
-                        <p className="text-[10px] text-emerald-300/70 mt-1">
-                          Bônus de promoção: +{PROFESSION_RANKS[rank].promotionBonus.toLocaleString('pt-BR')} Zeni
-                        </p>
-                      </>
-                    )}
+                    <div className="flex items-center justify-between text-[11px] text-amber-200/60 mb-1">
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" />
+                        {mastered ? 'Carreira completa' : `Progresso do Nível ${level}`}
+                      </span>
+                      <span className="tabular-nums">
+                        {mastered
+                          ? `${PROFESSION_MASTERY_HOURS.toLocaleString('pt-BR')}h / ${PROFESSION_MASTERY_HOURS.toLocaleString('pt-BR')}h`
+                          : `${hoursInto}h / ${progressTarget}h`}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-black/50 rounded-full overflow-hidden border border-amber-900/40">
+                      <div
+                        className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-400 rounded-full transition-all duration-500"
+                        style={{ width: `${careerPct}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-amber-200/45 mt-1">
+                      {prog.hours.toLocaleString('pt-BR')}h no ciclo · {prog.lifetimeHours.toLocaleString('pt-BR')}h históricas
+                    </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 mb-3">
                     <Chip className="bg-slate-950/50 text-slate-300 border-slate-700/50">
-                      <Timer className="w-3 h-3" /> 1 hora
+                      <Timer className="w-3 h-3" /> {selectedHours}h
                     </Chip>
                     <Chip className="bg-yellow-950/40 text-yellow-300 border-yellow-800/50">
-                      <Coins className="w-3 h-3" /> {tier.zeni.toLocaleString('pt-BR')}
+                      <Coins className="w-3 h-3" /> ~{preview.zeni.toLocaleString('pt-BR')}
                     </Chip>
-                    <Chip className="bg-orange-950/40 text-orange-300 border-orange-800/50">⭐ {xpReward.toLocaleString('pt-BR')} XP</Chip>
+                    <Chip className="bg-orange-950/40 text-orange-300 border-orange-800/50">
+                      ⭐ ~{preview.xp.toLocaleString('pt-BR')} XP
+                    </Chip>
+                    {attributeLabel ? (
+                      <Chip className="bg-emerald-950/40 text-emerald-300 border-emerald-800/50">
+                        +{(preview.attributeMilli / 1000).toLocaleString('pt-BR')} {attributeLabel}
+                      </Chip>
+                    ) : (
+                      <Chip className="bg-sky-950/40 text-sky-300 border-sky-800/50">
+                        🎓 XP global +{(level * 0.5).toLocaleString('pt-BR')}%
+                      </Chip>
+                    )}
+                    <Chip className="bg-fuchsia-950/40 text-fuchsia-300 border-fuchsia-800/50">
+                      💎 raro ~{rarePct.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%/h
+                    </Chip>
                   </div>
+
+                  <p className="text-[11px] text-amber-200/45 mb-3">
+                    Comum: 1–2 unidades por hora garantidas. Raros usam a eficiência do turno. Esfera: um teste por turno concluído.
+                  </p>
 
                   {isActive ? (
                     <div className="flex items-center gap-2 text-orange-300 text-sm bg-orange-950/40 rounded-lg px-3 py-2 border border-orange-800/50">
                       <Hourglass className="w-4 h-4 animate-pulse" /> Turno em andamento
                     </div>
                   ) : blockedByActive ? (
-                    <div
-                      className="flex items-center gap-2 text-amber-200/50 text-sm bg-black/30 rounded-lg px-3 py-2"
-                      title="Você já está em um turno de trabalho"
-                    >
+                    <div className="flex items-center gap-2 text-amber-200/50 text-sm bg-black/30 rounded-lg px-3 py-2">
                       <Hourglass className="w-4 h-4" /> Você já está em um turno
                     </div>
                   ) : (
                     <GameButton
-                      onClick={() => onAction({ type: 'mission', professionId: prof.id })}
-                      disabled={!canWork || busy}
+                      onClick={() => onAction({ type: 'mission', professionId: prof.id, hours: selectedHours })}
+                      disabled={busy}
                       className="w-full"
                     >
-                      Trabalhar (1h)
+                      Trabalhar ({selectedHours}h)
                     </GameButton>
                   )}
                 </GameCard>
               );
             })}
           </div>
+
+          <GameCard className="p-5">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 className="font-heading text-amber-100">Bolsa de materiais</h3>
+                <p className="text-xs text-amber-200/50">Drops profissionais guardados no inventário relacional.</p>
+              </div>
+              <button
+                type="button"
+                className="text-xs text-amber-300/70 hover:text-amber-200"
+                onClick={() => void loadMaterials()}
+              >
+                atualizar
+              </button>
+            </div>
+            {materialsFailed && !materials ? (
+              <LoadFail what="Os materiais profissionais" onRetry={() => void loadMaterials()} />
+            ) : materials === null ? (
+              <div className="flex items-center gap-2 text-sm text-amber-200/50">
+                <Loader2 className="w-4 h-4 animate-spin" /> Carregando materiais…
+              </div>
+            ) : materials.length === 0 ? (
+              <p className="text-sm text-amber-200/50">Nenhum material ainda. Conclua um turno para começar a coletar.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                {materials.map((m) => (
+                  <div key={m.itemId} className="rounded-lg border border-amber-900/30 bg-black/20 px-3 py-2 flex items-center gap-2">
+                    <span className="text-xl" aria-hidden>{m.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-amber-100 truncate">{m.name}</div>
+                      <div className="text-[10px] text-amber-200/45">
+                        Tier {m.tier ?? '?'} · {m.rarity === 'rare' ? 'raro' : 'comum'}
+                      </div>
+                    </div>
+                    <span className="font-heading text-amber-200 tabular-nums">×{m.quantity}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </GameCard>
         </>
       ) : (
         <QuestsTab player={player} onAction={onAction} busy={busy} />
