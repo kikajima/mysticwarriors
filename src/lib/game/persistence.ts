@@ -600,13 +600,15 @@ export async function bootPersistence(): Promise<void> {
 
   try {
     if (isPostgresDatabase()) {
-      try {
-        const { ensureBalanceVersion } = await import('./balance');
-        await ensureBalanceVersion();
-      } catch {
-        // a primeira rota tentará novamente
-      }
-      log('boot concluído (Supabase PostgreSQL, schema game)');
+      const { ensureBalanceVersion } = await import('./balance');
+      const { ensureSeed } = await import('./engine');
+      const { ensureActiveSeason } = await import('@/lib/seasons');
+
+      await ensureBalanceVersion();
+      await ensureSeed();
+      await db.$transaction((tx) => ensureActiveSeason(tx));
+
+      log('boot concluído (Supabase PostgreSQL, schema game; bots/temporada garantidos)');
       return;
     }
 
