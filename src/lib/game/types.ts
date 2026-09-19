@@ -110,6 +110,38 @@ export interface ProfessionLootEntry {
   quantity: number;
 }
 
+// ===== Oficina / Crafting =====
+
+export interface CraftIngredientDef {
+  itemId: string;
+  quantity: number;
+}
+
+export interface CraftStackItemDef {
+  id: string;
+  name: string;
+  description: string;
+  tier: 1 | 2 | 3 | 4 | 5;
+  icon: string;
+  kind: 'blueprint';
+}
+
+export interface CraftRecipeDef {
+  id: string;
+  name: string;
+  description: string;
+  tier: 1 | 2 | 3 | 4 | 5;
+  icon: string;
+  outputItemId: string;
+  outputQuantity: number;
+  outputKind: 'stack' | 'player_item';
+  costZeni: number;
+  baseDurationMin: number;
+  /** Blueprints são fabricados por quem já trabalhou como Acadêmico. */
+  requiresAcademic?: boolean;
+  ingredients: CraftIngredientDef[];
+}
+
 // ===== Inimigos (PvE) =====
 
 export interface Enemy {
@@ -158,7 +190,7 @@ export interface ShopItem {
   // equipamentos de treino: bônus aplicado ao treinar atributos
   trainBonus?: TrainBonus;
   // consumíveis
-  effect?: 'full_hp' | 'full_energy' | 'stat_boost';
+  effect?: 'full_hp' | 'full_energy' | 'stat_boost' | 'heal_30pct';
   icon: string;
 }
 
