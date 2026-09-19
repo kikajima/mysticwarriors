@@ -6,10 +6,7 @@ import { ApiError } from '@/lib/api';
 import {
   ENEMIES,
   PROFESSIONS,
-  PROFESSION_RANKS,
-  PROFESSION_MAX_RANK,
   getProfession,
-  professionXpReward,
   REGEN,
   getItem,
   npcCombatPower,
@@ -21,6 +18,12 @@ import { BOTS } from './content/names';
 import { parseCosmeticsEquipped } from './content/cosmetics';
 import { parseTalents } from './content/talents';
 import { parseTournament, tournamentCooldownRemainingMs } from './content/tournament';
+import {
+  parseProfessions as parseProfessionsCareer,
+  serializeProfessions as serializeProfessionsCareer,
+  professionLevelDef,
+  professionXpPerHour,
+} from './professionCareer';
 import { raceCombat, raceEconomy, ACTIVITY_DURATION, dayKey } from './rules';
 import { scaleCombatRules, aberturaChance, SCALE_COMBAT, scaleDiff } from './powerScale';
 import { IMPETO, IMPETO_COMBO_THRESHOLD, clampImpeto, isHeavyBlow, effectiveScalePower } from './impeto';
@@ -210,34 +213,10 @@ export function computeDerived(player: Player): DerivedStats {
   return { maxHp, maxEnergy, atkPower, kiPower, defPower, resPower, power };
 }
 
-// ===== Parse do JSON de progresso de profissões (Player.professions) =====
-
-export function parseProfessions(raw: string | null | undefined): ProfessionsMap {
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-    const out: ProfessionsMap = {};
-    for (const [id, value] of Object.entries(parsed as Record<string, unknown>)) {
-      if (!getProfession(id) || !value || typeof value !== 'object') continue;
-      const v = value as Record<string, unknown>;
-      const rank = Math.floor(Number(v.rank));
-      const completions = Math.floor(Number(v.completions));
-      if (!Number.isFinite(rank) || !Number.isFinite(completions)) continue;
-      out[id] = {
-        rank: Math.min(PROFESSION_MAX_RANK, Math.max(1, rank)),
-        completions: Math.max(0, completions),
-      };
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
-export function serializeProfessions(map: ProfessionsMap): string {
-  return JSON.stringify(map);
-}
+// ===== Progresso de profissões =====
+// Implementação pura vive em professionCareer.ts; reexport mantido para
+// compatibilidade de imports históricos.
+export { parseProfessions, serializeProfessions } from './professionCareer';
 
 // ===== View para o cliente =====
 
@@ -302,7 +281,7 @@ export function playerToView(
     !!player.missionId && !!player.missionEndsAt && player.missionEndsAt.getTime() > Date.now();
   const missionClaimable = !!player.missionId && !!player.missionEndsAt && !missionRunning;
   // v0.6: progresso nas profissões (rank/completions por professionId)
-  const professions = parseProfessions(player.professions);
+  const professions = parseProfessionsCareer(player.professions);
   return {
     id: player.id,
     name: player.name,
@@ -333,9 +312,20 @@ export function playerToView(
     // ATIVA somente com timer correndo; coletável é campo próprio
     activeMission:
       missionRunning && player.missionId && player.missionEndsAt
-        ? { missionId: player.missionId, endsAt: player.missionEndsAt.toISOString() }
+        ? {
+            missionId: player.missionId,
+            startedAt: (player.missionStartedAt ?? new Date(player.missionEndsAt.getTime() - (player.missionHours ?? 1) * 3600_000)).toISOString(),
+            endsAt: player.missionEndsAt.toISOString(),
+            hours: ([1, 2, 4, 8].includes(player.missionHours ?? 1) ? (player.missionHours ?? 1) : 1) as 1 | 2 | 4 | 8,
+          }
         : null,
-    claimableMission: missionClaimable && player.missionId ? { missionId: player.missionId } : null,
+    claimableMission:
+      missionClaimable && player.missionId
+        ? {
+            missionId: player.missionId,
+            hours: ([1, 2, 4, 8].includes(player.missionHours ?? 1) ? (player.missionHours ?? 1) : 1) as 1 | 2 | 4 | 8,
+          }
+        : null,
     professions,
     runningActivity: runningActivityEntity ? activityToView(runningActivityEntity) : null,
     // v0.9.6 (Mudança 3): posse e equipar são AMBOS do personagem —
@@ -1420,34 +1410,28 @@ export function pvpRewards(targetLevel: number, playerLevel: number, race: strin
 }
 
 /**
- * Recompensas de um trabalho de profissão concluído (v0.6).
- * Zeni fixo por rank (300 → 1.500), XP como fração do nível ATUAL do
- * personagem (10% → 25%) e chance de Esfera do Dragão por rank.
+ * Compatibilidade para consumidores antigos: recompensa de UMA hora no nível
+ * profissional informado. Turnos reais 1/2/4/8h usam professionShiftRewards.
  */
 export function professionRewards(
-  rank: number,
+  level: number,
   playerLevel: number,
   race: string,
   rng?: () => number
 ): { zeni: number; xp: number; foundDragonBall: boolean } {
   const r = rng ?? battleRng();
-  const idx = Math.min(PROFESSION_MAX_RANK, Math.max(1, Math.floor(rank))) - 1;
-  const tier = PROFESSION_RANKS[idx];
+  const tier = professionLevelDef(level);
   const econ = raceEconomy(race);
-  const zeni = Math.max(1, Math.round(tier.zeni * econ.zeniMissionMult));
   return {
-    zeni,
-    xp: professionXpReward(idx + 1, playerLevel),
+    zeni: Math.max(1, Math.round(tier.zeniPerHour * econ.zeniMissionMult)),
+    xp: professionXpPerHour(level, playerLevel, 1),
     foundDragonBall: r() < tier.dragonBallChance,
   };
 }
 
-/** LEGADO — não usado, ver wiki-audit v0.9.23: profissões não gastam energia
- * desde a v0.9; ninguém chama esta função no fluxo real. */
-export function professionEnergyCost(race: string): number {
-  const econ = raceEconomy(race);
-  const def = PROFESSIONS[0];
-  return Math.max(1, Math.round(def.energyCost * econ.missionEnergyMult));
+/** LEGADO: profissões não gastam energia desde a v0.9. */
+export function professionEnergyCost(_race: string): number {
+  return 0;
 }
 
 // ===== Cura =====
