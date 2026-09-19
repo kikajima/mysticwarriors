@@ -76,38 +76,43 @@ export async function GET(request: Request) {
       }
     }
 
-    // posição no ranking (barata: COUNT condicional, sem carregar todos)
+    // Estas leituras são independentes. Antes eram 5 viagens SEQUENCIAIS
+    // ao PostgreSQL; com banco remoto isso somava a latência de rede várias
+    // vezes em cada poll/fim de batalha. Fazemos todas em paralelo.
     const level = player.level;
     const battlesWon = player.battlesWon;
     const xp = player.xp;
-    const ahead = await db.player.count({
-      where: {
-        isBot: false,
-        OR: [
-          { level: { gt: level } },
-          { level, battlesWon: { gt: battlesWon } },
-          { level, battlesWon, xp: { gt: xp } },
-        ],
-      },
-    });
-    const totalPlayers = await db.player.count({ where: { isBot: false } });
+    const now = new Date();
+    const [ahead, totalPlayers, questRows, withActivity, guildInvites] = await Promise.all([
+      db.player.count({
+        where: {
+          isBot: false,
+          OR: [
+            { level: { gt: level } },
+            { level, battlesWon: { gt: battlesWon } },
+            { level, battlesWon, xp: { gt: xp } },
+          ],
+        },
+      }),
+      db.player.count({ where: { isBot: false } }),
+      db.questProgress.findMany({
+        where: { playerId: player.id, claimed: false },
+        select: { progress: true, target: true },
+      }),
+      db.player.findUnique({
+        where: { id: player.id },
+        include: {
+          guild: true,
+          activities: { where: { completedAt: null, endsAt: { gt: now } }, take: 1 },
+        },
+      }),
+      db.guildInvitation.count({
+        where: { playerId: player.id, expiresAt: { gt: now }, guild: { disbandedAt: null } },
+      }),
+    ]);
+
     const rankingPosition = ahead + 1;
-
-    // mini-resumo de quests (só contagens — detalhes no endpoint próprio)
-    const questRows = await db.questProgress.findMany({
-      where: { playerId: player.id, claimed: false },
-      select: { progress: true, target: true },
-    });
     const questsReady = questRows.filter((q) => q.progress >= q.target).length;
-
-    // view COM a atividade em andamento (se houver) + cosméticos da conta
-    const withActivity = await db.player.findUnique({
-      where: { id: player.id },
-      include: {
-        guild: true,
-        activities: { where: { completedAt: null, endsAt: { gt: new Date() } }, take: 1 },
-      },
-    });
 
     // Usa a leitura mais recente, inclusive se uma batalha ocorreu durante
     // a consulta. O tempo acumulado permanece nos relógios salvos até a ação.
@@ -118,7 +123,7 @@ export async function GET(request: Request) {
       player: playerToView(currentPlayer, rankingPosition),
       totalPlayers,
       questsReady,
-      guildInvites: await db.guildInvitation.count({ where: { playerId: player.id, expiresAt: { gt: new Date() }, guild: { disbandedAt: null } } }),
+      guildInvites,
       guildMotd: withActivity?.guild?.motd ?? '',
       pendingResults,
       // v0.9.6 (Mudança 1): hora do servidor na resposta — o cliente mede
