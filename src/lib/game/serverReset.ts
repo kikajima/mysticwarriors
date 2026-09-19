@@ -117,7 +117,7 @@ async function backupDatabase(): Promise<{ path: string; bytes: number }> {
     const exported = await makeBackupTarGz('user-backup', 'server-reset');
     const row = await db.serverResetBackup.create({
       data: {
-        payload: exported.body,
+        payload: Uint8Array.from(exported.body),
         manifest: JSON.stringify(exported.manifest),
       },
       select: { id: true },
