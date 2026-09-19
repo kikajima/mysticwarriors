@@ -77,6 +77,7 @@ import {
   type TrainActivityResult,
 } from './activities';
 import { addCurrency, grantRewards, spendCurrency } from '@/lib/economy';
+import { startCraft, claimCraft } from './crafting';
 import { bumpQuests, claimAchievement, claimQuest } from '@/lib/progression';
 import { attackWorldBoss } from '@/lib/worldboss';
 import { scoreSeasonVictory } from '@/lib/seasons';
@@ -213,6 +214,16 @@ export async function executeGameAction(
       case 'cancel_mission':
         result = await actionCancelProfession(tx, player);
         break;
+      case 'craft_start': {
+        const craft = await startCraft(tx, player, String(args.recipeId ?? ''));
+        result = { message: craft.message, levelsGained: 0 };
+        break;
+      }
+      case 'craft_claim': {
+        const craft = await claimCraft(tx, player);
+        result = { message: craft.message, levelsGained: 0 };
+        break;
+      }
       case 'battle':
         result = await actionStartBattle(tx, player, String(args.enemyId ?? ''));
         break;
@@ -1206,6 +1217,9 @@ async function actionSell(tx: Tx, player: Player, itemId: string, quantity: numb
   const item = getItem(itemId);
   if (!item) throw new ApiError('VALIDATION_ERROR', 'Item inválido.');
 
+  if (item.price <= 0) {
+    throw new ApiError('VALIDATION_ERROR', 'Itens fabricados não são vendidos na loja. Use o Mercado quando ele estiver disponível.');
+  }
   const items = parseItems(player.items);
   const currency = item.currency === 'crystal' ? ('crystal' as const) : ('zeni' as const);
   const unitSell = sellUnitPrice(item);
@@ -1286,7 +1300,7 @@ async function actionUseItem(tx: Tx, player: Player, itemId: string): Promise<Ac
   const derived = computeDerived(player);
 
   // valida antes de consumir (stat cap, vida cheia etc.)
-  if (item.effect === 'full_hp' && player.hp >= derived.maxHp) {
+  if ((item.effect === 'full_hp' || item.effect === 'heal_30pct') && player.hp >= derived.maxHp) {
     throw new ApiError('VALIDATION_ERROR', 'Sua vida já está cheia!');
   }
   if (item.effect === 'full_energy' && player.energy >= derived.maxEnergy) {
@@ -1303,7 +1317,14 @@ async function actionUseItem(tx: Tx, player: Player, itemId: string): Promise<Ac
   await updateJsonState(tx, player, { items: JSON.stringify(items) });
 
   let message = '';
-  if (item.effect === 'full_hp') {
+  if (item.effect === 'heal_30pct') {
+    const healed = Math.max(1, Math.ceil(derived.maxHp * 0.3));
+    const nextHp = Math.min(derived.maxHp, player.hp + healed);
+    const actual = nextHp - player.hp;
+    await tx.player.update({ where: { id: player.id }, data: { hp: nextHp } });
+    player.hp = nextHp;
+    message = `${item.name} usada! +${actual} HP (30% da vida máxima).`;
+  } else if (item.effect === 'full_hp') {
     await tx.player.update({ where: { id: player.id }, data: { hp: derived.maxHp } });
     player.hp = derived.maxHp;
     message = `Você comeu um Feijão Senzu! Vida totalmente restaurada (${derived.maxHp} HP).`;
