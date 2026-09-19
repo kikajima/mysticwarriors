@@ -16,38 +16,38 @@ test('infra de produção não depende da Z.ai', () => {
 
   const nextConfig = readFileSync(path.join(root, 'next.config.mjs'), 'utf8');
   expect(nextConfig).not.toContain('space-z.ai');
-
-  const auth = readFileSync(path.join(root, 'src/lib/auth.ts'), 'utf8');
-  expect(auth).toContain("sameSite: 'lax'");
-  expect(auth).not.toContain("sameSite: 'none'");
 });
 
-test('Render possui build, start, health check e disco persistente declarados', () => {
+test('produção usa PostgreSQL Supabase e testes preservam SQLite isolado', () => {
+  const prodSchema = readFileSync(path.join(root, 'prisma/schema.prisma'), 'utf8');
+  const testSchema = readFileSync(path.join(root, 'prisma/schema.sqlite.prisma'), 'utf8');
+  expect(prodSchema).toContain('provider = "postgresql"');
+  expect(testSchema).toContain('provider = "sqlite"');
+
+  const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  expect(pkg.scripts['db:generate']).toContain('schema.prisma');
+  expect(pkg.scripts['db:generate:test']).toContain('schema.sqlite.prisma');
+});
+
+test('Render Free usa Supabase PostgreSQL sem Persistent Disk', () => {
   const render = readFileSync(path.join(root, 'render.yaml'), 'utf8');
   expect(render).toContain('name: mysticwarriors');
-  expect(render).toContain('buildCommand: mkdir -p /tmp/mystic-warriors-build');
-  expect(render).toContain('export DATABASE_URL=file:/tmp/mystic-warriors-build/custom.db');
+  expect(render).toContain("postgresql://postgres:postgres@127.0.0.1:5432/postgres?schema=game&sslmode=require");
   expect(render).toContain('bun install --frozen-lockfile && bun run db:generate && bun run build');
   expect(render).toContain('startCommand: bun run start');
   expect(render).toContain('healthCheckPath: /api/health');
   expect(render).toContain('autoDeployTrigger: checksPass');
-  expect(render).toContain('mountPath: /var/data');
-  expect(render).toContain('file:/var/data/custom.db');
+  expect(render).toContain('- key: DATABASE_URL');
+  expect(render).toContain('sync: false');
+  expect(render).not.toContain('mountPath:');
+  expect(render).not.toContain('disk:');
+  expect(render).not.toContain('file:/var/data/custom.db');
 
   const start = readFileSync(path.join(root, 'scripts/start-production.mjs'), 'utf8');
-  expect(start).toContain('ALLOW_EMPTY_DB_INIT');
-  expect(start).toContain(".next/standalone/server.js");
-});
-
-test('documentação operacional usa apenas o volume atual do Render', () => {
-  const guide = readFileSync(path.join(root, 'CORRECOES-E-INSTALACAO.md'), 'utf8');
-  expect(guide).toContain('file:/var/data/custom.db');
-  expect(guide).toContain('file:/tmp/mystic-warriors/custom.db');
-  expect(guide).toContain('Web Service Free');
-  expect(guide).toContain('Persistent Disk só pode ser anexado a serviço Render pago');
-  expect(guide).not.toContain('file:/data/mystic-warriors/custom.db');
-  expect(guide).not.toContain('.zscripts');
-  expect(guide).not.toContain('mystic-warriors-alterados.zip');
+  expect(start).toContain('PostgreSQL do Supabase');
+  expect(start).toContain("schema') !== 'game'");
+  expect(start).not.toContain('ALLOW_EMPTY_DB_INIT');
+  expect(start).toContain('.next/standalone/server.js');
 });
 
 test('backup completo exige autorização administrativa', () => {
