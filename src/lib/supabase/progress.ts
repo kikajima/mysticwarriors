@@ -44,6 +44,7 @@ import { RACES } from '@/lib/game/content/races';
 import { TECHNIQUES, STRATEGIES } from '@/lib/game/content/techniques';
 import { TRANSFORMATIONS } from '@/lib/game/content/transformations';
 import { PROFESSIONS, PROFESSION_MATERIALS, SHOP_ITEMS, MAX_CHARACTERS_PER_ACCOUNT } from '@/lib/game/content/world';
+import { CRAFTED_ITEMS, CRAFT_STACK_ITEMS } from '@/lib/game/content/crafting';
 import { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS } from '@/lib/game/content/quests';
 import { TALENTS } from '@/lib/game/content/talents';
 import { TOURNAMENT_ROUNDS } from '@/lib/game/content/tournament';
@@ -203,9 +204,9 @@ const KNOWN = {
   races: new Set(Object.keys(RACES)),
   techniques: new Set(TECHNIQUES.map((t) => t.id)),
   transformations: new Set(TRANSFORMATIONS.map((t) => t.id)),
-  items: new Set(SHOP_ITEMS.map((i) => i.id)),
+  items: new Set([...SHOP_ITEMS, ...CRAFTED_ITEMS].map((i) => i.id)),
   professions: new Set<string>(PROFESSIONS.map((p) => p.id)),
-  materials: new Set(PROFESSION_MATERIALS.map((m) => m.id)),
+  materials: new Set([...PROFESSION_MATERIALS, ...CRAFT_STACK_ITEMS].map((m) => m.id)),
   cosmetics: new Set(COSMETICS.map((c) => c.id)),
   strategies: new Set(Object.keys(STRATEGIES)),
   // v0.9.18 — talentos de Ímpeto (Cap. 7) dominados
