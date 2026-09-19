@@ -1148,6 +1148,12 @@ function currencyLabel(currency: 'zeni' | 'crystal', value: number): string {
 async function actionBuy(tx: Tx, player: Player, itemId: string, quantity: number): Promise<ActionResult> {
   const item = getItem(itemId);
   if (!item) throw new ApiError('VALIDATION_ERROR', 'Item inválido.');
+  // Itens produzidos pela Oficina pertencem ao catálogo compartilhado para
+  // equipar/usar, mas NUNCA ao estoque da loja NPC. Sem esta guarda, um
+  // cliente poderia chamar diretamente a action buy com price=0.
+  if (item.price <= 0) {
+    throw new ApiError('VALIDATION_ERROR', 'Itens fabricados só podem ser obtidos na Oficina.');
+  }
   if (player.level < item.minLevel) {
     throw new ApiError('VALIDATION_ERROR', `Nível ${item.minLevel} necessário para comprar ${item.name}.`);
   }
