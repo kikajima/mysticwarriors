@@ -9,7 +9,7 @@ import { playerToView } from '@/lib/game/engine';
 import { ensureBalanceVersion } from '@/lib/game/balance';
 import { bossAttacksPerWindow } from '@/lib/worldboss';
 import { db } from '@/lib/db';
-import { ensureQuests } from '@/lib/progression';
+import { dailyPeriod, ensureQuests, weeklyPeriod } from '@/lib/progression';
 import { Prisma } from '@prisma/client';
 
 // =====================================================================
@@ -29,33 +29,68 @@ import { Prisma } from '@prisma/client';
 const DEDUP_TTL_MS = 5 * 60_000; // 5 minutos
 
 // =====================================================================
-// v-auditoria F4 — SERIALIZAÇÃO GLOBAL DAS AÇÕES (hardening de concorrência)
+// FILA DE AÇÕES — SQLite global, PostgreSQL por PERSONAGEM
 // ---------------------------------------------------------------------
-// Motivação (evidência E2E da auditoria): rajadas de ações concorrentes
-// (double-click, duas abas, N jogadores no boss) intercalavam transações
-// interativas no SQLite e produziam dois sintomas ruins:
-//  (a) CONFLICT 409 do stateVersion (bloqueio otimista) — seguro, mas
-//      atrapalhava o jogador;
-//  (b) P1008 após a ação JÁ COMMITADA (500 no ensureQuests/leitura final
-//      sem catch — o jogador via erro numa compra que tinha passado!).
-// O banco É single-writer; serializar na aplicação apenas formaliza isso:
-// uma ação por vez, com TODO o seu pós-processamento (dedup cache, quests,
-// estado fresco) dentro da mesma fila. Leituras (state GET) seguem
-// concorrentes no WAL. Processo único + SQLite local ⇒ correto e simples.
+// A fila global nasceu para o SQLite, que é single-writer. Depois da
+// migração para PostgreSQL/Supabase ela virou um gargalo: uma ação lenta de
+// QUALQUER jogador fazia todos os outros esperarem na mesma fila.
+//
+// Produção PostgreSQL: serializamos somente ações do MESMO personagem.
+// Jogadores diferentes podem executar em paralelo e o próprio PostgreSQL
+// resolve a concorrência entre linhas/transações. SQLite de testes mantém a
+// fila global original para preservar a proteção contra P1008.
 // =====================================================================
-let actionChain: Promise<unknown> = Promise.resolve();
+const IS_SQLITE = (process.env.DATABASE_URL ?? '').startsWith('file:');
+let sqliteActionChain: Promise<unknown> = Promise.resolve();
+const playerActionChains = new Map<string, Promise<unknown>>();
 
-async function withActionLock<T>(fn: () => Promise<T>): Promise<T> {
-  const run = actionChain.then(fn, fn); // executa mesmo se o anterior falhou
-  actionChain = run.catch(() => undefined);
-  return run;
+async function withActionLock<T>(playerId: string, fn: () => Promise<T>): Promise<T> {
+  if (IS_SQLITE) {
+    const run = sqliteActionChain.then(fn, fn);
+    sqliteActionChain = run.catch(() => undefined);
+    return run;
+  }
+
+  const previous = playerActionChains.get(playerId) ?? Promise.resolve();
+  const run = previous.then(fn, fn);
+  const tail = run.then(
+    () => undefined,
+    () => undefined
+  );
+  playerActionChains.set(playerId, tail);
+  try {
+    return await run;
+  } finally {
+    if (playerActionChains.get(playerId) === tail) {
+      playerActionChains.delete(playerId);
+    }
+  }
 }
 
-function isTransientSqliteError(error: unknown): boolean {
+function isTransientDatabaseError(error: unknown): boolean {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
-    (error.code === 'P1008' || error.code === 'P2028' || error.code === 'P2034')
+    (
+      error.code === 'P2034' ||
+      error.code === 'P2028' ||
+      (IS_SQLITE && error.code === 'P1008')
+    )
   );
+}
+
+// ensureQuests era consultado em TODA ação. Em PostgreSQL remoto, uma
+// consulta extra por clique custa uma viagem de rede mesmo quando as quests
+// do período já existem. Cacheamos apenas a confirmação do período atual.
+const questPeriodsReady = new Set<string>();
+
+async function ensureQuestsForAction(playerId: string): Promise<void> {
+  const key = `${playerId}:${dailyPeriod()}:${weeklyPeriod()}`;
+  if (questPeriodsReady.has(key)) return;
+  await db.$transaction(async (tx) => ensureQuests(tx, playerId), {
+    timeout: 60_000,
+    maxWait: 30_000,
+  });
+  questPeriodsReady.add(key);
 }
 
 async function executeActionWithRetry(
@@ -70,7 +105,7 @@ async function executeActionWithRetry(
     try {
       return await executeGameAction(auth, playerId, type, args, accessToken);
     } catch (error) {
-      if (!isTransientSqliteError(error) || attempt === 2) throw error;
+      if (!isTransientDatabaseError(error) || attempt === 2) throw error;
       lastError = error;
       await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
     }
@@ -124,6 +159,9 @@ const actionSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const requestStartedAt = Date.now();
+  let queueWaitMs = 0;
+  let actionExecMs = 0;
   // lock de dedup criado para ESTA requisição (limpo se a ação falhar)
   // v-auditoria F4: o lock do dedup vive num wrapper — atribuições dentro
   // da closure do withActionLock precisam ser visíveis ao catch (o fluxo do
@@ -201,7 +239,15 @@ export async function POST(request: Request) {
       // disputa o escritor único do SQLite com transações de ação; era a
       // última fonte de P1008/500 pré-ação). Uma ação confirmada NUNCA
       // devolve 500 por contenção; uma rajada inteira entra em fila.
-      result = await withActionLock(async () => {
+      const waitingSince = Date.now();
+      result = await withActionLock(playerId, async () => {
+        queueWaitMs = Date.now() - waitingSince;
+        const execStartedAt = Date.now();
+        try {
+          // Garante quests uma vez por período ANTES da ação: além de tirar
+          // uma consulta do caminho quente, a primeira ação do dia já conta.
+          await ensureQuestsForAction(playerId).catch(() => undefined);
+
         if (requestId && !result) {
           // LOCK: cria o registro antes de executar. Unique violation
           // (P2002) = outro request com o MESMO id já passou por aqui.
@@ -235,17 +281,16 @@ export async function POST(request: Request) {
           dedupRef.current = null; // registrado (ou falhou benignamente) — não limpar no finally
         }
         return r;
+        } finally {
+          actionExecMs = Date.now() - execStartedAt;
+        }
       });
     }
     if (!result) throw new ApiError('INTERNAL', 'Resultado da ação indisponível.');
 
-    // manutenção idempotente — NUNCA derruba uma ação que já passou
-    await db
-      .$transaction(async (tx) => ensureQuests(tx, playerId), { timeout: 60_000, maxWait: 30_000 })
-      .catch(() => undefined);
-
-    // idempotente e barato (1 consulta por processo) — política de reset
-    await ensureBalanceVersion().catch(() => undefined);
+    // O boot já garante a versão. Mantemos a defesa em profundidade fora do
+    // caminho crítico: não há motivo para o clique esperar por ela.
+    void ensureBalanceVersion().catch(() => undefined);
 
     // estado fresco do personagem (pós-transação) — inclui atividade em
     // andamento + cosméticos da conta (posse) e do personagem (equipados).
@@ -267,7 +312,14 @@ export async function POST(request: Request) {
     }
     if (!fresh) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado (sincronize pelo painel).');
 
-    return ok({
+    const totalMs = Date.now() - requestStartedAt;
+    if (totalMs >= 1000) {
+      console.warn(
+        `[perf][action] type=${type} player=${playerId} total=${totalMs}ms queue=${queueWaitMs}ms exec=${actionExecMs}ms db=${IS_SQLITE ? 'sqlite' : 'postgres'}`
+      );
+    }
+
+    const response = ok({
       player: playerToView(fresh),
       message: result.message,
       levelsGained: result.levelsGained,
@@ -281,6 +333,11 @@ export async function POST(request: Request) {
       // contadores (mesma fonte da verdade dos timestamps de fim).
       serverNow: new Date().toISOString(),
     });
+    response.headers.set(
+      'Server-Timing',
+      `action;dur=${totalMs}, queue;dur=${queueWaitMs}, execute;dur=${actionExecMs}`
+    );
+    return response;
   } catch (error) {
     // ação falhou → libera o lock de dedup para permitir retry limpo
     const key = dedupRef.current;
