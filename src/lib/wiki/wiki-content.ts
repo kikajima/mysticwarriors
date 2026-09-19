@@ -998,7 +998,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     summary: '5 profissões, carreira do Nível 1 ao 10, loot exclusivo e Oficina de crafting cross-profession.',
     resumo: [
       'Escolha turnos de **1h, 2h, 4h ou 8h** — trabalhar continua **sem custo de energia**.',
-      'Cada hora rende materiais; a **Oficina** combina insumos de profissões diferentes em itens e blueprints.',
+      'Cada hora rende **1–2 materiais comuns garantidos**; a **Oficina** combina insumos de profissões diferentes em itens e blueprints.',
       'Acadêmico aumenta o **XP global**, fabrica blueprints e reduz o tempo de crafting em **1% por nível** (até 10%).',
     ],
     blocks: [
