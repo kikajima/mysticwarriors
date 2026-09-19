@@ -32,9 +32,9 @@ export const BALANCE_VERSION = 6;
  * v0.16 — MATRIZ DE OCUPAÇÃO DEFINITIVA (3ª ordem; ver DESIGN-DECISIONS.md).
  *
  * TRABALHANDO bloqueia APENAS as 2 ações abaixo. TUDO mais é LIBERADO:
- * Treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de
+ * Treino, PvP, Ameaça Universal, Oficina/Crafting, loja (comprar/vender/usar), gestão completa de
  * guilda, coleta de recompensas (conquista/diária/missão/torneio),
- * hospital, equipamento/inventário, perfil e visualizações, Shenron,
+ * hospital, equipamento/inventário, Oficina/Crafting, perfil e visualizações, Shenron,
  * cosméticos, talentos, técnicas, transformações, estratégia.
  *
  * REGRA DE COLETA (parte 2 da 3ª ordem): coleta de recompensa de
