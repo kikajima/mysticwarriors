@@ -381,7 +381,6 @@ function WorldBossSection({
             onClick={async () => {
               if (await onAttack()) {
                 await load();
-                await saveLocalBossToCloud();
               }
             }}
           >

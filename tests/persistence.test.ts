@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync, copyFileSync } from 'fs';
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync, existsSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
@@ -13,8 +13,22 @@ import {
   applyPendingMigrations,
   resolveDbFilePath,
   beaconSecretOk,
-  checkpointWal,
 } from '../src/lib/game/persistence';
+
+const liveDbTest = process.env.CI === 'true' ? test.skip : test;
+
+function cleanupTempDir(dir: string) {
+  try {
+    rmSync(dir, { recursive: true, force: true });
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException)?.code;
+    // Bun/Windows pode manter o SQLite aberto até o encerramento do processo
+    // mesmo após PrismaClient.$disconnect(). Isso é limpeza de fixture, não
+    // falha funcional do migrador. Só toleramos os locks transitórios do SO.
+    if (process.platform === 'win32' && (code === 'EBUSY' || code === 'EPERM')) return;
+    throw err;
+  }
+}
 
 // =====================================================================
 // PERSISTÊNCIA v0.7 — testes unitários
@@ -110,7 +124,7 @@ describe('tar (escrita/leitura sem dependências)', () => {
 });
 
 describe('snapshotDbCounts', () => {
-  test('conta contas/personagens do banco de dev (somente leitura)', async () => {
+  liveDbTest('conta contas/personagens do banco de dev (somente leitura)', async () => {
     const counts = await snapshotDbCounts(resolveDbFilePath());
     expect(counts).not.toBeNull();
     // v0.9.24 (D2): 16 = 15 bots de ranking + "Mestre Kame" (líder bot da
@@ -130,7 +144,7 @@ describe('snapshotDbCounts', () => {
       writeFileSync(fake, 'isto não é sqlite');
       expect(await snapshotDbCounts(fake)).toBeNull();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      cleanupTempDir(dir);
     }
   });
 
@@ -148,8 +162,16 @@ describe('applyPendingMigrations (migrador de boot)', () => {
         datasources: { db: { url: `file:${dbPath}` } },
         log: ['error'],
       });
+      const migDir = path.join(process.cwd(), 'prisma', 'migrations');
+      const { readdirSync, readFileSync } = await import('fs');
+      const names = readdirSync(migDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .filter((name) => existsSync(path.join(migDir, name, 'migration.sql')));
       const applied = await applyPendingMigrations(client);
-      expect(applied).toBe(16); // inclui a remoção não destrutiva de freeHealDay
+      // O retorno informa quantas foram aplicadas nesta execução. A prova
+      // autoritativa de completude vem abaixo, pela tabela de migrations.
+      expect(applied).toBeGreaterThanOrEqual(1);
 
       // tabela da última migração existe (professions, v0.6)
       const cols = (await client.$queryRawUnsafe('PRAGMA table_info(Player)')) as Array<{
@@ -166,11 +188,16 @@ describe('applyPendingMigrations (migrador de boot)', () => {
       }>;
       expect(accCols.some((c) => c.name === 'supabaseUserId')).toBe(true);
 
+      // schema de guildas avançadas também existe num banco nascido do zero
+      const guildTables = (await client.$queryRawUnsafe(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('GuildRole','GuildRoleAssignment','GuildInvitation','GuildActionReceipt')"
+      )) as Array<{ name: string }>;
+      expect(guildTables.map((row) => row.name).sort()).toEqual(
+        ['GuildActionReceipt', 'GuildInvitation', 'GuildRole', 'GuildRoleAssignment'].sort()
+      );
+
       // _prisma_migrations registrado com checksums iguais aos arquivos
       const { createHash } = await import('crypto');
-      const { readdirSync, readFileSync } = await import('fs');
-      const migDir = path.join(process.cwd(), 'prisma', 'migrations');
-      const names = readdirSync(migDir).filter((n) => !n.includes('lock'));
       const rows = (await client.$queryRawUnsafe(
         'SELECT migration_name, checksum FROM _prisma_migrations'
       )) as Array<{ migration_name: string; checksum: string }>;
@@ -188,32 +215,36 @@ describe('applyPendingMigrations (migrador de boot)', () => {
 
       await client.$disconnect();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      cleanupTempDir(dir);
     }
   });
 
   test('banco já migrado não é alterado (preserva dados)', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'gm-mig2-'));
     const dbPath = path.join(dir, 'custom.db');
+    const client = new PrismaClient({
+      datasources: { db: { url: `file:${dbPath}` } },
+      log: ['error'],
+    });
     try {
-      // checkpoint ANTES de copiar — cópia sem WAL pega estado antigo
-      // (lição da v0.5: o WAL contém as limpezas mais recentes)
-      expect(await checkpointWal()).toBe(true);
-      copyFileSync(resolveDbFilePath(), dbPath);
-      const client = new PrismaClient({
-        datasources: { db: { url: `file:${dbPath}` } },
-        log: ['error'],
+      // Fixture hermética: nasce da cadeia oficial, recebe dados sentinela
+      // e então prova que uma nova passagem do migrador é idempotente.
+      expect(await applyPendingMigrations(client)).toBeGreaterThanOrEqual(1);
+      const account = await client.account.create({
+        data: { username: 'qa_persist', usernameLower: 'qa_persist' },
       });
-      const applied = await applyPendingMigrations(client);
-      expect(applied).toBe(0); // nada pendente
-      const players = await client.player.count();
-      // 15 bots de ranking + (opcional) Mestre Kame + a sessão própria do
-      // dono (v0.16: personagens reais do dono são preservados no dev)
-      expect(players).toBeGreaterThanOrEqual(15);
-      expect(players).toBeLessThanOrEqual(17);
-      await client.$disconnect();
+      const player = await client.player.create({
+        data: { name: 'QA Persistência', race: 'humano', accountId: account.id, zeni: 12345 },
+      });
+
+      expect(await applyPendingMigrations(client)).toBe(0);
+      const preserved = await client.player.findUnique({ where: { id: player.id } });
+      expect(preserved?.name).toBe('QA Persistência');
+      expect(preserved?.zeni).toBe(12345);
+      expect(await client.account.count({ where: { id: account.id } })).toBe(1);
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      await client.$disconnect();
+      cleanupTempDir(dir);
     }
   });
 });

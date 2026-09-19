@@ -7,13 +7,15 @@ import path from 'path';
 // não garante persistência entre recriações de containers.
 
 /** Extrai o caminho de um `file:...` (descarta query-params). */
-function parseFileUrl(url: string | undefined): string | undefined {
+function parseFileUrl(url: string | undefined, allowRelative = false): string | undefined {
   if (!url) return undefined;
   const m = url.match(/^file:(.+?)(\?.*)?$/i);
   if (!m) return undefined;
   const p = m[1];
-  if (!path.isAbsolute(p)) return undefined; // relativo ao schema — não confiável em runtime
-  return p;
+  if (path.isAbsolute(p)) return p;
+  // Desenvolvimento/teste podem usar o padrão Prisma file:./arquivo.db.
+  // Produção continua exigindo caminho absoluto em volume externo.
+  return allowRelative ? path.resolve(process.cwd(), p) : undefined;
 }
 
 function dbCandidates(): string[] {
@@ -22,8 +24,8 @@ function dbCandidates(): string[] {
     if (p && !out.includes(p)) out.push(p);
   };
 
-  // 1. DATABASE_URL (caminho absoluto válido)
-  add(parseFileUrl(process.env.DATABASE_URL));
+  // 1. DATABASE_URL (absoluto, ou relativo resolvido contra cwd em dev/test)
+  add(parseFileUrl(process.env.DATABASE_URL, true));
 
   // 2. volumes externos de produção (start.sh / plataforma)
   add('/app-data/guerreiros/custom.db');

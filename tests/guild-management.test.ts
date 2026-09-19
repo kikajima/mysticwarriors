@@ -11,6 +11,7 @@ import { guildBonuses, guildThreshold, guildCapacity, GUILD_UPGRADE_COSTS, GUILD
 import { grantRewards, transferZeniPvp } from '../src/lib/economy';
 import { applyRegen, buildPlayerCombatant, playerToView } from '../src/lib/game/engine';
 import { WIKI_SECTIONS } from '../src/lib/wiki/wiki-content';
+import { isOnline, touchPresence } from '../src/lib/game/presence';
 
 const dir = mkdtempSync(path.join(tmpdir(), 'mw-guild-tests-'));
 const db = new PrismaClient({ datasources: { db: { url: `file:${path.join(dir, 'test.db')}?connection_limit=1` } } });
@@ -34,6 +35,22 @@ async function inviteJoin(i: number, inviter = 0) {
   const invite = await db.guildInvitation.findFirstOrThrow({ where: { playerId: ids[i] } });
   await act(i, 'guild_accept', { inviteId: invite.id });
 }
+test('blindagem HTTP: rotas legadas de mutação não podem reaparecer', async () => {
+  for (const route of ['create', 'donate', 'invite', 'roles']) {
+    const file = Bun.file(path.join(process.cwd(), 'src/app/api/game/guilds', route, 'route.ts'));
+    expect(await file.exists()).toBe(false);
+  }
+});
+
+test('presença online/offline é apenas informativa e expira', () => {
+  const id = `QA_presence_${randomUUID()}`;
+  const now = Date.now();
+  expect(isOnline(id, now)).toBe(false);
+  expect(touchPresence(id)).toBe(true);
+  expect(isOnline(id, now + 60_000)).toBe(true);
+  expect(isOnline(id, now + 121_000)).toBe(false);
+});
+
 test('fundação atômica e replay: exatamente uma guilda e um débito', async () => {
   await expect(act(6, 'create_guild', { guildName: 'QA_Poor' })).rejects.toThrow();
   expect(await db.guild.count()).toBe(0);
@@ -133,9 +150,12 @@ test('MOTD sanitizada, transferência explícita, dissolução confirmada e hist
   await act(0, 'guild_transfer', { targetId: ids[3], leave: true });
   expect((await db.guild.findUniqueOrThrow({ where: { id: guildId } })).leaderId).toBe(ids[3]);
   await expect(act(3, 'guild_dissolve')).rejects.toThrow('Confirme');
+  const donationsBeforeDissolve = await db.guildDonation.count({ where: { guildId } });
   await act(3, 'guild_dissolve', { confirm: true });
   expect(await db.player.count({ where: { guildId } })).toBe(0);
-  expect(await db.guildDonation.count({ where: { guildId } })).toBe(3);
+  // Dissolver não apaga o histórico, independentemente de quantas doações
+  // outros testes legítimos tenham criado antes nesta mesma fixture.
+  expect(await db.guildDonation.count({ where: { guildId } })).toBe(donationsBeforeDissolve);
   expect((await db.guild.findUniqueOrThrow({ where: { id: guildId } })).disbandedAt).not.toBeNull();
 });
 test('contratos fixos: curva, bônus, permissões e wiki sincronizados', () => {
