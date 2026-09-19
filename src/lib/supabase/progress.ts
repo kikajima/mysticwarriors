@@ -204,7 +204,7 @@ const KNOWN = {
   techniques: new Set(TECHNIQUES.map((t) => t.id)),
   transformations: new Set(TRANSFORMATIONS.map((t) => t.id)),
   items: new Set(SHOP_ITEMS.map((i) => i.id)),
-  professions: new Set(PROFESSIONS.map((p) => p.id)),
+  professions: new Set<string>(PROFESSIONS.map((p) => p.id)),
   materials: new Set(PROFESSION_MATERIALS.map((m) => m.id)),
   cosmetics: new Set(COSMETICS.map((c) => c.id)),
   strategies: new Set(Object.keys(STRATEGIES)),
@@ -359,7 +359,7 @@ function sanitizeMission(
 export interface CharacterExtras {
   quests: CloudQuestSnapshot[];
   achievements: CloudAchievementSnapshot[];
-  materials: CloudMaterialSnapshot[];
+  materials?: CloudMaterialSnapshot[];
 }
 
 export function serializeCharacterForCloud(
