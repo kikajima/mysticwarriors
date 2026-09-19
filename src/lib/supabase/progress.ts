@@ -157,7 +157,7 @@ export interface CloudCharacterSnapshot {
   missionEndsAt: string | null;
   missionHours: 1 | 2 | 4 | 8 | null;
   /** Materiais profissionais relacionais espelhados para recuperação. */
-  materials: CloudMaterialSnapshot[];
+  materials?: CloudMaterialSnapshot[];
   /** Relógios de regeneração (energia/vida continuam contando offline). */
   lastRegen: string;
   lastRegenHp: string | null;
