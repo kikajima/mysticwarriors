@@ -28,17 +28,22 @@ bun run dev
 ## Produção no Render
 
 O filesystem comum do Render é efêmero. O SQLite precisa ficar em um
-**Persistent Disk**. O Blueprint de referência está em `render.yaml` e usa:
+**Persistent Disk**, que exige uma instância paga do Render. O plano Free não
+é adequado para este banco autoritativo porque não preserva o filesystem entre
+redeploys/restarts. O Blueprint de referência está em `render.yaml` e usa:
 
 ```text
 DATABASE_URL=file:/var/data/custom.db
 ```
 
-Build:
+Build no Render:
 
 ```sh
-bun install --frozen-lockfile && bun run db:generate && bun run build
+mkdir -p /tmp/mystic-warriors-build && touch /tmp/mystic-warriors-build/custom.db && export DATABASE_URL=file:/tmp/mystic-warriors-build/custom.db && bun install --frozen-lockfile && bun run db:generate && bun run build
 ```
+
+O SQLite acima existe somente durante o build. O banco real de produção fica em
+`/var/data/custom.db` e só é acessado no runtime.
 
 Start:
 
