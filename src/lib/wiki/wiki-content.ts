@@ -49,7 +49,10 @@ import {
   ENEMIES,
   SHOP_ITEMS,
   PROFESSIONS,
-  PROFESSION_RANKS,
+  PROFESSION_LEVELS,
+  PROFESSION_SHIFTS,
+  PROFESSION_MATERIALS,
+  PROFESSION_MASTERY_HOURS,
   REGEN,
   HEAL_COST_PER_HP,
   TRAIN_ENERGY_COST,
@@ -988,49 +991,108 @@ export const WIKI_SECTIONS: WikiSection[] = [
   // ================================================================
   {
     id: 'profissoes',
-    title: 'Profissões e Trabalho',
+    title: 'Profissões, Carreira e Loot',
     icon: '🌾',
     group: 'Progressão',
-    summary: '5 profissões, 5 ranks com promoções, recompensas por rank e chance de Esfera do Dragão.',
+    summary: '5 profissões, carreira do Nível 1 ao 10, turnos de 1h a 8h e materiais exclusivos.',
     resumo: [
-      'Turnos de **1 hora real** rendem Zeni + XP — **sem custo de energia**.',
-      'Ranks sobem com o trabalho: promoções pagam **bônus gordos**.',
-      'Cada turno coletado pode revelar uma **Esfera do Dragão**.',
+      'Escolha turnos de **1h, 2h, 4h ou 8h** — trabalhar continua **sem custo de energia**.',
+      'Cada hora rende Zeni, progresso de carreira e **1–2 materiais comuns garantidos**; materiais raros usam uma chance por hora.',
+      'Atleta/Policial/Agricultor/Cientista fortalecem um atributo até 999; Acadêmico aumenta o **XP global**.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: `O trabalho é a base econômica — e é de graça em energia: cada turno dura **60 minutos reais** e rende Zeni + XP na coleta. O progresso continua com o jogo fechado. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
+        text: `O trabalho continua contando com o jogo fechado. Você escolhe a duração do turno e coleta tudo ao final. Turnos maiores são mais cômodos, mas reduzem somente **XP e chance de material raro**; Zeni, atributo, horas de carreira, material comum e a chance de Esfera não sofrem redução. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
       },
       {
         kind: 'table',
         table: {
-          caption: 'Recompensas por rank (ORIGEM: content/world.ts — PROFESSION_RANKS)',
-          headers: ['Rank', 'Zeni/turno', 'XP por turno', 'Chance de Esfera', 'Conclusões p/ subir'],
-          rows: PROFESSION_RANKS.map((r, i) => [
-            String(i + 1),
-            br(r.zeni),
-            `${Math.round(r.xpPct * 100)}% do nível atual`,
-            `${Math.round(r.dragonBallChance * 100)}%`,
-            r.completionsToPromote === 0 ? '— (topo)' : String(r.completionsToPromote),
+          caption: 'Turnos flexíveis (ORIGEM: content/world.ts — PROFESSION_SHIFTS)',
+          headers: ['Turno', 'Eficiência de XP e raros', 'Zeni / atributo / comuns'],
+          rows: PROFESSION_SHIFTS.map((s) => [
+            `${s.hours}h`,
+            `${Math.round(s.efficiency * 100)}%`,
+            '100%',
+          ]),
+        },
+      },
+      {
+        kind: 'table',
+        table: {
+          caption: 'Carreira Nível 1–10 (ORIGEM: content/world.ts — PROFESSION_LEVELS)',
+          headers: ['Nível', 'Horas no nível', 'Acumulado', 'Zeni/h', 'Atributo/h', 'XP/h', 'Raro/h', 'Esfera/turno'],
+          rows: PROFESSION_LEVELS.map((r) => [
+            String(r.level),
+            `${br(r.hoursInLevel)}h`,
+            `${br(r.cumulativeHours)}h`,
+            br(r.zeniPerHour),
+            `+${(r.attributeMilliPerHour / 1000).toLocaleString('pt-BR')}`,
+            `${(r.xpPctPerHour * 100).toLocaleString('pt-BR')}%`,
+            `${(r.rareChance * 100).toLocaleString('pt-BR')}%`,
+            `${(r.dragonBallChance * 100).toLocaleString('pt-BR')}%`,
+          ]),
+        },
+      },
+      {
+        kind: 'table',
+        table: {
+          caption: 'Especialização das profissões',
+          headers: ['Profissão', 'Efeito da carreira'],
+          rows: PROFESSIONS.map((p) => [
+            `${p.icon} ${p.name}`,
+            p.id === 'academico'
+              ? '+0,5% de XP global por nível da profissão (até +5%)'
+              : p.attribute === 'strength'
+                ? 'Força por hora trabalhada'
+                : p.attribute === 'defense'
+                  ? 'Defesa por hora trabalhada'
+                  : p.attribute === 'speed'
+                    ? 'Velocidade por hora trabalhada'
+                    : 'Ki por hora trabalhada',
           ]),
         },
       },
       {
         kind: 'list',
         items: [
-          'O XP do turno é **fração do XP exigido pelo seu nível atual** (10% → 25%) — continua útil em qualquer progressão.',
-          'Cancelar um turno em andamento não devolve nada — coletar exige o término real do timer.',
-          '**Dica:** o Androide ganha +5% de Zeni em trabalhos (bônus racial que segue valendo).',
+          `A carreira fecha o ciclo em **${br(PROFESSION_MASTERY_HOURS)} horas**. No Nível 10 você continua recebendo as recompensas do Nível 10; Mestria/Prestígio será uma etapa própria.`,
+          'O ganho de atributo usa frações internas e respeita o teto global de **999**; ao chegar no teto, Zeni, XP, horas e loot continuam normalmente.',
+          'A chance de material raro é testada **uma vez por hora** e multiplicada pela eficiência do turno. O material comum nunca deixa de vir: **1–2 unidades por hora**.',
+          'A Esfera do Dragão faz **um único teste ao concluir o turno**, independentemente de o turno ter 1h ou 8h.',
+          'Cancelar um turno em andamento não concede recompensa parcial.',
+          '**Androide:** o bônus racial de Zeni de trabalho continua valendo.',
         ],
       },
       {
         kind: 'details',
-        summary: '🔍 Detalhes para curiosos — matemática das promoções',
+        summary: '📦 Materiais por profissão',
+        blocks: [
+          {
+            kind: 'table',
+            table: {
+              caption: 'Drops profissionais (ORIGEM: content/world.ts — PROFESSION_MATERIALS)',
+              headers: ['Profissão', 'Material', 'Raridade', 'Tier'],
+              rows: PROFESSION_MATERIALS.map((m) => {
+                const p = PROFESSIONS.find((x) => x.id === m.professionId);
+                return [
+                  p ? `${p.icon} ${p.name}` : m.professionId,
+                  `${m.icon} ${m.name}`,
+                  m.rarity === 'rare' ? 'Raro' : 'Comum',
+                  String(m.tier),
+                ];
+              }),
+            },
+          },
+        ],
+      },
+      {
+        kind: 'details',
+        summary: '🔍 Como o nível é calculado',
         blocks: [
           {
             kind: 'text',
-            text: 'Promoções acontecem automaticamente ao acumular conclusões (**3, 4, 5 e 6 por rank** — 18 h de dedicação até o topo) e pagam bônus únicos de **+1.000 / +3.000 / +9.000 / +30.000 Zeni**. O Zeni por turno sobe de 300 (rank 1) a 1.500 (rank 5) — 5× o inicial.',
+            text: 'O nível profissional é derivado das horas do ciclo: 0–39h = Nível 1; 40–99h = Nível 2; 100–189h = Nível 3; 190–324h = Nível 4; 325–524h = Nível 5; 525–824h = Nível 6; 825–1.274h = Nível 7; 1.275–1.949h = Nível 8; 1.950–2.949h = Nível 9; 2.950–4.450h = Nível 10. Turnos que cruzam uma faixa calculam cada hora com o nível correspondente.',
           },
         ],
       },
