@@ -47,6 +47,8 @@ test('Render Free usa Supabase PostgreSQL sem Persistent Disk', () => {
   expect(start).toContain('PostgreSQL do Supabase');
   expect(start).toContain("schema') !== 'game'");
   expect(start).not.toContain('ALLOW_EMPTY_DB_INIT');
+  expect(start).toContain("process.env.HOSTNAME = '0.0.0.0'");
+  expect(start).not.toContain("process.env.HOSTNAME ||= '0.0.0.0'");
   expect(start).toContain('.next/standalone/server.js');
 });
 
