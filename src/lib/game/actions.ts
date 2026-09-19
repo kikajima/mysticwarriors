@@ -110,6 +110,9 @@ export async function executeGameAction(
 ): Promise<ActionResult> {
   let offline: OfflineOpponent | undefined;
   let targetName = '';
+  let guildOffline: OfflineOpponent | undefined;
+  let guildInviteName = '';
+
   if (type === 'attack_player' && String(args.targetId ?? '').startsWith('cloud:')) {
     await requirePlayer(auth, playerId);
     try { targetName = decodeURIComponent(String(args.targetId).slice(6)); }
@@ -117,10 +120,38 @@ export async function executeGameAction(
     const local = await db.player.findUnique({ where: { name: targetName } });
     if (!local) offline = await fetchOfflineOpponent(targetName, accessToken);
   }
+
+  // Guildas vivem no SQLite autoritativo, mas um guerreiro desconectado
+  // pode existir apenas no espelho Supabase após deploy/restart. Para
+  // convidá-lo, reutilizamos o mesmo restore seguro do PvP offline:
+  // consulta a nuvem FORA da transação e materializa a conta/personagens
+  // SEM criar sessão. Estado local existente sempre vence.
+  if (type === 'guild_invite' && !args.targetId) {
+    guildInviteName = String(args.targetName ?? '').trim();
+    if (guildInviteName) {
+      await requirePlayer(auth, playerId);
+      const local = await db.player.findUnique({ where: { name: guildInviteName } });
+      if (!local) {
+        if (!accessToken) {
+          throw new ApiError('UNAUTHORIZED', 'Entre na sua conta para convidar guerreiros offline.');
+        }
+        guildOffline = await fetchOfflineOpponent(guildInviteName, accessToken);
+      }
+    }
+  }
+
   return db.$transaction(
     async (tx) => {
     // ===== AUTORIZAÇÃO CENTRAL =====
     const player = await requirePlayer(auth, playerId, tx);
+
+    if (type === 'guild_invite' && guildInviteName && guildOffline) {
+      const local = await tx.player.findUnique({ where: { name: guildInviteName } });
+      if (!local) {
+        const restored = await restoreOfflineOpponent(tx, guildOffline, guildInviteName);
+        if (!restored) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado.');
+      }
+    }
 
     if (isGuildAction(type)) return runGuildOnce(tx, player, type, args);
     // ===== ATIVIDADES VENCIDAS: aplicar ANTES de qualquer coisa =====
