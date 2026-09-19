@@ -155,7 +155,9 @@ describe('v0.9.6 — patchCloudResetCharacterState (reset de UM personagem, sem 
       cosmeticsOwned: ['aura_chama', 'titan'],
       transformationsOwned: ['saiyajin_ss1'],
       transformationId: 'saiyajin_ss1',
-      professions: { miner: { rank: 3, completions: 12 } },
+      professions: {
+        miner: { hours: 12, lifetimeHours: 12, prestige: 0, statMilliRemainder: 0, cycleStatGranted: 0 },
+      },
       missionsCompleted: ['miner_turn_1'],
       quests: [{ questId: 'daily_win3', kind: 'daily', period: '2026-09-13', progress: 2, claimed: false }],
       achievementsClaimed: [{ achievementId: 'first_blood', claimedAt: '2026-09-10T00:00:00.000Z' }],

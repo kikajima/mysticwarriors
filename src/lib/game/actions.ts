@@ -22,13 +22,12 @@ import {
   ENEMIES,
   HEAL_COST_PER_HP,
   PROFESSIONS,
-  PROFESSION_RANKS,
-  PROFESSION_MAX_RANK,
+  PROFESSION_MASTERY_HOURS,
   SELL_PRICE_RATIO,
   SHOP_MAX_QUANTITY,
   SHOP_MAX_STACK,
   getProfession,
-  professionRankTitle,
+  getProfessionMaterial,
   PVP_LEVEL_RANGE,
   TRAIN_ENERGY_COST,
   getItem,
@@ -54,12 +53,18 @@ import {
   parseProfessions,
   parseTechniques,
   parseTransformationsOwned,
-  professionRewards,
   pvpRewards,
   serializeProfessions,
   simulateBattle,
   updateJsonState,
 } from './engine';
+import {
+  professionLevel,
+  professionLevelTitle,
+  professionShift,
+  professionShiftRewards,
+  rollProfessionLoot,
+} from './professionCareer';
 import {
   applyTrainResult,
   assertNoRunningActivityTx,
@@ -76,7 +81,7 @@ import { bumpQuests, claimAchievement, claimQuest } from '@/lib/progression';
 import { attackWorldBoss } from '@/lib/worldboss';
 import { scoreSeasonVictory } from '@/lib/seasons';
 import { trackEvent } from '@/lib/analytics';
-import type { ActivityView, BattleResult, Loadout, ShopItem } from './types';
+import type { ActivityView, BattleResult, Loadout, ProfessionLootEntry, ShopItem } from './types';
 
 // =====================================================================
 // EXECUTOR DE AÇÕES DO JOGO (100% server-side)
@@ -93,7 +98,15 @@ export interface ActionResult {
   message: string;
   levelsGained: number;
   battle?: BattleResult;
-  missionResult?: { zeniGain: number; xpGain: number; foundDragonBall: boolean };
+  missionResult?: {
+    zeniGain: number;
+    xpGain: number;
+    foundDragonBall: boolean;
+    hours?: number;
+    statGain?: number;
+    professionLevel?: number;
+    loot?: ProfessionLootEntry[];
+  };
   bossAttack?: { damage: number; xpGain: number; killed: boolean; cooldownSec: number };
   /** atividade iniciada (treino/batalha) — o resultado vem após a duração */
   activity?: ActivityView;
@@ -187,7 +200,12 @@ export async function executeGameAction(
         result = await actionStartTrain(tx, player, String(args.stat ?? ''));
         break;
       case 'mission':
-        result = await actionStartProfession(tx, player, String(args.missionId ?? args.professionId ?? ''));
+        result = await actionStartProfession(
+          tx,
+          player,
+          String(args.missionId ?? args.professionId ?? ''),
+          args.hours ?? 1
+        );
         break;
       case 'claim_mission':
         result = await actionClaimProfession(tx, player);
@@ -347,7 +365,7 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
   };
 }
 
-// ===== PROFISSÕES (antigas missões temporizadas — v0.6) =====
+// ===== PROFISSÕES — carreira 1–10, turnos 1/2/4/8h e loot =====
 
 const PROFESSION_FLAVOR = [
   'Turno encerrado sem sustos!',
@@ -357,31 +375,71 @@ const PROFESSION_FLAVOR = [
   'Mais um dia honesto de trabalho.',
 ];
 
-async function actionStartProfession(tx: Tx, player: Player, professionId: string): Promise<ActionResult> {
+function validProfessionHours(value: unknown): 1 | 2 | 4 | 8 {
+  const hours = Math.trunc(Number(value));
+  if (!professionShift(hours)) {
+    throw new ApiError('VALIDATION_ERROR', 'Turno inválido. Escolha 1h, 2h, 4h ou 8h.');
+  }
+  return hours as 1 | 2 | 4 | 8;
+}
+
+async function actionStartProfession(
+  tx: Tx,
+  player: Player,
+  professionId: string,
+  hoursRaw: unknown
+): Promise<ActionResult> {
   const def = getProfession(professionId);
   if (!def) throw new ApiError('VALIDATION_ERROR', 'Profissão inválida.');
+  const hours = validProfessionHours(hoursRaw);
 
   if (player.missionId) {
     throw new ApiError('MISSION_IN_PROGRESS', 'Você já está em um trabalho! Conclua-o antes de começar outro.');
   }
 
-  // v0.9 — PROFISSÕES NÃO CONSOMEM MAIS ENERGIA: apenas o tempo de
-  // duração do turno permanece (treino continua custando energia).
+  const startedAt = new Date();
+  const endsAt = new Date(startedAt.getTime() + hours * 3600_000);
   const startedRes = await tx.player.updateMany({
     where: { id: player.id, missionId: null },
-    data: { missionId: def.id, missionEndsAt: new Date(Date.now() + def.durationMin * 60 * 1000) },
+    data: {
+      missionId: def.id,
+      missionStartedAt: startedAt,
+      missionEndsAt: endsAt,
+      missionHours: hours,
+    },
   });
   if (startedRes.count === 0) {
     throw new ApiError('MISSION_IN_PROGRESS', 'Você já está em um trabalho! Conclua-o antes de começar outro.');
   }
-  player.missionId = def.id;
 
-  const rank = parseProfessions(player.professions)[def.id]?.rank ?? 1;
-  const rankTitle = professionRankTitle(def, rank);
+  player.missionId = def.id;
+  player.missionStartedAt = startedAt;
+  player.missionEndsAt = endsAt;
+  player.missionHours = hours;
+
+  const progress = parseProfessions(player.professions);
+  const level = professionLevel(progress[def.id]);
+  const efficiency = Math.round((professionShift(hours)?.efficiency ?? 1) * 100);
+
   return {
-    message: `Trabalho iniciado: ${def.name} (${rankTitle}). Volte em ${def.durationMin / 60}h para receber o pagamento!`,
+    message: `Trabalho iniciado: ${def.name} (${professionLevelTitle(level)}), turno de ${hours}h. Eficiência de XP/raros: ${efficiency}%.`,
     levelsGained: 0,
   };
+}
+
+async function addProfessionLoot(
+  tx: Tx,
+  playerId: string,
+  loot: ProfessionLootEntry[]
+): Promise<void> {
+  for (const entry of loot) {
+    if (entry.quantity <= 0) continue;
+    await tx.inventoryStack.upsert({
+      where: { playerId_itemId: { playerId, itemId: entry.itemId } },
+      update: { quantity: { increment: entry.quantity } },
+      create: { playerId, itemId: entry.itemId, quantity: entry.quantity },
+    });
+  }
 }
 
 async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResult> {
@@ -390,45 +448,121 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
   }
   const def = getProfession(player.missionId);
   if (!def) {
-    await tx.player.update({ where: { id: player.id }, data: { missionId: null, missionEndsAt: null } });
+    await tx.player.update({
+      where: { id: player.id },
+      data: { missionId: null, missionStartedAt: null, missionEndsAt: null, missionHours: null },
+    });
     throw new ApiError('VALIDATION_ERROR', 'Profissão inválida — trabalho cancelado.');
   }
   const now = Date.now();
   if (now < player.missionEndsAt.getTime()) {
     const restante = Math.ceil((player.missionEndsAt.getTime() - now) / 60000);
-    throw new ApiError('MISSION_NOT_READY', `O trabalho ainda não terminou! Faltam cerca de ${restante} ${restante === 1 ? 'minuto' : 'minutos'}.`);
+    throw new ApiError(
+      'MISSION_NOT_READY',
+      `O trabalho ainda não terminou! Faltam cerca de ${restante} ${restante === 1 ? 'minuto' : 'minutos'}.`
+    );
   }
 
-  // claim atômico: apenas uma requisição consegue limpar o trabalho
+  const hours = ([1, 2, 4, 8].includes(player.missionHours ?? 1) ? (player.missionHours ?? 1) : 1) as 1 | 2 | 4 | 8;
+
+  // claim atômico: uma única requisição consegue limpar ESTE turno.
   const claimRes = await tx.player.updateMany({
     where: { id: player.id, missionId: player.missionId, missionEndsAt: player.missionEndsAt },
-    data: { missionId: null, missionEndsAt: null, missionsDone: { increment: 1 } },
+    data: {
+      missionId: null,
+      missionStartedAt: null,
+      missionEndsAt: null,
+      missionHours: null,
+      missionsDone: { increment: 1 },
+    },
   });
   if (claimRes.count === 0) {
     throw new ApiError('MISSION_NOT_READY', 'O pagamento deste trabalho já foi coletado.');
   }
 
-  // ===== progresso e recompensas da PROFISSÃO (rank atual) =====
   const progress = parseProfessions(player.professions);
-  const cur = progress[def.id] ?? { rank: 1, completions: 0 };
-  const rewards = professionRewards(cur.rank, player.level, player.race);
+  const cur = progress[def.id] ?? {
+    hours: 0,
+    lifetimeHours: 0,
+    prestige: 0,
+    statMilliRemainder: 0,
+    cycleStatGranted: 0,
+  };
+  const levelBefore = professionLevel(cur);
+  const turn = professionShiftRewards(cur.hours, hours, player.level);
 
-  const { levelsGained } = await grantRewards(tx, player, { zeni: rewards.zeni, xp: rewards.xp }, {
-    type: 'reward',
-    source: 'mission',
-    accountId: player.accountId,
-    metadata: { professionId: def.id, rank: cur.rank },
-  });
+  // Raça continua afetando Zeni de trabalho. Guilda e Acadêmico são
+  // aplicados na camada central grantRewards.
+  const econ = raceEconomy(player.race);
+  const raceZeni = Math.max(1, Math.round(turn.zeni * econ.zeniMissionMult));
+  const granted = await grantRewards(
+    tx,
+    player,
+    { zeni: raceZeni, xp: turn.xp },
+    {
+      type: 'reward',
+      source: 'mission',
+      accountId: player.accountId,
+      metadata: {
+        professionId: def.id,
+        professionLevel: levelBefore,
+        hours,
+        efficiency: turn.efficiency,
+      },
+    }
+  );
 
-  // esfera do dragão (incremento condicional — nunca passa de 7)
+  const rng = battleRng();
+  const loot = rollProfessionLoot(def.id, turn.hourLevels, turn.efficiency, rng);
+  await addProfessionLoot(tx, player.id, loot);
+
+  // Esfera: UM teste por turno, preservando a mecânica histórica.
   let foundBall = false;
-  if (rewards.foundDragonBall) {
+  if (rng() < turn.dragonBallChance) {
     const ballRes = await tx.player.updateMany({
       where: { id: player.id, dragonBalls: { lt: 7 } },
       data: { dragonBalls: { increment: 1 } },
     });
     foundBall = ballRes.count > 0;
   }
+
+  // Atributo profissional: frações ficam em milésimos e o ganho real passa
+  // obrigatoriamente pelo STAT_CAP. Acadêmico não possui atributo próprio.
+  let statGain = 0;
+  const totalMilli = cur.statMilliRemainder + turn.attributeMilli;
+  if (def.attribute) {
+    const whole = Math.floor(totalMilli / 1000);
+    if (whole > 0) {
+      const applied = addStat(player, def.attribute, whole);
+      statGain = applied.after - applied.before;
+    }
+    cur.statMilliRemainder = player[def.attribute] >= STAT_CAP ? 0 : totalMilli % 1000;
+    cur.cycleStatGranted += statGain;
+  } else {
+    cur.statMilliRemainder = 0;
+  }
+
+  cur.hours = Math.min(PROFESSION_MASTERY_HOURS, cur.hours + turn.careerHoursAdded);
+  cur.lifetimeHours += turn.lifetimeHoursAdded;
+  progress[def.id] = cur;
+  const professionsJson = serializeProfessions(progress);
+
+  const statData =
+    def.attribute === 'strength'
+      ? { strength: player.strength }
+      : def.attribute === 'defense'
+        ? { defense: player.defense }
+        : def.attribute === 'speed'
+          ? { speed: player.speed }
+          : def.attribute === 'ki'
+            ? { ki: player.ki }
+            : {};
+
+  await tx.player.update({
+    where: { id: player.id },
+    data: { professions: professionsJson, ...statData },
+  });
+  player.professions = professionsJson;
 
   // histórico de trabalhos concluídos (requisito de transformações)
   const completed = parseMissionsCompleted(player.missionsCompleted);
@@ -437,44 +571,37 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
     await tx.player.update({ where: { id: player.id }, data: { missionsCompleted: JSON.stringify(completed) } });
   }
 
-  // ===== PROMOÇÃO: conclusões suficientes no rank atual =====
-  let promoted = false;
-  let promotionBonusZeni = 0;
-  let newRankTitle = professionRankTitle(def, cur.rank);
-  const tier = PROFESSION_RANKS[Math.min(PROFESSION_MAX_RANK, cur.rank) - 1];
-  const completionsAfter = cur.completions + 1;
-  if (cur.rank < PROFESSION_MAX_RANK && completionsAfter >= tier.completionsToPromote) {
-    promoted = true;
-    cur.rank += 1;
-    cur.completions = 0;
-    newRankTitle = professionRankTitle(def, cur.rank);
-    promotionBonusZeni = PROFESSION_RANKS[cur.rank - 1].promotionBonus;
-    // bônus único de promoção (1k / 3k / 9k / 30k) — com ledger próprio
-    await grantRewards(tx, player, { zeni: promotionBonusZeni }, {
-      type: 'reward',
-      source: 'mission',
-      accountId: player.accountId,
-      metadata: { professionId: def.id, promotionTo: cur.rank, bonus: promotionBonusZeni },
-    });
-  } else {
-    cur.completions = completionsAfter;
-  }
-  progress[def.id] = cur;
-  await tx.player.update({ where: { id: player.id }, data: { professions: serializeProfessions(progress) } });
-  player.professions = serializeProfessions(progress);
-
   await bumpQuests(tx, player.id, 'mission_completed', 1);
-  if (player.missionsDone === 0) await trackEvent('first_mission', { playerId: player.id, accountId: player.accountId }, tx);
+  if (player.missionsDone === 0) {
+    await trackEvent('first_mission', { playerId: player.id, accountId: player.accountId }, tx);
+  }
 
   player.missionId = null;
+  player.missionStartedAt = null;
   player.missionEndsAt = null;
+  player.missionHours = null;
   player.missionsDone += 1;
 
-  const flavorRng = battleRng();
-  const flavor = PROFESSION_FLAVOR[Math.floor(flavorRng() * PROFESSION_FLAVOR.length)];
-  let message = `${flavor} +${rewards.zeni.toLocaleString('pt-BR')} Zeni, +${rewards.xp} XP.`;
-  if (promoted) {
-    message += ` ⏫ PROMOVIDO a ${newRankTitle}! Bônus de promoção: +${promotionBonusZeni.toLocaleString('pt-BR')} Zeni.`;
+  const levelAfter = professionLevel(cur);
+  const flavor = PROFESSION_FLAVOR[Math.floor(rng() * PROFESSION_FLAVOR.length)];
+  const lootText = loot
+    .map((entry) => {
+      const item = getProfessionMaterial(entry.itemId);
+      return `${entry.quantity}x ${item?.name ?? entry.itemId}`;
+    })
+    .join(', ');
+
+  let message =
+    `${flavor} ${hours}h concluídas: +${granted.zeniGranted.toLocaleString('pt-BR')} Zeni, +${granted.xpGranted.toLocaleString('pt-BR')} XP.`;
+  if (statGain > 0 && def.attribute) {
+    message += ` +${statGain} ${statName(def.attribute)}.`;
+  }
+  if (lootText) message += ` Materiais: ${lootText}.`;
+  if (levelAfter > levelBefore) {
+    message += ` 📈 ${def.name} chegou ao ${professionLevelTitle(levelAfter)}!`;
+  }
+  if (cur.hours >= PROFESSION_MASTERY_HOURS) {
+    message += ' 🏅 Carreira no limite de 4.450h — a Mestria/Prestígio chegará na etapa final.';
   }
   if (foundBall) {
     player.dragonBalls = Math.min(7, player.dragonBalls + 1);
@@ -483,8 +610,16 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
 
   return {
     message,
-    levelsGained,
-    missionResult: { zeniGain: rewards.zeni + promotionBonusZeni, xpGain: rewards.xp, foundDragonBall: foundBall },
+    levelsGained: granted.levelsGained,
+    missionResult: {
+      zeniGain: granted.zeniGranted,
+      xpGain: granted.xpGranted,
+      foundDragonBall: foundBall,
+      hours,
+      statGain,
+      professionLevel: levelAfter,
+      loot,
+    },
   };
 }
 
@@ -498,52 +633,46 @@ function parseMissionsCompleted(raw: string | null): string[] {
   }
 }
 
-// ===== CANCELAR PROFISSÃO (v0.9.6 — Mudança 2) =====
+// ===== CANCELAR PROFISSÃO =====
 
-/**
- * Interrompe o trabalho EM ANDAMENTO (timer ainda correndo):
- *  * nenhuma recompensa é concedida — nem parcial (sem Zeni, sem XP,
- *    sem Esfera, sem progresso de rank/conclusões, sem missionsDone);
- *  * a profissão fica IMEDIATAMENTE disponível para começar de novo;
- *  * energia não é afetada (profissões nunca gastaram energia);
- *  * cancelamento atômico (updateMany condicional) — duas requisições
- *    concorrentes não geram efeito duplo; e o claim simultâneo de um
- *    turno já vencido continua sendo a única forma de receber pagamento.
- */
 async function actionCancelProfession(tx: Tx, player: Player): Promise<ActionResult> {
   if (!player.missionId || !player.missionEndsAt) {
     throw new ApiError('MISSION_NONE', 'Você não tem trabalho em andamento.');
   }
   const def = getProfession(player.missionId);
   if (!def) {
-    // estado órfão (profissão removida do catálogo) — limpa e segue
-    await tx.player.update({ where: { id: player.id }, data: { missionId: null, missionEndsAt: null } });
+    await tx.player.update({
+      where: { id: player.id },
+      data: { missionId: null, missionStartedAt: null, missionEndsAt: null, missionHours: null },
+    });
     player.missionId = null;
+    player.missionStartedAt = null;
     player.missionEndsAt = null;
+    player.missionHours = null;
     return { message: 'Trabalho inválido removido do personagem.', levelsGained: 0 };
   }
-  const now = Date.now();
-  if (now >= player.missionEndsAt.getTime()) {
-    throw new ApiError(
-      'MISSION_NOT_READY',
-      'Este turno já terminou — colete o pagamento em vez de cancelar!'
-    );
+  if (Date.now() >= player.missionEndsAt.getTime()) {
+    throw new ApiError('MISSION_NOT_READY', 'Este turno já terminou — colete o pagamento em vez de cancelar!');
   }
 
-  // cancelamento atômico: só passa se o turno ainda for EXATAMENTE este
   const cancelRes = await tx.player.updateMany({
     where: { id: player.id, missionId: player.missionId, missionEndsAt: player.missionEndsAt },
-    data: { missionId: null, missionEndsAt: null },
+    data: { missionId: null, missionStartedAt: null, missionEndsAt: null, missionHours: null },
   });
   if (cancelRes.count === 0) {
-    // corrida com claim/cancel concorrente — nada mais a fazer
     throw new ApiError('MISSION_NOT_READY', 'O trabalho já foi encerrado.');
   }
 
   player.missionId = null;
+  player.missionStartedAt = null;
   player.missionEndsAt = null;
+  player.missionHours = null;
 
-  await trackEvent('mission_canceled', { playerId: player.id, accountId: player.accountId, metadata: { professionId: def.id } }, tx);
+  await trackEvent(
+    'mission_canceled',
+    { playerId: player.id, accountId: player.accountId, metadata: { professionId: def.id } },
+    tx
+  );
 
   return {
     message: `Turno de ${def.name} cancelado — nenhuma recompensa (nem parcial). Você pode começar de novo quando quiser.`,

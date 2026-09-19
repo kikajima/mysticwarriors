@@ -1,107 +1,118 @@
 import type {
   Enemy,
   ProfessionDef,
-  ProfessionRankRewards,
+  ProfessionLevelRewards,
+  ProfessionMaterialDef,
+  ProfessionShiftDef,
   ShopItem,
 } from '../types';
 
 // =====================================================================
-// PROFISSÕES (v0.6 — substituem as antigas missões temporizadas)
+// PROFISSÕES — CARREIRA 1–10, TURNOS FLEXÍVEIS E LOOT
 // ---------------------------------------------------------------------
-//  * 5 profissões: Agricultor, Cientista, Acadêmico, Policial e Atleta;
-//  * cada trabalho dura ~1 hora e consome energia no início;
-//  * 5 ranks por profissão: promoções por trabalhos concluídos
-//    (3, 4, 5 e 6 conclusões por rank — 18h de dedicação para o topo);
-//  * Zeni por conclusão: 300 no rank 1 → 1.500 no rank 5 (aumento
-//    gradual até 5x o valor inicial, conforme especificação do usuário);
-//  * bônus único de PROMOÇÃO: +1.000 / +3.000 / +9.000 / +30.000 Zeni;
-//  * XP por conclusão: fração do XP exigido pelo nível ATUAL
-//    (10% → 25%) — balanceado em qualquer nível de progressão.
+//  * progressão por HORAS (nível derivado; 4.450h fecham o ciclo);
+//  * turnos válidos: 1h / 2h / 4h / 8h;
+//  * eficiência reduz somente XP e chance de material raro;
+//  * Zeni, atributo, horas, comum garantido e Esfera não perdem eficiência;
+//  * atributo respeita STAT_CAP=999 no servidor;
+//  * Acadêmico não dá atributo: fornece bônus global de XP e, na PR de
+//    crafting, redução do tempo de fabricação.
 // =====================================================================
 
 export const PROFESSIONS: ProfessionDef[] = [
   {
     id: 'agricultor',
     name: 'Agricultor',
-    description:
-      'Cultive as terras férteis do Grande Vale. Colheitas generosas alimentam cidades inteiras — e enchem sua carteira.',
+    description: 'Cultive ervas, água pura e insumos biológicos. Cada hora de carreira fortalece sua Velocidade.',
     icon: '🌾',
-    energyCost: 6,
-    durationMin: 60,
-    rankNames: ['Lavrador', 'Fazendeiro', 'Agrônomo', 'Mestre Rural', 'Lenda dos Campos'],
+    attribute: 'speed',
   },
   {
     id: 'cientista',
     name: 'Cientista',
-    description:
-      'Pesquise na Corporação Cápsula: cápsulas, reatores e invenções que mudam o mundo. A ciência paga bem.',
+    description: 'Pesquise ligas, microchips, cápsulas e reatores. Cada hora de carreira fortalece seu Ki.',
     icon: '🔬',
-    energyCost: 6,
-    durationMin: 60,
-    rankNames: ['Assistente', 'Pesquisador', 'Doutor', 'Cientista-Chefe', 'Gênio Universal'],
+    attribute: 'ki',
   },
   {
     id: 'academico',
     name: 'Acadêmico',
-    description:
-      'Estude na Grande Biblioteca Universal. Conhecimento antigo, mapas estelares e segredos de guerra valem ouro.',
+    description: 'Estude esquemas, pergaminhos e tomos. A carreira amplia o XP global e prepara os blueprints avançados.',
     icon: '🎓',
-    energyCost: 6,
-    durationMin: 60,
-    rankNames: ['Estudante', 'Bacharel', 'Mestre', 'Doutor', 'Reitor'],
+    attribute: null,
   },
   {
     id: 'policial',
     name: 'Policial',
-    description:
-      'Patrulhe as cidades pela Defesa da Terra. Turnos longos, bandidos ousados e um salário que cresce com a patente.',
+    description: 'Patrulhe e produza fibras, blindagens e relatórios. Cada hora de carreira fortalece sua Defesa.',
     icon: '👮',
-    energyCost: 6,
-    durationMin: 60,
-    rankNames: ['Recruta', 'Soldado', 'Sargento', 'Capitão', 'Comandante'],
+    attribute: 'defense',
   },
   {
     id: 'atleta',
     name: 'Atleta',
-    description:
-      'Treine no Ginásio do Torneio Mundial: exibições, patrocínios e medalhas para quem supera os próprios limites.',
+    description: 'Treine com pesos, suplementos e fluidos extremos. Cada hora de carreira fortalece sua Força.',
     icon: '🏃',
-    energyCost: 6,
-    durationMin: 60,
-    rankNames: ['Novato', 'Amador', 'Profissional', 'Campeão', 'Lenda Olímpica'],
+    attribute: 'strength',
   },
 ];
 
-/** Recompensas por rank (índice = rank - 1). Especificação v0.6 do usuário. */
-export const PROFESSION_RANKS: ProfessionRankRewards[] = [
-  // rank 1 (inicial)
-  { zeni: 300, xpPct: 0.1, dragonBallChance: 0.03, completionsToPromote: 3, promotionBonus: 0 },
-  // rank 2 — promoção +1.000
-  { zeni: 450, xpPct: 0.14, dragonBallChance: 0.04, completionsToPromote: 4, promotionBonus: 1_000 },
-  // rank 3 — promoção +3.000
-  { zeni: 675, xpPct: 0.18, dragonBallChance: 0.06, completionsToPromote: 5, promotionBonus: 3_000 },
-  // rank 4 — promoção +9.000
-  { zeni: 1010, xpPct: 0.22, dragonBallChance: 0.08, completionsToPromote: 6, promotionBonus: 9_000 },
-  // rank 5 (última promoção) — +30.000 e 5x o Zeni inicial
-  { zeni: 1500, xpPct: 0.25, dragonBallChance: 0.1, completionsToPromote: 0, promotionBonus: 30_000 },
+export const PROFESSION_LEVELS: ProfessionLevelRewards[] = [
+  { level: 1, hoursInLevel: 40, cumulativeHours: 40, zeniPerHour: 300, attributeMilliPerHour: 1000, xpPctPerHour: 0.010, dragonBallChance: 0.030, rareChance: 0.10 },
+  { level: 2, hoursInLevel: 60, cumulativeHours: 100, zeniPerHour: 450, attributeMilliPerHour: 1300, xpPctPerHour: 0.010, dragonBallChance: 0.040, rareChance: 0.10 },
+  { level: 3, hoursInLevel: 90, cumulativeHours: 190, zeniPerHour: 675, attributeMilliPerHour: 1700, xpPctPerHour: 0.015, dragonBallChance: 0.050, rareChance: 0.13 },
+  { level: 4, hoursInLevel: 135, cumulativeHours: 325, zeniPerHour: 1010, attributeMilliPerHour: 2200, xpPctPerHour: 0.015, dragonBallChance: 0.060, rareChance: 0.13 },
+  { level: 5, hoursInLevel: 200, cumulativeHours: 525, zeniPerHour: 1500, attributeMilliPerHour: 2800, xpPctPerHour: 0.020, dragonBallChance: 0.070, rareChance: 0.16 },
+  { level: 6, hoursInLevel: 300, cumulativeHours: 825, zeniPerHour: 2100, attributeMilliPerHour: 3500, xpPctPerHour: 0.020, dragonBallChance: 0.080, rareChance: 0.16 },
+  { level: 7, hoursInLevel: 450, cumulativeHours: 1275, zeniPerHour: 2900, attributeMilliPerHour: 4400, xpPctPerHour: 0.025, dragonBallChance: 0.085, rareChance: 0.20 },
+  { level: 8, hoursInLevel: 675, cumulativeHours: 1950, zeniPerHour: 4000, attributeMilliPerHour: 5500, xpPctPerHour: 0.025, dragonBallChance: 0.090, rareChance: 0.20 },
+  { level: 9, hoursInLevel: 1000, cumulativeHours: 2950, zeniPerHour: 5500, attributeMilliPerHour: 6800, xpPctPerHour: 0.030, dragonBallChance: 0.095, rareChance: 0.22 },
+  { level: 10, hoursInLevel: 1500, cumulativeHours: 4450, zeniPerHour: 7500, attributeMilliPerHour: 8500, xpPctPerHour: 0.035, dragonBallChance: 0.100, rareChance: 0.25 },
 ];
 
-export const PROFESSION_MAX_RANK = PROFESSION_RANKS.length;
+export const PROFESSION_MAX_LEVEL = 10;
+export const PROFESSION_MASTERY_HOURS = 4_450;
+
+export const PROFESSION_SHIFTS: ProfessionShiftDef[] = [
+  { hours: 1, efficiency: 1.00 },
+  { hours: 2, efficiency: 0.95 },
+  { hours: 4, efficiency: 0.85 },
+  { hours: 8, efficiency: 0.70 },
+];
+
+export const PROFESSION_MATERIALS: ProfessionMaterialDef[] = [
+  { id: 'erva_medicinal', name: 'Erva Medicinal', professionId: 'agricultor', rarity: 'common', tier: 1, icon: '🌿' },
+  { id: 'agua_purificada', name: 'Água Purificada', professionId: 'agricultor', rarity: 'common', tier: 2, icon: '💧' },
+  { id: 'semente_deuses_virgem', name: 'Semente dos Deuses Virgem', professionId: 'agricultor', rarity: 'rare', tier: 3, icon: '🌱' },
+  { id: 'essencia_arvore_poder', name: 'Essência da Árvore do Poder', professionId: 'agricultor', rarity: 'rare', tier: 5, icon: '🌳' },
+
+  { id: 'liga_metais_leves', name: 'Liga de Metais Leves', professionId: 'cientista', rarity: 'common', tier: 1, icon: '🔩' },
+  { id: 'microchip_controle', name: 'Microchip de Controle', professionId: 'cientista', rarity: 'common', tier: 2, icon: '💾' },
+  { id: 'capsula_vazia_tipo_b', name: 'Cápsula Vazia Tipo-B', professionId: 'cientista', rarity: 'rare', tier: 3, icon: '💊' },
+  { id: 'cristal_energia_ki', name: 'Cristal de Energia Ki', professionId: 'cientista', rarity: 'rare', tier: 5, icon: '💠' },
+
+  { id: 'fibra_reforcada', name: 'Fibra Reforçada', professionId: 'policial', rarity: 'common', tier: 1, icon: '🧵' },
+  { id: 'algema_carbono', name: 'Algema de Carbono', professionId: 'policial', rarity: 'common', tier: 2, icon: '⛓️' },
+  { id: 'kevlar_alienigena', name: 'Kevlar Alienígena', professionId: 'policial', rarity: 'rare', tier: 3, icon: '🛡️' },
+  { id: 'relatorio_ameaca_global', name: 'Relatório de Ameaça Global', professionId: 'policial', rarity: 'rare', tier: 5, icon: '📋' },
+
+  { id: 'faixa_pressao', name: 'Faixa de Pressão', professionId: 'atleta', rarity: 'common', tier: 1, icon: '🥋' },
+  { id: 'proteina_concentrada', name: 'Proteína Concentrada', professionId: 'atleta', rarity: 'common', tier: 2, icon: '🥤' },
+  { id: 'pesos_gravidade_10x', name: 'Pesos de Gravidade 10x', professionId: 'atleta', rarity: 'rare', tier: 3, icon: '🏋️' },
+  { id: 'fluido_recuperacao_extrema', name: 'Fluido de Recuperação Extrema', professionId: 'atleta', rarity: 'rare', tier: 5, icon: '🧪' },
+
+  { id: 'papel_pergaminho', name: 'Papel de Pergaminho', professionId: 'academico', rarity: 'common', tier: 1, icon: '📜' },
+  { id: 'tinta_arcana', name: 'Tinta Arcana', professionId: 'academico', rarity: 'common', tier: 2, icon: '🖋️' },
+  { id: 'esquema_avancado_engenharia', name: 'Esquema Avançado de Engenharia', professionId: 'academico', rarity: 'rare', tier: 3, icon: '📐' },
+  { id: 'fragmento_tomo_ancestral', name: 'Fragmento de Tomo Ancestral', professionId: 'academico', rarity: 'rare', tier: 5, icon: '📖' },
+];
 
 export function getProfession(id: string): ProfessionDef | undefined {
   return PROFESSIONS.find((p) => p.id === id);
 }
 
-/** Título do rank atual da profissão (exibido na UI). */
-export function professionRankTitle(def: ProfessionDef, rank: number): string {
-  const idx = Math.min(PROFESSION_MAX_RANK, Math.max(1, Math.floor(rank))) - 1;
-  return def.rankNames[idx];
-}
-
-/** XP exato de uma conclusão no rank dado (fração do nível ATUAL). */
-export function professionXpReward(rank: number, playerLevel: number): number {
-  const idx = Math.min(PROFESSION_MAX_RANK, Math.max(1, Math.floor(rank))) - 1;
-  return Math.max(1, Math.ceil(xpToNextLevel(playerLevel) * PROFESSION_RANKS[idx].xpPct));
+export function getProfessionMaterial(id: string): ProfessionMaterialDef | undefined {
+  return PROFESSION_MATERIALS.find((m) => m.id === id);
 }
 
 // =====================================================================

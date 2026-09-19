@@ -2,7 +2,7 @@
 
 import { HpRecovery } from './HpRecovery';
 import { useEffect } from 'react';
-import { RACES, getItem, getTechnique, trainingCost, getStrategy, getProfession, professionRankTitle } from '@/lib/game/constants';
+import { RACES, getItem, getTechnique, trainingCost, getStrategy, getProfession, professionLevel, professionLevelTitle } from '@/lib/game/constants';
 import { equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { useServerNow } from '@/lib/game/clock';
 import type { PlayerView } from '@/lib/game/types';
@@ -328,7 +328,7 @@ export function Dashboard({
             <div className="flex-1 min-w-0">
               <p className="font-heading text-amber-100">
                 {activeProfession.name} —{' '}
-                {professionRankTitle(activeProfession, player.professions?.[activeProfession.id]?.rank ?? 1)}
+                {professionLevelTitle(professionLevel(player.professions?.[activeProfession.id]))}
               </p>
               {missionDone ? (
                 <p className="text-sm text-emerald-300 mt-0.5">Pagamento pronto! Colete na aba Profissões.</p>

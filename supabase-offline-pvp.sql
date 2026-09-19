@@ -28,7 +28,8 @@ begin
             'trainingsDone','guildDonated','missionsDone','dragonBalls','items','techniques',
             'loadout','strategy','missionsCompleted','professions','transformationId',
             'transformationsOwned','cosmeticsEquipped','cosmeticsOwned','missionId',
-            'missionEndsAt','lastRegen','lastRegenHp','quests','achievementsClaimed',
+            'missionStartedAt','missionEndsAt','missionHours','materials',
+            'lastRegen','lastRegenHp','quests','achievementsClaimed',
             'talents','miracleWins','davidWins','tournament','tournamentTitles','tournamentRoundWins'
           ]))
       ) order by p.criado_em) from public.personagens p where p.user_id = owner_id

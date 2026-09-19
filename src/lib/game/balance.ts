@@ -62,7 +62,9 @@ export const CREATION_DEFAULTS = {
   loadout: '{"1":null,"2":null,"3":null,"S":null}',
   strategy: 'balanced',
   missionId: null,
+  missionStartedAt: null,
   missionEndsAt: null,
+  missionHours: null,
   missionsCompleted: '[]',
   professions: '{}', // v0.6: progresso de profissões zera no reset de balanceamento
   transformationId: null,
@@ -111,6 +113,7 @@ export async function resetCharacterProgression(
     report.questsCleared += await txOrDb.questProgress
       .deleteMany({ where: { playerId: p.id } })
       .then((r) => r.count);
+    await txOrDb.inventoryStack.deleteMany({ where: { playerId: p.id } });
   }
 
   // bots: recalibra level/stats/zeni pela MESMA fórmula do ensureSeed

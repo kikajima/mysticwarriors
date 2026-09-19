@@ -90,7 +90,7 @@ describe('v0.8→v0.9.6 — serializeProgressForCloud (servidor → nuvem)', () 
     expect(c.items.consumables['senzu']).toBe(2);
     expect(c.techniques).toContain('kamehameha');
     expect(c.missionsCompleted).toContain('agricultor');
-    expect(c.professions['agricultor']).toEqual({ rank: 2, completions: 1 });
+    expect(c.professions['agricultor']).toEqual({ hours: 4, lifetimeHours: 4, prestige: 0, statMilliRemainder: 0, cycleStatGranted: 0 });
     // v0.9.6: a posse também viaja NO personagem
     expect(c.cosmeticsOwned).toEqual(['aura_ki_pulsante']);
     expect(snap.cosmeticsOwned).toEqual(['aura_ki_pulsante']);
@@ -117,7 +117,7 @@ describe('v0.8→v0.9.6 — serializeProgressForCloud (servidor → nuvem)', () 
     expect(data.name).toBe('Son Goku');
     expect(data.level).toBe(12);
     expect(data.zeni).toBe(5000);
-    expect(JSON.parse(data.professions)).toEqual({ agricultor: { rank: 2, completions: 1 } });
+    expect(JSON.parse(data.professions)).toEqual({ agricultor: { hours: 4, lifetimeHours: 4, prestige: 0, statMilliRemainder: 0, cycleStatGranted: 0 } });
     expect(JSON.parse(data.missionsCompleted)).toEqual(['agricultor']);
   });
 });
@@ -232,7 +232,7 @@ describe('v0.8 — sanitizeCloudProgress (nuvem não confiável → válido)', (
     expect(() => sanitizeCloudProgress([1, 2])).toThrow(CloudValidationError);
   });
 
-  test('profissões desconhecidas são descartadas; ranks e completions clampados', () => {
+  test('profissões desconhecidas são descartadas; formato legado migra para horas', () => {
     const out = sanitizeCloudProgress({
       characters: [
         {
@@ -245,7 +245,7 @@ describe('v0.8 — sanitizeCloudProgress (nuvem não confiável → válido)', (
         },
       ],
     });
-    expect(out.characters[0].professions['agricultor']).toEqual({ rank: 5, completions: 0 });
+    expect(out.characters[0].professions['agricultor']).toEqual({ hours: 18, lifetimeHours: 18, prestige: 0, statMilliRemainder: 0, cycleStatGranted: 0 });
     expect(out.characters[0].professions['profissao_falsa']).toBeUndefined();
   });
 

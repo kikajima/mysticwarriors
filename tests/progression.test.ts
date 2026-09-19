@@ -5,7 +5,7 @@ import { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS } from '@/lib/game/content/qu
 import { TRANSFORMATIONS, getTransformation, transformationsForRace } from '@/lib/game/content/transformations';
 import { RACES, RACE_LIST } from '@/lib/game/content/races';
 import { TECHNIQUES, TRAINING_MASTERS } from '@/lib/game/content/techniques';
-import { PROFESSIONS, PROFESSION_RANKS, ENEMIES, SHOP_ITEMS, xpToNextLevel, baseTrainingCost } from '@/lib/game/content/world';
+import { PROFESSIONS, PROFESSION_LEVELS, PROFESSION_SHIFTS, PROFESSION_MATERIALS, ENEMIES, SHOP_ITEMS, xpToNextLevel, baseTrainingCost } from '@/lib/game/content/world';
 import { randomWarriorName, BOTS } from '@/lib/game/content/names';
 import { guildLevelFromXp, guildXpToNext } from '@/lib/game/actions';
 
@@ -88,25 +88,19 @@ describe('Transformações (árvore)', () => {
 });
 
 describe('Integridade do conteúdo', () => {
-  test('profissões: exatamente 5, todas com turnos de 1 hora', () => {
+  test('profissões: exatamente 5 e especializações únicas', () => {
     expect(PROFESSIONS.length).toBe(5);
-    for (const p of PROFESSIONS) {
-      expect(p.durationMin).toBe(60);
-      expect(p.energyCost).toBeGreaterThan(0);
-      expect(new Set(p.rankNames).size).toBe(5); // 5 títulos distintos
-    }
+    expect(PROFESSIONS.filter((p) => p.attribute === null).map((p) => p.id)).toEqual(['academico']);
+    expect(new Set(PROFESSIONS.filter((p) => p.attribute).map((p) => p.attribute)).size).toBe(4);
   });
 
-  test('profissões: ranks pagam 300 → 1500 (5x) com bônus 1k/3k/9k/30k', () => {
-    expect(PROFESSION_RANKS[0].zeni).toBe(300);
-    expect(PROFESSION_RANKS[4].zeni).toBe(1500);
-    expect(PROFESSION_RANKS[4].zeni / PROFESSION_RANKS[0].zeni).toBe(5);
-    // aumento gradual (sem degraus que pulam mais que 60%)
-    for (let i = 1; i < PROFESSION_RANKS.length; i++) {
-      expect(PROFESSION_RANKS[i].zeni).toBeGreaterThan(PROFESSION_RANKS[i - 1].zeni);
-    }
-    expect(PROFESSION_RANKS.slice(1).map((r) => r.promotionBonus)).toEqual([1_000, 3_000, 9_000, 30_000]);
-    expect(PROFESSION_RANKS[0].promotionBonus).toBe(0);
+  test('profissões: carreira 1–10 e turnos 1/2/4/8 são íntegros', () => {
+    expect(PROFESSION_LEVELS).toHaveLength(10);
+    expect(PROFESSION_LEVELS[0].zeniPerHour).toBe(300);
+    expect(PROFESSION_LEVELS[9].zeniPerHour).toBe(7500);
+    expect(PROFESSION_LEVELS[9].cumulativeHours).toBe(4450);
+    expect(PROFESSION_SHIFTS.map((s) => s.hours)).toEqual([1, 2, 4, 8]);
+    expect(PROFESSION_MATERIALS).toHaveLength(20);
   });
 
   test('inimigos: 9 NPCs com níveis crescentes e recompensas positivas', () => {

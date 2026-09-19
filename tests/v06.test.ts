@@ -2,17 +2,26 @@
 import { describe, expect, test } from 'bun:test';
 import {
   PROFESSIONS,
-  PROFESSION_RANKS,
-  PROFESSION_MAX_RANK,
+  PROFESSION_LEVELS,
+  PROFESSION_MAX_LEVEL,
+  PROFESSION_MASTERY_HOURS,
+  PROFESSION_SHIFTS,
+  PROFESSION_MATERIALS,
   getProfession,
-  professionRankTitle,
-  professionXpReward,
-  professionEnergyCostOf,
   REGEN,
   BATTLE_ENERGY_COST,
-  PROFESSION_ENERGY_COST,
+  xpToNextLevel,
 } from '@/lib/game/content/world';
-import { parseProfessions, serializeProfessions, professionRewards, professionEnergyCost } from '@/lib/game/engine';
+import {
+  academicXpMultiplier,
+  legacyProfessionHours,
+  parseProfessions,
+  professionLevelForHours,
+  professionShiftRewards,
+  professionXpPerHour,
+  rollProfessionLoot,
+  serializeProfessions,
+} from '@/lib/game/professionCareer';
 import { BALANCE_VERSION } from '@/lib/game/rules';
 import { COSMETICS, getCosmetic, equippedCosmetic, COSMETIC_SLOTS } from '@/lib/game/content/cosmetics';
 
@@ -21,105 +30,111 @@ import { COSMETICS, getCosmetic, equippedCosmetic, COSMETIC_SLOTS } from '@/lib/
 // cosméticos de aura (ex-grátis) e política de reset por balanceamento.
 // =====================================================================
 
-describe('PROFISSÕES v0.6 — conteúdo', () => {
-  test('as 5 profissões pedidas existem com ids estáveis', () => {
-    const ids = PROFESSIONS.map((p) => p.id).sort();
-    expect(ids).toEqual(['academico', 'agricultor', 'atleta', 'cientista', 'policial']);
-    expect(getProfession('agricultor')?.name).toBe('Agricultor');
-    expect(getProfession('cientista')?.name).toBe('Cientista');
+describe('PROFISSÕES — carreira 1–10', () => {
+  test('as 5 profissões existem com especializações corretas', () => {
+    const byId = Object.fromEntries(PROFESSIONS.map((p) => [p.id, p]));
+    expect(Object.keys(byId).sort()).toEqual(['academico', 'agricultor', 'atleta', 'cientista', 'policial']);
+    expect(byId.atleta.attribute).toBe('strength');
+    expect(byId.cientista.attribute).toBe('ki');
+    expect(byId.agricultor.attribute).toBe('speed');
+    expect(byId.policial.attribute).toBe('defense');
+    expect(byId.academico.attribute).toBeNull();
     expect(getProfession('academico')?.name).toBe('Acadêmico');
-    expect(getProfession('policial')?.name).toBe('Policial');
-    expect(getProfession('atleta')?.name).toBe('Atleta');
   });
 
-  test('todas as profissões: turno de 1 hora e custo de 6 energia', () => {
-    for (const p of PROFESSIONS) {
-      expect(p.durationMin).toBe(60);
-      expect(p.energyCost).toBe(PROFESSION_ENERGY_COST);
-    }
+  test('10 níveis fecham exatamente em 4.450 horas', () => {
+    expect(PROFESSION_MAX_LEVEL).toBe(10);
+    expect(PROFESSION_LEVELS).toHaveLength(10);
+    expect(PROFESSION_LEVELS.map((r) => r.hoursInLevel)).toEqual([40, 60, 90, 135, 200, 300, 450, 675, 1000, 1500]);
+    expect(PROFESSION_LEVELS.at(-1)?.cumulativeHours).toBe(PROFESSION_MASTERY_HOURS);
+    expect(PROFESSION_MASTERY_HOURS).toBe(4450);
   });
 
-  test('ranks: 5 níveis, Zeni 300→1500 (5x gradual), bônus 1k/3k/9k/30k', () => {
-    expect(PROFESSION_MAX_RANK).toBe(5);
-    expect(PROFESSION_RANKS[0].zeni).toBe(300);
-    expect(PROFESSION_RANKS[4].zeni).toBe(1500);
-    expect(PROFESSION_RANKS[4].zeni).toBe(PROFESSION_RANKS[0].zeni * 5);
-    for (let i = 1; i < 5; i++) {
-      expect(PROFESSION_RANKS[i].zeni).toBeGreaterThan(PROFESSION_RANKS[i - 1].zeni);
-    }
-    expect(PROFESSION_RANKS.map((r) => r.promotionBonus)).toEqual([0, 1_000, 3_000, 9_000, 30_000]);
+  test('limiares de nível são derivados das horas sem off-by-one', () => {
+    expect(professionLevelForHours(0)).toBe(1);
+    expect(professionLevelForHours(39)).toBe(1);
+    expect(professionLevelForHours(40)).toBe(2);
+    expect(professionLevelForHours(99)).toBe(2);
+    expect(professionLevelForHours(100)).toBe(3);
+    expect(professionLevelForHours(2949)).toBe(9);
+    expect(professionLevelForHours(2950)).toBe(10);
+    expect(professionLevelForHours(4450)).toBe(10);
   });
 
-  test('promoções exigem 3/4/5/6 turnos — 18h no total por profissão', () => {
-    expect(PROFESSION_RANKS.slice(0, 4).map((r) => r.completionsToPromote)).toEqual([3, 4, 5, 6]);
-    expect(PROFESSION_RANKS[4].completionsToPromote).toBe(0); // topo não promove mais
-    const total = PROFESSION_RANKS.slice(0, 4).reduce((s, r) => s + r.completionsToPromote, 0);
-    expect(total).toBe(18);
+  test('turnos aceitos e eficiência são 1/2/4/8h = 100/95/85/70%', () => {
+    expect(PROFESSION_SHIFTS.map((s) => [s.hours, s.efficiency])).toEqual([
+      [1, 1],
+      [2, 0.95],
+      [4, 0.85],
+      [8, 0.70],
+    ]);
   });
 
-  test('títulos de rank: 5 distintos por profissão e rank máximo não estoura', () => {
-    for (const p of PROFESSIONS) {
-      expect(new Set(p.rankNames).size).toBe(5);
-      expect(professionRankTitle(p, 1)).toBe(p.rankNames[0]);
-      expect(professionRankTitle(p, 5)).toBe(p.rankNames[4]);
-      expect(professionRankTitle(p, 99)).toBe(p.rankNames[4]); // clamp
-    }
-  });
-});
-
-describe('PROFISSÕES v0.6 — recompensas e energia', () => {
-  test('XP por turno é fração do nível ATUAL (10% → 25%) — balanceado em qualquer nível', () => {
-    // nível 1: 80 XP necessários → 8..20 XP por turno
-    expect(professionXpReward(1, 1)).toBe(8);
-    expect(professionXpReward(5, 1)).toBe(20);
-    // nível 20: 8.311 XP → 832..2078 por turno
-    expect(professionXpReward(1, 20)).toBe(832);
-    expect(professionXpReward(5, 20)).toBe(2078);
-    // a fração cresce com o rank
-    for (let lvl = 1; lvl <= 50; lvl += 7) {
-      for (let r = 2; r <= 5; r++) {
-        expect(professionXpReward(r, lvl)).toBeGreaterThan(professionXpReward(r - 1, lvl));
-      }
-    }
+  test('XP/h aprovado: 1% → 3,5% do próximo nível', () => {
+    expect(PROFESSION_LEVELS.map((r) => r.xpPctPerHour)).toEqual([
+      0.01, 0.01, 0.015, 0.015, 0.02, 0.02, 0.025, 0.025, 0.03, 0.035,
+    ]);
+    expect(professionXpPerHour(1, 1)).toBe(Math.ceil(xpToNextLevel(1) * 0.01));
+    expect(professionXpPerHour(10, 20)).toBe(Math.ceil(xpToNextLevel(20) * 0.035));
   });
 
-  test('professionRewards: Zeni fixo do rank + XP do nível + chance de esfera', () => {
-    const r = professionRewards(3, 20, 'saiyajin', () => 0.5); // rng nunca acha esfera
-    expect(r.zeni).toBe(675);
-    expect(r.xp).toBe(professionXpReward(3, 20));
-    expect(r.foundDragonBall).toBe(false); // 0.5 >= 0.06
-
-    const lucky = professionRewards(5, 20, 'saiyajin', () => 0.01); // sempre acha
-    expect(lucky.foundDragonBall).toBe(true);
-    expect(lucky.zeni).toBe(1500);
+  test('chance rara aprovada: 10/13/16/20/22/25%', () => {
+    expect(PROFESSION_LEVELS.map((r) => r.rareChance)).toEqual([
+      0.10, 0.10, 0.13, 0.13, 0.16, 0.16, 0.20, 0.20, 0.22, 0.25,
+    ]);
   });
 
-  test('professionRewards: androide ganha +5% de Zeni (perk racial respeitado)', () => {
-    const base = professionRewards(1, 10, 'saiyajin', () => 0.99);
-    const androide = professionRewards(1, 10, 'androide', () => 0.99);
-    expect(androide.zeni).toBe(Math.round(base.zeni * 1.05));
+  test('turno que cruza nível calcula hora por hora', () => {
+    const r = professionShiftRewards(38, 4, 20);
+    expect(r.hourLevels).toEqual([1, 1, 2, 2]);
+    expect(r.careerHoursAdded).toBe(4);
+    expect(r.lifetimeHoursAdded).toBe(4);
   });
 
-  test('custo de energia: 6 base, 5 para androide (-15%) — UI e servidor concordam', () => {
-    expect(professionEnergyCost('saiyajin')).toBe(6);
-    expect(professionEnergyCost('androide')).toBe(5);
-    expect(professionEnergyCostOf(6, 'androide')).toBe(professionEnergyCost('androide'));
-    expect(professionEnergyCostOf(6, 'humano')).toBe(6);
-  });
-
-  test('parseProfessions: robustez total (null/lixo/ids inválidos/clamps)', () => {
-    expect(parseProfessions(null)).toEqual({});
-    expect(parseProfessions('')).toEqual({});
-    expect(parseProfessions('lixo json')).toEqual({});
-    expect(parseProfessions('[]')).toEqual({});
-    expect(parseProfessions('{"inexistente":{"rank":3,"completions":1}}')).toEqual({});
-    const ok = parseProfessions('{"agricultor":{"rank":2,"completions":1},"atleta":{"rank":99,"completions":-5}}');
-    expect(ok.agricultor).toEqual({ rank: 2, completions: 1 });
-    expect(ok.atleta).toEqual({ rank: 5, completions: 0 }); // clamp no máximo
-    // round-trip
-    expect(parseProfessions(serializeProfessions({ policial: { rank: 4, completions: 3 } }))).toEqual({
-      policial: { rank: 4, completions: 3 },
+  test('migração legada preserva horas sem conceder atributos retroativos', () => {
+    expect(legacyProfessionHours(1, 2)).toBe(2);
+    expect(legacyProfessionHours(2, 1)).toBe(4);
+    expect(legacyProfessionHours(4, 2)).toBe(14);
+    const migrated = parseProfessions('{"atleta":{"rank":4,"completions":2}}').atleta;
+    expect(migrated).toEqual({
+      hours: 14,
+      lifetimeHours: 14,
+      prestige: 0,
+      statMilliRemainder: 0,
+      cycleStatGranted: 0,
     });
+    expect(parseProfessions(serializeProfessions({ atleta: migrated })).atleta).toEqual(migrated);
+  });
+
+  test('Acadêmico só ativa após trabalhar e escala +0,5% por nível', () => {
+    expect(academicXpMultiplier({})).toBe(1);
+    expect(academicXpMultiplier({
+      academico: { hours: 0, lifetimeHours: 0, prestige: 0, statMilliRemainder: 0, cycleStatGranted: 0 },
+    })).toBe(1);
+    expect(academicXpMultiplier({
+      academico: { hours: 1, lifetimeHours: 1, prestige: 0, statMilliRemainder: 0, cycleStatGranted: 0 },
+    })).toBeCloseTo(1.005);
+    expect(academicXpMultiplier({
+      academico: { hours: 2950, lifetimeHours: 2950, prestige: 0, statMilliRemainder: 0, cycleStatGranted: 0 },
+    })).toBeCloseTo(1.05);
+  });
+
+  test('catálogo tem 4 materiais por profissão, ids únicos', () => {
+    expect(new Set(PROFESSION_MATERIALS.map((m) => m.id)).size).toBe(PROFESSION_MATERIALS.length);
+    for (const p of PROFESSIONS) {
+      const drops = PROFESSION_MATERIALS.filter((m) => m.professionId === p.id);
+      expect(drops).toHaveLength(4);
+      expect(drops.filter((m) => m.rarity === 'common')).toHaveLength(2);
+      expect(drops.filter((m) => m.rarity === 'rare')).toHaveLength(2);
+    }
+  });
+
+  test('loot comum é garantido 1–2 por hora', () => {
+    // RNG determinístico alto evita raro no nível 1 e escolhe qty 2.
+    const loot = rollProfessionLoot('cientista', [1, 1, 1, 1], 1, () => 0.99);
+    const commonIds = new Set(PROFESSION_MATERIALS.filter((m) => m.professionId === 'cientista' && m.rarity === 'common').map((m) => m.id));
+    const commonQty = loot.filter((x) => commonIds.has(x.itemId)).reduce((s, x) => s + x.quantity, 0);
+    expect(commonQty).toBe(8);
   });
 });
 
@@ -135,8 +150,8 @@ describe('ENERGIA v0.6 — 5 minutos por ponto e batalhas gastam energia', () =>
   test('orçamento diário coerente: 288 pontos/dia de regen sustenta o jogo', () => {
     const daily = Math.floor((24 * 3600) / REGEN.energySeconds);
     expect(daily).toBe(288);
-    // 20 batalhas + 3 turnos de profissão + 15 treinos = 60+18+45 = 123 < 288
-    const gasto = 20 * BATTLE_ENERGY_COST + 3 * PROFESSION_ENERGY_COST + 15 * 3;
+    // Profissões não gastam energia: 20 batalhas + 15 treinos = 60+45.
+    const gasto = 20 * BATTLE_ENERGY_COST + 15 * 3;
     expect(gasto).toBeLessThan(daily);
   });
 });

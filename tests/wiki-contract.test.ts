@@ -31,6 +31,10 @@ import {
   SHOP_ITEMS,
   TRAIN_ENERGY_COST,
   ENEMIES,
+  PROFESSION_LEVELS,
+  PROFESSION_SHIFTS,
+  PROFESSION_MATERIALS,
+  PROFESSION_MASTERY_HOURS,
   xpToNextLevel,
 } from '../src/lib/game/content/world';
 import { COMBAT, MAX_ROUNDS, BASIC_ENERGY_KI_COST } from '../src/lib/game/engine';
@@ -339,6 +343,23 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
   });
 });
 
+  test('Profissões: wiki publica carreira 1–10, turnos e loot a partir das constantes reais', () => {
+    const t = wikiText('profissoes');
+    expect(t).toContain(`${PROFESSION_MASTERY_HOURS.toLocaleString('pt-BR')} horas`);
+    for (const shift of PROFESSION_SHIFTS) {
+      expect(t).toContain(`${shift.hours}h`);
+      expect(t).toContain(`${Math.round(shift.efficiency * 100)}%`);
+    }
+    expect(t).toContain(`${(PROFESSION_LEVELS[0].xpPctPerHour * 100).toLocaleString('pt-BR')}%`);
+    expect(t).toContain(`${(PROFESSION_LEVELS[9].xpPctPerHour * 100).toLocaleString('pt-BR')}%`);
+    expect(t).toContain(`${(PROFESSION_LEVELS[9].rareChance * 100).toLocaleString('pt-BR')}%`);
+    expect(t).toContain('1–2 materiais comuns garantidos');
+    expect(t).toContain('um único teste ao concluir o turno');
+    for (const material of PROFESSION_MATERIALS) {
+      expect(t).toContain(material.name);
+    }
+  });
+
 // =====================================================================
 // C) CONTRATOS DE ESTRUTURA — âncoras estáveis, "Em resumo", busca
 // =====================================================================
@@ -379,6 +400,8 @@ describe('CONTRATO C — estrutura da wiki (âncoras, resumo, busca)', () => {
     expect(wikiText('accoes-custos')).toContain('0 ⚡');
     expect(wikiText('fim-de-luta')).toContain(`${MAX_ROUNDS} rodadas`);
     expect(wikiText('impeto')).toContain('Quebra de Limite');
-    expect(wikiText('profissoes')).toContain('60 minutos reais');
+    expect(wikiText('profissoes')).toContain('1h');
+    expect(wikiText('profissoes')).toContain('8h');
+    expect(wikiText('profissoes')).toContain('Nível 10');
   });
 });
