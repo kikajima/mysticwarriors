@@ -148,8 +148,13 @@ describe('applyPendingMigrations (migrador de boot)', () => {
         datasources: { db: { url: `file:${dbPath}` } },
         log: ['error'],
       });
+      const migDir = path.join(process.cwd(), 'prisma', 'migrations');
+      const { readdirSync, readFileSync } = await import('fs');
+      const names = readdirSync(migDir).filter((n) => !n.includes('lock'));
       const applied = await applyPendingMigrations(client);
-      expect(applied).toBe(16); // inclui a remoção não destrutiva de freeHealDay
+      // Não fixe a quantidade: toda migration nova legítima deve entrar
+      // automaticamente neste contrato.
+      expect(applied).toBe(names.length);
 
       // tabela da última migração existe (professions, v0.6)
       const cols = (await client.$queryRawUnsafe('PRAGMA table_info(Player)')) as Array<{
@@ -166,11 +171,16 @@ describe('applyPendingMigrations (migrador de boot)', () => {
       }>;
       expect(accCols.some((c) => c.name === 'supabaseUserId')).toBe(true);
 
+      // schema de guildas avançadas também existe num banco nascido do zero
+      const guildTables = (await client.$queryRawUnsafe(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('GuildRole','GuildRoleAssignment','GuildInvitation','GuildActionReceipt')"
+      )) as Array<{ name: string }>;
+      expect(new Set(guildTables.map((row) => row.name))).toEqual(
+        new Set(['GuildRole', 'GuildRoleAssignment', 'GuildInvitation', 'GuildActionReceipt'])
+      );
+
       // _prisma_migrations registrado com checksums iguais aos arquivos
       const { createHash } = await import('crypto');
-      const { readdirSync, readFileSync } = await import('fs');
-      const migDir = path.join(process.cwd(), 'prisma', 'migrations');
-      const names = readdirSync(migDir).filter((n) => !n.includes('lock'));
       const rows = (await client.$queryRawUnsafe(
         'SELECT migration_name, checksum FROM _prisma_migrations'
       )) as Array<{ migration_name: string; checksum: string }>;
