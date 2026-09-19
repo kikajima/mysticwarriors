@@ -18,8 +18,12 @@ export async function GET(request: Request) {
       await requirePlayer(auth, playerId);
     }
 
-    const boss = await getBossView(playerId);
-    const season = await getSeasonView(playerId);
+    // Boss e temporada são independentes. No PostgreSQL remoto, executar
+    // em paralelo evita somar a latência dos dois painéis.
+    const [boss, season] = await Promise.all([
+      getBossView(playerId),
+      getSeasonView(playerId),
+    ]);
     return ok({ boss, season });
   } catch (error) {
     return toErrorResponse(error);
