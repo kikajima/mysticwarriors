@@ -8,7 +8,7 @@ services:
     buildCommand: export MW_BUILD_PHASE=1 && export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:5432/postgres?schema=game&sslmode=require' && bun install --frozen-lockfile && bun run db:generate && bun run build
     startCommand: bun run start
     healthCheckPath: /api/health
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: off
     maxShutdownDelaySeconds: 30
     numInstances: 1
     envVars:
