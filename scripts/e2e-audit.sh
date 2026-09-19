@@ -271,31 +271,10 @@ echo "RESULTADO: $PASS passaram / $FAIL falharam"
 echo "==========================================="
 
 # limpeza seletiva: SOMENTE entidades ligadas aos nomes QA desta execução.
-# Nunca use filtros amplos (ex.: username=null), pois poderiam atingir jogadores reais.
-bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-const qaNames = ['AuditA$TS','AuditB$TS','GuestAudit$TS'];
-const players = await db.player.findMany({
-  where: { name: { in: qaNames } },
-  select: { id: true, accountId: true, guildId: true },
-});
-const playerIds = players.map(p => p.id);
-const accountIds = [...new Set(players.map(p => p.accountId))];
-const guildIds = [...new Set(players.map(p => p.guildId).filter(Boolean))];
-
-if (guildIds.length) {
-  await db.guildInvitation.deleteMany({ where: { guildId: { in: guildIds } } });
-  await db.guildRole.deleteMany({ where: { guildId: { in: guildIds } } });
-  await db.guildDonation.deleteMany({ where: { guildId: { in: guildIds } } });
+# Nunca usa prefixos amplos nem contas genéricas.
+bun scripts/e2e-db.ts cleanup-run "$TS" >/dev/null 2>&1 || {
+  echo "⚠ limpeza QA da execução $TS falhou; rode manualmente: bun scripts/e2e-db.ts cleanup-run $TS"
 }
-if (playerIds.length) await db.player.deleteMany({ where: { id: { in: playerIds } } });
-if (guildIds.length) await db.guild.deleteMany({ where: { id: { in: guildIds } } });
-if (accountIds.length) await db.account.deleteMany({ where: { id: { in: accountIds } } });
-
-await db.\$disconnect();
-console.log('cleanup QA seletivo ok');
-" 2>/dev/null
 
 rm -f $JAR_A $JAR_B $JAR_G
 
