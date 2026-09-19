@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync, copyFileSync } from 'fs';
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync, copyFileSync, existsSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
@@ -165,7 +165,8 @@ describe('applyPendingMigrations (migrador de boot)', () => {
       const { readdirSync, readFileSync } = await import('fs');
       const names = readdirSync(migDir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name);
+        .map((entry) => entry.name)
+        .filter((name) => existsSync(path.join(migDir, name, 'migration.sql')));
       const applied = await applyPendingMigrations(client);
       // O retorno informa quantas foram aplicadas nesta execução. A prova
       // autoritativa de completude vem abaixo, pela tabela de migrations.
