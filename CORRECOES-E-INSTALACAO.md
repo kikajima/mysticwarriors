@@ -33,7 +33,7 @@ Configuração de referência do serviço:
 ```text
 Repositorio: kikajima/mysticwarriors
 Branch: master
-Build: bun install --frozen-lockfile && bun run db:generate && bun run build
+Build: mkdir -p /tmp/mystic-warriors-build && touch /tmp/mystic-warriors-build/custom.db && export DATABASE_URL=file:/tmp/mystic-warriors-build/custom.db && bun install --frozen-lockfile && bun run db:generate && bun run build
 Start: bun run start
 Health check: /api/health
 Auto-deploy: After CI Checks Pass
@@ -43,8 +43,14 @@ SQLite: file:/var/data/custom.db
 ```
 
 O arquivo `render.yaml` contém a configuração declarativa de referência.
+O nome do serviço existente é `mysticwarriors`; não crie outro serviço para
+aplicar o Blueprint.
 
 ### Persistent Disk
+
+**Importante:** Persistent Disk só pode ser anexado a serviço Render pago.
+Um Web Service Free não oferece persistência de filesystem e, portanto, não
+é seguro para o SQLite autoritativo deste projeto.
 
 O filesystem normal do Render é efêmero. Somente arquivos gravados sob o
 mount do Persistent Disk sobrevivem a deploys e reinicializações.
@@ -125,11 +131,17 @@ bun run db:generate
 
 ## Primeiro deploy no serviço Render já existente
 
+**Estado legado observado em 2026-09-19:** serviço `mysticwarriors` no plano
+Free, banco em `file:/tmp/mystic-warriors/custom.db`, start command criando
+SQLite em `/tmp`, health check vazio e auto-deploy `On Commit`. Não faça
+redeploy desse estado sem exportar antes um backup do banco vivo.
+
 Antes de publicar uma mudança de infraestrutura:
 
 1. Confirme que o serviço Render está ligado ao repositório
    `kikajima/mysticwarriors` e à branch `master`.
-2. Confirme que existe Persistent Disk montado em `/var/data`.
+2. Confirme que o serviço já foi movido para um plano que suporte Persistent
+   Disk e que existe um disco montado em `/var/data`.
 3. Confirme que `/var/data/custom.db` é o banco que contém os jogadores
    atuais.
 4. Confirme `DATABASE_URL=file:/var/data/custom.db`.
