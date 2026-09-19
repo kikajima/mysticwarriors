@@ -32,6 +32,7 @@ import { AvatarDialog } from '@/components/game/AvatarDialog';
 import { ChatWidget } from '@/components/ChatWidget';
 import { equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { noteServerTime, serverNowMs } from '@/lib/game/clock';
+import { projectPlayerRegen } from '@/lib/game/clientRegen';
 import {
   getSupabaseSession,
   loadCloudProfile,
@@ -205,6 +206,21 @@ export default function PlayPage() {
   const battleOpenRef = useRef(false);
   const deferredPlayerRef = useRef<PlayerView | null>(null);
   const deferredToastsRef = useRef<Array<() => void>>([]);
+
+  // Regeneração visível em tempo real. O servidor continua autoritativo,
+  // mas a UI não precisa esperar a poll de 15s/F5 para mostrar um ponto de
+  // energia ou vida que já venceu pelo relógio.
+  useEffect(() => {
+    if (screen !== 'game' || !playerId) return;
+    const tick = () => {
+      if (battleOpenRef.current) return; // fundo permanece congelado na luta
+      setPlayer((prev) => (prev ? projectPlayerRegen(prev, serverNowMs()) : prev));
+    };
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [screen, playerId]);
+
   // indireção estável: o boot (deps []) chama handleAuthed via ref
   const handleAuthedRef = useRef<
     (account: AccountSession, chars: PlayerView[]) => Promise<void> | void
