@@ -484,6 +484,17 @@ model AdminActionLog {
   @@index([createdAt])
 }
 
+// ===== Backups do reset geral (PostgreSQL) =====
+
+model ServerResetBackup {
+  id        String   @id @default(cuid())
+  payload   Bytes
+  manifest  String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // ===== Analytics (eventos anônimos, sem dados pessoais) =====
 
 model AnalyticsEvent {
