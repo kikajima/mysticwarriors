@@ -150,7 +150,9 @@ describe('applyPendingMigrations (migrador de boot)', () => {
       });
       const migDir = path.join(process.cwd(), 'prisma', 'migrations');
       const { readdirSync, readFileSync } = await import('fs');
-      const names = readdirSync(migDir).filter((n) => !n.includes('lock'));
+      const names = readdirSync(migDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name);
       const applied = await applyPendingMigrations(client);
       // Não fixe a quantidade: toda migration nova legítima deve entrar
       // automaticamente neste contrato.
