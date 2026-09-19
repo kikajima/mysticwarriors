@@ -97,41 +97,22 @@ R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: applicatio
 check "compra sem diamantes → INSUFFICIENT_CRYSTALS" "INSUFFICIENT_CRYSTALS" "$R"
 
 # 4.1b dá 10 diamantes ao B → compra sai e zera o saldo
-bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-await db.player.update({ where: { id: '$PB' }, data: { crystals: 10 } });
-await db.\$disconnect();" 2>/dev/null
+bun scripts/e2e-db.ts set-crystals "$PB" 10 >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"senzu\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
 check "compra de Senzu com 10 diamantes" "True" "$R"
-CRY=$(bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-const p = await db.player.findUnique({ where: { id: '$PB' } });
-await db.\$disconnect();
-console.log(p.crystals);" 2>/dev/null)
+CRY=$(bun scripts/e2e-db.ts get-crystals "$PB" 2>/dev/null | tail -1)
 check "diamantes debitados (10 → 0)" "0" "$CRY"
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"senzu\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "segunda compra sem diamantes → INSUFFICIENT_CRYSTALS" "INSUFFICIENT_CRYSTALS" "$R"
 
 # 4.1c Zeni insuficiente (item em Zeni): Luvas custam 300; B fica com 100
-bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-await db.player.update({ where: { id: '$PB' }, data: { zeni: 100 } });
-await db.\$disconnect();" 2>/dev/null
+bun scripts/e2e-db.ts set-zeni "$PB" 100 >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"luvas\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "compra sem Zeni → INSUFFICIENT_ZENI" "INSUFFICIENT_ZENI" "$R"
 
 # 4.2 stat cap: dá 5.000.000 Zeni ao B direto no banco e usa 2000 elixires? — via wish não dá;
 # usa o método direto: treina até o cap é inviável. Teste funcional do cap: setar strength=999 no banco
-BUN_SET=$(bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-await db.player.update({ where: { id: '$PB' }, data: { level: 30, zeni: 5000000, strength: 999, defense: 999, speed: 999, ki: 999, items: JSON.stringify({weapon:null,armor:null,accessory:null,owned:['elixir_dragao'],consumables:{elixir_dragao:3}}) } });
-await db.\$disconnect();
-console.log('ok');
-" 2>&1 | tail -1)
+BUN_SET=$(bun scripts/e2e-db.ts setup-stat-cap "$PB" 2>&1 | tail -1)
 check "setup banco (zeni alto + atributos no cap)" "ok" "$BUN_SET"
 
 # usar Elixir com todos os atributos no cap → deve ser bloqueado (STAT_CAP_REACHED) e NÃO consumir o item
@@ -139,28 +120,12 @@ R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: applicatio
 check "Elixir com todos atributos no cap → STAT_CAP_REACHED" "STAT_CAP_REACHED" "$R"
 
 # reseta strength para 997 e usa elixir → deve ir a 999 e não passar
-bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-await db.player.update({ where: { id: '$PB' }, data: { strength: 997, defense: 500, speed: 500, ki: 500 } });
-await db.\$disconnect();
-" 2>/dev/null
+bun scripts/e2e-db.ts set-strength "$PB" 997 >/dev/null
 # prepara para os próximos testes: defesa baixa (treino barato) e ki alto
-bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-await db.player.update({ where: { id: '$PB' }, data: { defense: 10, speed: 10, ki: 500, level: 30 } });
-await db.\$disconnect();
-" 2>/dev/null
+bun scripts/e2e-db.ts set-combat-stats "$PB" >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"use_item\",\"itemId\":\"elixir_dragao\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["strength"])' 2>/dev/null)
 check "Elixir respeita o cap (997+2 → 999)" "999" "$R"
-R=$(bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-const p = await db.player.findUnique({ where: { id: '$PB' } });
-await db.\$disconnect();
-console.log(JSON.parse(p.items).consumables['elixir_dragao'] || 0);
-" 2>/dev/null)
+R=$(bun scripts/e2e-db.ts get-consumable "$PB" elixir_dragao 2>/dev/null | tail -1)
 check "Elixir consumido exatamente 1 (2 restantes)" "2" "$R"
 
 echo ""
@@ -189,12 +154,7 @@ R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: applicatio
 check "definir estratégia ki_specialist" "ki_specialist" "$R"
 
 # 5.2 batalha PvE funciona e devolve HP completo do servidor
-bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-await db.player.update({ where: { id: '$PB' }, data: { hp: 99999, energy: 999 } });
-await db.\$disconnect();
-" 2>/dev/null
+bun scripts/e2e-db.ts set-hp-energy "$PB" 99999 999 >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"battle\",\"enemyId\":\"saibaman\"}")
 BATTLE_OK=$(echo "$R" | python3 -c 'import json,sys;d=json.load(sys.stdin);b=d["activity"]["result"]["battle"];print("ok" if b["playerMaxHp"]>0 and b["enemyMaxHp"]>0 and "rounds" in b and d["activity"]["kind"]=="battle" and d["activity"]["remainingMs"]>0 else "erro")' 2>/dev/null)
 check "batalha inicia ATIVIDADE com battle completo + duração" "ok" "$BATTLE_OK"
@@ -204,12 +164,7 @@ R=$(curl -s -b $JAR_B "$BASE/api/game/state?playerId=$PB" | python3 -c 'import j
 check "pós-duração: state aplica o resultado da batalha" "ok" "$R"
 
 # 5.3 PvP: A elevado a nível 30 para ficar na faixa de B
-bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-await db.player.update({ where: { id: '$PA' }, data: { level: 30, hp: 99999, energy: 999 } });
-await db.\$disconnect();
-" 2>/dev/null
+bun scripts/e2e-db.ts set-level-hp-energy "$PA" 30 99999 999 >/dev/null
 R=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"attack_player\",\"targetId\":\"$PB\"}" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["activity"]["result"]["battle"]["opponentLevel"])' 2>/dev/null)
 check "PvP A→B inicia atividade (opponentLevel=30)" "30" "$R"
 sleep 6
@@ -222,18 +177,7 @@ R=$(curl -s -b $JAR_B "$BASE/api/game/quests?playerId=$PB" | python3 -c 'import 
 check "quests diárias/semanais geradas" "5" "$R"
 
 # força a quest de treino no período atual (a geração é sorteada; o claim é o que se testa)
-bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-const day = new Date(Date.now() - 3*3600e3).toISOString().slice(0,10);
-await db.questProgress.upsert({
-  where: { playerId_questId_period: { playerId: '$PB', questId: 'daily_trainings', period: day } },
-  update: { progress: 0, claimed: false, claimedAt: null },
-  create: { playerId: '$PB', questId: 'daily_trainings', kind: 'daily', period: day, target: 5, rewardZeni: 300, rewardXp: 80, rewardCrystals: 1 },
-});
-await db.\$disconnect();
-console.log('quest ok');
-" 2>/dev/null
+bun scripts/e2e-db.ts reset-training-quest "$PB" >/dev/null
 
 # treina 5x para completar a quest (defense baixo = barato).
 # v0.4: treino é ATIVIDADE com duração server-side (1,6s) — espera entre
@@ -259,22 +203,10 @@ q=[x for x in qs if x["questId"]=="daily_trainings"][0]
 print(q["questId"])' 2>/dev/null)
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"claim_quest\",\"questId\":\"$QID\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
 check "claim da quest" "True" "$R"
-ZENI_BEFORE=$(bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-const p = await db.player.findUnique({ where: { id: '$PB' } });
-await db.\$disconnect();
-console.log(p.zeni);
-" 2>/dev/null)
+ZENI_BEFORE=$(bun scripts/e2e-db.ts get-zeni "$PB" 2>/dev/null | tail -1)
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"claim_quest\",\"questId\":\"$QID\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "claim duplo da quest → QUEST_ALREADY_CLAIMED" "QUEST_ALREADY_CLAIMED" "$R"
-ZENI_AFTER=$(bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-const p = await db.player.findUnique({ where: { id: '$PB' } });
-await db.\$disconnect();
-console.log(p.zeni);
-" 2>/dev/null)
+ZENI_AFTER=$(bun scripts/e2e-db.ts get-zeni "$PB" 2>/dev/null | tail -1)
 check "saldo não mudou no claim duplo" "$ZENI_BEFORE" "$ZENI_AFTER"
 
 echo ""
@@ -323,26 +255,14 @@ check "criar guilda" "Audit Guild $TS" "$R"
 REQ_DONATE="guild-donate-$TS"
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"donate_guild\",\"amount\":8000,\"requestId\":\"$REQ_DONATE\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
 check "doar 8000 para a guilda" "True" "$R"
-GUILD_LVL=$(bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-const g = await db.guild.findFirst({ where: { name: 'Audit Guild $TS' } });
-await db.\$disconnect();
-console.log(g.level);
-" 2>/dev/null)
+GUILD_LVL=$(bun scripts/e2e-db.ts get-guild-level "Audit Guild $TS" 2>/dev/null | tail -1)
 check "guilda subiu para nível 2 (8.000 Zeni)" "2" "$GUILD_LVL"
 
 echo ""
 echo "=== 11. ECONOMIA: ledger e transações ==="
 
-LEDGER_COUNT=$(bun -e "
-import { PrismaClient } from '@prisma/client';
-const db = new PrismaClient();
-const c = await db.walletTransaction.count({ where: { playerId: '$PB' } });
-await db.\$disconnect();
-console.log(c);
-" 2>/dev/null)
-if [ "$LEDGER_COUNT" -gt 5 ]; then PASS=$((PASS+1)); echo "✓ ledger registrou $LEDGER_COUNT transações (>5)";
+LEDGER_COUNT=$(bun scripts/e2e-db.ts get-ledger-count "$PB" 2>/dev/null | tail -1)
+if [[ "$LEDGER_COUNT" =~ ^[0-9]+$ ]] && [ "$LEDGER_COUNT" -gt 5 ]; then PASS=$((PASS+1)); echo "✓ ledger registrou $LEDGER_COUNT transações (>5)";
 else FAIL=$((FAIL+1)); echo "✗ FALHOU: ledger com apenas $LEDGER_COUNT transações"; fi
 
 echo ""
@@ -378,3 +298,7 @@ console.log('cleanup QA seletivo ok');
 " 2>/dev/null
 
 rm -f $JAR_A $JAR_B $JAR_G
+
+if [ "$FAIL" -gt 0 ]; then
+  exit 1
+fi
