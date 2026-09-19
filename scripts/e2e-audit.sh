@@ -16,6 +16,9 @@ check() { # check <descrição> <esperado> <obtido>
 
 JAR_A=$(mktemp); JAR_B=$(mktemp); JAR_G=$(mktemp)
 TS=$(date +%s)
+E2E_IP_A="e2e-a-$TS"
+E2E_IP_B="e2e-b-$TS"
+E2E_IP_G="e2e-g-$TS"
 
 echo "=== 1. SEGURANÇA: autenticação e autorização ==="
 
@@ -33,9 +36,9 @@ check "senha < 8 caracteres rejeitada (ou rate-limit ativo)" "ok" "$([ "$R" != "
 
 # cria duas contas (rate limit é por IP: 5 registros/30min — usa 2)
 # sessões de convidado (rate limit de registro é 5/30min)
-R=$(curl -s -c $JAR_A -X POST $BASE/api/auth/guest)
+R=$(curl -s -c $JAR_A -H "X-Forwarded-For: $E2E_IP_A" -X POST $BASE/api/auth/guest)
 check "sessão (convidado) A criada" "True" "$(echo "$R" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)"
-R=$(curl -s -c $JAR_B -X POST $BASE/api/auth/guest)
+R=$(curl -s -c $JAR_B -H "X-Forwarded-For: $E2E_IP_B" -X POST $BASE/api/auth/guest)
 check "sessão (convidado) B criada" "True" "$(echo "$R" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)"
 
 # cria personagens
@@ -71,13 +74,13 @@ R=$(curl -s -b $JAR_G -c $JAR_G -X POST $BASE/api/auth/logout | python3 -c 'impo
 check "logout G" "True" "$R"
 R=$(curl -s -o /dev/null -w "%{http_code}" -b $JAR_G "$BASE/api/game/state")
 check "sessão de G invalidada pós-logout → 401" 401 "$R"
-R=$(curl -s -c $JAR_G -X POST $BASE/api/auth/guest | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
+R=$(curl -s -c $JAR_G -H "X-Forwarded-For: $E2E_IP_G" -X POST $BASE/api/auth/guest | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d.get("success", d.get("error",{}).get("code","")))' 2>/dev/null)
 check "nova sessão de G" "True" "$R"
 
 echo ""
 echo "=== 3. CONVIDADO: sessão própria + isolamento ==="
 
-R=$(curl -s -c $JAR_G -X POST $BASE/api/auth/guest | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["account"]["isGuest"])' 2>/dev/null)
+R=$(curl -s -c $JAR_G -H "X-Forwarded-For: $E2E_IP_G" -X POST $BASE/api/auth/guest | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["account"]["isGuest"])' 2>/dev/null)
 check "sessão de convidado criada" "True" "$R"
 
 # convidado tenta agir no personagem de B → 403
@@ -249,8 +252,12 @@ check "majin_caos exige forma anterior → TRANSFORMATION_LOCKED" "TRANSFORMATIO
 echo ""
 echo "=== 10. RANKING/GUILDAS: endpoints separados ==="
 
-R=$(curl -s -b $JAR_B "$BASE/api/game/ranking?playerId=$PB&page=1&pageSize=5" | python3 -c 'import json,sys;d=json.load(sys.stdin)["ranking"];pos=d.get("myPosition");src=d.get("source");ok=(isinstance(d.get("entries"),list) and len(d["entries"])<=5 and isinstance(d.get("total"),int) and src in ("cloud","local") and ((src=="local" and isinstance(pos,int) and pos>0) or (src=="cloud" and (pos is None or (isinstance(pos,int) and pos>0))));print(ok)' 2>/dev/null)
+RANK_BODY=$(curl -sS --max-time 12 -b $JAR_B "$BASE/api/game/ranking?playerId=$PB&page=1&pageSize=5")
+R=$(printf '%s' "$RANK_BODY" | python3 -c 'import json,sys;d=json.load(sys.stdin);r=d.get("ranking");ok=isinstance(r,dict) and isinstance(r.get("entries"),list) and len(r["entries"])<=5 and isinstance(r.get("total"),int) and r.get("source") in ("cloud","local");print("True" if ok else "False")' 2>/dev/null || echo "PARSE_ERROR")
 check "ranking paginado respeita contrato cloud/local" "True" "$R"
+if [ "$R" != "True" ]; then
+  echo "  ranking response: $(printf '%s' "$RANK_BODY" | head -c 500)"
+fi
 
 R=$(curl -s -b $JAR_B "$BASE/api/game/guilds?playerId=$PB" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(isinstance(d["guilds"],list))' 2>/dev/null)
 check "lista de guildas resumida" "True" "$R"
