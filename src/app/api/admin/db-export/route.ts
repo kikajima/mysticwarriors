@@ -1,27 +1,21 @@
 import { NextResponse } from 'next/server';
-import { beaconSecretOk, makeBackupTarGz } from '@/lib/game/persistence';
+import { makeBackupTarGz } from '@/lib/game/persistence';
 
 // =====================================================================
 // GET /api/admin/db-export — exportação autenticada do banco completo
 // ---------------------------------------------------------------------
-// Usada pelo BUILD (database-runtime-build.sh) para puxar o banco AO VIVO
-// da produção antes de empacotar (camada 5 da persistência): fecha a
-// janela de dados entre o último beacon e a publicação.
-//
-// Autenticação: header x-gm-beacon com qualquer segredo válido
-// (db/beacon-secrets.txt no destino — o build copia o arquivo para
-// dentro do pacote) OU GM_ADMIN_EXPORT_SECRET no ambiente.
+// Ferramenta opcional de operação/backup. A autenticação usa somente o
+// segredo explícito GM_ADMIN_EXPORT_SECRET; não existe mais segredo de
+// beacon nem sincronização com sandbox.
 // =====================================================================
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const provided = request.headers.get('x-gm-beacon') ?? '';
+  const provided = request.headers.get('x-gm-admin-export') ?? '';
   const adminSecret = process.env.GM_ADMIN_EXPORT_SECRET ?? '';
-  const ok =
-    (adminSecret !== '' && provided === adminSecret) || (await beaconSecretOk(provided));
-  if (!ok) {
+  if (!adminSecret || provided !== adminSecret) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
   try {

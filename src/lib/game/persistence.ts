@@ -1,5 +1,5 @@
-import { createHash, randomUUID, timingSafeEqual } from 'crypto';
-import { copyFile, mkdir, open, readdir, readFile, rm, stat, writeFile } from 'fs/promises';
+import { createHash, randomUUID } from 'crypto';
+import { copyFile, mkdir, open, readdir, readFile, rm, stat } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { gzipSync, gunzipSync } from 'zlib';
@@ -7,37 +7,11 @@ import { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
 
 // =====================================================================
-// PERSISTÊNCIA ENTRE ATUALIZAÇÕES (v0.7) — "as contas nunca mais somem"
+// PERSISTÊNCIA ENTRE ATUALIZAÇÕES
 // ---------------------------------------------------------------------
-// CAUSA RAIZ (diagnóstico 2026-09-11): cada publicação empacota o banco
-// de PREVIEW do sandbox (0 contas) e o deployment substitui o banco de
-// PRODUÇÃO onde os jogadores vivem → toda atualização apagava as contas.
-//
-// CAMADAS DE DEFESA (independentes; qualquer uma salva os dados):
-//
-//  1. DATA_HOME EXTERNO AO PACOTE (start.sh): o banco de produção vive
-//     em /app-data (fora do diretório extraído no deploy). Re-publicações
-//     sobrescrevem o pacote, não o volume de dados.
-//  2. RECONCILIAÇÃO ANTI-WIPE (boot): ao iniciar, o app compara o banco
-//     vivo com o seed do pacote e NUNCA deixa um banco com contas ser
-//     substituído por um com menos (o cenário exato que apagava contas).
-//  3. MIGRAÇÕES NO BOOT (este arquivo): replica o `prisma migrate deploy`
-//     via PrismaClient (a CLI não existe no pacote standalone) — o banco
-//     vivo é atualizado de schema sem reset, com checksums oficiais.
-//  4. BEACON (loop de dados): a produção empurra, dirigido por requests,
-//     um tar.gz (banco + avatares + manifesto) de volta ao sandbox
-//     (IP interno assado no pacote pelo build). O sandbox guarda em
-//     db/production-snapshot/ (commitado no git — sobrevive a resets do
-//     sandbox) e o PRÓXIMO build usa esse snapshot como seed. Mesmo com
-//     container de produção frio/substituído, os dados voltam.
-//  5. PULL NO BUILD: se o snapshot registrou a origem pública da
-//     produção, o build tenta baixar o banco ao vivo antes de semear.
-//  6. BACKUP MANUAL: GET /api/game/backup (sessão) baixa o tar.gz —
-//     rede de segurança última para o usuário.
-//
-// POLÍTICA (regra do usuário): contas NUNCA são deletadas por
-// atualização; apenas a progressão de personagens é resetada quando o
-// balanceamento muda (ver balance.ts).
+// Render: o SQLite autoritativo vive em Persistent Disk, fora do diretório
+// efêmero da aplicação. Este módulo cuida de migrações idempotentes,
+// backups e utilitários de integridade. Não há sincronização com sandbox.
 // =====================================================================
 
 const LOG_PREFIX = '[persistence]';
@@ -48,9 +22,6 @@ function log(...args: unknown[]) {
 
 // ===== Limites =====
 const MAX_TAR_BYTES = 60 * 1024 * 1024; // teto do pacote de backup/beacon
-const BEACON_INTERVAL_MS = 3 * 60_000; // mínimo entre beacons (dirigido por requests)
-const BEACON_TIMEOUT_MS = 15_000;
-const SNAPSHOT_BACKUPS_KEEP = 3;
 
 // =====================================================================
 // Resolução de caminhos
@@ -68,16 +39,6 @@ export function resolveMigrationsDir(): string {
 /** Diretório de avatares — irmão do banco (mesmo volume). */
 export function resolveAvatarsDir(): string {
   return path.join(path.dirname(resolveDbFilePath()), 'avatars');
-}
-
-/** Diretório do snapshot de produção (lado SANDBOX; commitado no git). */
-export function resolveSnapshotDir(): string {
-  return process.env.GM_SNAPSHOT_DIR ?? path.join(process.cwd(), 'db', 'production-snapshot');
-}
-
-/** Arquivo de segredos do beacon (um por build; append-only). */
-export function resolveBeaconSecretsFile(): string {
-  return process.env.GM_BEACON_SECRETS_FILE ?? path.join(process.cwd(), 'db', 'beacon-secrets.txt');
 }
 
 // =====================================================================
@@ -466,7 +427,7 @@ export interface BackupManifest {
   accounts: number;
   humanPlayers: number;
   bots: number;
-  purpose: 'beacon' | 'export' | 'user-backup';
+  purpose: 'export' | 'user-backup';
 }
 
 export async function makeBackupTarGz(
@@ -508,165 +469,6 @@ export async function makeBackupTarGz(
 const MAX_AVATAR_FILE_BYTES = 8 * 1024 * 1024;
 
 // =====================================================================
-// Beacon — produção → sandbox (fecha o loop de dados)
-// =====================================================================
-
-interface BeaconState {
-  enabled: boolean;
-  targets: string[];
-  secret: string;
-  lastAttemptMs: number;
-  lastSignature: string;
-  sending: boolean;
-  origin: string;
-}
-
-// Estado GLOBAL (não module-level): o Turbopack pode carregar DUAS
-// instâncias deste módulo (instrumentation.ts × rotas) — sem o global,
-// o beacon inicializado pelo boot ficaria invisível para as rotas.
-// Mesmo padrão do singleton Prisma em src/lib/db.ts.
-const globalForPersistence = globalThis as unknown as {
-  __gmBeacon?: BeaconState;
-  __gmPersistenceBooted?: boolean;
-};
-
-const beacon: BeaconState = (globalForPersistence.__gmBeacon ??= {
-  enabled: false,
-  targets: [],
-  secret: '',
-  lastAttemptMs: 0,
-  lastSignature: '',
-  sending: false,
-  origin: '',
-});
-
-function initBeacon(): void {
-  const targetEnv = process.env.GM_BEACON_TARGET ?? '';
-  const secret = process.env.GM_BEACON_SECRET ?? '';
-  if (!targetEnv || !secret) return;
-  beacon.targets = targetEnv
-    .split(',')
-    .map((t) => t.trim())
-    .filter((t) => t.startsWith('http'));
-  beacon.secret = secret;
-  beacon.enabled = beacon.targets.length > 0;
-  if (beacon.enabled) log(`beacon ativado → ${beacon.targets.join(', ')}`);
-}
-
-async function currentDataSignature(): Promise<string> {
-  try {
-    const dbPath = resolveDbFilePath();
-    const st = await stat(dbPath);
-    let av = '';
-    const avatarsDir = resolveAvatarsDir();
-    if (existsSync(avatarsDir)) {
-      const files = await readdir(avatarsDir);
-      av = `${files.length}:${files.slice().sort().join('|').length}`;
-    }
-    return `${st.size}:${Math.floor(st.mtimeMs / 1000)}:${av}`;
-  } catch {
-    return '';
-  }
-}
-
-export async function sendBeaconNow(
-  reason: string,
-  timeoutMs = BEACON_TIMEOUT_MS
-): Promise<boolean> {
-  if (!beacon.enabled || beacon.sending) return false;
-  beacon.sending = true;
-  beacon.lastAttemptMs = Date.now();
-  try {
-    const sig = await currentDataSignature();
-    if (reason === 'interval' && sig === beacon.lastSignature) return true; // nada mudou
-    const { body, manifest } = await makeBackupTarGz('beacon', beacon.origin);
-    for (const target of beacon.targets) {
-      try {
-        const res = await fetch(`${target.replace(/\/$/, '')}/api/internal/db-beacon`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/octet-stream', 'x-gm-beacon': beacon.secret },
-          body: new Uint8Array(body),
-          signal: AbortSignal.timeout(timeoutMs),
-        });
-        if (res.ok) {
-          beacon.lastSignature = sig;
-          log(`beacon entregue (${reason}; ${manifest.accounts} contas, ${body.length}B) → ${target}`);
-          return true;
-        }
-        log(`beacon recusado (${res.status}) em ${target}`);
-      } catch {
-        // alvo inalcançável — tenta o próximo
-      }
-    }
-    return false;
-  } catch (err) {
-    log('beacon falhou:', err instanceof Error ? err.message : err);
-    return false;
-  } finally {
-    beacon.sending = false;
-  }
-}
-
-/**
- * Beacon dirigido por requests: chamado (fire-and-forget) pelas rotas
- * principais. Sem timers permanentes — a instância não é impedida de
- * escalar para zero, e o beacon só corre quando há tráfego (exatamente
- * quando os dados mudam).
- */
-export function maybeBeacon(request?: Request): void {
-  if (!beacon.enabled) return;
-  if (request) {
-    try {
-      const h = request.headers;
-      const host = h.get('x-forwarded-host') ?? h.get('host') ?? '';
-      const proto = h.get('x-forwarded-proto') ?? 'https';
-      if (host && !beacon.origin) {
-        beacon.origin = `${proto}://${host}`;
-      }
-    } catch {
-      // sem origem — beacon segue sem manifesto de origem
-    }
-  }
-  if (Date.now() - beacon.lastAttemptMs < BEACON_INTERVAL_MS) return;
-  if (beacon.sending) return;
-  beacon.lastAttemptMs = Date.now(); // evita tempestade de tentativas
-  void sendBeaconNow('interval').catch(() => undefined);
-}
-
-// =====================================================================
-// Segredos do beacon (valores aceitos pelo receptor/export)
-// =====================================================================
-
-export async function loadBeaconSecrets(): Promise<string[]> {
-  const secrets = new Set<string>();
-  const env = process.env.GM_BEACON_SECRET ?? '';
-  if (env) secrets.add(env.trim());
-  const file = resolveBeaconSecretsFile();
-  try {
-    if (existsSync(file)) {
-      const content = await readFile(file, 'utf8');
-      for (const line of content.split('\n')) {
-        const t = line.trim();
-        if (t && !t.startsWith('#')) secrets.add(t);
-      }
-    }
-  } catch {
-    // sem arquivo — só o env
-  }
-  return [...secrets];
-}
-
-export async function beaconSecretOk(provided: string | null): Promise<boolean> {
-  if (!provided) return false;
-  const candidates = await loadBeaconSecrets();
-  const a = createHash('sha256').update(provided).digest();
-  return candidates.some((c) => {
-    const b = createHash('sha256').update(c).digest();
-    return a.length === b.length && timingSafeEqual(a, b);
-  });
-}
-
-// =====================================================================
 // Orquestração de boot (src/instrumentation.ts chama isto UMA vez)
 // =====================================================================
 
@@ -674,51 +476,17 @@ export async function bootPersistence(): Promise<void> {
   if (globalForPersistence.__gmPersistenceBooted) return;
   globalForPersistence.__gmPersistenceBooted = true;
   try {
-    initBeacon();
     await reconcileDataOnBoot();
     const applied = await applyPendingMigrations();
     if (applied > 0) log(`${applied} migração(ões) aplicada(s) no boot`);
 
-    // balancemento/versionameto é idempotente e barato — roda na primeira
-    // rota; aqui apenas garantimos que o boot não dependa de tráfego.
     try {
       const { ensureBalanceVersion } = await import('./balance');
       await ensureBalanceVersion();
     } catch {
-      // a rota tentará de novo
+      // a primeira rota tentará novamente
     }
 
-    if (beacon.enabled) {
-      // beacon inicial (atrasado p/ não competir com o cold start)
-      const t = setTimeout(() => {
-        void sendBeaconNow('boot').catch(() => undefined);
-      }, 10_000);
-      t.unref?.();
-      // beacon final em desligamento (redeploy): o servidor Next chama
-      // process.exit no SIGTERM — interceptamos a PRIMEIRA saída para dar
-      // ~4s ao beacon final (janela do start.sh antes do SIGKILL).
-      process.once('SIGTERM', () => {
-        const origExit = process.exit.bind(process);
-        let released = false;
-        const exitProxy = ((code?: number) => {
-          if (released) return origExit(code) as never;
-          log('SIGTERM — beacon final antes de sair...');
-          void sendBeaconNow('sigterm', 4000)
-            .catch(() => undefined)
-            .finally(() => {
-              released = true;
-              origExit(code);
-            });
-          return undefined as never;
-        }) as typeof process.exit;
-        try {
-          process.exit = exitProxy;
-        } catch {
-          // não conseguiu interceptar — best effort direto
-          void sendBeaconNow('sigterm', 4000).catch(() => undefined);
-        }
-      });
-    }
     log(`boot concluído (db=${resolveDbFilePath()})`);
   } catch (err) {
     console.error(LOG_PREFIX, 'falha no boot de persistência (app segue):', err);

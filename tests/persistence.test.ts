@@ -12,7 +12,6 @@ import {
   snapshotDbCounts,
   applyPendingMigrations,
   resolveDbFilePath,
-  beaconSecretOk,
 } from '../src/lib/game/persistence';
 
 const liveDbTest = process.env.CI === 'true' ? test.skip : test;
@@ -249,13 +248,3 @@ describe('applyPendingMigrations (migrador de boot)', () => {
   });
 });
 
-describe('beaconSecretOk', () => {
-  test('sem segredo fornecido → false', async () => {
-    expect(await beaconSecretOk(null)).toBe(false);
-    expect(await beaconSecretOk('')).toBe(false);
-  });
-
-  test('segredo aleatório não é aceito', async () => {
-    expect(await beaconSecretOk('valor-qualquer-que-nao-esta-no-arquivo')).toBe(false);
-  });
-});
