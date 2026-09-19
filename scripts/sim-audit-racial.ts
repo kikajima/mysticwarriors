@@ -47,7 +47,8 @@ const RACE_PT: Record<RaceId, string> = {
 };
 
 const SEEDS = 250; // × 2 arranjos de lado = 500 lutas por par (mín. exigido: 200)
-const GUILD_SIM_LEVEL = Number(process.env.GUILD_SIM_LEVEL ?? 0);
+const guildLevelArg = process.argv.find((arg) => arg.startsWith('--guild-level='));
+const GUILD_SIM_LEVEL = Number(guildLevelArg?.split('=')[1] ?? process.env.GUILD_SIM_LEVEL ?? 0);
 
 const NO_ITEMS = '{"weapon":null,"armor":null,"accessory":null,"owned":[],"consumables":{}}';
 const NO_TECH = '[]';
