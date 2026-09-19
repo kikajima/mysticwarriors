@@ -246,7 +246,18 @@
   em `ChatMute`; silenciar oculta mensagens daquele remetente para quem o
   silenciou, sem apagar o histórico e sem afetar outros jogadores. Remover
   o silêncio torna o histórico visível novamente.
-- **UI global e minimizável:** o widget é montado no layout raiz e fica no
-  canto inferior esquerdo, mas só faz polling enquanto estiver aberto.
+- **UI minimizável apenas dentro do jogo:** o widget fica no canto inferior
+  esquerdo quando existe um personagem ativo. Login, criação e seleção de
+  personagem NÃO montam o chat e não fazem polling.
+- **Troca de personagem sem espera:** o widget recebe o personagem ativo
+  diretamente da tela do jogo e toda chamada de chat envia `playerId`
+  explicitamente; o servidor revalida que ele pertence à conta. Assim o chat
+  troca junto com a UI, sem aguardar o polling de `Account.activePlayerId`.
+- **Polling silencioso:** a atualização de 4s nunca liga o estado visual
+  "Carregando…"; esse indicador só aparece no carregamento inicial real de
+  um canal vazio.
+- **Diretório privado:** ao focar a busca, a lista de guerreiros já está
+  disponível e o filtro acontece localmente conforme o nome é digitado.
 - **Blindagem:** `tests/chat.test.ts` vigia persistência, unicidade do mute,
-  presença global do widget e a existência do comando admin de limpeza.
+  ausência do chat no layout público, montagem somente no jogo, sincronização
+  por `playerId`, diretório privado e o comando admin de limpeza.
