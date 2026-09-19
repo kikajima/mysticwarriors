@@ -13,9 +13,8 @@ export const dynamic = 'force-dynamic';
 // personagem, NAS DUAS CAMADAS (v0.14)
 // ---------------------------------------------------------------------
 // FLUXO (ver src/lib/game/adminErasure.ts):
-//  1. AUTORIZAÇÃO (esta rota): Bearer token Supabase → RPC is_admin()
-//     (TRANSPORTE, modelo v0.9) → e-mail da sessão === ADMIN_EMAIL
-//     (AUTORIZAÇÃO v0.14 — src/lib/adminIdentity.ts, constante única);
+//  1. AUTORIZAÇÃO (esta rota): Bearer token Supabase → RPC is_admin(),
+//     cuja fonte é public.admins cruzada com auth.uid();
 //  2. PROTEÇÕES server-side: bot · próprio personagem do admin ·
 //     nome digitado ≠ nome do alvo (v0.15 — a proteção "líder da
 //     guilda do sistema" foi REMOVIDA: guilda de sistema não existe
