@@ -150,9 +150,12 @@ test('MOTD sanitizada, transferência explícita, dissolução confirmada e hist
   await act(0, 'guild_transfer', { targetId: ids[3], leave: true });
   expect((await db.guild.findUniqueOrThrow({ where: { id: guildId } })).leaderId).toBe(ids[3]);
   await expect(act(3, 'guild_dissolve')).rejects.toThrow('Confirme');
+  const donationsBeforeDissolve = await db.guildDonation.count({ where: { guildId } });
   await act(3, 'guild_dissolve', { confirm: true });
   expect(await db.player.count({ where: { guildId } })).toBe(0);
-  expect(await db.guildDonation.count({ where: { guildId } })).toBe(3);
+  // Dissolver não apaga o histórico, independentemente de quantas doações
+  // outros testes legítimos tenham criado antes nesta mesma fixture.
+  expect(await db.guildDonation.count({ where: { guildId } })).toBe(donationsBeforeDissolve);
   expect((await db.guild.findUniqueOrThrow({ where: { id: guildId } })).disbandedAt).not.toBeNull();
 });
 test('contratos fixos: curva, bônus, permissões e wiki sincronizados', () => {
