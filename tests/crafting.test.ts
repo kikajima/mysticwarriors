@@ -63,6 +63,16 @@ describe('Oficina — contratos de crafting', () => {
     expect(craftDurationMs(120, 10)).toBe(108 * 60_000);
   });
 
+
+  test('itens fabricados não podem ser comprados de graça na loja NPC', async () => {
+    expect(CRAFTED_ITEMS.every((item) => item.price === 0)).toBe(true);
+    const src = await Bun.file(`${import.meta.dir}/../src/lib/game/actions.ts`).text();
+    const start = src.indexOf('async function actionBuy');
+    const end = src.indexOf('async function actionSell', start);
+    const body = src.slice(start, end);
+    expect(body).toContain('item.price <= 0');
+    expect(body).toContain('Itens fabricados só podem ser obtidos na Oficina');
+  });
   test('efeitos dos itens fabricados correspondem ao desenho', () => {
     const capsule = CRAFTED_ITEMS.find((i) => i.id === 'capsula_recuperacao_simples');
     const armor = CRAFTED_ITEMS.find((i) => i.id === 'armadura_combate_saiyajin_craft');
