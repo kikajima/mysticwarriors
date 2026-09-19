@@ -227,7 +227,7 @@ export function WorkshopPanel({
       )}
 
       {failed ? (
-        <LoadFail onRetry={() => void load()} />
+        <LoadFail what="Oficina" onRetry={() => void load()} />
       ) : inventory === null ? (
         <GameCard className="p-4 text-sm text-amber-200/50">Carregando estoque da Oficina…</GameCard>
       ) : (
