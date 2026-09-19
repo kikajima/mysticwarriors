@@ -336,7 +336,7 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
 
   // v0.9: aplica AGORA (mesma rotina usada pelas atividades vencidas —
   // addStat com STAT_CAP, trainingsDone, quests e analytics)
-  const applied = await applyTrainResult(tx, player, payload);
+  const applied = await applyTrainResult(tx, player, payload, { playerIsFresh: true });
 
   await bumpQuests(tx, player.id, 'energy_spent', TRAIN_ENERGY_COST);
   if (player.trainingsDone === 0) await trackEvent('first_training', { playerId: player.id, accountId: player.accountId }, tx);
