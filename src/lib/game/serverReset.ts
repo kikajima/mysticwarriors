@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { ApiError } from '@/lib/api';
 import { ensureSeed } from './engine';
 import { ensureActiveSeason } from '@/lib/seasons';
-import { resolveAvatarsDir, resolveDbFilePath } from './persistence';
+import { isPostgresDatabase, makeBackupTarGz, resolveAvatarsDir, resolveDbFilePath } from './persistence';
 
 // =====================================================================
 // RESET GERAL DO SERVIDOR (v0.9.10 — Mudança 3)
@@ -27,10 +27,11 @@ import { resolveAvatarsDir, resolveDbFilePath } from './persistence';
 //   antigo e "rico" (pré-reset) jamais repopula uma produção resetada.
 //
 // NADA falha em silêncio:
-//   * o backup VACUUM INTO é executado ANTES de qualquer exclusão e,
-//     se falhar, o reset INTEIRO aborta com erro explícito;
-//   * falhas na limpeza de avatares são contadas e reportadas (não
-//     abortam — arquivos órfãos não têm efeito no jogo).
+//   * PostgreSQL: export lógico é persistido em game.ServerResetBackup;
+//   * SQLite legado/teste: VACUUM INTO cria snapshot físico;
+//   * qualquer falha de backup aborta o reset ANTES das exclusões;
+//   * no PostgreSQL, avatares vivem no Supabase Storage e não são apagados
+//     pelo reset local do servidor.
 // =====================================================================
 
 export interface ServerResetReport {
@@ -108,9 +109,25 @@ async function countAll(): Promise<Record<string, number>> {
   };
 }
 
-/** Backup físico do banco (VACUUM INTO — snapshot consistente, sem WAL).
- *  Falha == aborta o reset (o erro sobe). */
+/** Backup consistente ANTES do reset.
+ * PostgreSQL: export lógico persistido no próprio banco, fora das tabelas
+ * apagadas pelo reset. SQLite: mantém o VACUUM INTO legado/teste. */
 async function backupDatabase(): Promise<{ path: string; bytes: number }> {
+  if (isPostgresDatabase()) {
+    const exported = await makeBackupTarGz('user-backup', 'server-reset');
+    const row = await db.serverResetBackup.create({
+      data: {
+        payload: exported.body,
+        manifest: JSON.stringify(exported.manifest),
+      },
+      select: { id: true },
+    });
+    return {
+      path: `postgres:ServerResetBackup:${row.id}`,
+      bytes: exported.body.length,
+    };
+  }
+
   const dbPath = resolveDbFilePath();
   const backupsDir = path.join(path.dirname(dbPath), 'backups');
   await mkdir(backupsDir, { recursive: true });
@@ -120,7 +137,6 @@ async function backupDatabase(): Promise<{ path: string; bytes: number }> {
     throw new ApiError('INTERNAL', `Backup de reset já existe: ${target}`);
   }
   try {
-    // VACUUM INTO não pode rodar dentro de transação — execução direta.
     await db.$executeRawUnsafe(`VACUUM INTO '${target.replace(/'/g, "''")}'`);
   } catch (err) {
     throw new ApiError(
@@ -137,6 +153,10 @@ async function backupDatabase(): Promise<{ path: string; bytes: number }> {
 
 /** Remove os retratos enviados (arquivos órfãos de personagens apagados). */
 async function cleanAvatarFiles(): Promise<{ deleted: number; failed: number }> {
+  // Em PostgreSQL/Render Free os uploads autenticados vivem no Supabase
+  // Storage. O reset do servidor não apaga arquivos da conta do usuário.
+  if (isPostgresDatabase()) return { deleted: 0, failed: 0 };
+
   const dir = resolveAvatarsDir();
   if (!existsSync(dir)) return { deleted: 0, failed: 0 };
   let deleted = 0;
