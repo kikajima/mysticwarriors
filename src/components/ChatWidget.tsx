@@ -78,6 +78,7 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
   const messagesRef = useRef<Message[]>([]);
   const directoryLoadedRef = useRef(false);
 
+  const guildId = player.guild?.id ?? null;
   const mutedIds = useMemo(() => new Set(muted.map((item) => item.playerId)), [muted]);
   const filteredDirectory = useMemo(() => {
     const q = search.trim().toLocaleLowerCase('pt-BR');
@@ -116,7 +117,7 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
   }, [directoryLoading, player.id]);
 
   const loadMessages = useCallback(async (older = false, showLoading = false) => {
-    if (channel === 'guild' && !player.guild) return;
+    if (channel === 'guild' && !guildId) return;
     if (channel === 'private' && !privateTarget) {
       messagesRef.current = [];
       setMessages([]);
@@ -155,7 +156,7 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, [channel, player.id, player.guild, privateTarget]);
+  }, [channel, player.id, guildId, privateTarget]);
 
   // O componente é remontado quando o jogador sai da tela de jogo. Mesmo assim,
   // esta limpeza garante que uma troca de playerId nunca mostre dados do anterior.
