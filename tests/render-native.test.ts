@@ -24,7 +24,10 @@ test('infra de produção não depende da Z.ai', () => {
 
 test('Render possui build, start, health check e disco persistente declarados', () => {
   const render = readFileSync(path.join(root, 'render.yaml'), 'utf8');
-  expect(render).toContain('buildCommand: bun install --frozen-lockfile && bun run db:generate && bun run build');
+  expect(render).toContain('name: mysticwarriors');
+  expect(render).toContain('buildCommand: mkdir -p /tmp/mystic-warriors-build');
+  expect(render).toContain('export DATABASE_URL=file:/tmp/mystic-warriors-build/custom.db');
+  expect(render).toContain('bun install --frozen-lockfile && bun run db:generate && bun run build');
   expect(render).toContain('startCommand: bun run start');
   expect(render).toContain('healthCheckPath: /api/health');
   expect(render).toContain('autoDeployTrigger: checksPass');
@@ -39,7 +42,16 @@ test('Render possui build, start, health check e disco persistente declarados', 
 test('documentação operacional usa apenas o volume atual do Render', () => {
   const guide = readFileSync(path.join(root, 'CORRECOES-E-INSTALACAO.md'), 'utf8');
   expect(guide).toContain('file:/var/data/custom.db');
+  expect(guide).toContain('file:/tmp/mystic-warriors/custom.db');
+  expect(guide).toContain('Web Service Free');
+  expect(guide).toContain('Persistent Disk só pode ser anexado a serviço Render pago');
   expect(guide).not.toContain('file:/data/mystic-warriors/custom.db');
   expect(guide).not.toContain('.zscripts');
   expect(guide).not.toContain('mystic-warriors-alterados.zip');
+});
+
+test('backup completo exige autorização administrativa', () => {
+  const route = readFileSync(path.join(root, 'src/app/api/game/backup/route.ts'), 'utf8');
+  expect(route).toContain('requirePanelAdmin(request)');
+  expect(route).not.toContain('requireAuth()');
 });

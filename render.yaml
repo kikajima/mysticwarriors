@@ -1,9 +1,11 @@
 services:
   - type: web
-    name: mystic-warriors
+    name: mysticwarriors
     runtime: node
     branch: master
-    buildCommand: bun install --frozen-lockfile && bun run db:generate && bun run build
+    # O Persistent Disk não está disponível durante o build. Use um SQLite
+    # temporário apenas para satisfazer imports/geração estática nesta fase.
+    buildCommand: mkdir -p /tmp/mystic-warriors-build && touch /tmp/mystic-warriors-build/custom.db && export DATABASE_URL=file:/tmp/mystic-warriors-build/custom.db && bun install --frozen-lockfile && bun run db:generate && bun run build
     startCommand: bun run start
     healthCheckPath: /api/health
     autoDeployTrigger: checksPass
@@ -24,6 +26,8 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
+    # Persistent Disk requer instância paga no Render. O serviço Free não
+    # preserva SQLite local entre deploys/restarts.
     disk:
       name: mystic-warriors-data
       mountPath: /var/data
