@@ -51,6 +51,7 @@ import {
   Bomb,
   Users,
   ScrollText,
+  MessagesSquare,
   Lock,
   AlertTriangle,
   Skull,
@@ -72,7 +73,7 @@ const selectClass =
 export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) {
   const [open, setOpen] = useState(false);
   // v0.14 — abas: personagens (tudo que existia) · guildas · auditoria
-  const [tab, setTab] = useState<'personagens' | 'guildas' | 'auditoria'>('personagens');
+  const [tab, setTab] = useState<'personagens' | 'guildas' | 'auditoria' | 'chat'>('personagens');
   // v0.14 — autorização por E-MAIL no cliente (a segurança real é o backend;
   // aqui só ESCONDO os botões destrutivos de quem não é a conta principal)
   const [adminEmailOk, setAdminEmailOk] = useState(false);
@@ -124,6 +125,10 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
   const [deleteGuildText, setDeleteGuildText] = useState('');
   const [deleteGuildWorking, setDeleteGuildWorking] = useState(false);
   const [deleteGuildResult, setDeleteGuildResult] = useState<{ kind: 'ok' | 'warn' | 'err'; text: string } | null>(null);
+  // Chat: histórico persistente só pode ser limpo por comando explícito aqui.
+  const [chatClearText, setChatClearText] = useState('');
+  const [chatClearWorking, setChatClearWorking] = useState(false);
+  const [chatClearResult, setChatClearResult] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
 
   // v0.14 — resolve o e-mail da sessão UMA vez (esconde botões destrutivos
   // de admins que não sejam a conta principal; o backend revalida sempre)
@@ -474,6 +479,36 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
     }
   }, [deleteGuildTarget, deleteGuildWorking, deleteGuildText, authHeaders, fetchGuilds, fetchCharacters, onSelfModified]);
 
+  const runClearChat = useCallback(async () => {
+    if (chatClearWorking || chatClearText.trim() !== 'LIMPAR CHAT') return;
+    setChatClearWorking(true);
+    setChatClearResult(null);
+    try {
+      const headers = await authHeaders();
+      if (!headers) {
+        setChatClearResult({ kind: 'err', text: 'Sessão expirada — entre de novo.' });
+        return;
+      }
+      const res = await fetch('/api/admin/chat', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ confirm: 'LIMPAR CHAT' }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.success === false) {
+        setChatClearResult({ kind: 'err', text: data.error?.message ?? 'Limpeza recusada.' });
+        return;
+      }
+      setChatClearResult({ kind: 'ok', text: data.message });
+      setChatClearText('');
+      setAuditLogs(null);
+    } catch {
+      setChatClearResult({ kind: 'err', text: 'Falha de conexão durante a limpeza do chat.' });
+    } finally {
+      setChatClearWorking(false);
+    }
+  }, [chatClearWorking, chatClearText, authHeaders]);
+
 
   // ===== botão do escudo (só existe para o admin) =====
   const floatingButton = (
@@ -546,6 +581,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
             {([
               ['personagens', 'Personagens', Shield],
               ['guildas', 'Guildas', Users],
+              ['chat', 'Chat', MessagesSquare],
               ['auditoria', 'Ações admin', ScrollText],
             ] as const).map(([key, label, Icon]) => (
               <button
@@ -585,6 +621,15 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                   setDeleteGuildText('');
                   setDeleteGuildResult(null);
                 }}
+              />
+            ) : tab === 'chat' ? (
+              <ChatAdminTab
+                adminEmailOk={adminEmailOk}
+                text={chatClearText}
+                onText={setChatClearText}
+                working={chatClearWorking}
+                result={chatClearResult}
+                onClear={runClearChat}
               />
             ) : tab === 'auditoria' ? (
               <AuditTab logs={auditLogs} loading={auditLoading} onRefresh={fetchAuditLogs} />
@@ -1064,6 +1109,87 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
         }}
       />
     </>
+  );
+}
+
+// =====================================================================
+// CHAT — limpeza explícita do histórico persistente
+// =====================================================================
+
+function ChatAdminTab({
+  adminEmailOk,
+  text,
+  onText,
+  working,
+  result,
+  onClear,
+}: {
+  adminEmailOk: boolean;
+  text: string;
+  onText: (value: string) => void;
+  working: boolean;
+  result: { kind: 'ok' | 'err'; text: string } | null;
+  onClear: () => void;
+}) {
+  return (
+    <div className="p-4 sm:p-5 space-y-4">
+      <div>
+        <h3 className="font-heading text-base text-amber-100 flex items-center gap-2">
+          <MessagesSquare className="w-5 h-5 text-amber-400" /> Administração do chat
+        </h3>
+        <p className="text-[11px] text-amber-200/50 mt-1 leading-relaxed">
+          O histórico global, privado e de guilda vive no PostgreSQL e sobrevive a deploys, exclusões de personagens,
+          dissolução de guildas e reset do mundo. Mensagens só são removidas por este comando administrativo.
+          Preferências de jogadores silenciados não são apagadas.
+        </p>
+      </div>
+
+      <section className="rounded-xl border-2 border-red-800/60 bg-red-950/25 p-4">
+        <h4 className="font-heading text-sm text-red-200 mb-1 flex items-center gap-2">
+          <Trash2 className="w-4 h-4" /> Limpar todo o histórico do chat
+        </h4>
+        <p className="text-[11px] text-red-200/70 leading-relaxed mb-3">
+          Ação irreversível: remove mensagens dos três canais para todos os jogadores. A operação fica registrada em
+          <b> Ações admin</b>.
+        </p>
+        {adminEmailOk ? (
+          <>
+            <div className="flex flex-wrap gap-2">
+              <input
+                value={text}
+                onChange={(e) => onText(e.target.value)}
+                placeholder="digite LIMPAR CHAT"
+                disabled={working}
+                className="flex-1 min-w-52 bg-black/60 border border-red-900/60 rounded-lg px-3 py-2 text-red-100 text-sm tracking-wide uppercase focus:outline-none focus:border-red-500"
+              />
+              <button
+                onClick={onClear}
+                disabled={working || text.trim() !== 'LIMPAR CHAT'}
+                className="px-4 py-2.5 min-h-[44px] rounded-lg bg-red-700 hover:bg-red-600 text-white text-sm font-heading disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                {working ? 'Limpando…' : 'Limpar histórico do chat'}
+              </button>
+            </div>
+            {result && (
+              <p
+                role="status"
+                className={`mt-3 text-xs rounded-lg border px-3 py-2 ${
+                  result.kind === 'ok'
+                    ? 'text-emerald-300 border-emerald-800/50 bg-emerald-950/30'
+                    : 'text-red-300 border-red-800/50 bg-red-950/30'
+                }`}
+              >
+                {result.text}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-[11px] text-red-200/40 flex items-center gap-1.5">
+            <Lock className="w-3 h-3" /> Limpeza disponível apenas para a conta administrativa autorizada.
+          </p>
+        )}
+      </section>
+    </div>
   );
 }
 
