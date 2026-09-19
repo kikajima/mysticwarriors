@@ -129,12 +129,14 @@ describe('v0.16 anti-drift — GÊNERO REMOVIDO DA CRIAÇÃO (decisão permanent
 describe('v0.16 anti-drift — TRABALHANDO: tudo liberado EXCETO os 2 negados', () => {
   const working = missionPlayer();
 
-  test('trabalhando → comprar ok · vender ok · usar ok · equipar ok', () => {
+  test('trabalhando → comprar/vender/usar/equipar e Crafting ok', () => {
     expect(() => assertPlayerAvailableForAction(working, 'buy')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'sell')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'use_item')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'equip')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'unequip')).not.toThrow();
+    expect(() => assertPlayerAvailableForAction(working, 'craft_start')).not.toThrow();
+    expect(() => assertPlayerAvailableForAction(working, 'craft_claim')).not.toThrow();
   });
 
   test('trabalhando → doar na guilda ok · fundar/entrar/sair ok', () => {
