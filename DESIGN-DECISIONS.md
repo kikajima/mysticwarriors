@@ -289,3 +289,35 @@
 - **Observabilidade:** respostas de `/api/game/action` expõem
   `Server-Timing` (total/fila/execução) e ações acima de 1s geram log
   `[perf][action]` no Render para diagnóstico objetivo.
+
+
+## 🚀 ROUND-TRIPS REMOTOS — CAMINHO QUENTE (2026-09-19)
+
+Medições reais em produção após a primeira rodada de otimização ainda mostraram
+~1,7–2,5s para iniciar PvE, ~3s para treino, ~2s para equipar técnica e
+~2,5s para abrir a Ameaça Universal. O PostgreSQL executava as queries em
+poucos milissegundos; a parcela dominante era o número de viagens
+Render↔Supabase.
+
+Decisões permanentes desta rodada:
+
+- **RequestDedup não faz SELECT antes do INSERT em request novo.** UUID novo é
+  o caso normal. O INSERT único é a primeira operação; replay é detectado por
+  P2002 e só então lê o resultado armazenado.
+- **Higiene de dedup não bloqueia clique.** DELETE probabilístico de linhas
+  expiradas roda fora do caminho crítico.
+- **Pós-commit em paralelo:** cache do resultado idempotente e releitura fresca
+  do Player acontecem simultaneamente.
+- **Treino instantâneo não relê o Player** dentro da mesma transação quando o
+  executor acabou de carregá-lo.
+- **Ameaça Universal tem fast path somente leitura.** Boss ativo com `endsAt`
+  futuro não executa manutenção/ensure em cada abertura/ataque.
+- **Contagem de participantes do boss vem em `_count`** junto do boss, sem
+  query separada.
+- **Ataque ao boss reutiliza a guilda já carregada em `requirePlayer`** e
+  atualiza energia + desgaste de HP no mesmo UPDATE.
+- **Boss e temporada carregam em paralelo**, e a temporada também possui
+  fast path de leitura quando já existe uma temporada ativa válida.
+
+A regra de segurança permanece: otimizações não removem atomicidade,
+idempotência, cooldown condicional ou autoridade do servidor.
