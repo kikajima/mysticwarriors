@@ -184,7 +184,7 @@ export function ShopPanel({
                 player.items.accessory === item.id;
               const passive = item.category === 'training';
               const inUse = equipped || passive; // passivo de treino conta como "em uso"
-              const sellable = total - (inUse ? 1 : 0);
+              const sellable = item.price > 0 ? total - (inUse ? 1 : 0) : 0;
               const q = Math.min(sellQty[item.id] ?? 1, Math.max(1, sellable));
               return (
                 <div
@@ -221,7 +221,11 @@ export function ShopPanel({
                     </GameButton>
                   )}
                   {/* VENDA: unidade em uso nunca é vendida */}
-                  {sellable > 0 ? (
+                  {item.price <= 0 ? (
+                    <span className="text-[11px] text-sky-300/60 italic">
+                      fabricado — reservado para o Mercado
+                    </span>
+                  ) : sellable > 0 ? (
                     <span className="flex items-center gap-1.5 rounded-lg border border-amber-900/40 bg-black/20 px-2 py-1">
                       <HandCoins className="w-3.5 h-3.5 text-amber-300/70" aria-hidden />
                       <QtyStepper value={q} max={sellable} onChange={(v) => setSellQty((m) => ({ ...m, [item.id]: v }))} disabled={busy} />
@@ -265,14 +269,18 @@ export function ShopPanel({
                   <GameButton size="sm" onClick={() => onAction({ type: 'use_item', itemId })} disabled={busy}>
                     usar
                   </GameButton>
-                  <span className="flex items-center gap-1.5 rounded-lg border border-amber-900/40 bg-black/20 px-2 py-1">
-                    <HandCoins className="w-3.5 h-3.5 text-amber-300/70" aria-hidden />
-                    <QtyStepper value={q} max={count} onChange={(v) => setSellQty((m) => ({ ...m, [itemId]: v }))} disabled={busy} />
-                    <span className="text-[11px] text-amber-200/60 tabular-nums">recebe {priceLabel(item, q, true)}</span>
-                    <GameButton size="sm" variant="ghost" onClick={() => sell(itemId)} disabled={busy}>
-                      vender
-                    </GameButton>
-                  </span>
+                  {item.price > 0 ? (
+                    <span className="flex items-center gap-1.5 rounded-lg border border-amber-900/40 bg-black/20 px-2 py-1">
+                      <HandCoins className="w-3.5 h-3.5 text-amber-300/70" aria-hidden />
+                      <QtyStepper value={q} max={count} onChange={(v) => setSellQty((m) => ({ ...m, [itemId]: v }))} disabled={busy} />
+                      <span className="text-[11px] text-amber-200/60 tabular-nums">recebe {priceLabel(item, q, true)}</span>
+                      <GameButton size="sm" variant="ghost" onClick={() => sell(itemId)} disabled={busy}>
+                        vender
+                      </GameButton>
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-sky-300/60 italic">fabricado — reservado para o Mercado</span>
+                  )}
                 </div>
               );
             })}
