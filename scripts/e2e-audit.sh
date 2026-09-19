@@ -16,6 +16,7 @@ check() { # check <descrição> <esperado> <obtido>
 
 JAR_A=$(mktemp); JAR_B=$(mktemp); JAR_G=$(mktemp)
 TS=$(date +%s)
+export MW_E2E_RUN_ID="$TS"
 E2E_IP_A="e2e-a-$TS"
 E2E_IP_B="e2e-b-$TS"
 E2E_IP_G="e2e-g-$TS"
