@@ -10,7 +10,7 @@ export type ChatChannel = (typeof CHAT_CHANNELS)[number];
 
 export async function getActiveChatPlayer(
   auth: AuthContext,
-  client: Prisma.TransactionClient | typeof db = db
+  client: Prisma.TransactionClient = db as unknown as Prisma.TransactionClient
 ) {
   const activePlayerId = auth.account.activePlayerId;
   if (!activePlayerId) return null;
@@ -29,7 +29,7 @@ export async function getActiveChatPlayer(
 
 export async function requireActiveChatPlayer(
   auth: AuthContext,
-  client: Prisma.TransactionClient | typeof db = db
+  client: Prisma.TransactionClient = db as unknown as Prisma.TransactionClient
 ) {
   const player = await getActiveChatPlayer(auth, client);
   if (!player) {
