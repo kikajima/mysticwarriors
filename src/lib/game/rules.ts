@@ -46,7 +46,7 @@ export const BALANCE_VERSION = 6;
  * Substitui a antiga ALLOWLIST de missão da v0.9.3 (negava por padrão —
  * bloqueava loja/guilda/hospital/coleta durante o trabalho): exatamente
  * o erro corrigido agora. O teste de contrato vigia que a allowlist
- * morreu e que a blocklist continua fechada em 2.
+ * morreu e que a blocklist continua fechada em 3 (PvE, torneio e Busca).
  */
 export const MISSION_BLOCKED_ACTIONS: ReadonlySet<string> = new Set([
   'battle', // ❌ combate PvE contra inimigos (Ameaça Universal é EXCEÇÃO — liberado)
