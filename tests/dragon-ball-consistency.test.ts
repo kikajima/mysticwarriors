@@ -44,18 +44,17 @@ describe('Esferas do Dragão — consistência global', () => {
     ).toBe(0.5);
   });
 
-  test('Busca mostra quantas estrelas estão livres e bloqueia antes de gastar energia quando são zero', async () => {
+  test('Busca mostra estrelas livres e NÃO gasta energia', async () => {
     const actions = await Bun.file(`${import.meta.dir}/../src/lib/game/actions.ts`).text();
     const start = actions.indexOf('async function actionSearchDragonBall');
     const end = actions.indexOf('async function actionCancelDragonBallSearch', start);
     const body = actions.slice(start, end);
 
-    const countAt = body.indexOf("dragonBallPossession.count({ where: { playerId: null } })");
-    const noFreeAt = body.indexOf("DRAGON_BALL_NONE_AVAILABLE");
-    const energyAt = body.indexOf("energy: { decrement: DRAGON_BALL_SEARCH_ENERGY_COST }");
-    expect(countAt).toBeGreaterThanOrEqual(0);
-    expect(noFreeAt).toBeGreaterThan(countAt);
-    expect(energyAt).toBeGreaterThan(noFreeAt);
+    expect(body).toContain("dragonBallPossession.count({ where: { playerId: null } })");
+    expect(body).toContain("DRAGON_BALL_NONE_AVAILABLE");
+    expect(body).not.toContain('DRAGON_BALL_SEARCH_ENERGY_COST');
+    expect(body).not.toContain('energy: { decrement');
+    expect(body).not.toContain("'energy_spent'");
     expect(body).toContain('Há ${freeStars}');
     expect(body).toContain('esferas espalhadas');
 
@@ -67,6 +66,7 @@ describe('Esferas do Dragão — consistência global', () => {
     expect(panel).toContain('Esferas espalhadas');
     expect(panel).toContain('noFreeBalls');
     expect(panel).toContain('Nenhuma esfera espalhada');
+    expect(panel).not.toContain('DRAGON_BALL_SEARCH_ENERGY_COST');
   });
 
   test('restore de nuvem não recria posse global de esfera', async () => {
