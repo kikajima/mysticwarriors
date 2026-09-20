@@ -325,7 +325,7 @@ function EquipmentInventory({
       out.ki += item.ki ?? 0;
     }
     return out;
-  }, [player.items.weapon, player.items.armor, player.items.accessory]);
+  }, [player.items]);
 
   const sell = (itemId: string) =>
     onAction({ type: 'sell', itemId, quantity: sellQty[itemId] ?? 1 });
