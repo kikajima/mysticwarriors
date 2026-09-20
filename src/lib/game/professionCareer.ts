@@ -151,7 +151,7 @@ export interface ProfessionShiftRewards {
 
 /**
  * Calcula as recompensas BASE do turno. Raça/guilda/Acadêmico são aplicados
- * nas camadas centrais de economia; loot e Esfera são rolados no servidor.
+ * nas camadas centrais de economia; loot é rolado no servidor.
  */
 export function professionShiftRewards(
   startHours: number,

@@ -20,6 +20,7 @@ import {
 import {
   BATTLE_ENERGY_COST,
   DRAGON_BALL_SEARCH_ENERGY_COST,
+  dragonBallSearchShift,
   ENEMIES,
   HEAL_COST_PER_HP,
   PROFESSIONS,
@@ -75,6 +76,7 @@ import {
   type ActivityResultPayload,
   type AppliedActivityResult,
   type BattleActivityResult,
+  type DragonBallSearchActivityResult,
   type TrainActivityResult,
 } from './activities';
 import { addCurrency, grantRewards, spendCurrency } from '@/lib/economy';
@@ -223,7 +225,7 @@ export async function executeGameAction(
         result = await actionCancelProfession(tx, player);
         break;
       case 'search_dragon_ball':
-        result = await actionSearchDragonBall(tx, player);
+        result = await actionSearchDragonBall(tx, player, args.hours ?? 1);
         break;
       case 'craft_start': {
         const craft = await startCraft(
@@ -406,10 +408,13 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
 // ===== PROFISSÕES — carreira 1–10, turnos 1/2/4/8h e loot =====
 // Busca ativa separada dos turnos: o jogador decide quando gastar energia
 // para procurar, em vez de depender do encerramento de uma profissão.
-async function actionSearchDragonBall(tx: Tx, player: Player): Promise<ActionResult> {
+async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown): Promise<ActionResult> {
   if (player.dragonBalls >= 7) {
     throw new ApiError('VALIDATION_ERROR', 'Você já reuniu as 7 Esferas do Dragão. Faça um desejo antes de procurar mais.');
   }
+  const hours = Number(rawHours);
+  const shift = dragonBallSearchShift(hours);
+  if (!shift) throw new ApiError('VALIDATION_ERROR', 'Duração de busca inválida.');
   const energyRes = await tx.player.updateMany({
     where: { id: player.id, energy: { gte: DRAGON_BALL_SEARCH_ENERGY_COST } },
     data: { energy: { decrement: DRAGON_BALL_SEARCH_ENERGY_COST } },
@@ -419,37 +424,28 @@ async function actionSearchDragonBall(tx: Tx, player: Player): Promise<ActionRes
   }
   player.energy -= DRAGON_BALL_SEARCH_ENERGY_COST;
   await bumpQuests(tx, player.id, 'energy_spent', DRAGON_BALL_SEARCH_ENERGY_COST);
-  const found = battleRng()() < 0.12;
-  if (!found) {
-    await trackEvent('dragon_ball_search', {
+  const rng = battleRng();
+  const items = parseItems(player.items);
+  const searchBonus = Math.max(0, getItem(items.accessory ? items.accessory : '')?.dragonBallSearchChanceBonus ?? 0);
+  const chance = Math.min(0.20, shift.chance + searchBonus);
+  const payload: DragonBallSearchActivityResult = {
+    kind: 'dragon_ball_search',
+    display: { message: `Busca iniciada por ${hours}h. Chance de encontrar 1 esfera: ${Math.round(chance * 100)}%.`, levelsGained: 0 },
+    apply: { found: rng() < chance, chance },
+  };
+  const activity = await tx.activity.create({
+    data: {
       playerId: player.id,
-      accountId: player.accountId,
-      metadata: { found: false },
-    }, tx);
-    return {
-      message: `A busca terminou sem resultado. (-${DRAGON_BALL_SEARCH_ENERGY_COST} energia)`,
-      levelsGained: 0,
-    };
-  }
-  const ballRes = await tx.player.updateMany({
-    where: { id: player.id, dragonBalls: { lt: 7 } },
-    data: { dragonBalls: { increment: 1 } },
+      kind: 'dragon_ball_search',
+      payload: JSON.stringify({ mode: 'dragon_ball_search', hours }),
+      result: JSON.stringify(payload),
+      endsAt: new Date(Date.now() + hours * 3600_000),
+    },
   });
-  if (ballRes.count === 0) {
-    return {
-      message: `A busca encontrou uma assinatura, mas você já tem as 7 Esferas. (-${DRAGON_BALL_SEARCH_ENERGY_COST} energia)`,
-      levelsGained: 0,
-    };
-  }
-  player.dragonBalls = Math.min(7, player.dragonBalls + 1);
-  await trackEvent('dragon_ball_search', {
-    playerId: player.id,
-    accountId: player.accountId,
-    metadata: { found: true },
-  }, tx);
   return {
-    message: `Você encontrou uma Esfera do Dragão! (${player.dragonBalls}/7) (-${DRAGON_BALL_SEARCH_ENERGY_COST} energia)`,
+    message: payload.display.message,
     levelsGained: 0,
+    activity: activityToView(activity),
   };
 }
 

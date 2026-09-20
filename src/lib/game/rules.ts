@@ -68,6 +68,7 @@ export const ACTIVITY_BLOCKED_ACTIONS: ReadonlySet<string> = new Set([
   'battle',
   'attack_player',
   'mission',
+  'search_dragon_ball',
   // v0.9.18 — luta do torneio é uma batalha com duração
   'tournament_fight',
 ]);

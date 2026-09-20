@@ -43,6 +43,12 @@ export interface TrainActivityResult {
   apply: { stat: StatKey; gain: number };
 }
 
+export interface DragonBallSearchActivityResult {
+  kind: 'dragon_ball_search';
+  display: { message: string; levelsGained: number };
+  apply: { found: boolean; chance: number };
+}
+
 export interface BattleActivityResult {
   kind: 'battle';
   mode: 'pve' | 'pvp' | 'tournament';
@@ -102,13 +108,13 @@ export interface BattleActivityResult {
   };
 }
 
-export type ActivityResultPayload = TrainActivityResult | BattleActivityResult;
+export type ActivityResultPayload = TrainActivityResult | BattleActivityResult | DragonBallSearchActivityResult;
 
 export function activityToView(a: Activity): ActivityView {
   const result = JSON.parse(a.result ?? '{}') as ActivityResultPayload;
   return {
     id: a.id,
-    kind: a.kind as 'train' | 'battle',
+    kind: a.kind as 'train' | 'battle' | 'dragon_ball_search',
     startedAt: a.startedAt.toISOString(),
     endsAt: a.endsAt.toISOString(),
     remainingMs: Math.max(0, a.endsAt.getTime() - Date.now()),
@@ -151,7 +157,7 @@ export async function assertNoRunningActivityTx(tx: Tx, playerId: string, action
 
 export interface AppliedActivityResult {
   activityId: string;
-  kind: 'train' | 'battle';
+  kind: 'train' | 'battle' | 'dragon_ball_search';
   message: string;
   levelsGained: number;
   battle?: BattleResult;
@@ -188,6 +194,9 @@ export async function resolveDueActivities(tx: Tx, player: Player): Promise<Appl
     } else if (activity.kind === 'battle' && payload.kind === 'battle') {
       const out = await applyBattleResult(tx, player, payload);
       applied.push({ activityId: activity.id, kind: 'battle', ...out });
+    } else if (activity.kind === 'dragon_ball_search' && payload.kind === 'dragon_ball_search') {
+      const out = await applyDragonBallSearchResult(tx, player, payload);
+      applied.push({ activityId: activity.id, kind: 'dragon_ball_search', ...out });
     }
     // kinds desconhecidos (futuro): apenas marcam concluídos
   }
@@ -200,6 +209,25 @@ export async function resolveDueActivities(tx: Tx, player: Player): Promise<Appl
   }
 
   return applied;
+}
+
+async function applyDragonBallSearchResult(
+  tx: Tx,
+  player: Player,
+  payload: DragonBallSearchActivityResult
+): Promise<{ message: string; levelsGained: number }> {
+  if (!payload.apply.found) {
+    return { message: 'A busca terminou sem encontrar uma Esfera do Dragão.', levelsGained: 0 };
+  }
+  const result = await tx.player.updateMany({
+    where: { id: player.id, dragonBalls: { lt: 7 } },
+    data: { dragonBalls: { increment: 1 } },
+  });
+  if (result.count === 0) {
+    return { message: 'A busca encontrou uma assinatura, mas seu conjunto já está completo.', levelsGained: 0 };
+  }
+  player.dragonBalls = Math.min(7, player.dragonBalls + 1);
+  return { message: `Busca concluída: você encontrou 1 Esfera do Dragão! (${player.dragonBalls}/7)`, levelsGained: 0 };
 }
 
 // ===== APLICAÇÃO: TREINO =====

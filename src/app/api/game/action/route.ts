@@ -124,7 +124,7 @@ const actionSchema = z.object({
   // v0.6: id da profissão ao iniciar um turno (alias de missionId)
   professionId: z.string().optional(),
   // Carreira profissional: apenas turnos fechados de 1/2/4/8 horas.
-  hours: z.union([z.literal(1), z.literal(2), z.literal(4), z.literal(8)]).optional(),
+  hours: z.union([z.literal(1), z.literal(2), z.literal(4), z.literal(8), z.literal(12)]).optional(),
   enemyId: z.string().optional(),
   targetId: z.string().optional(),
   itemId: z.string().optional(),

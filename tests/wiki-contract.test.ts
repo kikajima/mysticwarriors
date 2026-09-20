@@ -36,6 +36,7 @@ import {
   PROFESSION_MATERIALS,
   PROFESSION_MATERIAL_TIER_LEVEL,
   PROFESSION_MASTERY_HOURS,
+  DRAGON_BALL_SEARCH_SHIFTS,
   xpToNextLevel,
 } from '../src/lib/game/content/world';
 import { COMBAT, MAX_ROUNDS, BASIC_ENERGY_KI_COST } from '../src/lib/game/engine';
@@ -363,7 +364,10 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     }
     expect(t).toContain(`${(PROFESSION_LEVELS[9].rareChance * 100).toLocaleString('pt-BR')}%`);
     expect(t).toContain('1–2 materiais comuns garantidos');
-    expect(t).toContain('um único teste ao concluir o turno');
+    const search = wikiText('esferas-dragao');
+    expect(search).toContain('1h a 12h');
+    expect(search).toContain('20%');
+    for (const shift of DRAGON_BALL_SEARCH_SHIFTS) expect(search).toContain(`${shift.hours}h`);
     for (const material of PROFESSION_MATERIALS) {
       expect(t).toContain(material.name);
     }

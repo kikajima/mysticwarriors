@@ -134,6 +134,7 @@ export const CRAFTED_ITEMS: ShopItem[] = [
     minLevel: 1,
     def: 2,
     spd: 2,
+    dragonBallSearchChanceBonus: 0.02,
     icon: '📟',
   },
   {

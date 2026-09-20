@@ -198,6 +198,8 @@ export interface ShopItem {
   ki?: number;    // poder de ataque de energia / resistência
   // equipamentos de treino: bônus aplicado ao treinar atributos
   trainBonus?: TrainBonus;
+  /** Bônus absoluto na chance da Busca pelas Esferas (0.02 = +2 p.p.). */
+  dragonBallSearchChanceBonus?: number;
   // consumíveis
   effect?: 'full_hp' | 'full_energy' | 'stat_boost' | 'heal_30pct';
   icon: string;
@@ -573,7 +575,7 @@ export interface ClaimableMission {
  */
 export interface ActivityView {
   id: string;
-  kind: 'train' | 'battle';
+  kind: 'train' | 'battle' | 'dragon_ball_search';
   startedAt: string;
   endsAt: string;
   /** ms restantes calculados pelo servidor no momento da resposta */
@@ -585,6 +587,7 @@ export interface ActivityView {
     battle?: BattleResult;
     missionResult?: { zeniGain: number; xpGain: number; foundDragonBall: boolean };
     bossAttack?: { damage: number; xpGain: number; killed: boolean; cooldownSec: number };
+    searchResult?: { found: boolean; chance: number };
   };
 }
 

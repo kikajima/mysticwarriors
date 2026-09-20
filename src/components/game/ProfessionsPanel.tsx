@@ -14,6 +14,8 @@ import {
   professionShiftRewards,
   academicXpBonusPct,
   DRAGON_BALL_SEARCH_ENERGY_COST,
+  DRAGON_BALL_SEARCH_SHIFTS,
+  getItem,
 } from '@/lib/game/constants';
 import { useServerNow } from '@/lib/game/clock';
 import type { PlayerView, QuestView } from '@/lib/game/types';
@@ -477,6 +479,18 @@ function DragonBallSearchTab({
   busy: boolean;
 }) {
   const complete = player.dragonBalls >= 7;
+  const now = useServerNow(1000);
+  const [selectedHours, setSelectedHours] = useState<1 | 2 | 4 | 8 | 12>(4);
+  const search = player.runningActivity?.kind === 'dragon_ball_search' ? player.runningActivity : null;
+  const accessory = player.items.accessory ? getItem(player.items.accessory) : null;
+  const itemBonus = Math.max(0, accessory?.dragonBallSearchChanceBonus ?? 0);
+  const baseChance = DRAGON_BALL_SEARCH_SHIFTS.find((shift) => shift.hours === selectedHours)?.chance ?? 0;
+  const chance = Math.min(0.2, baseChance + itemBonus);
+  const remaining = search ? Math.max(0, new Date(search.endsAt).getTime() - now) : 0;
+  const totalHours = search ? Math.max(1, Math.ceil((new Date(search.endsAt).getTime() - new Date(search.startedAt).getTime()) / 3600000)) : 0;
+  const countdown = remaining > 0
+    ? `${Math.floor(remaining / 3600000)}h ${String(Math.floor((remaining % 3600000) / 60000)).padStart(2, '0')}m`
+    : 'pronta para concluir';
   return (
     <div className="space-y-4">
       <GameCard className="p-6 border-yellow-700/50" glow={complete}>
@@ -484,22 +498,44 @@ function DragonBallSearchTab({
           <div className="text-6xl shrink-0 text-center" aria-hidden>🔮</div>
           <div className="flex-1">
             <h3 className="font-heading text-xl text-amber-100">Busca pelas Esferas</h3>
-            <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">
-              Dedique energia a uma varredura ativa de assinaturas de Ki. A busca é independente das profissões e pode ser repetida sempre que houver energia.
-            </p>
+            <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">Escolha quanto tempo seu radar ficará procurando. Quanto maior o turno, maior a chance, até 20%. Cada busca encontra no máximo uma esfera.</p>
+            {search && (
+              <div className="mt-3 rounded-lg border border-orange-700/50 bg-orange-950/30 p-3">
+                <p className="font-heading text-orange-200">Busca em andamento: {totalHours}h</p>
+                <p className="text-2xl text-amber-100 tabular-nums mt-1">⏳ {countdown}</p>
+                <p className="text-xs text-amber-200/50">A esfera será aplicada apenas quando a busca terminar.</p>
+              </div>
+            )}
+            {!search && (
+              <div className="grid grid-cols-5 gap-2 mt-4">
+                {DRAGON_BALL_SEARCH_SHIFTS.map((shift) => (
+                  <button
+                    key={shift.hours}
+                    type="button"
+                    onClick={() => setSelectedHours(shift.hours)}
+                    disabled={busy || complete}
+                    className={`rounded-lg border px-2 py-2 text-center transition-all disabled:opacity-40 ${selectedHours === shift.hours ? 'border-yellow-400 bg-yellow-950/60 text-yellow-200' : 'border-amber-900/40 bg-black/20 text-amber-200/70'}`}
+                  >
+                    <span className="font-heading block">{shift.hours}h</span>
+                    <span className="text-[10px]">{Math.round(Math.min(0.2, shift.chance + itemBonus) * 100)}%</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex flex-wrap gap-2 mt-3">
               <Chip className="bg-yellow-950/50 text-yellow-300 border-yellow-800/50">🔮 {player.dragonBalls}/7 coletadas</Chip>
               <Chip className="bg-amber-950/50 text-amber-200 border-amber-800/50">⚡ -{DRAGON_BALL_SEARCH_ENERGY_COST} energia</Chip>
-              <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">🎯 12% de chance por busca</Chip>
+              <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">🎯 {Math.round(chance * 100)}% de chance</Chip>
+              {itemBonus > 0 && <Chip className="bg-emerald-950/50 text-emerald-300 border-emerald-800/50">📟 +{Math.round(itemBonus * 100)}% do acessório</Chip>}
             </div>
           </div>
           <GameButton
             variant="gold"
             className="shrink-0"
-            disabled={busy || complete || player.energy < DRAGON_BALL_SEARCH_ENERGY_COST}
-            onClick={() => void onAction({ type: 'search_dragon_ball' })}
+            disabled={busy || complete || !!search || player.energy < DRAGON_BALL_SEARCH_ENERGY_COST}
+            onClick={() => void onAction({ type: 'search_dragon_ball', hours: selectedHours })}
           >
-            {complete ? 'Conjunto completo' : player.energy < DRAGON_BALL_SEARCH_ENERGY_COST ? 'Sem energia' : 'Procurar agora'}
+            {complete ? 'Conjunto completo' : search ? 'Busca em andamento' : player.energy < DRAGON_BALL_SEARCH_ENERGY_COST ? 'Sem energia' : `Iniciar busca (${selectedHours}h)`}
           </GameButton>
         </div>
       </GameCard>
