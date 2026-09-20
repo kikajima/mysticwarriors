@@ -87,7 +87,7 @@ import { attackWorldBoss } from '@/lib/worldboss';
 import { scoreSeasonVictory } from '@/lib/seasons';
 import { trackEvent } from '@/lib/analytics';
 import { EQUIPMENT_SLOTS } from './types';
-import { claimPlayerNotifications } from './notifications';
+import { listPendingPlayerNotifications } from './notifications';
 import type { ActivityView, BattleResult, EquipmentSlot, Loadout, PlayerNotificationView, ProfessionLootEntry, ShopItem } from './types';
 
 // =====================================================================
@@ -341,7 +341,7 @@ export async function executeGameAction(
         throw new ApiError('VALIDATION_ERROR', 'Ação desconhecida.');
     }
     if (appliedResults.length > 0) result.appliedResults = appliedResults;
-    const notifications = await claimPlayerNotifications(tx, player.id);
+    const notifications = await listPendingPlayerNotifications(tx, player.id);
     if (notifications.length > 0) result.notifications = notifications;
     return result;
     },
