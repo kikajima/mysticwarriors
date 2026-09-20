@@ -123,13 +123,14 @@ describe('CONTRATO A — comportamento dos handlers reais × afirmações da wik
     expect(atributos + custos).not.toContain('1,6 s');
   });
 
-  test('TRABALHO BLOQUEIA EXATAMENTE 2 AÇÕES: blocklist v0.16 com battle/tournament_fight', async () => {
+  test('TRABALHO BLOQUEIA EXATAMENTE 3 AÇÕES: PvE, torneio e Busca de Esferas', async () => {
     const rulesSrc = await Bun.file(`${import.meta.dir}/../src/lib/game/rules.ts`).text();
     const blocked = fnBody(rulesSrc, 'MISSION_BLOCKED_ACTIONS', ']);');
     expect(blocked).not.toContain("'train'");
     expect(blocked).toContain("'battle'");
     expect(blocked).toContain("'tournament_fight'");
-    // matriz FECHADA: nenhum outro bloqueio de missão além dos 2
+    expect(blocked).toContain("'search_dragon_ball'");
+    // matriz FECHADA: nenhum outro bloqueio de missão além dos 3
     expect(blocked).not.toContain("'attack_player'");
     expect(blocked).not.toContain("'buy'");
     expect(blocked).not.toContain("'heal'");
@@ -142,7 +143,8 @@ describe('CONTRATO A — comportamento dos handlers reais × afirmações da wik
     expect(wikiText('primeiros-passos')).not.toContain('você já pode lutar');
     // a wiki publica a matriz consolidada (v0.16)
     const ocupacao = wikiText('accoes-custos');
-    expect(ocupacao).toContain('TRABALHANDO bloqueia APENAS 2 ações');
+    expect(ocupacao).toContain('TRABALHANDO bloqueia APENAS 3 ações');
+    expect(ocupacao).toContain('Busca pelas Esferas');
     expect(ocupacao).toContain('Matriz ação × estado');
     expect(ocupacao).toContain('coletar é sempre possível');
     expect(ocupacao).toContain('Coletar recompensa (qualquer tipo)');
