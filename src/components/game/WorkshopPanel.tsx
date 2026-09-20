@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { EQUIPMENT_SLOTS } from '@/lib/game/types';
 import type { PlayerView } from '@/lib/game/types';
 import {
   CRAFT_RECIPES,
@@ -72,6 +73,7 @@ export function WorkshopPanel({
   const [job, setJob] = useState<CraftJobRow | null>(null);
   const [batchQty, setBatchQty] = useState<Record<string, number>>({});
   const [tierFilter, setTierFilter] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all');
+  const [kindFilter, setKindFilter] = useState<'all' | 'equipment' | 'consumable' | 'training'>('all');
   const [failed, setFailed] = useState(false);
   const now = useServerNow(500);
 
@@ -127,8 +129,17 @@ export function WorkshopPanel({
     a.tier - b.tier || a.name.localeCompare(b.name, 'pt-BR');
   const matchesTier = (recipe: (typeof CRAFT_RECIPES)[number]) =>
     tierFilter === 'all' || recipe.tier === tierFilter;
+  const matchesKind = (recipe: (typeof CRAFT_RECIPES)[number]) => {
+    if (kindFilter === 'all') return true;
+    const item = getCraftedItem(recipe.outputItemId);
+    if (!item) return false;
+    if (kindFilter === 'equipment') return EQUIPMENT_SLOTS.includes(item.category as (typeof EQUIPMENT_SLOTS)[number]);
+    return item.category === kindFilter;
+  };
   const blueprints = CRAFT_RECIPES.filter((r) => r.requiresAcademic && matchesTier(r)).sort(byTierThenName);
-  const mainRecipes = CRAFT_RECIPES.filter((r) => !r.requiresAcademic && matchesTier(r)).sort(byTierThenName);
+  const mainRecipes = CRAFT_RECIPES
+    .filter((r) => !r.requiresAcademic && matchesTier(r) && matchesKind(r))
+    .sort(byTierThenName);
 
   const renderRecipe = (recipe: (typeof CRAFT_RECIPES)[number]) => {
     const playerItemOutput = getCraftedItem(recipe.outputItemId);
@@ -327,22 +338,46 @@ export function WorkshopPanel({
         </p>
       </GameCard>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-amber-200/55 mr-1">Filtrar receitas:</span>
-        {(['all', 1, 2, 3, 4, 5] as const).map((tier) => (
-          <button
-            key={tier}
-            type="button"
-            onClick={() => setTierFilter(tier)}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-heading transition-colors ${
-              tierFilter === tier
-                ? 'border-orange-500/70 bg-orange-950/40 text-orange-200'
-                : 'border-amber-900/40 bg-black/20 text-amber-200/55 hover:border-amber-700/60'
-            }`}
-          >
-            {tier === 'all' ? 'Todos' : `Tier ${tier}`}
-          </button>
-        ))}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-amber-200/55 mr-1">Tier:</span>
+          {(['all', 1, 2, 3, 4, 5] as const).map((tier) => (
+            <button
+              key={tier}
+              type="button"
+              onClick={() => setTierFilter(tier)}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-heading transition-colors ${
+                tierFilter === tier
+                  ? 'border-orange-500/70 bg-orange-950/40 text-orange-200'
+                  : 'border-amber-900/40 bg-black/20 text-amber-200/55 hover:border-amber-700/60'
+              }`}
+            >
+              {tier === 'all' ? 'Todos' : `Tier ${tier}`}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-amber-200/55 mr-1">Tipo:</span>
+          {([
+            ['all', 'Todos'],
+            ['equipment', 'Equipamentos'],
+            ['consumable', 'Consumíveis'],
+            ['training', 'Treino'],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setKindFilter(key)}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-heading transition-colors ${
+                kindFilter === key
+                  ? 'border-sky-500/70 bg-sky-950/40 text-sky-200'
+                  : 'border-amber-900/40 bg-black/20 text-amber-200/55 hover:border-amber-700/60'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {job && (
