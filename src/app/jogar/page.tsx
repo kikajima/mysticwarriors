@@ -11,7 +11,7 @@ import { CharacterSelect } from '@/components/game/CharacterSelect';
 import { Dashboard } from '@/components/game/Dashboard';
 import { TrainingPanel } from '@/components/game/TrainingPanel';
 import { ProfessionsPanel } from '@/components/game/ProfessionsPanel';
-import { WorkshopPanel } from '@/components/game/WorkshopPanel';
+import { InventoryPanel } from '@/components/game/InventoryPanel';
 import { BattlePanel } from '@/components/game/BattlePanel';
 import { BattleLogDialog } from '@/components/game/BattleLogDialog';
 import { TournamentPanel } from '@/components/game/TournamentPanel';
@@ -76,14 +76,14 @@ import {
   Save,
   CloudOff,
   RotateCw,
-  Hammer,
+  Backpack,
 } from 'lucide-react';
 
 type View =
   | 'dashboard'
   | 'training'
   | 'missions'
-  | 'workshop'
+  | 'inventory'
   | 'battle'
   | 'tournament'
   | 'shop'
@@ -96,7 +96,7 @@ const NAV: Array<{ key: View; label: string; icon: React.ReactNode; short: strin
   { key: 'dashboard', label: 'Visão Geral', short: 'Início', icon: <LayoutDashboard className="w-4 h-4" /> },
   { key: 'training', label: 'Treino', short: 'Treino', icon: <Dumbbell className="w-4 h-4" /> },
   { key: 'missions', label: 'Profissões', short: 'Trabalho', icon: <Briefcase className="w-4 h-4" /> },
-  { key: 'workshop', label: 'Oficina', short: 'Oficina', icon: <Hammer className="w-4 h-4" /> },
+  { key: 'inventory', label: 'Inventário', short: 'Itens', icon: <Backpack className="w-4 h-4" /> },
   { key: 'battle', label: 'Batalha', short: 'Lutar', icon: <Swords className="w-4 h-4" /> },
   { key: 'tournament', label: 'Torneio', short: 'Torneio', icon: <Medal className="w-4 h-4" /> },
   { key: 'shop', label: 'Loja', short: 'Loja', icon: <Store className="w-4 h-4" /> },
@@ -1454,8 +1454,8 @@ export default function PlayPage() {
         {view === 'missions' && (
           <ProfessionsPanel player={player} onAction={(payload) => doAction(payload)} busy={busy} onRefresh={refreshGameState} />
         )}
-        {view === 'workshop' && (
-          <WorkshopPanel player={player} onAction={(payload) => doAction(payload)} busy={busy} />
+        {view === 'inventory' && (
+          <InventoryPanel player={player} onAction={(payload) => doAction(payload)} busy={busy} />
         )}
         {view === 'battle' && (
           <BattlePanel
@@ -1534,7 +1534,7 @@ export default function PlayPage() {
           <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
             <SheetTrigger
               className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-heading transition-colors ${
-                ['workshop', 'shop', 'ranking', 'guilds', 'shenron', 'achievements', 'tournament'].includes(view)
+                ['inventory', 'shop', 'ranking', 'guilds', 'shenron', 'achievements', 'tournament'].includes(view)
                   ? 'text-orange-300'
                   : 'text-amber-200/50'
               }`}
@@ -1549,7 +1549,7 @@ export default function PlayPage() {
                 <SheetTitle className="font-heading text-amber-100 text-left">Mais seções</SheetTitle>
               </SheetHeader>
               <div className="grid grid-cols-3 gap-3 pb-6">
-                {(['workshop', 'shop', 'ranking', 'guilds', 'shenron', 'achievements', 'tournament'] as View[]).map((key) => {
+                {(['inventory', 'shop', 'ranking', 'guilds', 'shenron', 'achievements', 'tournament'] as View[]).map((key) => {
                   const item = NAV.find((n) => n.key === key)!;
                   return (
                     <button

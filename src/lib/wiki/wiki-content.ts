@@ -995,10 +995,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Profissões, Carreira, Loot e Oficina',
     icon: '🌾',
     group: 'Progressão',
-    summary: '5 profissões, carreira do Nível 1 ao 10, loot exclusivo e Oficina de crafting cross-profession.',
+    summary: '5 profissões, carreira do Nível 1 ao 10, loot exclusivo e Oficina de crafting dentro do Inventário.',
     resumo: [
       'Escolha turnos de **1h, 2h, 4h ou 8h** — trabalhar continua **sem custo de energia**.',
-      'Cada hora rende **1–2 materiais comuns garantidos**; a **Oficina** combina insumos de profissões diferentes em itens e blueprints.',
+      'Cada hora rende **1–2 materiais comuns garantidos**; a **Oficina**, dentro do Inventário, combina insumos de profissões diferentes em itens e blueprints.',
       'Acadêmico aumenta o **XP global**, fabrica blueprints e reduz o tempo de crafting em **1% por nível** (até 10%).',
     ],
     blocks: [
@@ -1491,16 +1491,16 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Loja e Itens',
     icon: '🏪',
     group: 'Coleção e Social',
-    summary: 'Equipamentos, consumíveis, itens de treino, cosméticos e o Elixir do Dragão.',
+    summary: 'A Loja vende itens; posse, uso, venda e equipamento ficam organizados no Inventário.',
     resumo: [
       'Equipamentos de combate custam **Zeni**; consumíveis, treino e cosméticos custam **💎**.',
-      'Vender devolve **50%** na moeda original — e cosméticos não são vendíveis.',
+      'Itens comprados vão para o **Inventário**; lá você usa, vende e equipa. Vender devolve **50%** na moeda original.',
       'Empilhe até 999 unidades; até 99 por transação de compra/venda.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: `As primeiras compras úteis são baratas: **Luvas de Treino** (300 Zeni) para bater mais forte, **Gi de Batalha** (250 Zeni) para apanhar menos. Mais tarde, a **Espada Z** (6.000 Zeni, +42 de ataque) e o **Manto do Kaioshin** (38.000 Zeni, +100 de defesa) dominam o fim de jogo. Vender devolve ${Math.round(SELL_PRICE_RATIO * 100)}% do preço na mesma moeda.`,
+        text: `A Loja cuida apenas das compras. Depois de comprar, abra **Inventário → Itens** para consumíveis/treino ou **Inventário → Equipamento** para armas, armaduras e acessórios. As primeiras compras úteis são baratas: **Luvas de Treino** (300 Zeni) e **Gi de Batalha** (250 Zeni). Vender pelo Inventário devolve ${Math.round(SELL_PRICE_RATIO * 100)}% do preço na mesma moeda.`,
       },
       {
         kind: 'text',

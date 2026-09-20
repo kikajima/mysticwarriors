@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { SHOP_ITEMS, getItem, COSMETICS, PRODUCTS, SELL_PRICE_RATIO, SHOP_MAX_QUANTITY, TALENTS } from '@/lib/game/constants';
+import { SHOP_ITEMS, COSMETICS, PRODUCTS, SHOP_MAX_QUANTITY, TALENTS } from '@/lib/game/constants';
 import type { CosmeticDef } from '@/lib/game/content/cosmetics';
 import type { TalentDef } from '@/lib/game/content/talents';
-import type { ItemsState, PlayerView, ShopItem } from '@/lib/game/types';
+import type { PlayerView, ShopItem } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
-import { Coins, Lock, Swords, Shield, Gauge, Sparkles, Backpack, TrendingUp, Gem, Wand2, HandCoins, Flame, CheckCircle2 } from 'lucide-react';
+import { Coins, Lock, Swords, Shield, Gauge, Sparkles, TrendingUp, Gem, Flame, CheckCircle2 } from 'lucide-react';
 
 const CATEGORIES = [
   { key: 'weapon', label: 'Armas', icon: '⚔️' },
@@ -51,26 +51,15 @@ function trainBonusText(item: ShopItem): string {
 // ===== v0.9.10: helpers de quantidade/preço (EXIBIÇÃO — o servidor
 // recalcula tudo na hora da compra/venda e corrige o estado) =====
 
-/** Unidades de equipamento/treino no inventário (stacks ou posse legado). */
-function unitsOf(items: ItemsState, id: string): number {
-  return items.stacks?.[id] ?? (items.owned.includes(id) ? 1 : 0);
-}
-
-/** Preço unitário de venda (exibição): 50% do preço de compra, mesma moeda. */
-function sellUnitPrice(item: ShopItem): number {
-  return Math.max(0, Math.floor(item.price * SELL_PRICE_RATIO));
-}
-
-function priceLabel(item: ShopItem, qty: number, sell: boolean): string {
-  const unit = sell ? sellUnitPrice(item) : item.price;
-  const total = unit * qty;
+function priceLabel(item: ShopItem, qty: number): string {
+  const total = item.price * qty;
   if (item.currency === 'crystal') {
     return `${total} 💎 ${total === 1 ? 'diamante' : 'diamantes'}`;
   }
   return `${total.toLocaleString('pt-BR')} Zeni`;
 }
 
-/** Botão −/qtd/+ compacto (seletor de quantidade da loja e da venda). */
+/** Botão −/qtd/+ compacto (seletor de quantidade da loja). */
 function QtyStepper({
   value,
   onChange,
@@ -124,9 +113,8 @@ export function ShopPanel({
   // LIBERADOS durante o trabalho (só treino, PvE e torneio são negados).
   const [category, setCategory] = useState<CategoryKey>('weapon');
   const [ownedCosmetics, setOwnedCosmetics] = useState<string[]>([]);
-  // v0.9.10: quantidade por item na COMPRA e na VENDA (por id)
+  // quantidade por item na compra; posse/uso/venda ficam no Inventário.
   const [buyQty, setBuyQty] = useState<Record<string, number>>({});
-  const [sellQty, setSellQty] = useState<Record<string, number>>({});
 
   const loadCosmetics = useCallback(async () => {
     try {
@@ -146,11 +134,7 @@ export function ShopPanel({
   }, [category, loadCosmetics]);
 
   const items = category === 'cosmetics' || category === 'talents' ? [] : SHOP_ITEMS.filter((i) => i.category === category);
-  const ownedEquipment = player.items.owned.map((id) => getItem(id)).filter(Boolean) as ShopItem[];
-  const consumables = Object.entries(player.items.consumables);
-
   const buy = (itemId: string) => onAction({ type: 'buy', itemId, quantity: buyQty[itemId] ?? 1 });
-  const sell = (itemId: string) => onAction({ type: 'sell', itemId, quantity: sellQty[itemId] ?? 1 });
 
   return (
     <div className="space-y-6">
@@ -167,126 +151,6 @@ export function ShopPanel({
           </Chip>
         </div>
       </GameCard>
-
-      {/* Inventário de equipáveis — com quantidade e venda */}
-      {ownedEquipment.length > 0 && (
-        <div>
-          <h3 className="font-heading text-amber-100 mb-3 flex items-center gap-2">
-            <Backpack className="w-4 h-4" /> Seu Inventário
-          </h3>
-          <div className="grid gap-2">
-            {ownedEquipment.map((item) => {
-              if (!item) return null;
-              const total = unitsOf(player.items, item.id);
-              const equipped =
-                player.items.weapon === item.id ||
-                player.items.armor === item.id ||
-                player.items.accessory === item.id;
-              const passive = item.category === 'training';
-              const inUse = equipped || passive; // passivo de treino conta como "em uso"
-              const sellable = item.price > 0 ? total - (inUse ? 1 : 0) : 0;
-              const q = Math.min(sellQty[item.id] ?? 1, Math.max(1, sellable));
-              return (
-                <div
-                  key={item.id}
-                  className={`flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                    equipped
-                      ? 'bg-emerald-950/40 border-emerald-700/50 text-emerald-200'
-                      : 'bg-black/30 border-amber-900/40 text-amber-100'
-                  }`}
-                >
-                  <span aria-hidden>{item.icon}</span>
-                  <span>{item.name}</span>
-                  {total > 1 && <Chip className="bg-black/40 text-amber-200/80 border-amber-900/50">×{total}</Chip>}
-                  {equipped ? (
-                    <Chip className="bg-emerald-900/50 text-emerald-300 border-emerald-700/50">equipado</Chip>
-                  ) : passive ? (
-                    <Chip className="bg-emerald-900/50 text-emerald-300 border-emerald-700/50">ativo</Chip>
-                  ) : null}
-                  {!equipped && !passive && total > 0 && (
-                    <span className="text-[11px] text-amber-200/50">
-                      {total > 1 ? `${total - (equipped ? 1 : 0)} em reserva` : '1 unidade'}
-                    </span>
-                  )}
-                  <span className="flex-1" />
-                  {!equipped && !passive && (
-                    <GameButton
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onAction({ type: 'equip', itemId: item.id })}
-                      disabled={busy}
-                      title="Equipar uma unidade"
-                    >
-                      equipar
-                    </GameButton>
-                  )}
-                  {/* VENDA: unidade em uso nunca é vendida */}
-                  {item.price <= 0 ? (
-                    <span className="text-[11px] text-sky-300/60 italic">
-                      feito na Oficina
-                    </span>
-                  ) : sellable > 0 ? (
-                    <span className="flex items-center gap-1.5 rounded-lg border border-amber-900/40 bg-black/20 px-2 py-1">
-                      <HandCoins className="w-3.5 h-3.5 text-amber-300/70" aria-hidden />
-                      <QtyStepper value={q} max={sellable} onChange={(v) => setSellQty((m) => ({ ...m, [item.id]: v }))} disabled={busy} />
-                      <span className="text-[11px] text-amber-200/60 tabular-nums">recebe {priceLabel(item, q, true)}</span>
-                      <GameButton size="sm" variant="ghost" onClick={() => sell(item.id)} disabled={busy}>
-                        vender
-                      </GameButton>
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-amber-200/40 italic" title="A unidade em uso não pode ser vendida">
-                      em uso — deseque para vender
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Consumíveis no inventário — usar + vender */}
-      {consumables.length > 0 && (
-        <div>
-          <h3 className="font-heading text-amber-100 mb-3 flex items-center gap-2">
-            <Wand2 className="w-4 h-4" /> Consumíveis prontos para usar
-          </h3>
-          <div className="grid gap-2">
-            {consumables.map(([itemId, count]) => {
-              const item = getItem(itemId);
-              if (!item) return null;
-              const q = Math.min(sellQty[itemId] ?? 1, Math.max(1, count));
-              return (
-                <div
-                  key={itemId}
-                  className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-900/40 bg-black/30 px-3 py-2 text-sm text-amber-100"
-                >
-                  <span aria-hidden>{item.icon}</span>
-                  <span>{item.name}</span>
-                  <Chip className="bg-black/40 text-amber-200/70 border-amber-900/50">×{count}</Chip>
-                  <span className="flex-1" />
-                  <GameButton size="sm" onClick={() => onAction({ type: 'use_item', itemId })} disabled={busy}>
-                    usar
-                  </GameButton>
-                  {item.price > 0 ? (
-                    <span className="flex items-center gap-1.5 rounded-lg border border-amber-900/40 bg-black/20 px-2 py-1">
-                      <HandCoins className="w-3.5 h-3.5 text-amber-300/70" aria-hidden />
-                      <QtyStepper value={q} max={count} onChange={(v) => setSellQty((m) => ({ ...m, [itemId]: v }))} disabled={busy} />
-                      <span className="text-[11px] text-amber-200/60 tabular-nums">recebe {priceLabel(item, q, true)}</span>
-                      <GameButton size="sm" variant="ghost" onClick={() => sell(itemId)} disabled={busy}>
-                        vender
-                      </GameButton>
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-sky-300/60 italic">feito na Oficina</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Categorias */}
       <div className="flex gap-2 overflow-x-auto pb-1" role="tablist">
@@ -338,7 +202,6 @@ export function ShopPanel({
             const locked = player.level < item.minLevel;
             const crystalItem = item.currency === 'crystal';
             const isConsumable = item.category === 'consumable';
-            const ownedUnits = isConsumable ? (player.items.consumables[item.id] ?? 0) : unitsOf(player.items, item.id);
             const q = buyQty[item.id] ?? 1;
             const totalCost = item.price * q;
             const canAfford = crystalItem ? player.crystals >= totalCost : player.zeni >= totalCost;
@@ -383,11 +246,6 @@ export function ShopPanel({
                   {item.minLevel > 1 && (
                     <Chip className="bg-black/40 text-amber-200/60 border-amber-900/50">Nv {item.minLevel}+</Chip>
                   )}
-                  {ownedUnits > 0 && (
-                    <Chip className="bg-black/40 text-amber-200/70 border-amber-900/50">
-                      ×{ownedUnits} {ownedUnits === 1 ? 'no inventário' : 'de reserva'}
-                    </Chip>
-                  )}
                 </div>
                 <div className="flex-1" />
                 <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -398,10 +256,10 @@ export function ShopPanel({
                     {crystalItem ? <Gem className="w-4 h-4" /> : <Coins className="w-4 h-4" />}
                     {q > 1 ? (
                       <span>
-                        {priceLabel(item, 1, false)} <span className="text-amber-200/50">×</span> {q} = {priceLabel(item, q, false)}
+                        {priceLabel(item, 1)} <span className="text-amber-200/50">×</span> {q} = {priceLabel(item, q)}
                       </span>
                     ) : (
-                      priceLabel(item, 1, false)
+                      priceLabel(item, 1)
                     )}
                   </span>
                   <span className="flex items-center gap-2">

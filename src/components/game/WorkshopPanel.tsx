@@ -60,10 +60,12 @@ export function WorkshopPanel({
   player,
   onAction,
   busy,
+  embedded = false,
 }: {
   player: PlayerView;
   onAction: (payload: Record<string, unknown>) => void | Promise<boolean>;
   busy: boolean;
+  embedded?: boolean;
 }) {
   const [inventory, setInventory] = useState<InventoryRow[] | null>(null);
   const [job, setJob] = useState<CraftJobRow | null>(null);
@@ -184,7 +186,7 @@ export function WorkshopPanel({
 
   return (
     <div className="space-y-6">
-      <SectionTitle icon="🔧">Oficina</SectionTitle>
+      {!embedded && <SectionTitle icon="🔧">Oficina</SectionTitle>}
 
       <GameCard className="p-4">
         <p className="text-sm text-amber-100/80">
