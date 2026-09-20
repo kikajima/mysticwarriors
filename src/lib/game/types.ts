@@ -568,14 +568,14 @@ export interface DerivedStats {
   defPower: number;
   resPower: number;
   /** Bônus crus somados pelos equipamentos equipados. */
-  equipmentBonuses: {
+  equipmentBonuses?: {
     strength: number;
     defense: number;
     speed: number;
     ki: number;
   };
   /** Atributo base + bônus dos equipamentos, para exibição clara ao jogador. */
-  totalStats: {
+  totalStats?: {
     strength: number;
     defense: number;
     speed: number;
