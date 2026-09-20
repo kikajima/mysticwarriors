@@ -227,7 +227,7 @@ export function trainingCost(statValue: number, race: string): number {
  *  3. é preciso ENTRAR na luta com vida >= 50% do máximo (luta de verdade,
  *     não suicídio — ver zenkaiRequiresHpPct);
  *  4. cada derrota por nocaute deixa o guerreiro com 1 de vida; sem cura
- *     hospitalar instantânea, a recuperação natural ou por itens cria o
+ *     instantânea, a recuperação natural ou por itens cria o
  *     intervalo real entre tentativas de combate.
  */
 export const ZENKAI = {
