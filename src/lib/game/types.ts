@@ -168,7 +168,8 @@ export interface Enemy {
 
 // ===== Itens =====
 
-export type ItemCategory = 'weapon' | 'armor' | 'accessory' | 'consumable' | 'training';
+export type EquipmentSlot = 'weapon' | 'armor' | 'head' | 'wrists' | 'legs' | 'boots' | 'accessory';
+export type ItemCategory = EquipmentSlot | 'consumable' | 'training';
 
 export interface TrainBonus {
   all?: number;
@@ -206,6 +207,11 @@ export interface ShopItem {
 export interface ItemsState {
   weapon: string | null;
   armor: string | null;
+  /** Slots adicionados pela Oficina; opcionais no tipo para ler saves legados. */
+  head?: string | null;
+  wrists?: string | null;
+  legs?: string | null;
+  boots?: string | null;
   accessory: string | null;
   /** ids ÚNICOS de equipamentos/treino possuídos (duplicatas NUNCA entram
    *  aqui — o bônus de itens de treino soma por entrada; quantidades
