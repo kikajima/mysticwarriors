@@ -68,8 +68,8 @@ describe('Equipamento completo — sete slots reais', () => {
     expect(equipped.power).toBeGreaterThan(base.power);
   });
 
-  test('cada novo slot possui cinco equipamentos craftáveis, um por Tier', () => {
-    for (const slot of ['head', 'wrists', 'legs', 'boots'] as const) {
+  test('cada um dos sete slots possui cinco equipamentos craftáveis, um por Tier', () => {
+    for (const slot of EQUIPMENT_SLOTS) {
       const items = CRAFTED_ITEMS.filter((item) => item.category === slot);
       expect(items).toHaveLength(5);
       expect(new Set(items.map((item) => item.id)).size).toBe(5);
