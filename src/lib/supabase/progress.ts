@@ -44,7 +44,7 @@ import { RACES } from '@/lib/game/content/races';
 import { TECHNIQUES, STRATEGIES } from '@/lib/game/content/techniques';
 import { TRANSFORMATIONS } from '@/lib/game/content/transformations';
 import { PROFESSIONS, PROFESSION_MATERIALS, SHOP_ITEMS, MAX_CHARACTERS_PER_ACCOUNT } from '@/lib/game/content/world';
-import { CRAFTED_ITEMS, CRAFT_STACK_ITEMS, CRAFT_RECIPES, MAX_CRAFT_BATCH, getCraftRecipe } from '@/lib/game/content/crafting';
+import { CRAFTED_ITEMS, CRAFT_STACK_ITEMS, CRAFT_RECIPES, MAX_CRAFT_BATCH, craftingLevelFromXp, craftingQueueCapacity, getCraftRecipe } from '@/lib/game/content/crafting';
 import { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS } from '@/lib/game/content/quests';
 import { TALENTS } from '@/lib/game/content/talents';
 import { TOURNAMENT_ROUNDS } from '@/lib/game/content/tournament';
@@ -694,6 +694,9 @@ function sanitizeCharacter(raw: unknown, accountCosmetics: string[]): CloudChara
   const mission = sanitizeMission(c.missionId, c.missionStartedAt, c.missionEndsAt, c.missionHours);
   const lastRegen = sanitizeIsoDate(c.lastRegen, 30 * 86400_000, 5 * 60_000) ?? new Date();
   const lastRegenHp = sanitizeIsoDate(c.lastRegenHp, 30 * 86400_000, 5 * 60_000);
+  const craftingXp = clampInt(c.craftingXp, CLAMP.xp);
+  const queueCapacity = craftingQueueCapacity(craftingLevelFromXp(craftingXp));
+  const craftJobs = sanitizeCraftJobs(c.craftJobs, c.craftJob).slice(0, queueCapacity);
 
   return {
     id: asString(c.id, 64),
@@ -717,7 +720,7 @@ function sanitizeCharacter(raw: unknown, accountCosmetics: string[]): CloudChara
     guildDonated: clampInt(c.guildDonated, CLAMP.counter),
     missionsDone: clampInt(c.missionsDone, CLAMP.counter),
     dragonBalls: clampInt(c.dragonBalls, CLAMP.dragonBalls),
-    craftingXp: clampInt(c.craftingXp, CLAMP.xp),
+    craftingXp,
     craftsCompleted: clampInt(c.craftsCompleted, CLAMP.counter),
     items: sanitizeItems(c.items),
     techniques,
@@ -736,7 +739,7 @@ function sanitizeCharacter(raw: unknown, accountCosmetics: string[]): CloudChara
     missionEndsAt: mission?.missionEndsAt ?? null,
     missionHours: mission?.missionHours ?? null,
     materials: sanitizeMaterials(c.materials),
-    craftJobs: sanitizeCraftJobs(c.craftJobs, c.craftJob),
+    craftJobs,
     lastRegen: lastRegen.toISOString(),
     lastRegenHp: lastRegenHp ? lastRegenHp.toISOString() : null,
     quests: sanitizeQuests(c.quests),
