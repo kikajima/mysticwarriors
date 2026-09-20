@@ -8,6 +8,7 @@ import {
   getCraftedItem,
   getCraftRecipe,
   getCraftStackItem,
+  MAX_CRAFT_BATCH,
 } from './content/crafting';
 import {
   academicCraftTimeMultiplier,
@@ -24,7 +25,6 @@ import {
 type Tx = Prisma.TransactionClient;
 
 const MAX_STACK = 999;
-export const MAX_CRAFT_BATCH = 20;
 
 export function craftAcademicLevel(player: Pick<Player, 'professions'>): number {
   const professions = parseProfessions(player.professions);
