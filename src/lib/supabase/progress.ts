@@ -151,6 +151,9 @@ export interface CloudCharacterSnapshot {
   guildDonated: number;
   missionsDone: number;
   dragonBalls: number;
+  /** Maestria própria da Oficina; ausente em snapshots antigos = 0. */
+  craftingXp?: number;
+  craftsCompleted?: number;
   items: ItemsState;
   techniques: string[];
   loadout: Loadout;
@@ -170,7 +173,9 @@ export interface CloudCharacterSnapshot {
   missionHours?: 1 | 2 | 4 | 8 | null;
   /** Materiais profissionais relacionais espelhados para recuperação. */
   materials?: CloudMaterialSnapshot[];
-  /** Fabricação em andamento; ingredientes já foram consumidos no início. */
+  /** Fila persistente da Oficina; ingredientes já foram consumidos no início. */
+  craftJobs?: CloudCraftJobSnapshot[];
+  /** Campo legado (snapshot de fila única); aceito apenas na restauração. */
   craftJob?: CloudCraftJobSnapshot | null;
   /** Relógios de regeneração (energia/vida continuam contando offline). */
   lastRegen: string;
@@ -375,19 +380,24 @@ function sanitizeCraftJob(raw: unknown): CloudCraftJobSnapshot | null {
   const recipe = getCraftRecipe(recipeId);
   if (!recipe) return null;
 
-  // Craft máximo atual = 12h. Janela ampla tolera jobs vencidos/offline,
-  // sem aceitar datas absurdas trazidas de JSON editável pelo cliente.
-  const endsAt = sanitizeIsoDate(c.endsAt, 14 * 86400_000, 36 * 3600_000);
+  // Lotes de Tier 5 podem durar até ~10 dias e uma fila de três itens pode
+  // terminar quase 30 dias à frente. A janela continua limitada, mas precisa
+  // aceitar essa duração legítima.
+  const endsAt = sanitizeIsoDate(c.endsAt, 45 * 86400_000, 35 * 86400_000);
   if (!endsAt) return null;
   const startedAt =
-    sanitizeIsoDate(c.startedAt, 14 * 86400_000, 5 * 60_000) ??
+    sanitizeIsoDate(c.startedAt, 45 * 86400_000, 35 * 86400_000) ??
     new Date(endsAt.getTime() - recipe.baseDurationMin * 60_000);
 
   const inferredBatch = Math.max(
     1,
     Math.min(
       MAX_CRAFT_BATCH,
-      clampInt(c.batchQuantity ?? Math.max(1, Math.floor(Number(c.outputQuantity ?? recipe.outputQuantity) / recipe.outputQuantity)), [1, MAX_CRAFT_BATCH])
+      clampInt(
+        c.batchQuantity ??
+          Math.max(1, Math.floor(Number(c.outputQuantity ?? recipe.outputQuantity) / recipe.outputQuantity)),
+        [1, MAX_CRAFT_BATCH]
+      )
     )
   );
 
@@ -403,6 +413,15 @@ function sanitizeCraftJob(raw: unknown): CloudCraftJobSnapshot | null {
   };
 }
 
+function sanitizeCraftJobs(raw: unknown, legacy: unknown): CloudCraftJobSnapshot[] {
+  const source = Array.isArray(raw) ? raw.slice(0, 3) : legacy ? [legacy] : [];
+  return source
+    .map(sanitizeCraftJob)
+    .filter((job): job is CloudCraftJobSnapshot => job !== null)
+    .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+    .slice(0, 3);
+}
+
 // =====================================================================
 // SERIALIZAÇÃO: entidades Prisma → snapshot (fonte: servidor do jogo)
 // =====================================================================
@@ -412,6 +431,8 @@ export interface CharacterExtras {
   quests: CloudQuestSnapshot[];
   achievements: CloudAchievementSnapshot[];
   materials?: CloudMaterialSnapshot[];
+  craftJobs?: CloudCraftJobSnapshot[];
+  /** Legado para snapshots antigos; serialização nova usa craftJobs. */
   craftJob?: CloudCraftJobSnapshot | null;
 }
 
@@ -441,6 +462,8 @@ export function serializeCharacterForCloud(
     guildDonated: player.guildDonated,
     missionsDone: player.missionsDone,
     dragonBalls: player.dragonBalls,
+    craftingXp: player.craftingXp,
+    craftsCompleted: player.craftsCompleted,
     items: parseItems(player.items),
     techniques: parseTechniques(player.techniques),
     loadout: parseLoadout(player.loadout),
@@ -458,7 +481,7 @@ export function serializeCharacterForCloud(
     missionEndsAt: player.missionEndsAt ? player.missionEndsAt.toISOString() : null,
     missionHours: ([1, 2, 4, 8].includes(player.missionHours ?? 0) ? player.missionHours : null) as 1 | 2 | 4 | 8 | null,
     materials: extras?.materials ?? [],
-    craftJob: extras?.craftJob ?? null,
+    craftJobs: extras?.craftJobs ?? (extras?.craftJob ? [extras.craftJob] : []),
     lastRegen: player.lastRegen ? new Date(player.lastRegen).toISOString() : new Date().toISOString(),
     lastRegenHp: player.lastRegenHp ? new Date(player.lastRegenHp).toISOString() : null,
     quests: extras?.quests ?? [],
@@ -694,6 +717,8 @@ function sanitizeCharacter(raw: unknown, accountCosmetics: string[]): CloudChara
     guildDonated: clampInt(c.guildDonated, CLAMP.counter),
     missionsDone: clampInt(c.missionsDone, CLAMP.counter),
     dragonBalls: clampInt(c.dragonBalls, CLAMP.dragonBalls),
+    craftingXp: clampInt(c.craftingXp, CLAMP.xp),
+    craftsCompleted: clampInt(c.craftsCompleted, CLAMP.counter),
     items: sanitizeItems(c.items),
     techniques,
     loadout: sanitizeLoadout(c.loadout, techniques),
@@ -711,7 +736,7 @@ function sanitizeCharacter(raw: unknown, accountCosmetics: string[]): CloudChara
     missionEndsAt: mission?.missionEndsAt ?? null,
     missionHours: mission?.missionHours ?? null,
     materials: sanitizeMaterials(c.materials),
-    craftJob: sanitizeCraftJob(c.craftJob),
+    craftJobs: sanitizeCraftJobs(c.craftJobs, c.craftJob),
     lastRegen: lastRegen.toISOString(),
     lastRegenHp: lastRegenHp ? lastRegenHp.toISOString() : null,
     quests: sanitizeQuests(c.quests),
@@ -815,6 +840,8 @@ export function cloudCharacterToPlayerData(char: CloudCharacterSnapshot, nameOve
   guildDonated: number;
   missionsDone: number;
   dragonBalls: number;
+  craftingXp: number;
+  craftsCompleted: number;
   items: string;
   techniques: string;
   loadout: string;
@@ -863,6 +890,8 @@ export function cloudCharacterToPlayerData(char: CloudCharacterSnapshot, nameOve
     guildDonated: char.guildDonated,
     missionsDone: char.missionsDone,
     dragonBalls: char.dragonBalls,
+    craftingXp: char.craftingXp ?? 0,
+    craftsCompleted: char.craftsCompleted ?? 0,
     items: JSON.stringify(char.items),
     techniques: JSON.stringify(char.techniques),
     loadout: JSON.stringify(char.loadout),
