@@ -4,6 +4,7 @@ import { ApiError, ok, toErrorResponse } from '@/lib/api';
 import { requireAuth, requirePlayer } from '@/lib/auth';
 import { applyRegen, playerToView } from '@/lib/game/engine';
 import { resolveDueActivities } from '@/lib/game/activities';
+import { listPendingPlayerNotifications } from '@/lib/game/notifications';
 import { LIMITS, rateLimit } from '@/lib/rate-limit';
 
 // =====================================================================
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
     const targetId = playerId ?? auth.account.activePlayerId;
     if (!targetId) {
       // conta sem personagem ativo → cliente deve ir ao CharacterSelect
-      return ok({ player: null, totalPlayers: 0, questsReady: 0, pendingResults: [] });
+      return ok({ player: null, totalPlayers: 0, questsReady: 0, pendingResults: [], pendingNotifications: [] });
     }
     let player = await requirePlayer(auth, targetId);
     touchPresence(player.id);
@@ -114,6 +115,9 @@ export async function GET(request: Request) {
 
     const rankingPosition = ahead + 1;
     const questsReady = questRows.filter((q) => q.progress >= q.target).length;
+    const pendingNotifications = await db.$transaction((tx) =>
+      listPendingPlayerNotifications(tx, player.id)
+    );
 
     // Usa a leitura mais recente, inclusive se uma batalha ocorreu durante
     // a consulta. O tempo acumulado permanece nos relógios salvos até a ação.
@@ -130,6 +134,7 @@ export async function GET(request: Request) {
       guildInvites,
       guildMotd: withActivity?.guild?.motd ?? '',
       pendingResults,
+      pendingNotifications,
       // v0.9.6 (Mudança 1): hora do servidor na resposta — o cliente mede
       // a diferença de relógio e conta os timers por ELA, não pelo
       // relógio do navegador (fim de profissão/treino bate com o servidor).
