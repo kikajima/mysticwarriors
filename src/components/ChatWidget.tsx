@@ -11,6 +11,10 @@ import {
   Send,
   Shield,
   UserRound,
+  UserPlus,
+  UserMinus,
+  Ban,
+  ShieldOff,
   Volume2,
   VolumeX,
   X,
@@ -45,6 +49,7 @@ type Conversation = {
   mine: boolean;
 };
 type MutedPlayer = { playerId: string; name: string; createdAt: string };
+type SocialPlayer = { playerId: string; name: string; createdAt: string };
 
 const CHAT_MAX_MESSAGE = 500;
 
@@ -70,6 +75,8 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
   const [privateTarget, setPrivateTarget] = useState<Person | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [muted, setMuted] = useState<MutedPlayer[]>([]);
+  const [friends, setFriends] = useState<SocialPlayer[]>([]);
+  const [blocked, setBlocked] = useState<SocialPlayer[]>([]);
   const [search, setSearch] = useState('');
   const [directory, setDirectory] = useState<Person[]>([]);
   const [directoryLoading, setDirectoryLoading] = useState(false);
@@ -80,6 +87,8 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
 
   const guildId = player.guild?.id ?? null;
   const mutedIds = useMemo(() => new Set(muted.map((item) => item.playerId)), [muted]);
+  const friendIds = useMemo(() => new Set(friends.map((item) => item.playerId)), [friends]);
+  const blockedIds = useMemo(() => new Set(blocked.map((item) => item.playerId)), [blocked]);
   const filteredDirectory = useMemo(() => {
     const q = search.trim().toLocaleLowerCase('pt-BR');
     if (!q) return directory;
@@ -90,7 +99,11 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
     const params = new URLSearchParams({ view: 'context', playerId: player.id });
     const res = await fetch(`/api/chat?${params.toString()}`, { cache: 'no-store' });
     const data = await res.json();
-    if (res.ok) setMuted(Array.isArray(data.muted) ? data.muted : []);
+    if (res.ok) {
+      setMuted(Array.isArray(data.muted) ? data.muted : []);
+      setFriends(Array.isArray(data.friends) ? data.friends : []);
+      setBlocked(Array.isArray(data.blocked) ? data.blocked : []);
+    }
   }, [player.id]);
 
   const loadConversations = useCallback(async () => {
@@ -166,6 +179,8 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
     setMessages([]);
     setConversations([]);
     setMuted([]);
+    setFriends([]);
+    setBlocked([]);
     setDirectory([]);
     setPrivateTarget(null);
     setSearch('');
@@ -263,6 +278,30 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
     await loadConversations();
   }, [player.id, loadContext, privateTarget?.id, loadMessages, loadConversations]);
 
+  const setRelation = useCallback(async (
+    target: Person,
+    action: 'friend_add' | 'friend_remove' | 'block' | 'unblock'
+  ) => {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, playerId: player.id, targetId: target.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error?.message ?? 'Não foi possível alterar a relação.');
+      return;
+    }
+    setError(null);
+    await loadContext();
+    await loadConversations();
+    if (action === 'block' && privateTarget?.id === target.id) {
+      setPrivateTarget(null);
+      messagesRef.current = [];
+      setMessages([]);
+    }
+  }, [player.id, loadContext, loadConversations, privateTarget?.id]);
+
   const openPrivate = useCallback((target: Person) => {
     setChannel('private');
     setPrivateTarget(target);
@@ -278,7 +317,7 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
 
   const canCompose =
     (channel !== 'guild' || Boolean(player.guild)) &&
-    (channel !== 'private' || Boolean(privateTarget));
+    (channel !== 'private' || (Boolean(privateTarget) && !blockedIds.has(privateTarget!.id)));
 
   return (
     <>
@@ -381,6 +420,34 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                 </div>
               )}
 
+              {friends.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-amber-200/40 mb-1">Amigos</p>
+                  <div className="space-y-1">
+                    {friends.map((friend) => (
+                      <div key={friend.playerId} className="flex items-center gap-2 rounded-lg border border-emerald-900/40 bg-emerald-950/15 px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => openPrivate({ id: friend.playerId, name: friend.name })}
+                          className="flex-1 min-w-0 text-left text-sm text-emerald-100 truncate hover:text-white"
+                        >
+                          👥 {friend.name}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void setRelation({ id: friend.playerId, name: friend.name }, 'friend_remove')}
+                          className="p-1 text-amber-200/40 hover:text-red-300"
+                          title="Remover amigo"
+                          aria-label={`Remover ${friend.name} dos amigos`}
+                        >
+                          <UserMinus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <p className="text-[10px] uppercase tracking-wide text-amber-200/40 mb-1">Conversas recentes</p>
                 <div className="space-y-1">
@@ -421,6 +488,26 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                   </div>
                 </div>
               )}
+
+              {blocked.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-red-300/60 mb-1">Bloqueados</p>
+                  <div className="space-y-1">
+                    {blocked.map((item) => (
+                      <div key={item.playerId} className="flex items-center justify-between gap-2 rounded-lg border border-red-900/40 bg-red-950/15 px-3 py-2">
+                        <span className="text-xs text-red-100 truncate">{item.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => void setRelation({ id: item.playerId, name: item.name }, 'unblock')}
+                          className="flex items-center gap-1 text-[10px] text-emerald-300 hover:text-emerald-200"
+                        >
+                          <ShieldOff className="h-3.5 w-3.5" /> Desbloquear
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -430,15 +517,36 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                   <span className="flex-1 truncate text-xs font-heading text-amber-100">{privateTarget.name}</span>
+                  {!blockedIds.has(privateTarget.id) && (
+                    <button
+                      type="button"
+                      onClick={() => void setRelation(privateTarget, friendIds.has(privateTarget.id) ? 'friend_remove' : 'friend_add')}
+                      className="p-1.5 text-emerald-300/80 hover:text-emerald-200"
+                      title={friendIds.has(privateTarget.id) ? 'Remover amigo' : 'Adicionar amigo'}
+                      aria-label={friendIds.has(privateTarget.id) ? `Remover ${privateTarget.name} dos amigos` : `Adicionar ${privateTarget.name} aos amigos`}
+                    >
+                      {friendIds.has(privateTarget.id) ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => void setMute(privateTarget, !mutedIds.has(privateTarget.id))}
-                    className="flex items-center gap-1 p-1.5 text-[10px] text-amber-200/60 hover:text-amber-100"
-                    title={mutedIds.has(privateTarget.id) ? 'Remover silêncio' : 'Silenciar jogador'}
+                    onClick={() => void setRelation(privateTarget, blockedIds.has(privateTarget.id) ? 'unblock' : 'block')}
+                    className={`p-1.5 ${blockedIds.has(privateTarget.id) ? 'text-emerald-300' : 'text-red-300/70 hover:text-red-200'}`}
+                    title={blockedIds.has(privateTarget.id) ? 'Desbloquear jogador' : 'Bloquear jogador'}
+                    aria-label={blockedIds.has(privateTarget.id) ? `Desbloquear ${privateTarget.name}` : `Bloquear ${privateTarget.name}`}
                   >
-                    {mutedIds.has(privateTarget.id) ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-                    {mutedIds.has(privateTarget.id) ? 'Ouvir' : 'Silenciar'}
+                    {blockedIds.has(privateTarget.id) ? <ShieldOff className="h-3.5 w-3.5" /> : <Ban className="h-3.5 w-3.5" />}
                   </button>
+                  {!blockedIds.has(privateTarget.id) && (
+                    <button
+                      type="button"
+                      onClick={() => void setMute(privateTarget, !mutedIds.has(privateTarget.id))}
+                      className="p-1.5 text-amber-200/60 hover:text-amber-100"
+                      title={mutedIds.has(privateTarget.id) ? 'Remover silêncio' : 'Silenciar jogador'}
+                    >
+                      {mutedIds.has(privateTarget.id) ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+                    </button>
+                  )}
                 </div>
               )}
 
