@@ -229,6 +229,7 @@ model Player {
   activities       Activity[]
   inventoryStacks  InventoryStack[]
   craftJob         CraftJob?
+  notifications    PlayerNotification[]
   dragonBallPossessions DragonBallPossession[]
   accountActive    Account?  @relation("ActivePlayer")
 
@@ -479,6 +480,20 @@ model RequestDedup {
 }
 
 // ===== Atividades com duração server-side (treino/batalha v0.4) =====
+
+model PlayerNotification {
+  id          String    @id @default(cuid())
+  playerId    String
+  player      Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  kind        String
+  title       String
+  message     String
+  metadata    String?
+  createdAt   DateTime  @default(now())
+  deliveredAt DateTime?
+
+  @@index([playerId, deliveredAt, createdAt])
+}
 
 model Activity {
   id          String    @id @default(cuid())
