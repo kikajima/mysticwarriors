@@ -68,6 +68,8 @@ async function countAll(): Promise<Record<string, number>> {
     craftJobs,
     analytics,
     dedups,
+    friendships,
+    playerBlocks,
   ] = await Promise.all([
     db.account.count(),
     db.session.count(),
@@ -88,6 +90,8 @@ async function countAll(): Promise<Record<string, number>> {
     db.craftJob.count(),
     db.analyticsEvent.count(),
     db.requestDedup.count(),
+    db.friendship.count(),
+    db.playerBlock.count(),
   ]);
   return {
     contas: accounts,
@@ -109,6 +113,8 @@ async function countAll(): Promise<Record<string, number>> {
     fabricacoes: craftJobs,
     eventos_analytics: analytics,
     dedups: dedups,
+    amizades: friendships,
+    bloqueios_sociais: playerBlocks,
   };
 }
 
