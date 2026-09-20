@@ -320,15 +320,23 @@ function EquipmentInventory({
     [player.items.owned]
   );
 
-  const totals = useMemo(
-    () => ({
-      atk: player.derived.equipmentBonuses.strength,
-      def: player.derived.equipmentBonuses.defense,
-      spd: player.derived.equipmentBonuses.speed,
-      ki: player.derived.equipmentBonuses.ki,
-    }),
-    [player.derived.equipmentBonuses]
-  );
+  const totals = useMemo(() => {
+    const server = player.derived.equipmentBonuses;
+    if (server) {
+      return { atk: server.strength, def: server.defense, spd: server.speed, ki: server.ki };
+    }
+    const out = { atk: 0, def: 0, spd: 0, ki: 0 };
+    for (const slot of DISPLAY_SLOTS) {
+      const itemId = player.items[slot.key] ?? null;
+      const item = itemId ? getItem(itemId) : undefined;
+      if (!item) continue;
+      out.atk += item.atk ?? 0;
+      out.def += item.def ?? 0;
+      out.spd += item.spd ?? 0;
+      out.ki += item.ki ?? 0;
+    }
+    return out;
+  }, [player.derived.equipmentBonuses, player.items]);
 
   const sell = (itemId: string) =>
     onAction({ type: 'sell', itemId, quantity: sellQty[itemId] ?? 1 });
