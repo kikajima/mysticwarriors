@@ -692,6 +692,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           await tx.seasonRankEntry.deleteMany({ where: { playerId: fresh.id } });
           await tx.inventoryStack.deleteMany({ where: { playerId: fresh.id } });
           await tx.craftJob.deleteMany({ where: { playerId: fresh.id } });
+          await tx.playerNotification.deleteMany({ where: { playerId: fresh.id } });
           await tx.dragonBallPossession.updateMany({
             where: { playerId: fresh.id },
             data: { playerId: null, acquiredAt: now },
