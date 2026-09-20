@@ -160,6 +160,8 @@ model Player {
   guildDonated  Int       @default(0)
   missionsDone  Int       @default(0)
   dragonBalls   Int       @default(0)
+  craftingXp    Int       @default(0)
+  craftsCompleted Int     @default(0)
   // v0.9.17 — conquistas narrativas (ASCENSÃO Z): Milagre no Limite e
   // David vs Golias (contadores aditivos, default 0)
   miracleWins   Int       @default(0)
@@ -230,7 +232,7 @@ model Player {
   requestDedups    RequestDedup[]
   activities       Activity[]
   inventoryStacks  InventoryStack[]
-  craftJob         CraftJob?
+  craftJobs        CraftJob[]
   accountActive    Account?  @relation("ActivePlayer")
 
   @@index([accountId])
@@ -259,7 +261,8 @@ model InventoryStack {
 
 model CraftJob {
   id                 String   @id @default(cuid())
-  playerId           String   @unique
+  playerId           String
+  position           Int      @default(0)
   recipeId           String
   outputItemId       String
   outputQuantity     Int      @default(1)
@@ -273,6 +276,8 @@ model CraftJob {
 
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
+  @@unique([playerId, position])
+  @@index([playerId, endsAt])
   @@index([endsAt])
 }
 
