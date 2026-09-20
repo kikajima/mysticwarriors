@@ -321,3 +321,43 @@ Decisões permanentes desta rodada:
 
 A regra de segurança permanece: otimizações não removem atomicidade,
 idempotência, cooldown condicional ou autoridade do servidor.
+
+
+## 🔧 OFICINA / CRAFTING COMPLETO (2026-09-20)
+
+- **Sete slots reais de equipamento:** Cabeça, Punhos, Torso, Acessório,
+  Arma, Pernas e Botas. O slot salvo precisa coincidir com a categoria do
+  item; parser local e restauração da nuvem descartam combinações inválidas.
+  Todos os sete slots entram no cálculo autoritativo de combate.
+- **Progressão craftável completa:** cada slot possui uma linha de
+  equipamentos Tier 1–5. Tier 1 é entrada livre; T2/T3/T4/T5 usam a escada
+  profissional Nv. 2/4/6/8 e receitas avançadas combinam duas ou mais
+  profissões.
+- **Materiais também têm progressão:** T1/T2/T3/T4/T5 passam a integrar o
+  pool de drop apenas nos níveis profissionais 1/2/4/6/8. Um personagem não
+  encontra material endgame no início da carreira.
+- **Blueprints acadêmicos são parte da cadeia, não decoração:** itens
+  principais Tier 3+ consomem projeto acadêmico; o Acadêmico também reduz o
+  tempo de fabricação em 1% por nível, limitado a 10%.
+- **Uma fabricação por personagem:** a fila continua deliberadamente com um
+  único trabalho. Ela avança offline e em paralelo a trabalho, loja, guilda
+  e outras ações liberadas pela matriz de ocupação.
+- **Lotes são explícitos e server-authoritative:** somente receitas que
+  declaram `maxBatch` aceitam quantidade maior que 1. Custo, ingredientes,
+  saída e duração escalam pela quantidade e são revalidados no servidor.
+- **Itens permanentes são únicos:** equipamentos e itens passivos de treino
+  feitos na Oficina não podem ser fabricados em duplicata. Consumíveis e
+  projetos continuam empilháveis.
+- **Cancelamento é reversível antes do término:** cancelar uma fabricação em
+  andamento devolve integralmente os ingredientes e o Zeni consumidos. Job
+  já concluído não pode ser cancelado; deve ser coletado. O reembolso passa
+  pelo ledger da economia (`type=refund`, `source=craft_cancel`).
+- **Coleta é exatamente uma vez:** a quantidade armazenada no `CraftJob`
+  precisa ser compatível com o catálogo e com o limite de lote antes de a
+  saída ser concedida; o job é reivindicado atomicamente antes do grant.
+- **Persistência integral:** estoque relacional, lote em andamento, timestamps
+  e os sete slots sobrevivem ao snapshot/restore da nuvem. Nenhuma migration
+  adicional é necessária para os slots porque eles vivem no JSON de itens.
+- **Itens fabricados não entram na loja NPC:** `price=0` significa origem
+  exclusiva da Oficina, não compra grátis. A interface do Inventário é o
+  lugar para equipar/usar os resultados.
