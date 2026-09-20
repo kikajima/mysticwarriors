@@ -231,6 +231,8 @@ model Player {
   craftJob         CraftJob?
   notifications    PlayerNotification[]
   dragonBallPossessions DragonBallPossession[]
+  relationsOwned  PlayerRelation[] @relation("RelationOwner")
+  relationsTargeted PlayerRelation[] @relation("RelationTarget")
   accountActive    Account?  @relation("ActivePlayer")
 
   @@index([accountId])
@@ -544,6 +546,26 @@ model ChatMute {
 
   @@unique([playerId, mutedPlayerId])
   @@index([playerId])
+}
+
+/**
+ * Relações sociais entre personagens.
+ * "friend" é gravado nos dois sentidos; "blocked" é unilateral.
+ */
+model PlayerRelation {
+  id               String   @id @default(cuid())
+  playerId         String
+  player           Player   @relation("RelationOwner", fields: [playerId], references: [id], onDelete: Cascade)
+  targetPlayerId   String
+  target           Player   @relation("RelationTarget", fields: [targetPlayerId], references: [id], onDelete: Cascade)
+  targetPlayerName String
+  status           String   // "friend" | "blocked"
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([playerId, targetPlayerId])
+  @@index([playerId, status])
+  @@index([targetPlayerId, status])
 }
 
 // ===== Auditoria administrativa (v0.14) =====
