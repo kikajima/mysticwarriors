@@ -10,9 +10,6 @@ import type { RaceCombatDef, RaceEconomyDef, RaceId } from './types';
 // Nenhuma rota pode alterar atributos/saldos sem passar por aqui.
 // =====================================================================
 
-/** Limite máximo absoluto de qualquer atributo. */
-export const STAT_CAP = 999;
-
 /**
  * VERSÃO DO BALANCEAMENTO (v0.6) — política de atualizações:
  *  * CONTAS nunca são deletadas por atualizações (regra absoluta);
@@ -158,25 +155,22 @@ export function assertPlayerAvailableForAction(
 
 export type StatKey = 'strength' | 'defense' | 'speed' | 'ki';
 
-export function capStat(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return Math.min(STAT_CAP, Math.max(0, Math.floor(value)));
+/** Normaliza atributos sem impor teto de gameplay: inteiros e nunca negativos. */
+export function normalizeStat(value: number): number {
+  if (!Number.isFinite(value)) return value > 0 ? Number.MAX_SAFE_INTEGER : 0;
+  return Math.max(0, Math.floor(value));
 }
 
 /**
  * Única forma permitida de aumentar/diminuir atributos.
- * Aplica o limite global (STAT_CAP) — Elixir, desejos, treino, Zenkai,
- * bônus raciais e qualquer fonte futura passam obrigatoriamente por aqui.
+ * Não existe teto de gameplay: treino, profissões, desejos, Zenkai e
+ * futuras fontes de progressão podem continuar fortalecendo o guerreiro.
  */
-export function addStat(player: Pick<Player, StatKey>, stat: StatKey, amount: number): { before: number; after: number; capped: boolean } {
+export function addStat(player: Pick<Player, StatKey>, stat: StatKey, amount: number): { before: number; after: number } {
   const before = player[stat];
-  const after = capStat(before + amount);
+  const after = normalizeStat(before + amount);
   player[stat] = after;
-  return { before, after, capped: after === STAT_CAP && after > before };
-}
-
-export function statAtCap(player: Pick<Player, StatKey>, stat: StatKey): boolean {
-  return player[stat] >= STAT_CAP;
+  return { before, after };
 }
 
 // ===== Raças: helpers com fallback seguro =====
