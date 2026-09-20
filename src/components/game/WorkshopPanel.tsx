@@ -30,6 +30,7 @@ interface InventoryRow {
 
 interface CraftJobRow {
   id: string;
+  position: number;
   recipeId: string;
   outputItemId: string;
   outputQuantity: number;
@@ -40,6 +41,16 @@ interface CraftJobRow {
   academicLevelStart: number;
   startedAt: string;
   endsAt: string;
+}
+
+interface WorkshopMastery {
+  level: number;
+  xp: number;
+  currentLevelXp: number;
+  nextLevelXp: number | null;
+  progressPct: number;
+  queueCapacity: number;
+  craftsCompleted: number;
 }
 
 function durationLabel(minutes: number): string {
@@ -72,7 +83,8 @@ export function WorkshopPanel({
   embedded?: boolean;
 }) {
   const [inventory, setInventory] = useState<InventoryRow[] | null>(null);
-  const [job, setJob] = useState<CraftJobRow | null>(null);
+  const [jobs, setJobs] = useState<CraftJobRow[]>([]);
+  const [mastery, setMastery] = useState<WorkshopMastery | null>(null);
   const [batchByRecipe, setBatchByRecipe] = useState<Record<string, number>>({});
   const [failed, setFailed] = useState(false);
   const now = useServerNow(500);
@@ -89,7 +101,8 @@ export function WorkshopPanel({
         if (!res.ok) throw new Error(String(res.status));
         const data = await res.json();
         setInventory(Array.isArray(data.inventory) ? data.inventory : []);
-        setJob(data.job ?? null);
+        setJobs(Array.isArray(data.jobs) ? data.jobs : data.job ? [data.job] : []);
+        setMastery(data.mastery ?? null);
         return;
       } catch {
         if (attempt === 0) {
@@ -119,11 +132,17 @@ export function WorkshopPanel({
     if (ok !== false) await load();
   };
 
-  const remaining = job ? new Date(job.endsAt).getTime() - now : 0;
-  const totalMs = job
-    ? Math.max(1, new Date(job.endsAt).getTime() - new Date(job.startedAt).getTime())
+  const activeJob = jobs[0] ?? null;
+  const queuedJobs = jobs.slice(1);
+  const remaining = activeJob ? new Date(activeJob.endsAt).getTime() - now : 0;
+  const totalMs = activeJob
+    ? Math.max(1, new Date(activeJob.endsAt).getTime() - new Date(activeJob.startedAt).getTime())
     : 1;
-  const progress = job ? Math.max(0, Math.min(100, ((totalMs - Math.max(0, remaining)) / totalMs) * 100)) : 0;
+  const progress = activeJob
+    ? Math.max(0, Math.min(100, ((totalMs - Math.max(0, remaining)) / totalMs) * 100))
+    : 0;
+  const queueCapacity = mastery?.queueCapacity ?? 1;
+  const queueFull = jobs.length >= queueCapacity;
 
   const blueprints = CRAFT_RECIPES.filter((r) => r.requiresAcademic);
   const mainRecipes = CRAFT_RECIPES.filter((r) => !r.requiresAcademic);
@@ -151,7 +170,7 @@ export function WorkshopPanel({
     const ingredientsOk = recipe.ingredients.every((i) => (counts.get(i.itemId) ?? 0) >= i.quantity * batchQuantity);
     const totalCost = recipe.costZeni * batchQuantity;
     const canStart =
-      !job &&
+      !queueFull &&
       academicOk &&
       professionRequirementsOk &&
       ingredientsOk &&
@@ -259,7 +278,8 @@ export function WorkshopPanel({
               onClick={() => void runAction({ type: 'craft_start', recipeId: recipe.id, quantity: batchQuantity })}
             >
               <Wrench className="w-4 h-4" />
-              Fabricar {batchQuantity > 1 ? `${batchQuantity}× ` : ''}{output?.name ?? recipe.name}
+              {jobs.length > 0 ? 'Adicionar à fila: ' : 'Fabricar '}
+              {batchQuantity > 1 ? `${batchQuantity}× ` : ''}{output?.name ?? recipe.name}
             </GameButton>
           </div>
         </div>
