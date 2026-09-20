@@ -72,8 +72,19 @@ export function BattlePanel({
         {ENEMIES.map((enemy) => {
           const recommended = player.level >= enemy.level - 2 && player.level <= enemy.level + 5;
           const hard = player.level < enemy.level - 2;
+          const enemyScale = getPowerScale(enemyPower(enemy)).scale;
+          const tierRoman = enemy.enemyTier === 1 ? 'I' : enemy.enemyTier === 2 ? 'II' : 'III';
           return (
-            <GameCard key={enemy.id} className="overflow-hidden" interactive>
+            <div key={enemy.id} className="contents">
+              {enemy.enemyTier === 1 && (
+                <div className="col-span-full flex items-center gap-2 pt-2">
+                  <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-heading ${enemyScale.badge}`}>
+                    <span aria-hidden>{enemyScale.emoji}</span> {enemyScale.nome}
+                  </span>
+                  <span className="text-[11px] text-amber-200/35">I → II → III</span>
+                </div>
+              )}
+              <GameCard className="overflow-hidden" interactive>
               <div className={`bg-gradient-to-br ${enemy.color} p-4 relative`}>
                 <div className="absolute top-3 right-3">
                   <Chip className="bg-black/40 text-white border-white/20">Nv {enemy.level}</Chip>
@@ -83,6 +94,9 @@ export function BattlePanel({
                 </div>
                 <h3 className="font-heading text-white text-lg leading-tight drop-shadow">{enemy.name}</h3>
                 <p className="text-white/70 text-xs italic mt-1">{enemy.taunt}</p>
+                <p className="text-white/80 text-[11px] mt-2 leading-relaxed">
+                  <span className="font-heading">Intenção:</span> {enemy.intent}
+                </p>
               </div>
               <div className="p-4">
                 <div className="grid grid-cols-4 gap-1 mb-3 text-center">
@@ -126,8 +140,8 @@ export function BattlePanel({
                   <span
                     className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-heading ${getPowerScale(enemyPower(enemy)).scale.badge}`}
                   >
-                    <span aria-hidden>{getPowerScale(enemyPower(enemy)).scale.emoji}</span>
-                    {getPowerScale(enemyPower(enemy)).scale.nome}
+                    <span aria-hidden>{enemyScale.emoji}</span>
+                    {enemyScale.nome} {tierRoman}
                   </span>
                   <span
                     className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${scaleDiffLabel(enemyPower(enemy), player.derived.power).className}`}
@@ -161,6 +175,7 @@ export function BattlePanel({
 
               </div>
             </GameCard>
+            </div>
           );
         })}
       </div>
