@@ -74,17 +74,17 @@ describe('v0.9 — clampAdminInt (limites defensivos das ações de admin)', () 
 });
 
 describe('v0.9.6 — patchCloudCharacterState (patch direto no estado do personagem na nuvem)', () => {
-  test('concede recursos com clamps (Zeni, Diamantes, Esferas ≤ 7, XP)', () => {
-    const out = patchCloudCharacterState(charFixture(), {
+  test('concede recursos de snapshot com clamps; Esferas globais não vêm da nuvem', () => {
+    const before = charFixture();
+    const out = patchCloudCharacterState(before, {
       zeniDelta: 10_000,
       crystalDelta: 25,
-      ballDelta: 10,
       xpGain: 500,
     });
     expect(out).not.toBeNull();
     expect(out!.zeni).toBe(15_000);
     expect(out!.crystals).toBe(65);
-    expect(out!.dragonBalls).toBe(7); // nunca passa de 7
+    expect(out!.dragonBalls).toBe(before.dragonBalls);
     expect(out!.xp).toBe(700);
     // o personagem original não é mutado (imutabilidade do estado)
     expect(charFixture().zeni).toBe(5000);
@@ -106,7 +106,7 @@ describe('v0.9.6 — patchCloudCharacterState (patch direto no estado do persona
     expect(out!.energy).toBe(100); // mesma fórmula do jogo
   });
 
-  test('completar profissão vence o turno AGORA; inválido → null', () => {
+  test('acelerar atividade vence o turno AGORA; alias legado continua aceito', () => {
     const base = charFixture();
     base.missionId = 'agricultor';
     base.missionEndsAt = new Date(Date.now() + 3600_000).toISOString();
