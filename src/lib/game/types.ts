@@ -173,6 +173,23 @@ export type EquipmentSlot = 'head' | 'wrists' | 'armor' | 'accessory' | 'weapon'
 export type EquippedSlot = EquipmentSlot | 'accessory2';
 export const EQUIPMENT_SLOTS: EquipmentSlot[] = ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots'];
 export const EQUIPPED_SLOTS: EquippedSlot[] = ['head', 'wrists', 'armor', 'accessory', 'accessory2', 'weapon', 'legs', 'boots'];
+
+export const EQUIPMENT_SLOT_META: Record<EquipmentSlot, { label: string; icon: string }> = {
+  head: { label: 'Cabeça', icon: '🪖' },
+  wrists: { label: 'Punhos', icon: '🥊' },
+  armor: { label: 'Torso', icon: '🛡️' },
+  accessory: { label: 'Acessório', icon: '💍' },
+  weapon: { label: 'Arma', icon: '⚔️' },
+  legs: { label: 'Pernas', icon: '👖' },
+  boots: { label: 'Botas', icon: '🥾' },
+};
+
+export const EQUIPPED_SLOT_META: Record<EquippedSlot, { label: string; icon: string }> = {
+  ...EQUIPMENT_SLOT_META,
+  accessory: { label: 'Acessório I', icon: '💍' },
+  accessory2: { label: 'Acessório II', icon: '💍' },
+};
+
 export type ItemCategory = EquipmentSlot | 'consumable' | 'training';
 
 export interface TrainBonus {
