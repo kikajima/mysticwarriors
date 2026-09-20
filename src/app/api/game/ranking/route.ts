@@ -29,7 +29,7 @@ export async function GET(request: Request) {
           id: player.id,
           level: player.level,
           name: player.name,
-          hasRadar: getItem(items.accessory ?? '')?.id === 'radar_esferas',
+          hasRadar: [items.accessory, items.accessory2].some((id) => getItem(id ?? '')?.id === 'radar_esferas'),
         };
       } catch {
         me = null; // personagem inválido → ranking público
