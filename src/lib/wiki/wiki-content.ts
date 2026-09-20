@@ -53,6 +53,8 @@ import {
   PROFESSION_LEVELS,
   PROFESSION_SHIFTS,
   PROFESSION_MATERIALS,
+  PROFESSION_MATERIAL_TIER_LEVEL,
+  professionMaterialRequiredLevel,
   PROFESSION_MASTERY_HOURS,
   REGEN,
   HEAL_COST_PER_HP,
@@ -1075,7 +1077,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'table',
             table: {
               caption: 'Drops profissionais (ORIGEM: content/world.ts — PROFESSION_MATERIALS)',
-              headers: ['Profissão', 'Material', 'Raridade', 'Tier'],
+              headers: ['Profissão', 'Material', 'Raridade', 'Tier', 'Libera no nível'],
               rows: PROFESSION_MATERIALS.map((m) => {
                 const p = PROFESSIONS.find((x) => x.id === m.professionId);
                 return [
@@ -1083,6 +1085,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
                   `${m.icon} ${m.name}`,
                   m.rarity === 'rare' ? 'Raro' : 'Comum',
                   String(m.tier),
+                  `Nível ${professionMaterialRequiredLevel(m.tier)}`,
                 ];
               }),
             },
@@ -1132,6 +1135,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'list',
             items: [
               `Escada de progressão: Tier 2 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[2]}**, Tier 3 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[3]}**, Tier 4 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[4]}** e Tier 5 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[5]}** nas carreiras indicadas.`,
+              `Os materiais profissionais respeitam a mesma ideia de progressão: T1 libera no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[1]}**, T2 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[2]}**, T3 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[3]}**, T4 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[4]}** e T5 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[5]}**. Um turno só sorteia materiais já desbloqueados naquele nível da carreira.`,
               'Tier 3 ou superior sempre usa insumos ligados a **pelo menos duas profissões**.',
               'Os itens principais de Tier 3+ exigem um **blueprint Acadêmico**, e cada blueprint tem seu próprio requisito de nível Acadêmico.',
               'O equipamento usa **7 slots reais**: Cabeça, Punhos, Torso, Acessório, Arma, Pernas e Botas. Os bônus de todos os slots equipados entram no cálculo de combate.',
