@@ -182,13 +182,14 @@ describe('ATIVIDADES server-side (duração central)', () => {
   });
 });
 
-describe('MISSÃO: matriz DEFINITIVA v0.16 (bloqueio de exatamente 2 ações)', () => {
-  test('durante o trabalho SÓ batalha PvE e torneio são negados', () => {
+describe('MISSÃO: matriz DEFINITIVA v0.16 (bloqueio de exatamente 3 ações)', () => {
+  test('durante o trabalho PvE, torneio e Busca de Esferas são negados', () => {
     expect(MISSION_BLOCKED_ACTIONS.has('train')).toBe(false);
     expect(MISSION_BLOCKED_ACTIONS.has('battle')).toBe(true);
     expect(MISSION_BLOCKED_ACTIONS.has('tournament_fight')).toBe(true);
-    // exatamente 2 — matriz fechada
-    expect(MISSION_BLOCKED_ACTIONS.size).toBe(2);
+    expect(MISSION_BLOCKED_ACTIONS.has('search_dragon_ball')).toBe(true);
+    // exatamente 3 — matriz fechada
+    expect(MISSION_BLOCKED_ACTIONS.size).toBe(3);
     // TUDO mais LIBERADO (v0.16 — 3ª ordem):
     for (const liberated of ['attack_player', 'world_boss_attack', 'buy', 'sell', 'heal', 'use_item', 'equip', 'unequip', 'wish', 'learn_technique', 'equip_technique', 'set_strategy', 'unlock_transformation', 'activate_transformation', 'create_guild', 'join_guild', 'leave_guild', 'donate_guild', 'claim_quest', 'claim_achievement', 'claim_mission', 'cancel_mission', 'select_player', 'buy_cosmetic', 'buy_talent', 'equip_cosmetic', 'unequip_cosmetic', 'mission']) {
       expect(MISSION_BLOCKED_ACTIONS.has(liberated)).toBe(false);
