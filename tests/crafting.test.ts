@@ -45,6 +45,7 @@ describe('Oficina — contratos de crafting', () => {
       [2, [{ professionId: 'academico', level: 2 }]],
       [3, [{ professionId: 'academico', level: 4 }]],
       [4, [{ professionId: 'academico', level: 6 }]],
+      [4, [{ professionId: 'academico', level: 6 }]],
       [5, [{ professionId: 'academico', level: 8 }]],
     ]);
 
@@ -84,6 +85,33 @@ describe('Oficina — contratos de crafting', () => {
       },
     });
     expect(missingCraftProfessionRequirements({ professions }, radar)).toEqual([]);
+  });
+
+  test('Cabeça, Punhos, Pernas e Botas têm progressão craftável Tier 1–5', () => {
+    const slots = ['head', 'wrists', 'legs', 'boots'] as const;
+    for (const slot of slots) {
+      const items = CRAFTED_ITEMS.filter((item) => item.category === slot);
+      expect(items).toHaveLength(5);
+      const outputs = new Set(items.map((item) => item.id));
+      const tiers = CRAFT_RECIPES
+        .filter((recipe) => outputs.has(recipe.outputItemId))
+        .map((recipe) => recipe.tier)
+        .sort();
+      expect(tiers).toEqual([1, 2, 3, 4, 5]);
+    }
+  });
+
+  test('lotes existem só onde foram habilitados e têm limites seguros', () => {
+    expect(getCraftRecipe('capsula_recuperacao_simples')?.maxBatch).toBe(10);
+    expect(getCraftRecipe('senzu_processado')?.maxBatch).toBe(5);
+    for (const recipe of CRAFT_RECIPES.filter((r) => r.requiresAcademic)) {
+      expect(recipe.maxBatch).toBe(5);
+    }
+    for (const recipe of CRAFT_RECIPES.filter((r) => ['head', 'wrists', 'legs', 'boots'].includes(
+      CRAFTED_ITEMS.find((item) => item.id === r.outputItemId)?.category ?? ''
+    ))) {
+      expect(recipe.maxBatch ?? 1).toBe(1);
+    }
   });
 
   test('todo craft Tier 3+ usa insumos de pelo menos duas profissões', () => {
@@ -138,11 +166,25 @@ describe('Oficina — contratos de crafting', () => {
     expect(body).toContain('item.price <= 0');
     expect(body).toContain('Itens fabricados só podem ser obtidos na Oficina');
   });
-  test('Oficina mostra os requisitos profissionais e usa a trava no botão', async () => {
+  test('Oficina mostra travas, filtros, lotes e cancelamento', async () => {
     const src = await Bun.file(`${import.meta.dir}/../src/components/game/WorkshopPanel.tsx`).text();
     expect(src).toContain('Requisitos profissionais');
     expect(src).toContain('professionRequirementsOk');
     expect(src).toContain('CRAFT_TIER_PROFESSION_LEVEL');
+    expect(src).toContain('Filtrar receitas:');
+    expect(src).toContain('Quantidade do lote');
+    expect(src).toContain("type: 'craft_cancel'");
+    expect(src).toContain('Cancelar e reembolsar');
+  });
+
+  test('servidor valida lote, coleta e cancelamento', async () => {
+    const src = await Bun.file(`${import.meta.dir}/../src/lib/game/crafting.ts`).text();
+    expect(src).toContain('recipe.maxBatch ?? 1');
+    expect(src).toContain('const totalCost = recipe.costZeni * batch');
+    expect(src).toContain('ingredient.quantity * batch');
+    expect(src).toContain('export async function cancelCraft');
+    expect(src).toContain("source: 'craft_cancel'");
+    expect(src).toContain("type: 'refund'");
   });
 
   test('efeitos dos itens fabricados correspondem ao desenho', () => {
