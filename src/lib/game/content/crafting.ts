@@ -13,6 +13,8 @@ import type { CraftRecipeDef, CraftStackItemDef, ShopItem } from '../types';
 // * blueprints são produzidos na Oficina e exigem experiência Acadêmica.
 // =====================================================================
 
+export const MAX_CRAFT_BATCH = 20;
+
 export const CRAFT_TIER_PROFESSION_LEVEL = {
   1: 0,
   2: 2,
