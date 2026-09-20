@@ -10,7 +10,7 @@
 
 import { describe, expect, test } from 'bun:test';
 import { applyOptimisticDelta, builtinOptimisticDelta, optimisticLevelsGained } from '../src/lib/game/optimistic';
-import { xpToNextLevel, HEAL_COST_PER_HP, SHOP_ITEMS, GUILD_CREATION_COST } from '../src/lib/game/content/world';
+import { xpToNextLevel, SHOP_ITEMS, GUILD_CREATION_COST } from '../src/lib/game/content/world';
 import type { PlayerView } from '../src/lib/game/types';
 
 /** PlayerView sintético mínimo (só o que o delta lê). */
@@ -149,11 +149,8 @@ describe('v0.9.24 (B2) — applyOptimisticDelta: XP sempre COM level-up + carry'
 });
 
 describe('v0.9.24 (B2) — builtinOptimisticDelta: deltas de tabela', () => {
-  test('hospital: toda cura cobra o custo exato computável', () => {
-    const p = view({ hp: 30 });
-    const missing = p.derived.maxHp - 30;
-    const d = builtinOptimisticDelta(p, { type: 'heal' });
-    expect(d).toEqual({ hp: p.derived.maxHp, zeni: -missing * HEAL_COST_PER_HP });
+  test('ação de hospital foi removida: heal não possui delta otimista', () => {
+    expect(builtinOptimisticDelta(view({ hp: 30 }), { type: 'heal' })).toBeNull();
   });
 
   test('compra: preço de tabela × quantidade (Zeni e cristais)', () => {
