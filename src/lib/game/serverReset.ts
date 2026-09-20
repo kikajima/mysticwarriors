@@ -201,6 +201,7 @@ export async function performServerReset(confirm: string): Promise<ServerResetRe
       // referências ativas primeiro (FKs)
       await tx.account.updateMany({ data: { activePlayerId: null } });
       await tx.session.deleteMany({});
+      await tx.playerRelation.deleteMany({});
       await tx.guildDonation.deleteMany({});
       await tx.activity.deleteMany({});
       await tx.craftJob.deleteMany({});
