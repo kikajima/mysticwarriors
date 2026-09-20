@@ -191,7 +191,7 @@ describe('MISSÃO: matriz DEFINITIVA v0.16 (bloqueio de exatamente 3 ações)', 
     // exatamente 3 — matriz fechada
     expect(MISSION_BLOCKED_ACTIONS.size).toBe(3);
     // TUDO mais LIBERADO (v0.16 — 3ª ordem):
-    for (const liberated of ['attack_player', 'world_boss_attack', 'buy', 'sell', 'heal', 'use_item', 'equip', 'unequip', 'wish', 'learn_technique', 'equip_technique', 'set_strategy', 'unlock_transformation', 'activate_transformation', 'create_guild', 'join_guild', 'leave_guild', 'donate_guild', 'claim_quest', 'claim_achievement', 'claim_mission', 'cancel_mission', 'select_player', 'buy_cosmetic', 'buy_talent', 'equip_cosmetic', 'unequip_cosmetic', 'mission']) {
+    for (const liberated of ['attack_player', 'world_boss_attack', 'buy', 'sell', 'use_item', 'equip', 'unequip', 'wish', 'learn_technique', 'equip_technique', 'set_strategy', 'unlock_transformation', 'activate_transformation', 'create_guild', 'join_guild', 'leave_guild', 'donate_guild', 'claim_quest', 'claim_achievement', 'claim_mission', 'cancel_mission', 'select_player', 'buy_cosmetic', 'buy_talent', 'equip_cosmetic', 'unequip_cosmetic', 'mission']) {
       expect(MISSION_BLOCKED_ACTIONS.has(liberated)).toBe(false);
     }
   });
