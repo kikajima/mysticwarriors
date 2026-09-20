@@ -326,6 +326,7 @@ export async function POST(request: Request) {
       bossAttack: result.bossAttack ?? null,
       activity: result.activity ?? null,
       appliedResults: result.appliedResults ?? [],
+      notifications: result.notifications ?? [],
       deduplicated,
       // v0.9.6 (Mudança 1): hora do servidor para o cliente ajustar os
       // contadores (mesma fonte da verdade dos timestamps de fim).
