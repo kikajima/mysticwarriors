@@ -74,15 +74,26 @@ export function WorkshopPanel({
 
   const load = useCallback(async () => {
     setFailed(false);
-    try {
-      const res = await fetchPanelJson(`/api/game/workshop?playerId=${player.id}`);
-      if (!res.ok) throw new Error(String(res.status));
-      const data = await res.json();
-      setInventory(Array.isArray(data.inventory) ? data.inventory : []);
-      setJob(data.job ?? null);
-    } catch {
-      setFailed(true);
+    const url = `/api/game/workshop?playerId=${player.id}`;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        // A Oficina depende de sessão + personagem + duas leituras remotas.
+        // Em cold start do Render/Supabase, 8s pode ser pouco: a segunda
+        // tentativa ganha uma janela maior antes de mostrar erro ao jogador.
+        const res = await fetchPanelJson(url, attempt === 0 ? 8_000 : 12_000);
+        if (!res.ok) throw new Error(String(res.status));
+        const data = await res.json();
+        setInventory(Array.isArray(data.inventory) ? data.inventory : []);
+        setJob(data.job ?? null);
+        return;
+      } catch {
+        if (attempt === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 600));
+          continue;
+        }
+      }
     }
+    setFailed(true);
   }, [player.id]);
 
   useEffect(() => {
@@ -253,18 +264,22 @@ export function WorkshopPanel({
         </GameCard>
       )}
 
-      <div>
-        <h2 className="font-heading text-amber-100 mb-3">Receitas da Oficina</h2>
-        <div className="grid lg:grid-cols-2 gap-4">{mainRecipes.map(renderRecipe)}</div>
-      </div>
+      {inventory !== null && (
+        <>
+          <div>
+            <h2 className="font-heading text-amber-100 mb-3">Receitas da Oficina</h2>
+            <div className="grid lg:grid-cols-2 gap-4">{mainRecipes.map(renderRecipe)}</div>
+          </div>
 
-      <div>
-        <h2 className="font-heading text-amber-100 mb-1">Projetos Acadêmicos</h2>
-        <p className="text-xs text-amber-200/50 mb-3">
-          Blueprints avançados alimentam o crafting cross-profession e entram como ingredientes dos tiers superiores.
-        </p>
-        <div className="grid lg:grid-cols-2 gap-4">{blueprints.map(renderRecipe)}</div>
-      </div>
+          <div>
+            <h2 className="font-heading text-amber-100 mb-1">Projetos Acadêmicos</h2>
+            <p className="text-xs text-amber-200/50 mb-3">
+              Blueprints avançados alimentam o crafting cross-profession e entram como ingredientes dos tiers superiores.
+            </p>
+            <div className="grid lg:grid-cols-2 gap-4">{blueprints.map(renderRecipe)}</div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
