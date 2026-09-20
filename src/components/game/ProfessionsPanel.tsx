@@ -166,7 +166,7 @@ export function ProfessionsPanel({
               <div>
                 <h3 className="font-heading text-amber-100">Duração do próximo turno</h3>
                 <p className="text-xs text-amber-200/50 mt-1">
-                  Turnos longos mantêm Zeni, atributo, horas e materiais comuns integrais. A eficiência reduz apenas XP e chance de material raro.
+                  Quanto maior o turno, maior o bônus de XP e de chance de material raro. Zeni, atributo, horas e materiais comuns continuam integrais.
                 </p>
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -183,7 +183,11 @@ export function ProfessionsPanel({
                     }`}
                   >
                     <span className="font-heading block">{shift.hours}h</span>
-                    <span className="text-[10px]">{Math.round(shift.efficiency * 100)}% XP/raros</span>
+                    <span className="text-[10px]">
+                      {shift.efficiency <= 1
+                        ? 'XP/raros base'
+                        : `+${Math.round((shift.efficiency - 1) * 100)}% XP/raros`}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -230,7 +234,7 @@ export function ProfessionsPanel({
                         />
                       </div>
                       <p className="text-[11px] text-amber-200/40">
-                        Base do turno: {currentPreview.zeni.toLocaleString('pt-BR')} Zeni · {currentPreview.xp.toLocaleString('pt-BR')} XP · eficiência {Math.round(currentPreview.efficiency * 100)}%.
+                        Base do turno: {currentPreview.zeni.toLocaleString('pt-BR')} Zeni · {currentPreview.xp.toLocaleString('pt-BR')} XP · {currentPreview.efficiency <= 1 ? 'sem bônus de duração' : `bônus de duração +${Math.round((currentPreview.efficiency - 1) * 100)}% em XP/raros`}.
                       </p>
                       <div className="mt-3">
                         {confirmCancel ? (
@@ -388,7 +392,7 @@ export function ProfessionsPanel({
                   </div>
 
                   <p className="text-[11px] text-amber-200/45 mb-3">
-                    Comum: 1–2 unidades por hora garantidas. Raros usam a eficiência do turno. Esfera: um teste por turno concluído.
+                    Comum: 1–2 unidades por hora garantidas. Turnos mais longos aumentam a chance de raro por hora. Esfera: um teste por turno concluído.
                   </p>
 
                   {isActive ? (
