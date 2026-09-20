@@ -508,9 +508,10 @@ async function actionStartProfession(
   const level = professionLevel(progress[def.id]);
   const shiftMultiplier = professionShift(hours)?.efficiency ?? 1;
   const shiftBonusPct = Math.max(0, Math.round((shiftMultiplier - 1) * 100));
+  const shiftBonusLabel = shiftBonusPct > 0 ? `bônus de duração em XP/raros: +${shiftBonusPct}%` : 'sem bônus de duração';
 
   return {
-    message: `Trabalho iniciado: ${def.name} (${professionLevelTitle(level)}), turno de ${hours}h. Bônus de duração em XP/raros: +${shiftBonusPct}%.`,
+    message: `Trabalho iniciado: ${def.name} (${professionLevelTitle(level)}), turno de ${hours}h: ${shiftBonusLabel}.`,
     levelsGained: 0,
   };
 }
