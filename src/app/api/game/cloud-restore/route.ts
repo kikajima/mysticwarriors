@@ -4,6 +4,7 @@ import { ApiError, toErrorResponse, ok } from '@/lib/api';
 import { requireAuth } from '@/lib/auth';
 import { playerToView, computeDerived } from '@/lib/game/engine';
 import { MAX_CHARACTERS_PER_ACCOUNT } from '@/lib/game/content/world';
+import { getCraftRecipe } from '@/lib/game/content/crafting';
 import { DAILY_QUESTS, WEEKLY_QUESTS } from '@/lib/game/content/quests';
 import { dailyPeriod, weeklyPeriod } from '@/lib/progression';
 import { filterStaleRows } from '@/lib/game/resetGuard';
@@ -239,18 +240,32 @@ export async function POST(request: Request) {
         // Ingredientes foram consumidos ANTES do snapshot; restauramos apenas
         // a fila, com saída/timestamps já sanitizados contra o catálogo.
         if (char.craftJob) {
-          await tx.craftJob.create({
-            data: {
-              playerId: created.id,
-              recipeId: char.craftJob.recipeId,
-              outputItemId: char.craftJob.outputItemId,
-              outputQuantity: char.craftJob.outputQuantity,
-              outputKind: char.craftJob.outputKind,
-              academicLevelStart: char.craftJob.academicLevelStart,
-              startedAt: new Date(char.craftJob.startedAt),
-              endsAt: new Date(char.craftJob.endsAt),
-            },
-          });
+          const recipe = getCraftRecipe(char.craftJob.recipeId);
+          if (recipe) {
+            const batch = Math.max(
+              1,
+              Math.trunc(char.craftJob.outputQuantity / Math.max(1, recipe.outputQuantity))
+            );
+            await tx.craftJob.create({
+              data: {
+                playerId: created.id,
+                recipeId: char.craftJob.recipeId,
+                outputItemId: char.craftJob.outputItemId,
+                outputQuantity: char.craftJob.outputQuantity,
+                outputKind: char.craftJob.outputKind,
+                academicLevelStart: char.craftJob.academicLevelStart,
+                inputZeni: recipe.costZeni * batch,
+                inputIngredients: JSON.stringify(
+                  recipe.ingredients.map((ingredient) => ({
+                    itemId: ingredient.itemId,
+                    quantity: ingredient.quantity * batch,
+                  }))
+                ),
+                startedAt: new Date(char.craftJob.startedAt),
+                endsAt: new Date(char.craftJob.endsAt),
+              },
+            });
+          }
         }
 
         // ===== quests do período atual =====
