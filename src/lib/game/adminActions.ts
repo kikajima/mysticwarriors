@@ -547,6 +547,10 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           await tx.seasonRankEntry.deleteMany({ where: { playerId: fresh.id } });
           await tx.inventoryStack.deleteMany({ where: { playerId: fresh.id } });
           await tx.craftJob.deleteMany({ where: { playerId: fresh.id } });
+          await tx.dragonBallPossession.updateMany({
+            where: { playerId: fresh.id },
+            data: { playerId: null, acquiredAt: now },
+          });
           // dano no Ameaça Universal ATUAL: personagem zerado não mantém
           // crédito de dano no evento em andamento (histórico de
           // eventos passados permanece — é registro do evento)
