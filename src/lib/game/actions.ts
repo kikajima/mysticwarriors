@@ -223,7 +223,12 @@ export async function executeGameAction(
         result = await actionCancelProfession(tx, player);
         break;
       case 'craft_start': {
-        const craft = await startCraft(tx, player, String(args.recipeId ?? ''));
+        const craft = await startCraft(
+          tx,
+          player,
+          String(args.recipeId ?? ''),
+          Number(args.quantity ?? 1)
+        );
         result = { message: craft.message, levelsGained: 0 };
         break;
       }
