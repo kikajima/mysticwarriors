@@ -59,6 +59,51 @@ export function clampAdminInt(value: unknown, min: number, max: number): number 
   return Math.max(min, Math.min(max, Math.trunc(n)));
 }
 
+async function setAdminDragonBallCount(
+  tx: Prisma.TransactionClient,
+  playerId: string,
+  desiredCount: number
+): Promise<number> {
+  const desired = clampAdminInt(desiredCount, 0, ADMIN_LIMITS.dragonBalls);
+  let owned = await tx.dragonBallPossession.findMany({
+    where: { playerId },
+    orderBy: { star: 'asc' },
+    select: { star: true },
+  });
+
+  if (desired < owned.length) {
+    const release = owned.slice(desired);
+    await tx.dragonBallPossession.updateMany({
+      where: { star: { in: release.map((ball) => ball.star) }, playerId },
+      data: { playerId: null, acquiredAt: new Date() },
+    });
+  } else if (desired > owned.length) {
+    let missing = desired - owned.length;
+    while (missing > 0) {
+      const free = await tx.dragonBallPossession.findFirst({
+        where: { playerId: null },
+        orderBy: { star: 'asc' },
+        select: { star: true },
+      });
+      if (!free) break;
+      const claimed = await tx.dragonBallPossession.updateMany({
+        where: { star: free.star, playerId: null },
+        data: { playerId, acquiredAt: new Date() },
+      });
+      if (claimed.count === 0) continue;
+      missing--;
+    }
+  }
+
+  owned = await tx.dragonBallPossession.findMany({
+    where: { playerId },
+    orderBy: { star: 'asc' },
+    select: { star: true },
+  });
+  await tx.player.update({ where: { id: playerId }, data: { dragonBalls: owned.length } });
+  return owned.length;
+}
+
 // ===== Tipos compartilhados com a UI =====
 
 /** Um personagem na lista do painel (fonte local OU nuvem). */
@@ -356,9 +401,14 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
             parts.push('Diamantes ajustados');
           }
           if (input.ballDelta) {
-            const after = clampAdminInt(fresh.dragonBalls + input.ballDelta, 0, ADMIN_LIMITS.dragonBalls);
-            await tx.player.update({ where: { id: fresh.id }, data: { dragonBalls: after } });
-            parts.push(`Esferas do Dragão: ${after}/7`);
+            const current = await tx.dragonBallPossession.count({ where: { playerId: fresh.id } });
+            const desired = clampAdminInt(current + input.ballDelta, 0, ADMIN_LIMITS.dragonBalls);
+            const after = await setAdminDragonBallCount(tx, fresh.id, desired);
+            parts.push(
+              after === desired
+                ? `Esferas do Dragão: ${after}/7`
+                : `Esferas do Dragão: ${after}/7 (não há mais esferas globais livres)`
+            );
           }
           if (input.xpGain && input.xpGain > 0) {
             const g = await grantRewards(
