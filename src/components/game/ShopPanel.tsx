@@ -7,7 +7,7 @@ import type { TalentDef } from '@/lib/game/content/talents';
 import { EQUIPMENT_SLOT_META, EQUIPMENT_SLOTS } from '@/lib/game/types';
 import type { EquipmentSlot, PlayerView, ShopItem } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
-import { Coins, Lock, Swords, Shield, Gauge, Sparkles, TrendingUp, Gem, Flame, CheckCircle2 } from 'lucide-react';
+import { Coins, Lock, Swords, TrendingUp, Gem, Flame, CheckCircle2 } from 'lucide-react';
 
 const CATEGORIES = [
   { key: 'weapon', label: 'Armas', icon: '⚔️' },
