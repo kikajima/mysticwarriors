@@ -382,10 +382,19 @@ function sanitizeCraftJob(raw: unknown): CloudCraftJobSnapshot | null {
     sanitizeIsoDate(c.startedAt, 14 * 86400_000, 5 * 60_000) ??
     new Date(endsAt.getTime() - recipe.baseDurationMin * 60_000);
 
+  const requestedOutput = Math.trunc(Number(c.outputQuantity) || recipe.outputQuantity);
+  const maxOutput = recipe.outputQuantity * Math.max(1, recipe.maxBatch ?? 1);
+  const outputQuantity =
+    requestedOutput >= recipe.outputQuantity &&
+    requestedOutput <= maxOutput &&
+    requestedOutput % recipe.outputQuantity === 0
+      ? requestedOutput
+      : recipe.outputQuantity;
+
   return {
     recipeId: recipe.id,
     outputItemId: recipe.outputItemId,
-    outputQuantity: recipe.outputQuantity,
+    outputQuantity,
     outputKind: recipe.outputKind,
     academicLevelStart: clampInt(c.academicLevelStart, [0, 10]),
     startedAt: startedAt.toISOString(),
