@@ -85,6 +85,7 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
       outputItemId: job.outputItemId,
       outputQuantity: job.outputQuantity,
       outputKind: job.outputKind === 'stack' ? 'stack' : 'player_item',
+      batchQuantity: job.batchQuantity,
       academicLevelStart: job.academicLevelStart,
       startedAt: job.startedAt.toISOString(),
       endsAt: job.endsAt.toISOString(),
