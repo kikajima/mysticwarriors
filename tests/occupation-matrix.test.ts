@@ -218,7 +218,7 @@ describe('v0.16 anti-drift — EM LUTA: coleta NUNCA espera ocupação', () => {
           kind: 'battle',
           startedAt: new Date(),
           endsAt: new Date(Date.now() + 30_000),
-          payload: JSON.stringify({ kind: 'battle', enemyId: 'saibaman' }),
+          payload: JSON.stringify({ kind: 'battle', enemyId: 'arruaceiro_ermo' }),
           result: JSON.stringify({ kind: 'battle', display: null, result: { message: 'luta', levelsGained: 0 } }),
         },
       });
