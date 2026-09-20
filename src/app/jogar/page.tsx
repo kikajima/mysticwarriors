@@ -507,7 +507,7 @@ export default function PlayPage() {
       active = false;
       clearInterval(timer);
     };
-  }, [playerId, screen, auth, applyPlayerState, showAppliedResults, stageIncomingBattle]);
+  }, [playerId, screen, auth, applyPlayerState, showAppliedResults, showPlayerNotifications, stageIncomingBattle]);
 
   // ===== Handlers de autenticação (v0.8: contas na nuvem; v0.9.6: personagens) =====
   /**
