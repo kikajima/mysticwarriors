@@ -239,16 +239,18 @@ export async function POST(request: Request) {
         // ===== fabricação em andamento =====
         // Ingredientes foram consumidos ANTES do snapshot; restauramos apenas
         // a fila, com saída/timestamps já sanitizados contra o catálogo.
-        if (char.craftJob) {
-          const restoredRecipe = getCraftRecipe(char.craftJob.recipeId);
-          const restoredBatch = char.craftJob.batchQuantity;
+        const restoredCraftJobs = char.craftJobs ?? (char.craftJob ? [char.craftJob] : []);
+        for (const [position, craftJob] of restoredCraftJobs.entries()) {
+          const restoredRecipe = getCraftRecipe(craftJob.recipeId);
+          const restoredBatch = craftJob.batchQuantity;
           await tx.craftJob.create({
             data: {
               playerId: created.id,
-              recipeId: char.craftJob.recipeId,
-              outputItemId: char.craftJob.outputItemId,
-              outputQuantity: char.craftJob.outputQuantity,
-              outputKind: char.craftJob.outputKind,
+              position,
+              recipeId: craftJob.recipeId,
+              outputItemId: craftJob.outputItemId,
+              outputQuantity: craftJob.outputQuantity,
+              outputKind: craftJob.outputKind,
               batchQuantity: restoredBatch,
               spentZeni: restoredRecipe ? restoredRecipe.costZeni * restoredBatch : 0,
               ingredientsJson: restoredRecipe
@@ -257,9 +259,9 @@ export async function POST(request: Request) {
                     quantity: ingredient.quantity * restoredBatch,
                   })))
                 : '[]',
-              academicLevelStart: char.craftJob.academicLevelStart,
-              startedAt: new Date(char.craftJob.startedAt),
-              endsAt: new Date(char.craftJob.endsAt),
+              academicLevelStart: craftJob.academicLevelStart,
+              startedAt: new Date(craftJob.startedAt),
+              endsAt: new Date(craftJob.endsAt),
             },
           });
         }
