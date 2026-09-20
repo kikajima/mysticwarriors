@@ -454,9 +454,10 @@ export function Dashboard({
             // antigos nunca façam o painel voltar a exibir só o atributo base.
             const localEquipmentBonus = equippedBonusForStat(player, key);
             const serverEquipmentBonus = player.derived.equipmentBonuses?.[key];
-            const bonus = serverEquipmentBonus === localEquipmentBonus
-              ? serverEquipmentBonus
-              : localEquipmentBonus;
+            const bonus =
+              serverEquipmentBonus !== undefined && serverEquipmentBonus === localEquipmentBonus
+                ? serverEquipmentBonus
+                : localEquipmentBonus;
             const total = base + bonus;
             return (
               <GameCard key={key} className="p-4">
