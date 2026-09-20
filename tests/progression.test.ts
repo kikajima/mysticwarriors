@@ -89,11 +89,13 @@ describe('Transformações (árvore)', () => {
   });
 });
 
-test('UI de treino não repete saldo/energia no topo e Transformações exibem descrição', async () => {
+test('UI de treino não repete saldo/energia e Transformações exibem descrição + efeitos', async () => {
   const src = await Bun.file(`${import.meta.dir}/../src/components/game/TrainingPanel.tsx`).text();
   expect(src).not.toContain("{player.energy} energia (cada treino:");
   expect(src).not.toContain("player.zeni.toLocaleString('pt-BR')} Zeni");
   expect(src).toContain('{tr!.description}');
+  expect(src).toContain('transformationEffectLabels(tr!)');
+  expect(src).toContain('Enquanto ativa:');
 });
 
 describe('Integridade do conteúdo', () => {
