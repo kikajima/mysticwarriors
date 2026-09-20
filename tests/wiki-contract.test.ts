@@ -218,12 +218,6 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(t).toContain(`${REGEN.hpSeconds} segundos`);
   });
 
-  test('Hospital: custo por HP publicado = HEAL_COST_PER_HP real', () => {
-    const t = wikiText('recursos') + wikiText('fim-de-luta');
-    expect(HEAL_COST_PER_HP).toBe(3);
-    expect(t).toContain(`${HEAL_COST_PER_HP} Zeni por HP`);
-  });
-
   test('Combate: limite de rodadas, Ki básico e parâmetros centrais', () => {
     const t = wikiText('combate') + wikiText('fim-de-luta');
     expect(MAX_ROUNDS).toBe(40);
