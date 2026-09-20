@@ -251,7 +251,7 @@ export const ENEMIES: Enemy[] = [
   enemyFromPower({ id: 'guardiao_vazio_transcendente', name: 'Guardião do Vazio Transcendente', taunt: '"Além daqui, até os deuses enviam servos."', intent: 'Mantém selada uma fronteira que separa realidades incompatíveis.', enemyScaleIndex: 9, enemyTier: 1, level: 150, targetPower: 120000, style: 'tank', color: 'from-orange-600 to-red-950', emoji: '👁️' }),
   enemyFromPower({ id: 'emissario_fim_ciclos', name: 'Emissário do Fim dos Ciclos', taunt: '"Todo universo termina. Eu só antecipo o calendário."', intent: 'Avalia quais linhas de realidade devem ser encerradas antes do tempo.', enemyScaleIndex: 9, enemyTier: 2, level: 180, targetPower: 205000, style: 'ki', color: 'from-red-600 to-rose-950', emoji: '🕳️' }),
   enemyFromPower({ id: 'custodio_alem_escala', name: 'Custódio Além da Escala', taunt: '"Você mede poder. Eu meço consequências."', intent: 'Impede que forças crescentes rompam as leis que sustentam múltiplos universos.', enemyScaleIndex: 9, enemyTier: 3, level: 220, targetPower: 360000, style: 'balanced', color: 'from-red-500 to-black', emoji: '♾️' }),
-]
+];
 
 export function getEnemy(id: string): { enemy: Enemy; index: number } | null {
   const index = ENEMIES.findIndex((e) => e.id === id);
