@@ -13,7 +13,6 @@ import {
   professionHoursIntoLevel,
   professionShiftRewards,
   academicXpBonusPct,
-  DRAGON_BALL_SEARCH_ENERGY_COST,
   DRAGON_BALL_SEARCH_SHIFTS,
   DRAGON_BALL_SEARCH_MAX_CHANCE,
   getItem,
@@ -565,7 +564,7 @@ function DragonBallSearchTab({
                   🌍 {freeBalls}/7 espalhadas
                 </Chip>
               )}
-              <Chip className="bg-amber-950/50 text-amber-200 border-amber-800/50">⚡ -{DRAGON_BALL_SEARCH_ENERGY_COST} energia</Chip>
+              <Chip className="bg-emerald-950/50 text-emerald-300 border-emerald-800/50">⚡ 0 energia</Chip>
               <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">🎯 {Math.round(chance * 100)}% de chance</Chip>
               {itemBonus > 0 && <Chip className="bg-emerald-950/50 text-emerald-300 border-emerald-800/50">📟 +{Math.round(itemBonus * 100)}% do acessório</Chip>}
             </div>
@@ -573,10 +572,10 @@ function DragonBallSearchTab({
           <GameButton
             variant="gold"
             className="shrink-0"
-            disabled={busy || complete || noFreeBalls || !!search || player.energy < DRAGON_BALL_SEARCH_ENERGY_COST}
+            disabled={busy || complete || noFreeBalls || !!search}
             onClick={() => void onAction({ type: 'search_dragon_ball', hours: selectedHours })}
           >
-            {complete ? 'Conjunto completo' : noFreeBalls ? 'Nenhuma esfera espalhada' : search ? 'Busca em andamento' : player.energy < DRAGON_BALL_SEARCH_ENERGY_COST ? 'Sem energia' : `Iniciar busca (${selectedHours}h)`}
+            {complete ? 'Conjunto completo' : noFreeBalls ? 'Nenhuma esfera espalhada' : search ? 'Busca em andamento' : `Iniciar busca (${selectedHours}h)`}
           </GameButton>
         </div>
       </GameCard>
