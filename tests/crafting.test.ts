@@ -171,7 +171,9 @@ describe('Oficina — contratos de crafting', () => {
     expect(src).toContain('Requisitos profissionais');
     expect(src).toContain('professionRequirementsOk');
     expect(src).toContain('CRAFT_TIER_PROFESSION_LEVEL');
-    expect(src).toContain('Filtrar receitas:');
+    expect(src).toContain('>Tier:</span>');
+    expect(src).toContain('>Tipo:</span>');
+    expect(src).toContain("['equipment', 'Equipamentos']");
     expect(src).toContain('Quantidade do lote');
     expect(src).toContain("type: 'craft_cancel'");
     expect(src).toContain('Cancelar e reembolsar');
