@@ -44,10 +44,13 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
         outputItemId: true,
         outputQuantity: true,
         outputKind: true,
+        batchQuantity: true,
+        position: true,
         academicLevelStart: true,
         startedAt: true,
         endsAt: true,
       },
+      orderBy: [{ playerId: 'asc' }, { position: 'asc' }],
     }),
   ]);
 
@@ -80,7 +83,7 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
 
   for (const job of craftRows) {
     const entry = map.get(job.playerId) ?? { quests: [], achievements: [], materials: [] };
-    entry.craftJob = {
+    (entry.craftJobs ??= []).push({
       recipeId: job.recipeId,
       outputItemId: job.outputItemId,
       outputQuantity: job.outputQuantity,
@@ -89,7 +92,7 @@ export async function collectCharacterExtras(playerIds: string[]): Promise<Chara
       academicLevelStart: job.academicLevelStart,
       startedAt: job.startedAt.toISOString(),
       endsAt: job.endsAt.toISOString(),
-    };
+    });
     map.set(job.playerId, entry);
   }
 
