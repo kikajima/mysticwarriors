@@ -157,6 +157,10 @@ export interface Enemy {
   id: string;
   name: string;
   taunt: string;
+  /** Intenção/lore curta: por que este capanga está enfrentando o jogador. */
+  intent: string;
+  /** Subdivisão EXCLUSIVA do PvE: I, II ou III dentro da escala normal. */
+  enemyTier: 1 | 2 | 3;
   level: number;
   strength: number;
   defense: number;
