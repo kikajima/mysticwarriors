@@ -266,7 +266,7 @@ export const ENEMIES: Enemy[] = [
     name: 'Arauto da Ordem Superior',
     taunt: '"Eu sou apenas o mensageiro. Isso deveria preocupar você."',
     level: 100,
-    strength: 5000,
+    strength: 5200,
     defense: 4450,
     speed: 4800,
     ki: 4300,
