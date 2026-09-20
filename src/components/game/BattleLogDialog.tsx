@@ -323,12 +323,12 @@ function BattleContent({
                 DERROTA...
               </p>
               {/* v0.9.21 (correção 1): a mensagem acompanha o que a barra
-                  mostra — nocaute (0 HP) → hospital com 1 de vida; decisão
+                  mostra — nocaute (0 HP) → resgate com 1 de vida; decisão
                   dos jurados (limite de rodadas) → vida final mantida. */}
               <p className="text-sm text-amber-200/60 mb-3">
                 {battle.playerEndHp <= 0 ? (
                   <>
-                    Você acordou no hospital com 1 de vida. Ainda ganhou{' '}
+                    Você foi resgatado com 1 de vida. Ainda ganhou{' '}
                     {battle.xpGain.toLocaleString('pt-BR')} XP de experiência.
                     {battle.zenkaiGranted ? ' Zenkai ativado: +1 Força!' : ''}
                   </>
