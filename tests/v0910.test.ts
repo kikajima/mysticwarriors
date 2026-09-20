@@ -108,6 +108,24 @@ describe('v0.9.10 — parseItems com stacks (retrocompatível)', () => {
     expect(invalid.head).toBeNull();
   });
 
+  test('Acessório II é retrocompatível e exige a categoria accessory', () => {
+    const valid = parseItems(JSON.stringify({
+      accessory: 'cristal_baba',
+      accessory2: 'potara',
+      owned: ['cristal_baba', 'potara'],
+      consumables: {},
+    }));
+    expect(valid.accessory).toBe('cristal_baba');
+    expect(valid.accessory2).toBe('potara');
+
+    const invalid = parseItems(JSON.stringify({
+      accessory2: 'katana',
+      owned: ['katana'],
+      consumables: {},
+    }));
+    expect(invalid.accessory2).toBeNull();
+  });
+
   test('stacks válidas são preservadas (só ids presentes em owned)', () => {
     const items = parseItems('{"weapon":null,"armor":null,"accessory":null,"owned":["gi","luvas"],"consumables":{},"stacks":{"gi":3,"luvas":2}}');
     expect(items.stacks).toEqual({ gi: 3, luvas: 2 });
@@ -142,6 +160,7 @@ describe('v0.9.10 — parseItems com stacks (retrocompatível)', () => {
       weapon: null,
       armor: null,
       accessory: null,
+      accessory2: null,
       head: null,
       wrists: null,
       legs: null,
@@ -334,6 +353,27 @@ describe('v0.9.10 — stacks na sincronização da nuvem', () => {
     expect(clean!.items.wrists).toBe('munhequeiras_reforcadas');
     expect(clean!.items.legs).toBe('calca_treino_reforcada');
     expect(clean!.items.boots).toBe('botas_corrida_reforcadas');
+  });
+
+  test('sanitize da nuvem preserva os dois acessórios e exige duas cópias para duplicar', () => {
+    const valid = sanitizeCloudCharacterState(snapFixture({
+      accessory: 'cristal_baba',
+      accessory2: 'potara',
+      owned: ['cristal_baba', 'potara'],
+      consumables: {},
+      stacks: {},
+    }));
+    expect(valid.items.accessory).toBe('cristal_baba');
+    expect(valid.items.accessory2).toBe('potara');
+
+    const duplicateWithoutStack = sanitizeCloudCharacterState(snapFixture({
+      accessory: 'radar_esferas',
+      accessory2: 'radar_esferas',
+      owned: ['radar_esferas'],
+      consumables: {},
+      stacks: {},
+    }));
+    expect(duplicateWithoutStack.items.accessory2).toBeNull();
   });
 
   test('sanitize NUNCA inventa unidades (valor 1 é implícito, lixo vira nada)', () => {
