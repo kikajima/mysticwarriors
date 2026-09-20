@@ -27,6 +27,27 @@ test('chat persiste mensagens globais, privadas e de guilda sem FK destrutiva', 
   expect(await db.chatMessage.count()).toBe(3);
 });
 
+test('amizade e bloqueio são relações persistentes entre personagens', async () => {
+  const a = await db.player.create({ data: { id: 'social-a', name: 'Social Alpha', race: 'humano' } });
+  const b = await db.player.create({ data: { id: 'social-b', name: 'Social Beta', race: 'saiyajin' } });
+
+  const friendship = await db.friendship.create({
+    data: { playerAId: a.id, playerBId: b.id, requestedById: a.id, status: 'pending' },
+  });
+  expect(friendship.status).toBe('pending');
+  await db.friendship.update({ where: { id: friendship.id }, data: { status: 'accepted', acceptedAt: new Date() } });
+  expect((await db.friendship.findUniqueOrThrow({ where: { id: friendship.id } })).status).toBe('accepted');
+
+  await db.playerBlock.create({ data: { playerId: a.id, blockedPlayerId: b.id } });
+  expect(await db.playerBlock.count({ where: { playerId: a.id } })).toBe(1);
+
+  // FKs sociais são CASCADE: apagar um personagem não deixa relação órfã.
+  await db.player.delete({ where: { id: a.id } });
+  expect(await db.friendship.count()).toBe(0);
+  expect(await db.playerBlock.count()).toBe(0);
+  await db.player.delete({ where: { id: b.id } });
+});
+
 test('silêncio é unilateral e único por par', async () => {
   await db.chatMute.create({ data: { playerId: 'p2', mutedPlayerId: 'p1', mutedPlayerName: 'Alpha' } });
   let duplicateRejected = false;
@@ -55,6 +76,14 @@ test('contrato: chat só existe dentro do jogo e mantém limpeza administrativa'
   expect(widget).toContain("playerId: player.id");
   expect(api).toContain("playerId: z.string().min(1).max(80).optional()");
   expect(api).toContain("take: q ? 50 : 200");
+  expect(api).toContain("'friend_add'");
+  expect(api).toContain("'friend_accept'");
+  expect(api).toContain("'friend_remove'");
+  expect(api).toContain("'block'");
+  expect(api).toContain('assertNotBlocked');
+  expect(widget).toContain('Solicitações de amizade');
+  expect(widget).toContain('Amigos (');
+  expect(widget).toContain('Bloqueados');
   expect(admin).toContain("z.literal('LIMPAR CHAT'");
   expect(admin).toContain('chatMessage.deleteMany');
 });
