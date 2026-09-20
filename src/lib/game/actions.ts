@@ -556,17 +556,16 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
     foundBall = ballRes.count > 0;
   }
 
-  // Atributo profissional: frações ficam em milésimos e o ganho real passa
-  // obrigatoriamente pelo STAT_CAP. Acadêmico não possui atributo próprio.
+  // Atributo profissional: ganho sempre INTEIRO. O catálogo usa milésimos
+  // apenas por compatibilidade estrutural, mas todos os valores são múltiplos de 1000.
   let statGain = 0;
-  const totalMilli = cur.statMilliRemainder + turn.attributeMilli;
   if (def.attribute) {
-    const whole = Math.floor(totalMilli / 1000);
+    const whole = Math.trunc(turn.attributeMilli / 1000);
     if (whole > 0) {
       const applied = addStat(player, def.attribute, whole);
       statGain = applied.after - applied.before;
     }
-    cur.statMilliRemainder = player[def.attribute] >= STAT_CAP ? 0 : totalMilli % 1000;
+    cur.statMilliRemainder = 0;
     cur.cycleStatGranted += statGain;
   } else {
     cur.statMilliRemainder = 0;

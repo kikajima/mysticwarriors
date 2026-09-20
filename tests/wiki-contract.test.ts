@@ -355,6 +355,11 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(t).toContain(`${PROFESSION_LEVELS[0].xpPerPlayerLevel} × nível do personagem`);
     expect(t).toContain(`${PROFESSION_LEVELS[9].xpPerPlayerLevel} × nível do personagem`);
     expect(t).toContain('XP é proporcional ao nível do personagem');
+    expect(t).toContain('ganho de atributo é sempre um **número inteiro**');
+    for (const tier of PROFESSION_LEVELS) {
+      expect(t).toContain(`+${Math.trunc(tier.attributeMilliPerHour / 1000).toLocaleString('pt-BR')}`);
+      expect(tier.attributeMilliPerHour % 1000).toBe(0);
+    }
     expect(t).toContain(`${(PROFESSION_LEVELS[9].rareChance * 100).toLocaleString('pt-BR')}%`);
     expect(t).toContain('1–2 materiais comuns garantidos');
     expect(t).toContain('um único teste ao concluir o turno');

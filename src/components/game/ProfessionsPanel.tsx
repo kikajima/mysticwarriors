@@ -379,7 +379,7 @@ export function ProfessionsPanel({
                     </Chip>
                     {attributeLabel ? (
                       <Chip className="bg-emerald-950/40 text-emerald-300 border-emerald-800/50">
-                        +{(preview.attributeMilli / 1000).toLocaleString('pt-BR')} {attributeLabel}
+                        +{Math.trunc(preview.attributeMilli / 1000).toLocaleString('pt-BR')} {attributeLabel}
                       </Chip>
                     ) : (
                       <Chip className="bg-sky-950/40 text-sky-300 border-sky-800/50">
