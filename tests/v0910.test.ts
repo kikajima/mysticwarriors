@@ -86,6 +86,28 @@ describe('v0.9.10 — parseItems com stacks (retrocompatível)', () => {
     expect(itemCount(items, 'luvas')).toBe(0);
   });
 
+  test('slots novos são retrocompatíveis e rejeitam item da categoria errada', () => {
+    const valid = parseItems(JSON.stringify({
+      head: 'bandana_oficina',
+      wrists: 'munhequeiras_reforcadas',
+      legs: 'calca_treino_reforcada',
+      boots: 'botas_corrida_reforcadas',
+      owned: ['bandana_oficina', 'munhequeiras_reforcadas', 'calca_treino_reforcada', 'botas_corrida_reforcadas'],
+      consumables: {},
+    }));
+    expect(valid.head).toBe('bandana_oficina');
+    expect(valid.wrists).toBe('munhequeiras_reforcadas');
+    expect(valid.legs).toBe('calca_treino_reforcada');
+    expect(valid.boots).toBe('botas_corrida_reforcadas');
+
+    const invalid = parseItems(JSON.stringify({
+      head: 'energia_infinita',
+      owned: ['energia_infinita'],
+      consumables: {},
+    }));
+    expect(invalid.head).toBeNull();
+  });
+
   test('stacks válidas são preservadas (só ids presentes em owned)', () => {
     const items = parseItems('{"weapon":null,"armor":null,"accessory":null,"owned":["gi","luvas"],"consumables":{},"stacks":{"gi":3,"luvas":2}}');
     expect(items.stacks).toEqual({ gi: 3, luvas: 2 });
@@ -116,7 +138,18 @@ describe('v0.9.10 — parseItems com stacks (retrocompatível)', () => {
 
   test('JSON inválido → estado padrão com stacks vazias', () => {
     const items = parseItems('lixo total');
-    expect(items).toEqual({ weapon: null, armor: null, accessory: null, owned: [], consumables: {}, stacks: {} });
+    expect(items).toEqual({
+      weapon: null,
+      armor: null,
+      accessory: null,
+      head: null,
+      wrists: null,
+      legs: null,
+      boots: null,
+      owned: [],
+      consumables: {},
+      stacks: {},
+    });
   });
 });
 
