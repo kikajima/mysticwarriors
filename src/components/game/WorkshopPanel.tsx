@@ -355,9 +355,9 @@ export function WorkshopPanel({
         </p>
         <p className="text-xs text-amber-200/50 mt-2">
           🎓 Mestria Acadêmica reduz o tempo de fabricação em 1% por nível, até 10%.
-          Os Tiers agora têm progressão real: Tier 2 exige carreira Nv. {CRAFT_TIER_PROFESSION_LEVEL[2]},
-          Tier 3 Nv. {CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4 Nv. {CRAFT_TIER_PROFESSION_LEVEL[4]} e
-          Tier 5 Nv. {CRAFT_TIER_PROFESSION_LEVEL[5]} nas profissões indicadas pela receita.
+          A progressão base continua em Tier 2/Nv. {CRAFT_TIER_PROFESSION_LEVEL[2]}, Tier 3/Nv. {CRAFT_TIER_PROFESSION_LEVEL[3]},
+          Tier 4/Nv. {CRAFT_TIER_PROFESSION_LEVEL[4]} e Tier 5/Nv. {CRAFT_TIER_PROFESSION_LEVEL[5]}.
+          As obras-primas de endgame continuam no Tier 5, mas exigem guerreiro Nv. 30/50/75/100 e carreiras Nv. 8–10.
         </p>
       </GameCard>
 
