@@ -127,6 +127,7 @@ async function main() {
         report.activities += await tx.activity.deleteMany({ where: { playerId: p.id, completedAt: null } }).then((r) => r.count);
         report.dedups += await tx.requestDedup.deleteMany({ where: { playerId: p.id } }).then((r) => r.count);
         report.quests += await tx.questProgress.deleteMany({ where: { playerId: p.id } }).then((r) => r.count);
+        await tx.playerNotification.deleteMany({ where: { playerId: p.id } });
         await tx.dragonBallPossession.updateMany({
           where: { playerId: p.id },
           data: { playerId: null, acquiredAt: now },

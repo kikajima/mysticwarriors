@@ -7,7 +7,7 @@ import { MAX_ACTION_ENERGY } from '@/lib/game/rules';
 //    conta dona aparece apenas como INFORMAÇÃO;
 //  * TODAS as ações agem sobre o personagem escolhido: dar zenni/
 //    diamantes/esferas, editar atributos, dar XP/nível, restaurar
-//    energia, completar profissão/treinamento, dar itens/auras/
+//    energia/vida, acelerar atividades, dar itens/auras/
 //    cosméticos/transformações e resetar progresso (DAQUELE personagem).
 //
 // QUEM PODE CHAMAR: apenas as rotas /api/admin/* — que validam o admin
@@ -28,7 +28,10 @@ import { applyEquipmentBuy, computeDerived, itemCount, parseItems } from './engi
 import { isOnActiveMission } from './rules';
 import { grantRewards } from '@/lib/economy';
 import { trackEvent } from '@/lib/analytics';
-import { getItem } from './content/world';
+import { getItem, getProfessionMaterial } from './content/world';
+import { getCraftedItem, getCraftStackItem } from './content/crafting';
+import { createPlayerNotification } from './notifications';
+import { resolveDueActivities } from './activities';
 import { getTransformation } from './content/transformations';
 import { getCosmetic } from './content/cosmetics';
 import {
@@ -104,6 +107,49 @@ async function setAdminDragonBallCount(
   return owned.length;
 }
 
+export async function grantAdminDragonBallStar(
+  tx: Prisma.TransactionClient,
+  player: Player,
+  rawStar: number
+): Promise<string> {
+  const star = clampAdminInt(rawStar, 1, 7);
+  const possession = await tx.dragonBallPossession.findUnique({
+    where: { star },
+    include: { player: { select: { id: true, name: true } } },
+  });
+  if (!possession) {
+    throw new ApiError('VALIDATION_ERROR', `A Esfera de ${star} estrela${star === 1 ? '' : 's'} não existe no mundo.`);
+  }
+  if (possession.playerId === player.id) {
+    return `${player.name} já possui a Esfera de ${star} estrela${star === 1 ? '' : 's'}.`;
+  }
+  if (possession.playerId) {
+    throw new ApiError(
+      'CONFLICT',
+      `A Esfera de ${star} estrela${star === 1 ? '' : 's'} já pertence a ${possession.player?.name ?? 'outro guerreiro'}.`
+    );
+  }
+
+  const claimed = await tx.dragonBallPossession.updateMany({
+    where: { star, playerId: null },
+    data: { playerId: player.id, acquiredAt: new Date() },
+  });
+  if (claimed.count !== 1) {
+    throw new ApiError('CONFLICT', 'Essa Esfera acabou de mudar de dono. Atualize o painel e tente novamente.');
+  }
+
+  const count = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
+  await tx.player.update({ where: { id: player.id }, data: { dragonBalls: count } });
+  await createPlayerNotification(tx, {
+    playerId: player.id,
+    kind: 'admin',
+    title: '🐉 Esfera concedida!',
+    message: `A administração concedeu a você a Esfera de ${star} estrela${star === 1 ? '' : 's'}.`,
+    metadata: { star, source: 'admin' },
+  });
+  return `Esfera de ${star} estrela${star === 1 ? '' : 's'} concedida a ${player.name} (${count}/7).`;
+}
+
 // ===== Tipos compartilhados com a UI =====
 
 /** Um personagem na lista do painel (fonte local OU nuvem). */
@@ -154,7 +200,12 @@ export type AdminActionKind =
   | 'set_stats'
   | 'set_progress'
   | 'restore_energy'
-  | 'finish'
+  | 'restore_health'
+  | 'accelerate_activity'
+  | 'finish' // alias legado para clientes admin em cache
+  | 'grant_dragon_ball'
+  | 'grant_craft_material'
+  | 'grant_crafted_item'
   | 'reset'
   | 'grant_item'
   | 'grant_cosmetic'
@@ -179,6 +230,10 @@ export interface AdminActionInput {
   itemId?: string;
   cosmeticId?: string;
   transformationId?: string;
+  dragonBallStar?: number;
+  materialId?: string;
+  craftedItemId?: string;
+  quantity?: number;
 }
 
 export interface AdminActionResultLocal {
@@ -452,22 +507,114 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           await trackEvent('admin_restore_energy', { accountId, metadata: { character: fresh.name } }, tx);
           return `Energia de ${fresh.name} restaurada ao total (${d.maxEnergy}).`;
 
-        } else if (input.action === 'finish') {
-          const now = new Date();
+        } else if (input.action === 'restore_health') {
+          const d = computeDerived(fresh);
+          await tx.player.update({ where: { id: fresh.id }, data: { hp: d.maxHp } });
+          await trackEvent('admin_restore_health', { accountId, metadata: { character: fresh.name } }, tx);
+          return `Vida de ${fresh.name} restaurada ao total (${d.maxHp}).`;
+
+        } else if (input.action === 'accelerate_activity' || input.action === 'finish') {
+          const readyAt = new Date(Date.now() - 1000);
           const done: string[] = [];
-          if (fresh.missionId && fresh.missionEndsAt && fresh.missionEndsAt.getTime() > now.getTime()) {
-            await tx.player.update({ where: { id: fresh.id }, data: { missionEndsAt: now } });
-            done.push('turno de trabalho concluído (pagamento pronto para coletar)');
+
+          if (fresh.missionId && fresh.missionEndsAt && fresh.missionEndsAt.getTime() > readyAt.getTime()) {
+            await tx.player.update({ where: { id: fresh.id }, data: { missionEndsAt: readyAt } });
+            done.push('trabalho pronto para coletar');
           }
-          const acts = await tx.activity.updateMany({
-            where: { playerId: fresh.id, completedAt: null, endsAt: { gt: now } },
-            data: { endsAt: now },
+
+          const activities = await tx.activity.updateMany({
+            where: { playerId: fresh.id, completedAt: null, endsAt: { gt: readyAt } },
+            data: { endsAt: readyAt },
           });
-          if (acts.count > 0) done.push(`${acts.count} batalha(s)/atividade(s) concluída(s)`);
-          await trackEvent('admin_finish', { accountId, metadata: { character: fresh.name } }, tx);
+          if (activities.count > 0) {
+            const resolved = await resolveDueActivities(tx, fresh);
+            done.push(`${resolved.length} atividade(s) concluída(s) instantaneamente`);
+          }
+
+          const craft = await tx.craftJob.updateMany({
+            where: { playerId: fresh.id, endsAt: { gt: readyAt } },
+            data: { endsAt: readyAt },
+          });
+          if (craft.count > 0) {
+            done.push('fabricação pronta para coletar');
+          }
+
+          await trackEvent('admin_accelerate_activity', {
+            accountId,
+            metadata: {
+              character: fresh.name,
+              profession: !!fresh.missionId,
+              activities: activities.count,
+              craft: craft.count,
+            },
+          }, tx);
+
           return done.length > 0
-            ? `${fresh.name}: ${done.join(' · ')}. O jogador vê o resultado ao voltar ao jogo.`
-            : `${fresh.name} não tem nada em andamento neste servidor.`;
+            ? `${fresh.name}: ${done.join(' · ')}. Nenhuma recompensa foi antecipada; o fluxo normal de resolução/coleta continua valendo.`
+            : `${fresh.name} não tem atividade com timer em andamento neste servidor.`;
+
+        } else if (input.action === 'grant_dragon_ball') {
+          if (input.dragonBallStar === undefined) {
+            throw new ApiError('VALIDATION_ERROR', 'Escolha qual Esfera do Dragão deseja conceder.');
+          }
+          const message = await grantAdminDragonBallStar(tx, fresh, input.dragonBallStar);
+          await trackEvent('admin_grant_dragon_ball', {
+            accountId,
+            metadata: { character: fresh.name, star: input.dragonBallStar },
+          }, tx);
+          return message;
+
+        } else if (input.action === 'grant_craft_material') {
+          const materialId = String(input.materialId ?? '');
+          const material = getProfessionMaterial(materialId) ?? getCraftStackItem(materialId);
+          if (!material) throw new ApiError('VALIDATION_ERROR', 'Material/projeto de crafting desconhecido.');
+
+          const quantity = clampAdminInt(input.quantity ?? 1, 1, 999);
+          const current = await tx.inventoryStack.findUnique({
+            where: { playerId_itemId: { playerId: fresh.id, itemId: materialId } },
+            select: { quantity: true },
+          });
+          if ((current?.quantity ?? 0) + quantity > 1_000_000) {
+            throw new ApiError('VALIDATION_ERROR', 'Esse estoque atingiria o limite máximo permitido.');
+          }
+          await tx.inventoryStack.upsert({
+            where: { playerId_itemId: { playerId: fresh.id, itemId: materialId } },
+            update: { quantity: { increment: quantity } },
+            create: { playerId: fresh.id, itemId: materialId, quantity },
+          });
+          await trackEvent('admin_grant_craft_material', {
+            accountId,
+            metadata: { character: fresh.name, itemId: materialId, quantity },
+          }, tx);
+          return `${material.icon} +${quantity} ${material.name} para ${fresh.name}.`;
+
+        } else if (input.action === 'grant_crafted_item') {
+          const craftedId = String(input.craftedItemId ?? '');
+          const item = getCraftedItem(craftedId);
+          if (!item) throw new ApiError('VALIDATION_ERROR', 'Item exclusivo da Oficina desconhecido.');
+
+          const items = parseItems(fresh.items);
+          const requested = clampAdminInt(input.quantity ?? 1, 1, 999);
+          if (item.category === 'consumable') {
+            const current = items.consumables[item.id] ?? 0;
+            if (current + requested > 999) {
+              throw new ApiError('VALIDATION_ERROR', `Limite de 999 unidades de ${item.name} excedido.`);
+            }
+            items.consumables[item.id] = current + requested;
+          } else {
+            if (requested !== 1) {
+              throw new ApiError('VALIDATION_ERROR', 'Equipamentos e itens permanentes de crafting só podem ser concedidos uma unidade por vez.');
+            }
+            if (items.owned.includes(item.id)) return `${fresh.name} já possui ${item.name}.`;
+            if (items.owned.length >= 200) throw new ApiError('VALIDATION_ERROR', 'Inventário cheio (limite 200).');
+            items.owned.push(item.id);
+          }
+          await tx.player.update({ where: { id: fresh.id }, data: { items: JSON.stringify(items) } });
+          await trackEvent('admin_grant_crafted_item', {
+            accountId,
+            metadata: { character: fresh.name, itemId: item.id, quantity: requested },
+          }, tx);
+          return `${item.icon} ${item.name} concedido a ${fresh.name}${requested > 1 ? ` (×${requested})` : ''}.`;
 
         } else if (input.action === 'grant_item') {
           // v0.9.6: dar ITEM de loja ao personagem (catálogo validado).
@@ -529,7 +676,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           // cosmético sobrevivente). Agora ele ESCREVE O ESTADO INICIAL
           // de um personagem novo (characterInitial.ts — a MESMA fonte
           // da criação) e preserva apenas a IDENTIDADE: id, conta, nome,
-          // raça, sexo e guilda. Todo o resto zera: cosméticos
+          // raça e guilda. Todo o resto zera: cosméticos
           // (comprados e equipados), avatar, itens, auras,
           // transformações, zenni, diamantes, esferas, XP/nível/
           // atributos, vida/energia, conquistas, missões, profissão,
@@ -547,6 +694,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           await tx.seasonRankEntry.deleteMany({ where: { playerId: fresh.id } });
           await tx.inventoryStack.deleteMany({ where: { playerId: fresh.id } });
           await tx.craftJob.deleteMany({ where: { playerId: fresh.id } });
+          await tx.playerNotification.deleteMany({ where: { playerId: fresh.id } });
           await tx.dragonBallPossession.updateMany({
             where: { playerId: fresh.id },
             data: { playerId: null, acquiredAt: now },
@@ -559,7 +707,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           });
           await trackEvent('admin_reset_progress', { accountId, metadata: { character: fresh.name } }, tx);
           return (
-            `${fresh.name} voltou ao estado de criação — só nome, raça e sexo preservados. ` +
+            `${fresh.name} voltou ao estado de criação — só nome e raça preservados. ` +
             `Zerados: cosméticos, avatar, diamantes (${fresh.crystals}), itens, transformações, ` +
             `conquistas, missões, profissão e pontos de temporada` +
             `${bossRemoved.count > 0 ? ' — dano no Ameaça Universal atual removido' : ''}.`
@@ -594,7 +742,6 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 export interface CloudCharacterPatch {
   zeniDelta?: number;
   crystalDelta?: number;
-  ballDelta?: number;
   xpGain?: number;
   strength?: number;
   defense?: number;
@@ -603,8 +750,14 @@ export interface CloudCharacterPatch {
   level?: number;
   xp?: number;
   restoreEnergy?: boolean;
-  finishMission?: boolean;
+  restoreHealth?: boolean;
+  accelerateActivity?: boolean;
+  finishMission?: boolean; // alias legado: equivale a acelerar atividade
   itemId?: string;
+  materialId?: string;
+  materialQuantity?: number;
+  craftedItemId?: string;
+  craftedItemQuantity?: number;
   cosmeticId?: string;
   transformationId?: string;
 }
@@ -621,7 +774,8 @@ export function patchCloudCharacterState(raw: unknown, patch: CloudCharacterPatc
 
   if (patch.zeniDelta) after.zeni = clampAdminInt((before.zeni ?? 0) + patch.zeniDelta, 0, ADMIN_LIMITS.zeni);
   if (patch.crystalDelta) after.crystals = clampAdminInt((before.crystals ?? 0) + patch.crystalDelta, 0, ADMIN_LIMITS.crystals);
-  if (patch.ballDelta) after.dragonBalls = clampAdminInt((before.dragonBalls ?? 0) + patch.ballDelta, 0, ADMIN_LIMITS.dragonBalls);
+  // Esferas não são restauráveis/editáveis pelo snapshot: a fonte de verdade
+  // é DragonBallPossession no mundo global.
   if (patch.xpGain && patch.xpGain > 0) after.xp = clampAdminInt((before.xp ?? 0) + Math.floor(patch.xpGain), 0, ADMIN_LIMITS.xp);
   if (patch.strength !== undefined) after.strength = clampAdminInt(patch.strength, 0, ADMIN_LIMITS.stat);
   if (patch.defense !== undefined) after.defense = clampAdminInt(patch.defense, 0, ADMIN_LIMITS.stat);
@@ -629,12 +783,52 @@ export function patchCloudCharacterState(raw: unknown, patch: CloudCharacterPatc
   if (patch.ki !== undefined) after.ki = clampAdminInt(patch.ki, 0, ADMIN_LIMITS.stat);
   if (patch.level !== undefined) after.level = clampAdminInt(patch.level, 1, ADMIN_LIMITS.level);
   if (patch.xp !== undefined) after.xp = clampAdminInt(patch.xp, 0, ADMIN_LIMITS.xp);
-  if (patch.restoreEnergy) after.energy = MAX_ACTION_ENERGY; // mesma fórmula do jogo
-  // "completar profissão" na nuvem = turno vence agora (o jogador coleta
-  // o pagamento normalmente quando entrar)
-  if (patch.finishMission && after.missionId && after.missionEndsAt) {
-    after.missionEndsAt = new Date(Date.now() - 1000).toISOString();
+  if (patch.restoreEnergy) after.energy = MAX_ACTION_ENERGY;
+  if (patch.restoreHealth) {
+    after.hp = Math.max(1, 80 + Math.max(1, after.level ?? 1) * 15 + Math.max(0, after.defense ?? 0) * 5);
   }
+  if (patch.accelerateActivity || patch.finishMission) {
+    const doneAt = new Date(Date.now() - 1000).toISOString();
+    if (after.missionId && after.missionEndsAt) after.missionEndsAt = doneAt;
+    if (after.craftJob) after.craftJob = { ...after.craftJob, endsAt: doneAt };
+    // Batalhas/Busca vivem na tabela Activity e portanto só podem ser
+    // aceleradas quando o personagem está carregado no servidor local.
+  }
+
+  if (patch.materialId) {
+    const material = getProfessionMaterial(patch.materialId) ?? getCraftStackItem(patch.materialId);
+    if (material) {
+      const quantity = clampAdminInt(patch.materialQuantity ?? 1, 1, 999);
+      const materials = [...(after.materials ?? [])];
+      const idx = materials.findIndex((entry) => entry.itemId === patch.materialId);
+      if (idx >= 0) {
+        materials[idx] = {
+          itemId: patch.materialId,
+          quantity: Math.min(1_000_000, materials[idx].quantity + quantity),
+        };
+      } else {
+        materials.push({ itemId: patch.materialId, quantity });
+      }
+      after.materials = materials.slice(0, 200);
+    }
+  }
+
+  if (patch.craftedItemId) {
+    const crafted = getCraftedItem(patch.craftedItemId);
+    if (crafted) {
+      const quantity = clampAdminInt(patch.craftedItemQuantity ?? 1, 1, 999);
+      const items = { ...(after.items ?? { weapon: null, armor: null, accessory: null, owned: [], consumables: {} }) };
+      items.consumables = { ...(items.consumables ?? {}) };
+      items.owned = [...(items.owned ?? [])];
+      if (crafted.category === 'consumable') {
+        items.consumables[crafted.id] = Math.min(999, (items.consumables[crafted.id] ?? 0) + quantity);
+      } else if (!items.owned.includes(crafted.id) && items.owned.length < 200) {
+        items.owned.push(crafted.id);
+      }
+      after.items = items;
+    }
+  }
+
   // dar item/cosmético/transformação direto no estado
   if (patch.itemId) {
     const item = getItem(patch.itemId);

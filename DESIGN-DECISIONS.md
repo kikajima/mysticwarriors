@@ -361,3 +361,29 @@ idempotência, cooldown condicional ou autoridade do servidor.
 - **Itens fabricados não entram na loja NPC:** `price=0` significa origem
   exclusiva da Oficina, não compra grátis. A interface do Inventário é o
   lugar para equipar/usar os resultados.
+
+
+## 🔔 NOTIFICAÇÕES PERSISTENTES E SUPORTE ADMIN (2026-09-20)
+
+- **Roubo de Esfera é um evento persistente:** quando uma estrela muda de dono
+  por vitória PvP, atacante e vítima recebem uma `PlayerNotification`.
+  O atacante vê o pop-up somente depois do replay terminar; a vítima recebe
+  o aviso no próximo acesso mesmo se estava offline no momento do duelo.
+- **Entrega confirmada pelo cliente:** ler uma notificação não a consome.
+  Ela só recebe `deliveredAt` depois que o navegador exibiu o pop-up e
+  confirmou via endpoint autenticado. Isso evita perder avisos por queda de rede.
+- **Esferas continuam globais:** o admin escolhe a estrela exata (1–7), mas
+  só pode conceder uma estrela livre. O painel mostra o dono atual de cada
+  estrela e não transforma snapshot de nuvem em fonte de posse.
+- **Acelerar atividade substitui "Completar profissão/treino":** a ação
+  encurta trabalho, fabricação e qualquer `Activity` temporizada
+  (PvE/PvP/torneio/Busca pelas Esferas). Atividades server-side são
+  resolvidas imediatamente; trabalho e crafting ficam prontos para a coleta
+  normal, sem inventar recompensa administrativa.
+- **Suporte de crafting:** o admin pode conceder materiais profissionais,
+  projetos/blueprints e itens exclusivos da Oficina, sempre validados contra
+  os catálogos reais. Itens permanentes continuam únicos e consumíveis
+  respeitam os limites de pilha.
+- **Ferramenta adicional de suporte:** restaurar vida total foi adicionada
+  ao lado de restaurar energia, útil para recuperar personagens presos em
+  estados de teste/suporte sem alterar progressão.

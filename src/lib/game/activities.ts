@@ -7,6 +7,7 @@ import { bumpQuests } from '@/lib/progression';
 import { scoreSeasonVictory } from '@/lib/seasons';
 import { trackEvent } from '@/lib/analytics';
 import { xpToNextLevel } from './content/world';
+import { createPlayerNotification } from './notifications';
 import { advanceTournament, parseTournament, roundDef, serializeTournament } from './content/tournament';
 import type { ActivityView, BattleResult } from './types';
 
@@ -444,6 +445,24 @@ async function applyPvpResult(
             await tx.player.update({ where: { id: target.id }, data: { dragonBalls: targetCount } });
             player.dragonBalls = winnerCount;
             target.dragonBalls = targetCount;
+
+            const starLabel = `${targetBall.star} estrela${targetBall.star === 1 ? '' : 's'}`;
+            await createPlayerNotification(tx, {
+              playerId: player.id,
+              kind: 'dragon_ball_stolen',
+              title: '🐉 Esfera roubada!',
+              message: `Você tomou a Esfera de ${starLabel} de ${target.name} ao vencer o duelo PvP.`,
+              metadata: { star: targetBall.star, targetId: target.id, targetName: target.name },
+            });
+            if (!target.isBot) {
+              await createPlayerNotification(tx, {
+                playerId: target.id,
+                kind: 'dragon_ball_lost',
+                title: '🚨 Uma Esfera foi roubada!',
+                message: `${player.name} venceu você em um duelo PvP e levou sua Esfera de ${starLabel}.`,
+                metadata: { star: targetBall.star, attackerId: player.id, attackerName: player.name },
+              });
+            }
           }
         }
       }

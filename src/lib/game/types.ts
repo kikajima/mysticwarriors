@@ -574,6 +574,15 @@ export interface ClaimableMission {
  * o servidor persiste início/término/identidade e concede o resultado
  * APENAS após o término — recarregar a página retoma o trecho restante.
  */
+export interface PlayerNotificationView {
+  id: string;
+  kind: 'dragon_ball_stolen' | 'dragon_ball_lost' | 'admin';
+  title: string;
+  message: string;
+  createdAt: string;
+  metadata?: Record<string, unknown> | null;
+}
+
 export interface ActivityView {
   id: string;
   kind: 'train' | 'battle' | 'dragon_ball_search';

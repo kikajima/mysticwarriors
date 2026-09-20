@@ -87,7 +87,8 @@ import { attackWorldBoss } from '@/lib/worldboss';
 import { scoreSeasonVictory } from '@/lib/seasons';
 import { trackEvent } from '@/lib/analytics';
 import { EQUIPMENT_SLOTS } from './types';
-import type { ActivityView, BattleResult, EquipmentSlot, Loadout, ProfessionLootEntry, ShopItem } from './types';
+import { listPendingPlayerNotifications } from './notifications';
+import type { ActivityView, BattleResult, EquipmentSlot, Loadout, PlayerNotificationView, ProfessionLootEntry, ShopItem } from './types';
 
 // =====================================================================
 // EXECUTOR DE AÇÕES DO JOGO (100% server-side)
@@ -118,6 +119,8 @@ export interface ActionResult {
   activity?: ActivityView;
   /** resultados de atividades vencidas aplicadas nesta requisição */
   appliedResults?: AppliedActivityResult[];
+  /** avisos persistentes entregues exatamente uma vez ao jogador */
+  notifications?: PlayerNotificationView[];
 }
 
 export async function executeGameAction(
@@ -338,6 +341,8 @@ export async function executeGameAction(
         throw new ApiError('VALIDATION_ERROR', 'Ação desconhecida.');
     }
     if (appliedResults.length > 0) result.appliedResults = appliedResults;
+    const notifications = await listPendingPlayerNotifications(tx, player.id);
+    if (notifications.length > 0) result.notifications = notifications;
     return result;
     },
     // transações de jogo podem envolver combate + recompensas + quests:

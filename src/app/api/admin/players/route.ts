@@ -4,6 +4,7 @@ import { toErrorResponse, ApiError, ok } from '@/lib/api';
 import { LIMITS, clientIp, rateLimit } from '@/lib/rate-limit';
 import { extractBearerToken, verifySupabaseAdmin, adminListCloudCharacters } from '@/lib/supabase/admin';
 import { listLocalCharactersForAdmin, type AdminCharacterRow } from '@/lib/game/adminActions';
+import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -96,9 +97,13 @@ export async function GET(request: Request) {
     const rl = rateLimit(`admin-list:${clientIp(request)}`, LIMITS.supabase.limit, LIMITS.supabase.windowMs);
     if (!rl.allowed) throw new ApiError('RATE_LIMITED', 'Muitas consultas. Aguarde um instante.');
 
-    const [cloudRows, localRows] = await Promise.all([
+    const [cloudRows, localRows, dragonBallWorld] = await Promise.all([
       adminListCloudCharacters(token),
       listLocalCharactersForAdmin(),
+      db.dragonBallPossession.findMany({
+        orderBy: { star: 'asc' },
+        include: { player: { select: { id: true, name: true } } },
+      }),
     ]);
 
     // ===== mescla: LOCAL é mais fresco; NUVEM cobre quem não está aqui =====
@@ -129,7 +134,15 @@ export async function GET(request: Request) {
       (a, b) => b.level - a.level || b.power - a.power || a.name.localeCompare(b.name)
     );
 
-    return ok({ characters, cloudAvailable: cloudRows !== null });
+    return ok({
+      characters,
+      cloudAvailable: cloudRows !== null,
+      dragonBallWorld: dragonBallWorld.map((ball) => ({
+        star: ball.star,
+        playerId: ball.playerId,
+        playerName: ball.player?.name ?? null,
+      })),
+    });
   } catch (error) {
     return toErrorResponse(error);
   }

@@ -1389,7 +1389,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: 'A aba **Busca** em [[profissoes|Atividades]] permite procurar esferas ativamente por energia e tempo: 1h, 2h, 4h, 8h ou 12h. A chance base vai até 20%; o **Radar das Esferas** adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais** no mundo, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Junte as **7 esferas**, invoque Shenlon e escolha:',
+        text: 'A aba **Busca** em [[profissoes|Atividades]] permite procurar esferas ativamente por energia e tempo: 1h, 2h, 4h, 8h ou 12h. A chance base vai até 20%; o **Radar das Esferas** adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais** no mundo, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Quando isso acontece, **os dois jogadores são avisados**: o vencedor vê o alerta ao terminar a batalha e a vítima recebe o aviso mesmo se estava offline, no próximo acesso. Junte as **7 esferas**, invoque Shenlon e escolha:',
       },
       {
         kind: 'table',

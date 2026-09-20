@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useToast } from '@/hooks/use-toast';
 import type { AccountSession } from '@/lib/auth';
-import type { ActivityView, BattleResult, PlayerView } from '@/lib/game/types';
+import type { ActivityView, BattleResult, PlayerNotificationView, PlayerView } from '@/lib/game/types';
 import { AuthGate } from '@/components/game/AuthGate';
 import { CharacterCreate } from '@/components/game/CharacterCreate';
 import { CharacterSelect } from '@/components/game/CharacterSelect';
@@ -185,6 +185,10 @@ export default function PlayPage() {
   // batalha NÃO é re-exibida — era isto que "resetava" a animação no meio
   // e fazia a luta rodar duas vezes.
   const shownActivityIdsRef = useRef<Set<string>>(new Set());
+  // Notificações persistentes podem aparecer em respostas concorrentes
+  // (/state e sync_activity). Este set evita pop-up duplicado enquanto a
+  // confirmação ao servidor ainda está em voo.
+  const shownNotificationIdsRef = useRef<Set<string>>(new Set());
   // ===== v0.8 — sincronização com a nuvem (Supabase) =====
   // fingerprint do último estado salvo em profiles.progresso
   const lastSavedCloudRef = useRef<string | null>(null);
@@ -407,6 +411,51 @@ export default function PlayPage() {
     [toast]
   );
 
+  const showPlayerNotifications = useCallback(
+    (notifications: PlayerNotificationView[] | undefined) => {
+      if (!playerId || !Array.isArray(notifications) || notifications.length === 0) return;
+
+      const acknowledge = async (id: string) => {
+        try {
+          const res = await fetch('/api/game/notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, ids: [id] }),
+          });
+          if (!res.ok) shownNotificationIdsRef.current.delete(id);
+        } catch {
+          shownNotificationIdsRef.current.delete(id);
+        }
+      };
+
+      for (const notification of notifications) {
+        if (shownNotificationIdsRef.current.has(notification.id)) continue;
+        shownNotificationIdsRef.current.add(notification.id);
+
+        const show = () => {
+          const className =
+            notification.kind === 'dragon_ball_lost'
+              ? 'border-red-600 bg-red-950 text-red-100'
+              : notification.kind === 'dragon_ball_stolen'
+                ? 'border-amber-500 bg-amber-950 text-amber-100'
+                : 'border-sky-600 bg-sky-950 text-sky-100';
+          toast({
+            title: notification.title,
+            description: notification.message,
+            className,
+          });
+          void acknowledge(notification.id);
+        };
+
+        // Quem roubou a Esfera só descobre DEPOIS de terminar de assistir
+        // à batalha; a vítima offline recebe no primeiro estado ao voltar.
+        if (battleOpenRef.current) deferredToastsRef.current.push(show);
+        else show();
+      }
+    },
+    [playerId, toast]
+  );
+
   // ===== Polling leve: apenas estado pessoal a cada 15s =====
   useEffect(() => {
     if (screen !== 'game' || !playerId) return;
@@ -447,6 +496,7 @@ export default function PlayPage() {
         if (Array.isArray(data.pendingResults) && data.pendingResults.length > 0) {
           showAppliedResults(data.pendingResults);
         }
+        showPlayerNotifications(data.pendingNotifications);
       } catch {
         // silencioso — próxima poll tenta de novo
       }
@@ -457,7 +507,7 @@ export default function PlayPage() {
       active = false;
       clearInterval(timer);
     };
-  }, [playerId, screen, auth, applyPlayerState, showAppliedResults, stageIncomingBattle]);
+  }, [playerId, screen, auth, applyPlayerState, showAppliedResults, showPlayerNotifications, stageIncomingBattle]);
 
   // ===== Handlers de autenticação (v0.8: contas na nuvem; v0.9.6: personagens) =====
   /**
@@ -718,6 +768,7 @@ export default function PlayPage() {
         if (Array.isArray(data.appliedResults) && data.appliedResults.length > 0) {
           showAppliedResults(data.appliedResults);
         }
+        showPlayerNotifications(data.notifications);
         if (data.activity) {
           // ===== ATIVIDADE com duração server-side (treino/batalha) =====
           // o servidor persistiu início/término; a UI anima pelo tempo
@@ -757,7 +808,7 @@ export default function PlayPage() {
         setBusy(false);
       }
     },
-    [playerId, busy, player, toast, applyPlayerState, showAppliedResults, refreshGameState, stageIncomingBattle]
+    [playerId, busy, player, toast, applyPlayerState, showAppliedResults, showPlayerNotifications, refreshGameState, stageIncomingBattle]
   );
 
   // ===== Atividade viva: local (iniciada aqui) OU retomada do servidor =====
@@ -906,6 +957,7 @@ export default function PlayPage() {
         if (Array.isArray(data.appliedResults) && data.appliedResults.length > 0) {
           showAppliedResults(data.appliedResults);
         }
+        showPlayerNotifications(data.notifications);
         setResultSyncPending(false);
         return true;
       } catch (error) {
@@ -921,7 +973,7 @@ export default function PlayPage() {
         window.clearTimeout(timeout);
       }
     },
-    [playerId, applyPlayerState, showAppliedResults, stageIncomingBattle]
+    [playerId, applyPlayerState, showAppliedResults, showPlayerNotifications, stageIncomingBattle]
   );
 
   useEffect(() => {
