@@ -1530,8 +1530,6 @@ async function actionUnequip(tx: Tx, player: Player, slot: string): Promise<Acti
   return { message: 'Item guardado no inventário.', levelsGained: 0 };
 }
 
-// ===== HOSPITAL =====
-
 
 // ===== SHENRON (desejos) =====
 
