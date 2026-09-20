@@ -1523,7 +1523,6 @@ export default function PlayPage() {
           <BattlePanel
             player={player}
             onBattle={(enemyId) => doAction({ type: 'battle', enemyId })}
-            onHeal={() => doAction({ type: 'heal' })}
             onBossAttack={() => doAction({ type: 'world_boss_attack' })}
             busy={busy}
           />

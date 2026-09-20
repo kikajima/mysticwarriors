@@ -57,7 +57,6 @@ import {
   professionMaterialRequiredLevel,
   PROFESSION_MASTERY_HOURS,
   REGEN,
-  HEAL_COST_PER_HP,
   TRAIN_ENERGY_COST,
   BATTLE_ENERGY_COST,
   MAX_CHARACTERS_PER_ACCOUNT,
@@ -185,10 +184,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
         ordered: true,
         items: [
           '**Crie o personagem** ([[racas|Raças]]) — a raça define seus bônus permanentes. É para sempre!',
-          '**Comece um turno de trabalho** ([[profissoes|Profissões]]) — dura 1 hora real, **não gasta energia** e rende Zeni + XP mesmo com o jogo fechado. Durante o turno só lutas contra inimigos e torneio esperam — PvP, Ameaça Universal, loja, guilda, hospital e coletas seguem liberados.',
+          '**Comece um turno de trabalho** ([[profissoes|Profissões]]) — dura 1 hora real, **não gasta energia** e rende Zeni + XP mesmo com o jogo fechado. Durante o turno só lutas contra inimigos e torneio esperam — PvP, Ameaça Universal, loja, guilda e coletas seguem liberados.',
           '**Aprenda sua primeira técnica** ([[tecnicas|Técnicas]]) — o Rogafufuken (600 Zeni) já deixa seus golpes físicos 25% mais fortes.',
           '**Treine o atributo da sua build** ([[atributos|Atributos]]) — Força para golpes físicos, Ki para ondas de energia.',
-          '**Lute contra os vilões** ([[pve|Campanhas PvE]]) — comece pelo Saibaman Verde e suba a fila conforme seu [[escala-poder|Poder de Luta]] cresce.',
+          '**Lute contra os capangas** ([[pve|Batalhas PvE]]) — comece pelo Arruaceiro do Ermo e avance até inimigos de escala Transcendente conforme seu [[escala-poder|Poder de Luta]] cresce.',
           '**Compre equipamento** ([[loja|Loja]]) — Luvas de Treino (300 Zeni) e Gi de Batalha (250 Zeni) custam pouco e já fazem diferença.',
           'A partir daí: [[torneio|Torneio]], [[world-boss|Ameaça Universal]], [[esferas-dragao|Esferas do Dragão]] e [[guildas|Guilda]].',
         ],
@@ -256,7 +255,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'text',
-        text: 'Um exemplo com números reais: um guerreiro com **Força 20** e Luvas de Treino desfere golpes físicos de poder ~**50**. Contra o Saibaman Verde (defesa baixa), isso vira uns **35 a 45 de dano** por golpe. Se ele trocar para ondas de Ki com **Ki 18** e Bandana equipada, cada onda custa **10 de Ki de batalha** e bate parecido — a diferença é que tanques de defesa alta sofrem mais com energia.',
+        text: 'Um exemplo com números reais: um guerreiro com **Força 20** e Luvas de Treino desfere golpes físicos de poder ~**50**. Contra o Arruaceiro do Ermo (defesa baixa), isso vira uns **35 a 45 de dano** por golpe. Se ele trocar para ondas de Ki com **Ki 18** e Bandana equipada, cada onda custa **10 de Ki de batalha** e bate parecido — a diferença é que tanques de defesa alta sofrem mais com energia.',
       },
       {
         kind: 'callout',
@@ -466,11 +465,11 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Fim de Luta: KO × Decisão',
     icon: '⚖️',
     group: 'Combate',
-    summary: 'Limite de rodadas, critérios dos jurados, hospital e level-up.',
+    summary: 'Limite de rodadas, critérios dos jurados, resgate após KO e level-up.',
     resumo: [
       'Luta acaba por **nocaute** (HP zerado) — o caminho normal.',
       'Sem KO em 40 rodadas? **Decisão dos jurados**: mais vida % ganha.',
-      '**Hospital só no nocaute** — derrota por decisão te deixa sair com a vida que tem.',
+      '**KO deixa você com 1 HP** após o resgate; derrota por decisão mantém a vida final da luta.',
     ],
     blocks: [
       {
@@ -500,8 +499,8 @@ export const WIKI_SECTIONS: WikiSection[] = [
           headers: ['Situação', 'Vida final'],
           rows: [
             ['Vitória', 'A vida final do log (Majin ainda **absorve +4% do máximo** ao vencer)'],
-            ['Derrota por NOCAUTE', `Você acorda no **hospital com 1 de vida** — cada cura custa ${HEAL_COST_PER_HP} Zeni por HP`],
-            ['Derrota por Decisão', 'Você sai do ringue com a vida final do log — decisão **NÃO** vai para o hospital'],
+            ['Derrota por NOCAUTE', 'Você é **resgatado com 1 de vida** — aguarde a regeneração natural ou use um item de cura antes de voltar ao combate.'],
+            ['Derrota por Decisão', 'Você sai do ringue com a vida final exibida no log — sem resgate para 1 HP.'],
             ['Subiu de nível na luta', 'Vida restaurada à CHEIA após o resultado (vitória ou derrota)'],
           ],
         },
@@ -738,7 +737,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       'Vida volta **1 ponto a cada 12 s** (Namekuseijin: mais rápido).',
     ],
     blocks: [
-      { kind: 'text', text: 'A ficha e o Hospital mostram o tempo até o próximo ponto de vida e até a recuperação completa. Os contadores usam o relógio do servidor e o intervalo da sua raça; a recuperação continua com o jogo fechado.' },
+      { kind: 'text', text: 'A ficha mostra o tempo até o próximo ponto de vida e até a recuperação completa. Os contadores usam o relógio do servidor e o intervalo da sua raça; a recuperação continua com o jogo fechado.' },
       {
         kind: 'table',
         table: {
@@ -760,12 +759,12 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'text',
-        text: `A regeneração é o relógio do jogo: cada ponto de energia demora **5 minutos** para voltar — por isso vale ouro. A vida volta bem mais rápido (**12 segundos por ponto**), então descansar fora do hospital é viável entre lutas.`,
+        text: `A regeneração é o relógio do jogo: cada ponto de energia demora **5 minutos** para voltar — por isso vale ouro. A vida volta bem mais rápido (**12 segundos por ponto**), então a recuperação natural cria uma pausa curta entre lutas.`,
       },
       {
         kind: 'list',
         items: [
-          `**Cura no hospital:** ${HEAL_COST_PER_HP} Zeni por HP. Um Feijão Senzu (10 💎) restaura 100% na hora.`,
+          '**Recuperação de vida:** o HP regenera com o tempo; itens de cura podem acelerar a recuperação e o Feijão Senzu restaura 100% na hora.',
           `**Venda de itens:** ${Math.round(SELL_PRICE_RATIO * 100)}% do preço de compra, na mesma moeda (Zeni→Zeni, 💎→💎).`,
           'Subir de nível restaura a vida à cheia — mas nunca a energia.',
         ],
@@ -843,7 +842,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'callout',
         tone: 'warn',
         title: 'Matriz de ocupação (v0.16 — definitiva)',
-        text: '**TRABALHANDO bloqueia APENAS 3 ações:** combate PvE contra inimigos, torneio e iniciar uma nova Busca pelas Esferas. **TUDO mais fica liberado durante o turno:** treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), hospital, equipamento/inventário, perfil e Shenron. **Em luta em andamento:** não iniciar outra luta/treino/trabalho/Busca pelas Esferas até o desfecho — mas coletas seguem liberadas.',
+        text: '**TRABALHANDO bloqueia APENAS 3 ações:** combate PvE contra inimigos, torneio e iniciar uma nova Busca pelas Esferas. **TUDO mais fica liberado durante o turno:** treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), equipamento/inventário, perfil e Shenron. **Em luta em andamento:** não iniciar outra luta/treino/trabalho/Busca pelas Esferas até o desfecho — mas coletas seguem liberadas.',
       },
       {
         kind: 'table',
@@ -860,7 +859,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Loja (comprar/vender/usar/equipar)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Guilda (fundar/entrar/sair/doar)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Coletar recompensa (qualquer tipo)', '✅ Liberado', '✅ Liberado', '✅'],
-            ['Hospital (curar)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Shenron (desejos)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Perfil / inventário / visualizações', '✅ Liberado', '✅ Liberado', '✅'],
           ],
@@ -1165,25 +1163,25 @@ export const WIKI_SECTIONS: WikiSection[] = [
   // ================================================================
   {
     id: 'pve',
-    title: 'Campanhas PvE (Vilões)',
+    title: 'Batalhas PvE (Capangas)',
     icon: '👹',
     group: 'Progressão',
-    summary: 'Os 9 vilões da campanha com níveis, recompensas e a fila crescente.',
+    summary: 'Um capanga genérico para cada uma das 10 Escalas de Poder, com dificuldade e recompensas crescentes.',
     resumo: [
-      '**9 vilões clássicos** em dificuldade crescente — comece pelo Saibaman.',
+      '**10 capangas genéricos**, exatamente um em cada Escala de Poder — de Mortal Comum a Transcendente.',
       'O painel mostra stats e recompensas de cada um antes de você aceitar.',
-      'Vencer paga Zeni + XP; perder rende uma fração do XP (e hospital só no nocaute).',
+      'Vencer paga Zeni + XP; perder rende uma fração do XP e um KO exige recuperação antes da próxima luta.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: 'A campanha começa fácil — o **Saibaman Verde** (nível 1) paga ~70 Zeni e ~45 XP por vitória — e termina épico: **Broly, o Lendário** (nível 45) paga ~11.000 Zeni e ~8.200 XP. O painel de Batalha mostra os stats de cada vilão, as recompensas e a comparação de [[escala-poder|escala]] com o seu poder atual.',
+        text: `A sequência começa no **${ENEMIES[0].name}** (nível ${ENEMIES[0].level}, escala ${POWER_SCALES[0].nome}), que paga ~${br(ENEMIES[0].zeniReward)} Zeni e ~${br(ENEMIES[0].xpReward)} XP, e termina no **${ENEMIES[ENEMIES.length - 1].name}** (nível ${ENEMIES[ENEMIES.length - 1].level}, escala ${POWER_SCALES[POWER_SCALES.length - 1].nome), com ~${br(ENEMIES[ENEMIES.length - 1].zeniReward)} Zeni e ~${br(ENEMIES[ENEMIES.length - 1].xpReward)} XP por vitória. São ${ENEMIES.length} capangas ao todo — exatamente um por escala. O painel de Batalha mostra os atributos, recompensas e a comparação de [[escala-poder|escala]] com o seu poder atual.`,
       },
       {
         kind: 'list',
         items: [
           '**Recompensa de vitória:** Zeni varia ±(10–15%) por luta; XP ±10%. Saiyajin ganha +10% XP.',
-          '**Derrota:** você leva 15% do XP do vilão como aprendizado (Zeni só na vitória) — e [[fim-de-luta|hospital]] apenas se for nocaute.',
+          '**Derrota:** você leva uma fração do XP do inimigo como aprendizado (Zeni só na vitória). Em KO, volta com 1 HP e precisa se recuperar antes da próxima luta.',
           'Não existe penalidade diária de farm: cada vitória paga o valor cheio, sempre.',
         ],
       },

@@ -140,18 +140,6 @@ function TrainTab({
   };
   return (
     <>
-      <GameCard className="p-4">
-
-        <div className="flex flex-wrap gap-4 mt-3 text-xs">
-          <span className="flex items-center gap-1.5 text-amber-200/60">
-            <Coins className="w-4 h-4 text-yellow-500" /> {player.zeni.toLocaleString('pt-BR')} Zeni
-          </span>
-          <span className="flex items-center gap-1.5 text-amber-200/60">
-            <Zap className="w-4 h-4 text-amber-400" /> {player.energy} energia (cada treino: {TRAIN_ENERGY_COST})
-          </span>
-        </div>
-      </GameCard>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {STATS.map((stat) => {
           const value = player[stat.key];
@@ -585,6 +573,7 @@ function TransformTab({
                             <Chip className="bg-emerald-900/50 text-emerald-300 border-emerald-800/50">desbloqueada</Chip>
                           )}
                         </div>
+                        <p className="text-xs text-amber-200/55 mt-1.5 leading-relaxed">{tr!.description}</p>
 
                         {!isOwned && req.missing.length > 0 && (
                           <p className="text-[11px] text-red-300/70 mt-1.5">🔒 Requisitos: {req.missing.join(' · ')}</p>

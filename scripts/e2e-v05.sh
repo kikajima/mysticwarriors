@@ -134,7 +134,7 @@ echo ""
 echo "=== 4. BATALHA ÚNICA — resultado entregue exatamente UMA vez ==="
 
 # 4.1 inicia batalha (atividade com duração + activityId)
-ACT=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"cell_jr\"}" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["activity"]["id"], d["activity"]["endsAt"], d["activity"]["result"]["battle"]["rounds"].__len__())' 2>/dev/null)
+ACT=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"arruaceiro_ermo\"}" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["activity"]["id"], d["activity"]["endsAt"], d["activity"]["result"]["battle"]["rounds"].__len__())' 2>/dev/null)
 ACT_ID=$(echo "$ACT" | awk '{print $1}')
 ACT_END=$(echo "$ACT" | awk '{print $2}')
 ROUNDS=$(echo "$ACT" | awk '{print $3}')

@@ -63,27 +63,27 @@ describe('ZENKAI v0.4 (balanceado por RISCO — sem cota diária)', () => {
   };
 
   test('Saiyajin recebe Zenkai contra adversário relevante (>= 60% do nível)', () => {
-    const d = shouldGrantZenkai({ ...base }, 12, 'enemy:freeza'); // 12 >= 0.6*20
+    const d = shouldGrantZenkai({ ...base }, 12, 'enemy:capitao_saque_galactico'); // 12 >= 0.6*20
     expect(d.granted).toBe(true);
   });
 
   test('não-Saiyajin nunca recebe Zenkai', () => {
-    const d = shouldGrantZenkai({ ...base, race: 'humano' }, 20, 'enemy:freeza');
+    const d = shouldGrantZenkai({ ...base, race: 'humano' }, 20, 'enemy:capitao_saque_galactico');
     expect(d.granted).toBe(false);
     expect(d.reason).toBe('not_saiyajin');
   });
 
   test('adversário irrelevante (nível < 60%) não dá Zenkai — perder de fraco não ativa', () => {
-    const d = shouldGrantZenkai({ ...base }, 11, 'enemy:saibaman'); // 11 < 12
+    const d = shouldGrantZenkai({ ...base }, 11, 'enemy:arruaceiro_ermo'); // 11 < 12
     expect(d.granted).toBe(false);
     expect(d.reason).toBe('irrelevant_opponent');
   });
 
   test('não repete contra o mesmo adversário em 12h (variedade forçada)', () => {
     const d = shouldGrantZenkai(
-      { ...base, lastZenkaiAt: new Date(Date.now() - 3600_000), lastZenkaiOpponentId: 'enemy:freeza' },
+      { ...base, lastZenkaiAt: new Date(Date.now() - 3600_000), lastZenkaiOpponentId: 'enemy:capitao_saque_galactico' },
       20,
-      'enemy:freeza'
+      'enemy:capitao_saque_galactico'
     );
     expect(d.granted).toBe(false);
     expect(d.reason).toBe('same_opponent');
@@ -91,9 +91,9 @@ describe('ZENKAI v0.4 (balanceado por RISCO — sem cota diária)', () => {
 
   test('MESMO adversário liberado após 12h — sem cota diária, o limite é o risco', () => {
     const d = shouldGrantZenkai(
-      { ...base, lastZenkaiAt: new Date(Date.now() - 13 * 3600_000), lastZenkaiOpponentId: 'enemy:freeza' },
+      { ...base, lastZenkaiAt: new Date(Date.now() - 13 * 3600_000), lastZenkaiOpponentId: 'enemy:capitao_saque_galactico' },
       20,
-      'enemy:freeza'
+      'enemy:capitao_saque_galactico'
     );
     expect(d.granted).toBe(true);
   });
@@ -191,7 +191,7 @@ describe('MISSÃO: matriz DEFINITIVA v0.16 (bloqueio de exatamente 3 ações)', 
     // exatamente 3 — matriz fechada
     expect(MISSION_BLOCKED_ACTIONS.size).toBe(3);
     // TUDO mais LIBERADO (v0.16 — 3ª ordem):
-    for (const liberated of ['attack_player', 'world_boss_attack', 'buy', 'sell', 'heal', 'use_item', 'equip', 'unequip', 'wish', 'learn_technique', 'equip_technique', 'set_strategy', 'unlock_transformation', 'activate_transformation', 'create_guild', 'join_guild', 'leave_guild', 'donate_guild', 'claim_quest', 'claim_achievement', 'claim_mission', 'cancel_mission', 'select_player', 'buy_cosmetic', 'buy_talent', 'equip_cosmetic', 'unequip_cosmetic', 'mission']) {
+    for (const liberated of ['attack_player', 'world_boss_attack', 'buy', 'sell', 'use_item', 'equip', 'unequip', 'wish', 'learn_technique', 'equip_technique', 'set_strategy', 'unlock_transformation', 'activate_transformation', 'create_guild', 'join_guild', 'leave_guild', 'donate_guild', 'claim_quest', 'claim_achievement', 'claim_mission', 'cancel_mission', 'select_player', 'buy_cosmetic', 'buy_talent', 'equip_cosmetic', 'unequip_cosmetic', 'mission']) {
       expect(MISSION_BLOCKED_ACTIONS.has(liberated)).toBe(false);
     }
   });

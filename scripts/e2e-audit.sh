@@ -159,7 +159,7 @@ check "definir estratégia ki_specialist" "ki_specialist" "$R"
 
 # 5.2 batalha PvE funciona e devolve HP completo do servidor
 bun scripts/e2e-db.ts set-hp-energy "$PB" 99999 999 >/dev/null
-R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"battle\",\"enemyId\":\"saibaman\"}")
+R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"battle\",\"enemyId\":\"arruaceiro_ermo\"}")
 BATTLE_OK=$(echo "$R" | python3 -c 'import json,sys;d=json.load(sys.stdin);b=d["activity"]["result"]["battle"];print("ok" if b["playerMaxHp"]>0 and b["enemyMaxHp"]>0 and "rounds" in b and d["activity"]["kind"]=="battle" and d["activity"]["remainingMs"]>0 else "erro")' 2>/dev/null)
 check "batalha inicia ATIVIDADE com battle completo + duração" "ok" "$BATTLE_OK"
 # espera a duração server-side e confirma aplicação (pendingResults)

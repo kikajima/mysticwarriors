@@ -5,7 +5,7 @@
 // PERMANENTES e vigiam as 3 decisões registradas em DESIGN-DECISIONS.md:
 //   1. criação de personagem SEM campo de gênero (falha se voltar);
 //   2. trabalhando → comprar ok · doar ok · coletar ok · atacar boss ok ·
-//      atacar jogador ok · curar ok · desejar ok;
+//      atacar jogador ok · desejar ok;
 //      trabalhando → treinar NEGADO · PvE NEGADO · torneio NEGADO;
 //   3. em luta (atividade) → coletar ok (coleta NUNCA espera ocupação).
 //
@@ -163,8 +163,7 @@ describe('v0.16 anti-drift — TRABALHANDO: tudo liberado EXCETO os 2 negados', 
     expect(() => assertPlayerAvailableForAction(working, 'attack_player')).not.toThrow();
   });
 
-  test('trabalhando → hospital ok · Shenron ok · perfil ok · cosméticos/talentos ok', () => {
-    expect(() => assertPlayerAvailableForAction(working, 'heal')).not.toThrow();
+  test('trabalhando → Shenron ok · perfil ok · cosméticos/talentos ok', () => {
     expect(() => assertPlayerAvailableForAction(working, 'wish')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'select_player')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'buy_cosmetic')).not.toThrow();
@@ -219,7 +218,7 @@ describe('v0.16 anti-drift — EM LUTA: coleta NUNCA espera ocupação', () => {
           kind: 'battle',
           startedAt: new Date(),
           endsAt: new Date(Date.now() + 30_000),
-          payload: JSON.stringify({ kind: 'battle', enemyId: 'saibaman' }),
+          payload: JSON.stringify({ kind: 'battle', enemyId: 'arruaceiro_ermo' }),
           result: JSON.stringify({ kind: 'battle', display: null, result: { message: 'luta', levelsGained: 0 } }),
         },
       });
@@ -229,9 +228,8 @@ describe('v0.16 anti-drift — EM LUTA: coleta NUNCA espera ocupação', () => {
         await expect(assertNoRunningActivityTx(tx, player.id, 'claim_achievement')).resolves.toBeUndefined();
         await expect(assertNoRunningActivityTx(tx, player.id, 'claim_quest')).resolves.toBeUndefined();
         await expect(assertNoRunningActivityTx(tx, player.id, 'claim_mission')).resolves.toBeUndefined();
-        // loja/hospital/guilda/perfil também passam (matriz)
+        // loja/guilda/perfil também passam (matriz)
         await expect(assertNoRunningActivityTx(tx, player.id, 'buy')).resolves.toBeUndefined();
-        await expect(assertNoRunningActivityTx(tx, player.id, 'heal')).resolves.toBeUndefined();
         await expect(assertNoRunningActivityTx(tx, player.id, 'donate_guild')).resolves.toBeUndefined();
         await expect(assertNoRunningActivityTx(tx, player.id, 'select_player')).resolves.toBeUndefined();
         await expect(assertNoRunningActivityTx(tx, player.id, 'craft_start')).resolves.toBeUndefined();

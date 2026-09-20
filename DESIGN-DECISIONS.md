@@ -192,7 +192,7 @@
 - **"TRABALHANDO bloqueia APENAS: combate PvE contra inimigos
   (EXCETO Chefe Global) · torneio. Tudo mais LIBERADO: PvP · Chefe Global ·
   loja (comprar/usar) · gestão completa de guilda · coletar recompensas ·
-  hospital · equipamento/inventário · perfil e visualizações. Mensagem
+  equipamento/inventário · perfil e visualizações. Mensagem
   de bloqueio clara SÓ nos 3 casos negados. Vítima/alvo JAMAIS é bloqueado
   por estado (regra permanente). Nenhum agent futuro restringe ações
   liberadas desta matriz."** (2026-09-16 — 3ª ordem do dono)
@@ -201,31 +201,31 @@
   — TUDO mais negado durante o trabalho: loja, guilda, hospital, PvP,
   coletas, equipamento, Shenron, cosméticos, talentos… (deny-by-default).
 - **Agora (v0.16):** blocklist `MISSION_BLOCKED_ACTIONS` com EXATAMENTE 3
-  ações (`battle`, `tournament_fight`) — allow-by-default. O
+  ações (`battle`, `tournament_fight`, `search_dragon_ball`) — allow-by-default. O
   handler de trabalho em si mantém o próprio erro `MISSION_IN_PROGRESS`
   ("Você já está em um trabalho!") para NÃO começar um segundo turno —
   invariante de slot único de trabalho, não matriz de ação.
 - **Estado "EM LUTA" (atividade com duração) é invariante de sistema, não
   matriz:** uma atividade POR VEZ (`ACTIVITY_BLOCKED_ACTIONS`: train,
   battle, attack_player, mission, tournament_fight — não pode iniciar
-  outra luta/trabalho no meio de um replay). Loja, guilda, hospital,
-  perfil e TODAS as coletas seguem liberadas durante a luta.
+  outra luta/trabalho no meio de um replay). Loja, guilda, perfil e TODAS as coletas seguem liberadas durante a luta.
 - **Atacante vs vítima (invariante permanente, desde v0.9.20):** o
   ATACANTE é quem se sujeita às checagens de ocupação; o ALVO é sempre
   atacável esteja trabalhando/treinando/lutando. A v0.16 só AUMENTOU a
   liberdade do atacante (agora pode atacar durante o próprio trabalho).
-- **UI espelha a matriz:** botões de loja/guilda/hospital/PvP/coleta/
-  Shenron/cosméticos/talentos perderam o `disabled={… || onMission}`;
+- **UI espelha a matriz:** botões de loja/guilda/PvP/coleta/Shenron/cosméticos/talentos perderam o `disabled={… || onMission}`;
   PvE/torneio mantêm o bloqueio com MENSAGEM CLARA que lista o que
   segue liberado.
 - **TESTES ANTI-DRIFT PERMANENTES** (`tests/occupation-matrix.test.ts`):
   trabalhando → comprar ok · doar ok · coletar ok · atacar boss ok ·
-  atacar jogador ok · curar ok · desejar ok; trabalhando → treinar
+  atacar jogador ok · desejar ok; trabalhando → treinar
   NEGADO · PvE NEGADO · torneio NEGADO; em luta → coletar ok; + teste de
   contrato dos SETS (exatamente 3 bloqueios de missão; claim_* ausentes
   dos dois sets). A WIKI publica a tabela consolidada ação × estado
   (seção "Ações, Custos e Ocupação") e o teste de contrato da wiki vigia.
 
+
+- **HOSPITAL DO DR. BRIEF REMOVIDO:** não existe mais ação manual de cura total por Zeni. Um nocaute ainda resgata o guerreiro com 1 HP, mas a volta ao combate depende de regeneração natural ou itens de cura. A decisão elimina o ciclo de cura instantânea que permitia lutar sem intervalo. (2026-09-20)
 
 ## 💬 CHAT PERSISTENTE — HISTÓRICO FORA DAS CASCATAS (2026-09-19)
 

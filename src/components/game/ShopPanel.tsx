@@ -408,7 +408,10 @@ function TalentCard({
               </Chip>
             )}
           </div>
-
+          <p className="text-[11px] text-amber-200/55 mt-2 leading-relaxed">{talent.description}</p>
+          <p className="text-[10px] text-orange-300/75 mt-2 leading-relaxed">
+            <span className="font-heading">Efeito:</span> {talent.effect}
+          </p>
         </div>
       </div>
 

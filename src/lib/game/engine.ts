@@ -1476,12 +1476,6 @@ export function professionEnergyCost(_race: string): number {
   return 0;
 }
 
-// ===== Cura =====
-
-export function healCost(player: Player): number {
-  const d = computeDerived(player);
-  return Math.max(0, (d.maxHp - player.hp) * 3);
-}
 
 // ===== Persistência otimista de JSON (anti-corrida) =====
 

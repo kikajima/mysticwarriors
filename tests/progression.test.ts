@@ -5,8 +5,9 @@ import { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS } from '@/lib/game/content/qu
 import { TRANSFORMATIONS, getTransformation, transformationsForRace } from '@/lib/game/content/transformations';
 import { RACES, RACE_LIST } from '@/lib/game/content/races';
 import { TECHNIQUES, TRAINING_MASTERS } from '@/lib/game/content/techniques';
-import { PROFESSIONS, PROFESSION_LEVELS, PROFESSION_SHIFTS, PROFESSION_MATERIALS, ENEMIES, SHOP_ITEMS, xpToNextLevel, baseTrainingCost } from '@/lib/game/content/world';
+import { PROFESSIONS, PROFESSION_LEVELS, PROFESSION_SHIFTS, PROFESSION_MATERIALS, ENEMIES, SHOP_ITEMS, xpToNextLevel, baseTrainingCost, npcCombatPower } from '@/lib/game/content/world';
 import { randomWarriorName, BOTS } from '@/lib/game/content/names';
+import { POWER_SCALES, getPowerScale } from '@/lib/game/powerScale';
 import { guildLevelFromXp, guildXpToNext } from '@/lib/game/actions';
 
 // =====================================================================
@@ -83,8 +84,16 @@ describe('Transformações (árvore)', () => {
         expect(m).toBeLessThanOrEqual(1.35);
         expect(m).toBeGreaterThanOrEqual(1);
       }
+      expect(t.description.trim().length).toBeGreaterThan(20);
     }
   });
+});
+
+test('UI de treino não repete saldo/energia no topo e Transformações exibem descrição', async () => {
+  const src = await Bun.file(`${import.meta.dir}/../src/components/game/TrainingPanel.tsx`).text();
+  expect(src).not.toContain("{player.energy} energia (cada treino:");
+  expect(src).not.toContain("player.zeni.toLocaleString('pt-BR')} Zeni");
+  expect(src).toContain('{tr!.description}');
 });
 
 describe('Integridade do conteúdo', () => {
@@ -103,11 +112,16 @@ describe('Integridade do conteúdo', () => {
     expect(PROFESSION_MATERIALS).toHaveLength(20);
   });
 
-  test('inimigos: 9 NPCs com níveis crescentes e recompensas positivas', () => {
-    expect(ENEMIES.length).toBe(9);
-    for (let i = 1; i < ENEMIES.length; i++) {
-      expect(ENEMIES[i].level).toBeGreaterThan(ENEMIES[i - 1].level);
-      expect(ENEMIES[i].zeniReward).toBeGreaterThan(0);
+  test('inimigos: exatamente um capanga genérico por Escala de Poder', () => {
+    expect(ENEMIES).toHaveLength(POWER_SCALES.length);
+    const forbiddenMainVillains = /freeza|cell|broly|dabura|buu|vegeta|nappa|raditz|goku black|zamasu/i;
+    for (let i = 0; i < ENEMIES.length; i++) {
+      const enemy = ENEMIES[i];
+      expect(getPowerScale(npcCombatPower(enemy)).scale.index).toBe(i);
+      expect(enemy.name).not.toMatch(forbiddenMainVillains);
+      expect(enemy.zeniReward).toBeGreaterThan(0);
+      expect(enemy.xpReward).toBeGreaterThan(0);
+      if (i > 0) expect(enemy.level).toBeGreaterThan(ENEMIES[i - 1].level);
     }
   });
 

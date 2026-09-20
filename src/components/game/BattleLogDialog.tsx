@@ -254,7 +254,7 @@ function BattleContent({
             <span className="text-amber-200/40 font-heading mr-2">R{round.round}{' '}</span>
             {/* v0.9.24 (A3): TODO marcador termina com {' '} — espaço REAL
                 entre marcador e nome (o mr-1 de 4px era lido como texto
-                colado: "COMBOSaibaman", "TÉCNICAPríncipe Aisurom"). */}
+                colado: "COMBOArruaceiro", "TÉCNICAPríncipe Aisurom"). */}
             {round.decision === 'round-limit' && (
               <span className="font-heading font-bold mr-1.5 text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-amber-400 animate-pulse">
                 ⚖️ DECISÃO{' '}
@@ -323,12 +323,12 @@ function BattleContent({
                 DERROTA...
               </p>
               {/* v0.9.21 (correção 1): a mensagem acompanha o que a barra
-                  mostra — nocaute (0 HP) → hospital com 1 de vida; decisão
+                  mostra — nocaute (0 HP) → resgate com 1 de vida; decisão
                   dos jurados (limite de rodadas) → vida final mantida. */}
               <p className="text-sm text-amber-200/60 mb-3">
                 {battle.playerEndHp <= 0 ? (
                   <>
-                    Você acordou no hospital com 1 de vida. Ainda ganhou{' '}
+                    Você foi resgatado com 1 de vida. Ainda ganhou{' '}
                     {battle.xpGain.toLocaleString('pt-BR')} XP de experiência.
                     {battle.zenkaiGranted ? ' Zenkai ativado: +1 Força!' : ''}
                   </>

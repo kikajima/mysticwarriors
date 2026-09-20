@@ -4,6 +4,7 @@ import {
   scaleCombatRules,
   aberturaChance,
   getPowerScale,
+  POWER_SCALES,
 } from '../src/lib/game/powerScale';
 import { simulateBattle, makeRng } from '../src/lib/game/engine';
 import { npcCombatPower, ENEMIES } from '../src/lib/game/content/world';
@@ -205,25 +206,22 @@ describe('simulateBattle — Armadura de Escala aplicada', () => {
 });
 
 describe('calibração com o conteúdo real do jogo', () => {
-  test('poder dos NPCs bate com a fórmula única (npcCombatPower)', () => {
-    const saibaman = ENEMIES.find((e) => e.id === 'saibaman')!;
-    const broly = ENEMIES.find((e) => e.id === 'broly')!;
-    // Saibaman: 15+26.4+12.96+14.4+16.5+28 = ~113 → Mortal Comum/Marcial
-    expect(npcCombatPower(saibaman)).toBeGreaterThan(100);
-    expect(npcCombatPower(saibaman)).toBeLessThan(200);
-    // Broly no topo do PvE
-    expect(getPowerScale(npcCombatPower(broly)).scale.index).toBeGreaterThanOrEqual(5);
+  test('cada NPC ocupa exatamente a escala correspondente à sua posição', () => {
+    expect(ENEMIES).toHaveLength(POWER_SCALES.length);
+    ENEMIES.forEach((enemy, index) => {
+      expect(getPowerScale(npcCombatPower(enemy)).scale.index).toBe(index);
+    });
   });
 
-  test('guerreiro novato vs Broly: crushing ATIVO (a barreira existe)', () => {
-    const broly = ENEMIES.find((e) => e.id === 'broly')!;
-    const rules = scaleCombatRules(111, npcCombatPower(broly));
+  test('novato contra o capanga Transcendente: crushing ATIVO', () => {
+    const top = ENEMIES[ENEMIES.length - 1];
+    const rules = scaleCombatRules(111, npcCombatPower(top));
     expect(rules.crushing).toBe(true);
   });
 
-  test('guerreiro novato vs Saibaman: sem crushing, escala vizinha', () => {
-    const saibaman = ENEMIES.find((e) => e.id === 'saibaman')!;
-    const rules = scaleCombatRules(111, npcCombatPower(saibaman));
+  test('novato contra o Mortal Comum: sem crushing', () => {
+    const first = ENEMIES[0];
+    const rules = scaleCombatRules(111, npcCombatPower(first));
     expect(rules.crushing).toBe(false);
     expect(Math.abs(rules.diff)).toBeLessThanOrEqual(1);
   });

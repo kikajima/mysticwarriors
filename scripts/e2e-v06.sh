@@ -45,7 +45,7 @@ echo "=== 2. BATALHAS GASTAM ENERGIA (v0.6) ==="
 
 # 2.1 batalha PvE com energia registrada ANTES
 E0=$(curl -s -b $JAR_A "$BASE/api/game/state?playerId=$PA" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["energy"])' 2>/dev/null)
-R=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"saibaman\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
+R=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"arruaceiro_ermo\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
 check "batalha PvE iniciada" "True" "$R"
 
 # 2.2 energia caiu exatamente 3 no servidor
@@ -85,7 +85,7 @@ await db.player.update({ where: { id: '$PA' }, data: { energy: 2, hp: 99999 } })
 await db.\$disconnect();
 " 2>/dev/null
 sleep 6
-R=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"saibaman\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
+R=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"arruaceiro_ermo\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "batalha sem energia → INSUFFICIENT_ENERGY" "INSUFFICIENT_ENERGY" "$R"
 
 echo ""

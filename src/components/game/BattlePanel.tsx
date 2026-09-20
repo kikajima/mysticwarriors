@@ -9,7 +9,7 @@ import { BossSkeleton, fetchPanelJson, LoadFail } from './PanelLoad';
 import { getPowerScale, scaleDiffLabel } from '@/lib/game/powerScale';
 import { HpRecovery } from './HpRecovery';
 import { BOSS_ATTACK_ENERGY_COST } from '@/lib/game/rules';
-import { Crosshair, Heart, Hospital, Shield, Swords, Skull, Timer, Zap } from 'lucide-react';
+import { Crosshair, Heart, Shield, Swords, Skull, Timer, Zap } from 'lucide-react';
 
 /** Poder de scouter do oponente — fonte ÚNICA compartilhada com a engine
  * (Armadura de Escala, regra 5.1): o que o card mostra é o que o duelo usa. */
@@ -31,22 +31,17 @@ function formatCountdown(ms: number): string {
 export function BattlePanel({
   player,
   onBattle,
-  onHeal,
   onBossAttack,
   busy,
 }: {
   player: PlayerView;
   onBattle: (enemyId: string) => void;
-  onHeal: () => void;
   onBossAttack: () => Promise<boolean>;
   busy: boolean;
 }) {
-  const hpPct = Math.round((player.hp / player.derived.maxHp) * 100);
   const tooHurt = player.hp < Math.max(20, Math.floor(player.derived.maxHp * 0.2));
-  const healCost = (player.derived.maxHp - player.hp) * 3;
   // v0.16 — matriz de ocupação: trabalho bloqueia SÓ o PvE (o torneio e o
-  // treino bloqueiam nos próprios painéis). Ameaça Universal e HOSPITAL seguem
-  // liberados durante o turno — só os 3 negados têm mensagem clara.
+  // treino bloqueiam nos próprios painéis). Ameaça Universal segue liberada.
   const onMission = !!player.activeMission;
   // v0.6 — batalhas gastam energia (3 por luta)
   const noEnergy = player.energy < BATTLE_ENERGY_COST;
@@ -58,41 +53,20 @@ export function BattlePanel({
       {/* Ameaça Universal */}
       <WorldBossSection player={player} onAttack={onBossAttack} busy={busy} />
 
-      {/* Hospital */}
-      <GameCard className={`p-4 ${tooHurt ? 'ring-1 ring-red-500/50' : ''}`}>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            <Hospital className="w-8 h-8 text-red-400 shrink-0" />
+      {tooHurt && (
+        <GameCard className="p-4 ring-1 ring-red-500/40">
+          <div className="flex items-center gap-3">
+            <Heart className="w-6 h-6 text-red-400 shrink-0" />
             <div>
-              <h3 className="font-heading text-amber-100 flex items-center gap-2 flex-wrap">
-                Hospital do Doutor Brief
-              </h3>
+              <p className="font-heading text-red-200 text-sm">Vida baixa para lutar</p>
               <p className="text-xs text-amber-200/50">
-                Vida atual:{' '}
-                <span className={tooHurt ? 'text-red-400 font-heading' : 'text-emerald-400 font-heading'}>
-                  {player.hp}/{player.derived.maxHp} ({hpPct}%)
-                </span>
-                {tooHurt && <span className="text-red-400"> — você está ferido demais para lutar!</span>}
-                {player.hp < player.derived.maxHp && (
-                  <span className="text-amber-200/40"> · cura: {healCost.toLocaleString('pt-BR')} Zeni</span>
-                )}
+                Aguarde a regeneração natural ou use um item de cura do inventário.
               </p>
               <HpRecovery player={player} />
             </div>
           </div>
-          <GameButton
-            variant="danger"
-            onClick={onHeal}
-            disabled={busy || player.hp >= player.derived.maxHp || player.zeni < healCost}
-            title="Recuperar vida"
-          >
-            <Heart className="w-4 h-4" />
-            {player.hp >= player.derived.maxHp
-              ? 'Totalmente curado'
-              : `Curar por ${healCost.toLocaleString('pt-BR')} Zeni`}
-          </GameButton>
-        </div>
-      </GameCard>
+        </GameCard>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {ENEMIES.map((enemy) => {
@@ -182,7 +156,7 @@ export function BattlePanel({
                   }
                 >
                   <Crosshair className="w-4 h-4" />
-                  {tooHurt ? 'Cure-se primeiro' : onMission ? 'EM TURNO' : noEnergy ? 'Sem energia' : 'Lutar!'}
+                  {tooHurt ? 'Recupere-se primeiro' : onMission ? 'EM TURNO' : noEnergy ? 'Sem energia' : 'Lutar!'}
                 </GameButton>
 
               </div>

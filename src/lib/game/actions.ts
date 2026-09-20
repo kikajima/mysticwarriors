@@ -24,7 +24,6 @@ import {
   DRAGON_BALL_SEARCH_MAX_CHANCE,
   DRAGON_BALL_PVP_STEAL_CHANCE,
   ENEMIES,
-  HEAL_COST_PER_HP,
   PROFESSIONS,
   PROFESSION_MASTERY_HOURS,
   SELL_PRICE_RATIO,
@@ -48,7 +47,6 @@ import {
   buildPlayerCombatant,
   canEquipInSlot,
   computeDerived,
-  healCost,
   itemCount,
   npcRewards,
   parseItems,
@@ -190,7 +188,7 @@ export async function executeGameAction(
     // O frontend só DESABILITA botões — quem decide é o servidor.
     // v0.16 — MATRIZ DEFINITIVA (3ª ordem): durante trabalho ativo
     // PvE, torneio e iniciar Busca de Esferas são negados (MISSION_BLOCKED_ACTIONS).
-    // Tudo mais passa: treino, Oficina, loja, guilda, hospital, coletas, PvP, chefe
+    // Tudo mais passa: treino, Oficina, loja, guilda, coletas, PvP, chefe
     // mundial, equipamento, perfil, Shenron, cosméticos, talentos…
     assertPlayerAvailableForAction(player, type);
 
@@ -291,9 +289,6 @@ export async function executeGameAction(
         break;
       case 'unequip':
         result = await actionUnequip(tx, player, String(args.slot ?? ''));
-        break;
-      case 'heal':
-        result = await actionHeal(tx, player);
         break;
       case 'wish':
         result = await actionWish(tx, player, String(args.wishType ?? 'riqueza'));
@@ -816,7 +811,7 @@ async function actionStartBattle(tx: Tx, player: Player, enemyId: string): Promi
   const derived = computeDerived(player);
   const minHp = Math.max(20, Math.floor(derived.maxHp * 0.2));
   if (player.hp < minHp) {
-    throw new ApiError('INSUFFICIENT_HP', 'Você está ferido demais para lutar! Use um Senzu ou descanse no hospital.');
+    throw new ApiError('INSUFFICIENT_HP', 'Você está ferido demais para lutar! Use um item de cura ou aguarde a recuperação natural.');
   }
 
   // v0.6 — BATALHAS GASTAM ENERGIA: cobrança ATÔMICA no início
@@ -877,7 +872,7 @@ async function actionStartBattle(tx: Tx, player: Player, enemyId: string): Promi
     display: {
       message: sim.won
         ? `Vitória contra ${enemy.name}! +${rewards.zeni.toLocaleString('pt-BR')} Zeni, +${rewards.xp} XP.`
-        : `Derrota para ${enemy.name}... Você acordou no hospital com 1 de vida.`,
+        : `Derrota para ${enemy.name}... Você foi resgatado com 1 de vida.`,
       levelsGained: levelsEstimate,
       battle: {
         ...sim,
@@ -975,7 +970,7 @@ async function actionStartTournamentFight(tx: Tx, player: Player): Promise<Actio
   const derived = computeDerived(player);
   const minHp = Math.max(20, Math.floor(derived.maxHp * 0.2));
   if (player.hp < minHp) {
-    throw new ApiError('INSUFFICIENT_HP', 'Você está ferido demais para o ringue! Use um Senzu ou descanse no hospital.');
+    throw new ApiError('INSUFFICIENT_HP', 'Você está ferido demais para o ringue! Use um item de cura ou aguarde a recuperação natural.');
   }
   const energyRes = await tx.player.updateMany({
     where: { id: player.id, energy: { gte: BATTLE_ENERGY_COST } },
@@ -1535,19 +1530,6 @@ async function actionUnequip(tx: Tx, player: Player, slot: string): Promise<Acti
   return { message: 'Item guardado no inventário.', levelsGained: 0 };
 }
 
-// ===== HOSPITAL =====
-
-async function actionHeal(tx: Tx, player: Player): Promise<ActionResult> {
-  const derived = computeDerived(player);
-  const missing = derived.maxHp - player.hp;
-  if (missing <= 0) throw new ApiError('VALIDATION_ERROR', 'Sua vida já está cheia!');
-
-  const cost = healCost(player);
-  await spendCurrency(tx, player.id, 'zeni', cost, { type: 'spend', source: 'hospital', accountId: player.accountId });
-  await tx.player.update({ where: { id: player.id }, data: { hp: derived.maxHp } });
-  player.hp = derived.maxHp;
-  return { message: `Tratamento concluído! Vida restaurada. (-${cost.toLocaleString('pt-BR')} Zeni)`, levelsGained: 0 };
-}
 
 // ===== SHENRON (desejos) =====
 

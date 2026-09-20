@@ -171,7 +171,7 @@ async function main() {
     data: { missionId: 'agricultor', missionEndsAt: new Date(Date.now() + 3600_000), hp: 145, energy: 50 },
   });
   const cTrain = await post('/api/game/action', main.cookie, { playerId: main.playerId, type: 'train', stat: 'strength', requestId: randomUUID() });
-  const cBattle = await post('/api/game/action', main.cookie, { playerId: main.playerId, type: 'battle', enemyId: 'saibaman', requestId: randomUUID() });
+  const cBattle = await post('/api/game/action', main.cookie, { playerId: main.playerId, type: 'battle', enemyId: 'arruaceiro_ermo', requestId: randomUUID() });
   const cPvp = await post('/api/game/action', main.cookie, { playerId: main.playerId, type: 'attack_player', targetId: pvpTarget.playerId, requestId: randomUUID() });
   const cBoss = await post('/api/game/action', main.cookie, { playerId: main.playerId, type: 'world_boss_attack', requestId: randomUUID() });
   check('T9: treino BLOQUEADO durante trabalho', !cTrain.json?.success && cTrain.json?.error?.code === 'PLAYER_BUSY_ON_MISSION', `code=${cTrain.json?.error?.code}`);
@@ -184,8 +184,8 @@ async function main() {
   console.log('\n--- T7: double-click em INICIAR BATALHA (corrida de atividade) ---');
   await db.player.update({ where: { id: main.playerId }, data: { energy: 6, hp: 145, battlesWon: 0, battlesLost: 0 } });
   const t7 = await Promise.all([
-    post('/api/game/action', main.cookie, { playerId: main.playerId, type: 'battle', enemyId: 'saibaman', requestId: randomUUID() }),
-    post('/api/game/action', main.cookie, { playerId: main.playerId, type: 'battle', enemyId: 'saibaman', requestId: randomUUID() }),
+    post('/api/game/action', main.cookie, { playerId: main.playerId, type: 'battle', enemyId: 'arruaceiro_ermo', requestId: randomUUID() }),
+    post('/api/game/action', main.cookie, { playerId: main.playerId, type: 'battle', enemyId: 'arruaceiro_ermo', requestId: randomUUID() }),
   ]);
   const t7ok = t7.filter((r) => r.json?.success).length;
   const acts = await db.activity.findMany({ where: { playerId: main.playerId, completedAt: null } });

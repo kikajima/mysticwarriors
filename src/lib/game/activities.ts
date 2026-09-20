@@ -315,15 +315,15 @@ async function applyPveResult(
 
   // ORDEM CORRETA (v0.4): level-up restaura a vida DEPOIS da simulação —
   // a recuperação anunciada é a que fica gravada, em vitórias E derrotas.
-  // v0.9.21 (correção 1): hospital (1 de vida) SÓ no nocaute real
+  // v0.9.21 (correção 1): resgate com 1 de vida SÓ no nocaute real
   // (playerEndHp === 0). Derrota por DECISÃO DOS JURADOS (limite de
   // rodadas) mantém a vida final exibida no log — barra e mensagem
-  // deixam de se contradizer (o caso 199/280 "no hospital com 1").
+  // deixam de se contradizer (o caso 199/280 "resgatado com 1").
   let hpAfter = data.playerEndHp;
   if (grant.levelsGained > 0) {
     hpAfter = 80 + player.level * 15 + player.defense * 5; // nível NOVO = vida cheia
   } else if (!data.won && data.playerEndHp <= 0) {
-    hpAfter = 1; // nocaute → hospital com 1 de vida
+    hpAfter = 1; // nocaute → resgate automático com 1 de vida
   }
   hpAfter = Math.max(1, hpAfter);
 
@@ -374,7 +374,7 @@ async function applyPveResult(
   const message = data.won
     ? `Vitória contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP.`
     : data.playerEndHp <= 0
-      ? `Derrota para ${payload.display.battle.enemyName}... Você acordou no hospital com 1 de vida.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`
+      ? `Derrota para ${payload.display.battle.enemyName}... Você foi resgatado com 1 de vida.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`
       : `Derrota para ${payload.display.battle.enemyName} por decisão dos jurados... Você deixou a arena com ${data.playerEndHp} de vida e leva +${data.xp} XP de aprendizado.`;
 
   return { message, levelsGained: grant.levelsGained, battle: finalBattle };
@@ -529,7 +529,7 @@ async function applyPvpResult(
     if (levelsGained > 0) {
       hpAfter = 80 + player.level * 15 + player.defense * 5;
     } else if (data.playerEndHp > 0) {
-      // v0.9.21: derrota por decisão (limite de rodadas) NÃO é hospital —
+      // v0.9.21: derrota por decisão (limite de rodadas) NÃO força resgate —
       // o duelista deixa o ringue com a vida exibida no log
       hpAfter = data.playerEndHp;
     }
@@ -588,7 +588,7 @@ async function applyPvpResult(
  * Aplica o desfecho da luta do torneio:
  *  * vitória → premiação da rodada + avanço na chave (ou TÍTULO na final);
  *  * derrota → campanha encerrada (cooldown começa a contar);
- *  * HP final segue a política PvE (level-up restaura; derrota = hospital 1 HP);
+ *  * HP final segue a política PvE (level-up restaura; derrota por KO = resgate com 1 HP);
  *  * lutas contam como batalhas (battlesWon/Lost) e alimentam quests/métricas.
  * O estado da campanha (Player.tournament) avança AQUI — transição pura
  * de advanceTournament() serializada de volta à coluna.
@@ -614,7 +614,7 @@ async function applyTournamentResult(
   });
 
   // HP final (mesma ordem do PvE: level-up restaura DEPOIS da simulação)
-  // v0.9.21 (correção 1): hospital (1 de vida) SÓ no nocaute — derrota
+  // v0.9.21 (correção 1): resgate com 1 de vida SÓ no nocaute — derrota
   // por decisão dos jurados mantém a vida final do log
   let hpAfter = data.playerEndHp;
   if (grant.levelsGained > 0) {
@@ -673,7 +673,7 @@ async function applyTournamentResult(
     : data.won
       ? `Vitória na ${roundName} contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP${data.crystals > 0 ? `, +${data.crystals} cristais` : ''}.`
       : data.playerEndHp <= 0
-        ? `Eliminado na ${roundName} por ${payload.display.battle.enemyName}... Você acordou no hospital com 1 de vida (+${data.xp} XP de aprendizado) — o comitê reorganiza a chave para a próxima inscrição.`
+        ? `Eliminado na ${roundName} por ${payload.display.battle.enemyName}... Você foi resgatado com 1 de vida (+${data.xp} XP de aprendizado) — o comitê reorganiza a chave para a próxima inscrição.`
         : `Eliminado na ${roundName} por decisão dos jurados contra ${payload.display.battle.enemyName}... Você deixou o ringue com ${data.playerEndHp} de vida (+${data.xp} XP de aprendizado) — o comitê reorganiza a chave para a próxima inscrição.`;
 
   return { message, levelsGained: grant.levelsGained, battle: finalBattle };

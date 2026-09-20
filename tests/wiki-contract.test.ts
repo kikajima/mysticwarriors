@@ -24,7 +24,6 @@ import {
 } from '../src/lib/wiki/wiki-content';
 import {
   BATTLE_ENERGY_COST,
-  HEAL_COST_PER_HP,
   GUILD_CREATION_COST,
   REGEN,
   SHOP_ITEMS,
@@ -151,20 +150,13 @@ describe('CONTRATO A — comportamento dos handlers reais × afirmações da wik
     expect(ocupacao).not.toContain('só é permitido atacar o');
   });
 
-  test('HOSPITAL — toda cura cobra o custo normal', () => {
-    const healBody = fnBody(
-      actionsSrc,
-      'async function actionHeal',
-      '// ===== SHENRON (desejos) ====='
-    );
-    expect(healBody).not.toContain('freeHealDay');
-    expect(healBody).toContain('spendCurrency');
-  });
-
-  test('HOSPITAL — wiki publica o custo da cura', () => {
-    const t = wikiText('recursos') + wikiText('fim-de-luta');
-    expect(t).not.toContain('primeira cura de cada dia é GRÁTIS');
-    expect(t).toContain(`${HEAL_COST_PER_HP} Zeni por HP`);
+  test('HOSPITAL REMOVIDO — não existe ação de cura nem referência na wiki atual', () => {
+    expect(actionsSrc).not.toContain("case 'heal':");
+    expect(actionsSrc).not.toContain('async function actionHeal');
+    expect(actionsSrc).not.toContain("source: 'hospital'");
+    const t = wikiText('recursos') + wikiText('fim-de-luta') + wikiText('accoes-custos');
+    expect(t.toLowerCase()).not.toContain('hospital');
+    expect(t).toContain('regeneração natural');
   });
 
   test('TÉCNICAS — GARANTIA DE ≥1 USO POR BATALHA (v0.9.24 D1): engine força a 1ª oportunidade', async () => {
@@ -224,12 +216,6 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(REGEN.hpSeconds).toBe(12);
     expect(t).toContain(`${REGEN.energySeconds / 60} minutos`);
     expect(t).toContain(`${REGEN.hpSeconds} segundos`);
-  });
-
-  test('Hospital: custo por HP publicado = HEAL_COST_PER_HP real', () => {
-    const t = wikiText('recursos') + wikiText('fim-de-luta');
-    expect(HEAL_COST_PER_HP).toBe(3);
-    expect(t).toContain(`${HEAL_COST_PER_HP} Zeni por HP`);
   });
 
   test('Combate: limite de rodadas, Ki básico e parâmetros centrais', () => {
@@ -298,7 +284,7 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(t).toContain('5%');
   });
 
-  test('PvE: recompensas do primeiro e do último vilão = ENEMIES reais', () => {
+  test('PvE: recompensas do primeiro e do último capanga = ENEMIES reais', () => {
     const t = wikiText('pve');
     const first = ENEMIES[0];
     const last = ENEMIES[ENEMIES.length - 1];
