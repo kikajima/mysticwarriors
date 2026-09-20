@@ -749,6 +749,7 @@ export interface CloudCharacterPatch {
   restoreEnergy?: boolean;
   restoreHealth?: boolean;
   accelerateActivity?: boolean;
+  finishMission?: boolean; // alias legado: equivale a acelerar atividade
   itemId?: string;
   materialId?: string;
   materialQuantity?: number;
@@ -783,7 +784,7 @@ export function patchCloudCharacterState(raw: unknown, patch: CloudCharacterPatc
   if (patch.restoreHealth) {
     after.hp = Math.max(1, 80 + Math.max(1, after.level ?? 1) * 15 + Math.max(0, after.defense ?? 0) * 5);
   }
-  if (patch.accelerateActivity) {
+  if (patch.accelerateActivity || patch.finishMission) {
     const doneAt = new Date(Date.now() - 1000).toISOString();
     if (after.missionId && after.missionEndsAt) after.missionEndsAt = doneAt;
     if (after.craftJob) after.craftJob = { ...after.craftJob, endsAt: doneAt };
