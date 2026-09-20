@@ -310,6 +310,101 @@ export function npcCombatPower(enemy: {
 // LOJA — armas, armaduras, acessórios, consumíveis e treino
 // =====================================================================
 
+
+const ENDGAME_SHOP_BANDS = [
+  { id: 'galactico', name: 'Galáctico', minLevel: 30, price: 75_000, power: 80 },
+  { id: 'divino', name: 'Divino', minLevel: 50, price: 220_000, power: 120 },
+  { id: 'cosmico', name: 'Cósmico', minLevel: 75, price: 650_000, power: 175 },
+  { id: 'eterno', name: 'Eterno', minLevel: 100, price: 1_800_000, power: 245 },
+] as const;
+
+const ENDGAME_SHOP_SLOT_CONFIGS = [
+  {
+    category: 'weapon',
+    slotLabel: 'Arma',
+    name: 'Lâmina',
+    icon: '⚔️',
+    stats: (p: number) => ({ atk: p, ki: Math.round(p * 0.20) }),
+  },
+  {
+    category: 'head',
+    slotLabel: 'Cabeça',
+    name: 'Elmo',
+    icon: '🪖',
+    stats: (p: number) => ({ def: Math.round(p * 0.45), ki: Math.round(p * 0.38), spd: Math.round(p * 0.12) }),
+  },
+  {
+    category: 'wrists',
+    slotLabel: 'Punhos',
+    name: 'Manoplas',
+    icon: '🥊',
+    stats: (p: number) => ({ atk: Math.round(p * 0.72), def: Math.round(p * 0.25), ki: Math.round(p * 0.12) }),
+  },
+  {
+    category: 'armor',
+    slotLabel: 'Torso',
+    name: 'Armadura',
+    icon: '🛡️',
+    stats: (p: number) => ({ def: Math.round(p * 0.90), ki: Math.round(p * 0.18) }),
+  },
+  {
+    category: 'legs',
+    slotLabel: 'Pernas',
+    name: 'Grevas',
+    icon: '👖',
+    stats: (p: number) => ({ def: Math.round(p * 0.48), spd: Math.round(p * 0.55), ki: Math.round(p * 0.10) }),
+  },
+  {
+    category: 'boots',
+    slotLabel: 'Botas',
+    name: 'Botas',
+    icon: '🥾',
+    stats: (p: number) => ({ spd: Math.round(p * 0.85), def: Math.round(p * 0.20), ki: Math.round(p * 0.10) }),
+  },
+  {
+    category: 'accessory',
+    slotLabel: 'Acessório I ou II',
+    name: 'Selo',
+    icon: '💠',
+    stats: (p: number) => ({
+      atk: Math.round(p * 0.28),
+      def: Math.round(p * 0.28),
+      spd: Math.round(p * 0.28),
+      ki: Math.round(p * 0.28),
+    }),
+  },
+] as const;
+
+function equipmentBonusDescription(stats: { atk?: number; def?: number; spd?: number; ki?: number }): string {
+  return [
+    stats.atk ? `+${stats.atk} ATQ` : '',
+    stats.def ? `+${stats.def} DEF` : '',
+    stats.spd ? `+${stats.spd} VEL` : '',
+    stats.ki ? `+${stats.ki} KI` : '',
+  ].filter(Boolean).join(', ');
+}
+
+/**
+ * Progressão comercial de longo prazo. Os degraus 30/50/75/100 evitam
+ * que a Loja "acabe" no nível 20, mas cada equivalente da Oficina segue
+ * deliberadamente mais forte no mesmo patamar.
+ */
+export const ENDGAME_SHOP_ITEMS: ShopItem[] = ENDGAME_SHOP_BANDS.flatMap((band) =>
+  ENDGAME_SHOP_SLOT_CONFIGS.map((slot) => {
+    const stats = slot.stats(band.power);
+    return {
+      id: `loja_${band.id}_${slot.category}`,
+      name: `${slot.name} ${band.name}`,
+      description: `Slot: ${slot.slotLabel}. Equipamento comercial de longo prazo (Nv. ${band.minLevel}+). Bônus: ${equipmentBonusDescription(stats)}. A Oficina oferece uma versão superior neste patamar.`,
+      category: slot.category,
+      price: band.price,
+      minLevel: band.minLevel,
+      icon: slot.icon,
+      ...stats,
+    } satisfies ShopItem;
+  })
+);
+
 export const SHOP_ITEMS: ShopItem[] = [
   // ===== EQUIPAMENTOS DA LOJA =====
   // A Oficina continua sendo a progressão de equipamento mais forte.
@@ -361,6 +456,9 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'potara', name: 'Brinco Potara', description: 'Slot: Acessório I ou II. Relíquia divina focada em Ki e reação. Bônus: +14 KI e +6 VEL.', category: 'accessory', price: 8000, minLevel: 12, ki: 14, spd: 6, icon: '💍' },
   { id: 'coracao_dourado', name: 'Coração do Dragão Eterno', description: 'Slot: Acessório I ou II. Melhor acessório de combate vendido pronto. Bônus: +10 ATQ, +10 DEF, +10 KI e +10 VEL.', category: 'accessory', price: 26000, minLevel: 20, atk: 10, def: 10, ki: 10, spd: 10, icon: '💎' },
   { id: 'radar_esferas', name: 'Radar das Esferas', description: 'Slot: Acessório I ou II. Aumenta a chance da Busca pelas Esferas em +30 pontos percentuais, respeitando o teto mundial de 50%.', category: 'accessory', price: 500, currency: 'crystal', minLevel: 1, dragonBallSearchChanceBonus: 0.30, icon: '📡' },
+
+  // Endgame comercial — quatro novos degraus por slot (Nv. 30/50/75/100).
+  ...ENDGAME_SHOP_ITEMS,
   // Consumíveis (v0.9.2 — custam DIAMANTES; ficam no inventário e são
   // usados sob demanda. Conveniência premium: energia/vida instantâneas
   // e atributos extras numa economia onde energia é escassa.)

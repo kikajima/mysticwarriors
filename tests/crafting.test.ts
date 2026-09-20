@@ -72,7 +72,12 @@ describe('Oficina — contratos de crafting', () => {
 
     for (const recipe of CRAFT_RECIPES) {
       for (const requirement of recipe.professionRequirements ?? []) {
-        expect(requirement.level).toBe(CRAFT_TIER_PROFESSION_LEVEL[recipe.tier]);
+        if (recipe.minPlayerLevel) {
+          expect(requirement.level).toBeGreaterThanOrEqual(CRAFT_TIER_PROFESSION_LEVEL[recipe.tier]);
+          expect(requirement.level).toBeLessThanOrEqual(10);
+        } else {
+          expect(requirement.level).toBe(CRAFT_TIER_PROFESSION_LEVEL[recipe.tier]);
+        }
       }
     }
 
@@ -125,17 +130,18 @@ describe('Oficina — contratos de crafting', () => {
     expect(missingCraftProfessionRequirements({ professions }, focus)).toEqual([]);
   });
 
-  test('todos os sete slots têm progressão craftável Tier 1–5', () => {
+  test('todos os sete slots mantêm Tiers 1–5 e ganham quatro obras-primas de nível 30–100', () => {
     const slots = ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots'] as const;
     for (const slot of slots) {
       const items = CRAFTED_ITEMS.filter((item) => item.category === slot);
-      expect(items).toHaveLength(5);
+      expect(items).toHaveLength(9);
       const outputs = new Set(items.map((item) => item.id));
-      const tiers = CRAFT_RECIPES
-        .filter((recipe) => outputs.has(recipe.outputItemId))
-        .map((recipe) => recipe.tier)
-        .sort();
-      expect(tiers).toEqual([1, 2, 3, 4, 5]);
+      const recipes = CRAFT_RECIPES.filter((recipe) => outputs.has(recipe.outputItemId));
+      const tiers = new Set(recipes.map((recipe) => recipe.tier));
+      expect([...tiers].sort()).toEqual([1, 2, 3, 4, 5]);
+      expect(
+        recipes.filter((recipe) => recipe.minPlayerLevel).map((recipe) => recipe.minPlayerLevel).sort((a, b) => (a ?? 0) - (b ?? 0))
+      ).toEqual([30, 50, 75, 100]);
     }
   });
 
@@ -208,6 +214,8 @@ describe('Oficina — contratos de crafting', () => {
     const src = await Bun.file(`${import.meta.dir}/../src/components/game/WorkshopPanel.tsx`).text();
     expect(src).toContain('Requisitos profissionais');
     expect(src).toContain('professionRequirementsOk');
+    expect(src).toContain('playerLevelOk');
+    expect(src).toContain('Guerreiro Nv. {recipe.minPlayerLevel}+');
     expect(src).toContain('CRAFT_TIER_PROFESSION_LEVEL');
     expect(src).toContain('>Tier:</span>');
     expect(src).toContain('>Tipo:</span>');
@@ -220,6 +228,7 @@ describe('Oficina — contratos de crafting', () => {
   test('servidor valida lote, coleta e cancelamento', async () => {
     const src = await Bun.file(`${import.meta.dir}/../src/lib/game/crafting.ts`).text();
     expect(src).toContain('recipe.maxBatch ?? 1');
+    expect(src).toContain('recipe.minPlayerLevel && player.level < recipe.minPlayerLevel');
     expect(src).toContain('const totalCost = recipe.costZeni * batch');
     expect(src).toContain('ingredient.quantity * batch');
     expect(src).toContain('export async function cancelCraft');

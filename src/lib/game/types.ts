@@ -144,6 +144,8 @@ export interface CraftRecipeDef {
   maxBatch?: number;
   /** Blueprints são receitas acadêmicas e aparecem na seção de Projetos. */
   requiresAcademic?: boolean;
+  /** Nível mínimo do guerreiro para iniciar a fabricação. */
+  minPlayerLevel?: number;
   /** Níveis mínimos de carreira exigidos para iniciar esta fabricação. */
   professionRequirements?: CraftProfessionRequirement[];
   ingredients: CraftIngredientDef[];

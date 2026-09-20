@@ -149,6 +149,7 @@ export function WorkshopPanel({
       playerItemOutput.category !== 'consumable' &&
       player.items.owned.includes(playerItemOutput.id);
     const academicOk = !recipe.requiresAcademic || academicLevel > 0;
+    const playerLevelOk = player.level >= (recipe.minPlayerLevel ?? 1);
     const maxBatch = Math.max(1, recipe.maxBatch ?? 1);
     const quantity = Math.max(1, Math.min(maxBatch, batchQty[recipe.id] ?? 1));
     const totalCost = recipe.costZeni * quantity;
@@ -174,6 +175,7 @@ export function WorkshopPanel({
     const canStart =
       !job &&
       academicOk &&
+      playerLevelOk &&
       professionRequirementsOk &&
       ingredientsOk &&
       player.zeni >= totalCost &&
@@ -192,9 +194,17 @@ export function WorkshopPanel({
               {recipe.requiresAcademic && (
                 <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">Acadêmico</Chip>
               )}
+              {recipe.minPlayerLevel && recipe.minPlayerLevel > 1 && (
+                <Chip className={playerLevelOk
+                  ? "bg-violet-950/40 text-violet-300 border-violet-800/50"
+                  : "bg-red-950/50 text-red-300 border-red-800/50"
+                }>
+                  Guerreiro Nv. {recipe.minPlayerLevel}+
+                </Chip>
+              )}
               <Chip
                 className={
-                  academicOk && professionRequirementsOk
+                  academicOk && playerLevelOk && professionRequirementsOk
                     ? ingredientsOk && player.zeni >= totalCost
                       ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/50'
                       : 'bg-yellow-950/50 text-yellow-300 border-yellow-800/50'
@@ -203,7 +213,7 @@ export function WorkshopPanel({
               >
                 {uniqueAlreadyOwned
                   ? 'já fabricado'
-                  : academicOk && professionRequirementsOk
+                  : academicOk && playerLevelOk && professionRequirementsOk
                     ? ingredientsOk && player.zeni >= totalCost
                       ? 'pronta'
                       : 'faltam recursos'
@@ -279,6 +289,11 @@ export function WorkshopPanel({
                 Esta receita exige experiência como Acadêmico.
               </p>
             )}
+            {!playerLevelOk && recipe.minPlayerLevel && (
+              <p className="text-xs text-red-300/80 mt-3">
+                Seu guerreiro precisa atingir o nível {recipe.minPlayerLevel} para fabricar esta obra-prima.
+              </p>
+            )}
             {uniqueAlreadyOwned && (
               <p className="text-xs text-emerald-300/70 mt-3">
                 Você já possui este item permanente. A Oficina não fabrica duplicatas sem utilidade.
@@ -340,9 +355,9 @@ export function WorkshopPanel({
         </p>
         <p className="text-xs text-amber-200/50 mt-2">
           🎓 Mestria Acadêmica reduz o tempo de fabricação em 1% por nível, até 10%.
-          Os Tiers agora têm progressão real: Tier 2 exige carreira Nv. {CRAFT_TIER_PROFESSION_LEVEL[2]},
-          Tier 3 Nv. {CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4 Nv. {CRAFT_TIER_PROFESSION_LEVEL[4]} e
-          Tier 5 Nv. {CRAFT_TIER_PROFESSION_LEVEL[5]} nas profissões indicadas pela receita.
+          A progressão base continua em Tier 2/Nv. {CRAFT_TIER_PROFESSION_LEVEL[2]}, Tier 3/Nv. {CRAFT_TIER_PROFESSION_LEVEL[3]},
+          Tier 4/Nv. {CRAFT_TIER_PROFESSION_LEVEL[4]} e Tier 5/Nv. {CRAFT_TIER_PROFESSION_LEVEL[5]}.
+          As obras-primas de endgame continuam no Tier 5, mas exigem guerreiro Nv. 30/50/75/100 e carreiras Nv. 8–10.
         </p>
       </GameCard>
 

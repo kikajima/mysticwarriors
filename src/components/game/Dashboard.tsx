@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { RACES, getItem, getTechnique, trainingCost, getStrategy, getProfession, professionLevel, professionLevelTitle } from '@/lib/game/constants';
 import { equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { useServerNow } from '@/lib/game/clock';
-import type { PlayerView } from '@/lib/game/types';
+import { EQUIPPED_SLOTS, type PlayerView } from '@/lib/game/types';
 import { Chip, GameCard, PlayerAvatar, RACE_EMOJI, ResourceBar, GameButton } from './Bits';
 import { getPowerScale, POWER_SCALES } from '@/lib/game/powerScale';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,15 @@ const STAT_META: Record<DisplayStat, { label: string; icon: React.ReactNode }> =
   speed: { label: 'Velocidade', icon: <Gauge className="w-4 h-4" /> },
   ki: { label: 'Ki', icon: <Sparkles className="w-4 h-4" /> },
 };
+
+function equippedBonusForStat(player: PlayerView, key: DisplayStat): number {
+  const itemStat = key === 'strength' ? 'atk' : key === 'defense' ? 'def' : key === 'speed' ? 'spd' : 'ki';
+  return EQUIPPED_SLOTS.reduce((sum, slot) => {
+    const itemId = player.items[slot] ?? null;
+    const item = itemId ? getItem(itemId) : undefined;
+    return sum + (item?.[itemStat] ?? 0);
+  }, 0);
+}
 
 function formatCountdown(ms: number): string {
   if (ms <= 0) return 'pronta!';
@@ -441,30 +450,45 @@ export function Dashboard({
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {STAT_KEYS.map((key) => {
             const base = player[key];
-            const bonus = player.derived.equipmentBonuses?.[key] ?? 0;
-            const total = player.derived.totalStats?.[key] ?? base + bonus;
+            // O cliente recalcula pelos slots equipados para que saves/API
+            // antigos nunca façam o painel voltar a exibir só o atributo base.
+            const localEquipmentBonus = equippedBonusForStat(player, key);
+            const serverEquipmentBonus = player.derived.equipmentBonuses?.[key];
+            const bonus =
+              serverEquipmentBonus !== undefined && serverEquipmentBonus === localEquipmentBonus
+                ? serverEquipmentBonus
+                : localEquipmentBonus;
+            const total = base + bonus;
             return (
               <GameCard key={key} className="p-4">
-                <div className="flex items-center justify-between mb-1 gap-2">
+                <div className="flex items-start justify-between mb-1 gap-3">
                   <span className="font-heading text-amber-200 text-sm flex items-center gap-1.5">
                     {STAT_META[key].icon} {STAT_META[key].label}
                   </span>
-                  <span className="font-heading text-2xl text-orange-400 tabular-nums">{total}</span>
+                  <div className="text-right">
+                    <p className="text-[9px] uppercase tracking-wider text-orange-200/50">Total com equipamento</p>
+                    <span className="font-heading text-3xl text-orange-400 tabular-nums">{total}</span>
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
                   <Chip className="bg-black/30 text-amber-200/60 border-amber-900/40 text-[10px]">
                     Base {base}
                   </Chip>
+                  <span className="text-amber-200/30 text-[10px]">+</span>
                   <Chip className={`text-[10px] ${
                     bonus > 0
                       ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/50'
                       : 'bg-black/30 text-amber-200/35 border-amber-900/30'
                   }`}>
-                    Equip. {bonus > 0 ? `+${bonus}` : '+0'}
+                    Equipamento {bonus > 0 ? `+${bonus}` : '+0'}
+                  </Chip>
+                  <span className="text-amber-200/30 text-[10px]">=</span>
+                  <Chip className="bg-orange-950/45 text-orange-300 border-orange-800/50 text-[10px]">
+                    Total {total}
                   </Chip>
                 </div>
                 <p className="text-[10px] text-amber-200/35 mt-1">
-                  Total = atributo base + bônus dos equipamentos
+                  O número grande acima já inclui todos os 8 espaços equipáveis.
                 </p>
 
                 <button

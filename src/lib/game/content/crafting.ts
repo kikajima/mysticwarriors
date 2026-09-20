@@ -114,6 +114,139 @@ const SLOT_CRAFTED_ITEMS: ShopItem[] = [
   { id: 'botas_gravidade_100x', name: 'Botas de Gravidade 100x', description: 'Slot: Botas. Fabricação Tier 5, superior às botas da loja. Bônus: +44 VEL, +14 ATQ e +10 KI.', category: 'boots', price: 0, minLevel: 1, spd: 44, atk: 14, ki: 10, icon: '🥾' },
 ];
 
+
+const ENDGAME_CRAFT_BANDS = [
+  { id: 'ascendente', name: 'Ascendente', minLevel: 30, power: 105, costZeni: 55_000, durationMin: 480, professionLevel: 8, materialQty: 2 },
+  { id: 'divino_supremo', name: 'Divino Supremo', minLevel: 50, power: 160, costZeni: 180_000, durationMin: 720, professionLevel: 9, materialQty: 4 },
+  { id: 'cosmico_supremo', name: 'Cósmico Supremo', minLevel: 75, power: 235, costZeni: 560_000, durationMin: 960, professionLevel: 10, materialQty: 6 },
+  { id: 'eterno_supremo', name: 'Eterno Supremo', minLevel: 100, power: 330, costZeni: 1_600_000, durationMin: 1320, professionLevel: 10, materialQty: 10 },
+] as const;
+
+const ENDGAME_CRAFT_SLOT_CONFIGS = [
+  {
+    category: 'weapon',
+    slotLabel: 'Arma',
+    name: 'Lâmina Forjada',
+    icon: '⚔️',
+    professions: ['atleta', 'cientista'],
+    materials: ['cristal_energia_ki', 'pesos_gravidade_10x', 'fragmento_tomo_ancestral'],
+    stats: (p: number) => ({ atk: p, ki: Math.round(p * 0.24) }),
+  },
+  {
+    category: 'head',
+    slotLabel: 'Cabeça',
+    name: 'Elmo Forjado',
+    icon: '🪖',
+    professions: ['cientista', 'policial'],
+    materials: ['cristal_energia_ki', 'relatorio_ameaca_global', 'fragmento_tomo_ancestral'],
+    stats: (p: number) => ({ def: Math.round(p * 0.50), ki: Math.round(p * 0.42), spd: Math.round(p * 0.15) }),
+  },
+  {
+    category: 'wrists',
+    slotLabel: 'Punhos',
+    name: 'Manoplas Forjadas',
+    icon: '🥊',
+    professions: ['atleta', 'cientista'],
+    materials: ['fluido_recuperacao_extrema', 'pesos_gravidade_10x', 'cristal_energia_ki'],
+    stats: (p: number) => ({ atk: Math.round(p * 0.80), def: Math.round(p * 0.28), ki: Math.round(p * 0.14) }),
+  },
+  {
+    category: 'armor',
+    slotLabel: 'Torso',
+    name: 'Armadura Forjada',
+    icon: '🛡️',
+    professions: ['policial', 'cientista'],
+    materials: ['relatorio_ameaca_global', 'cristal_energia_ki', 'essencia_arvore_poder'],
+    stats: (p: number) => ({ def: Math.round(p * 0.98), ki: Math.round(p * 0.22) }),
+  },
+  {
+    category: 'legs',
+    slotLabel: 'Pernas',
+    name: 'Grevas Forjadas',
+    icon: '🦿',
+    professions: ['policial', 'atleta'],
+    materials: ['relatorio_ameaca_global', 'pesos_gravidade_10x', 'essencia_arvore_poder'],
+    stats: (p: number) => ({ def: Math.round(p * 0.52), spd: Math.round(p * 0.62), ki: Math.round(p * 0.12) }),
+  },
+  {
+    category: 'boots',
+    slotLabel: 'Botas',
+    name: 'Botas Forjadas',
+    icon: '🥾',
+    professions: ['cientista', 'atleta'],
+    materials: ['cristal_energia_ki', 'pesos_gravidade_10x', 'essencia_arvore_poder'],
+    stats: (p: number) => ({ spd: Math.round(p * 0.94), def: Math.round(p * 0.23), ki: Math.round(p * 0.12) }),
+  },
+  {
+    category: 'accessory',
+    slotLabel: 'Acessório I ou II',
+    name: 'Núcleo Forjado',
+    icon: '💠',
+    professions: ['cientista', 'academico'],
+    materials: ['fragmento_tomo_ancestral', 'cristal_energia_ki', 'essencia_arvore_poder'],
+    stats: (p: number) => ({
+      atk: Math.round(p * 0.32),
+      def: Math.round(p * 0.32),
+      spd: Math.round(p * 0.32),
+      ki: Math.round(p * 0.32),
+    }),
+  },
+] as const;
+
+function endgameCraftBonusText(stats: { atk?: number; def?: number; spd?: number; ki?: number }): string {
+  return [
+    stats.atk ? `+${stats.atk} ATQ` : '',
+    stats.def ? `+${stats.def} DEF` : '',
+    stats.spd ? `+${stats.spd} VEL` : '',
+    stats.ki ? `+${stats.ki} KI` : '',
+  ].filter(Boolean).join(', ');
+}
+
+/**
+ * Obras-primas da Oficina para o endgame. Em cada faixa (30/50/75/100)
+ * elas são cerca de 30–40% mais fortes que o equivalente comercial,
+ * exigindo carreira avançada, materiais raros, blueprint e tempo offline.
+ */
+export const ENDGAME_CRAFTED_ITEMS: ShopItem[] = ENDGAME_CRAFT_BANDS.flatMap((band) =>
+  ENDGAME_CRAFT_SLOT_CONFIGS.map((slot) => {
+    const stats = slot.stats(band.power);
+    return {
+      id: `oficina_${band.id}_${slot.category}`,
+      name: `${slot.name} ${band.name}`,
+      description: `Slot: ${slot.slotLabel}. Obra-prima da Oficina para Nv. ${band.minLevel}+. Bônus: ${endgameCraftBonusText(stats)}. Superior ao equipamento comercial do mesmo patamar.`,
+      category: slot.category,
+      price: 0,
+      minLevel: band.minLevel,
+      icon: slot.icon,
+      ...stats,
+    } satisfies ShopItem;
+  })
+);
+
+const ENDGAME_CRAFT_RECIPES: CraftRecipeDef[] = ENDGAME_CRAFT_BANDS.flatMap((band) =>
+  ENDGAME_CRAFT_SLOT_CONFIGS.map((slot) => ({
+    id: `craft_oficina_${band.id}_${slot.category}`,
+    name: `${slot.name} ${band.name}`,
+    description: `Obra-prima de endgame para ${slot.slotLabel}, destinada a guerreiros de nível ${band.minLevel}+.`,
+    tier: 5,
+    icon: slot.icon,
+    outputItemId: `oficina_${band.id}_${slot.category}`,
+    outputQuantity: 1,
+    outputKind: 'player_item',
+    costZeni: band.costZeni,
+    baseDurationMin: band.durationMin,
+    minPlayerLevel: band.minLevel,
+    professionRequirements: slot.professions.map((professionId) => ({
+      professionId,
+      level: band.professionLevel,
+    })),
+    ingredients: [
+      ...slot.materials.map((itemId) => ({ itemId, quantity: band.materialQty })),
+      { itemId: 'esquema_gravidade_alterada', quantity: Math.max(1, Math.ceil(band.materialQty / 4)) },
+    ],
+  } satisfies CraftRecipeDef))
+);
+
 export const CRAFTED_ITEMS: ShopItem[] = [
   {
     id: 'capsula_recuperacao_simples',
@@ -168,6 +301,7 @@ export const CRAFTED_ITEMS: ShopItem[] = [
     icon: '🛸',
   },
   ...SLOT_CRAFTED_ITEMS,
+  ...ENDGAME_CRAFTED_ITEMS,
 ];
 
 
@@ -436,6 +570,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
     ],
   },
   ...SLOT_CRAFT_RECIPES,
+  ...ENDGAME_CRAFT_RECIPES,
 ];
 
 export function getCraftRecipe(id: string): CraftRecipeDef | undefined {

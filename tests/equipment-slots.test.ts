@@ -126,11 +126,12 @@ describe('Equipamento completo — sete categorias e oito espaços equipáveis',
     expect(twoCopies.accessory2).toBe('radar_esferas');
   });
 
-  test('cada um dos sete slots possui cinco equipamentos craftáveis, um por Tier', () => {
+  test('cada slot mantém os cinco crafts base e recebe quatro obras-primas de endgame', () => {
     for (const slot of EQUIPMENT_SLOTS) {
       const items = CRAFTED_ITEMS.filter((item) => item.category === slot);
-      expect(items).toHaveLength(5);
-      expect(new Set(items.map((item) => item.id)).size).toBe(5);
+      expect(items).toHaveLength(9);
+      expect(new Set(items.map((item) => item.id)).size).toBe(9);
+      expect(items.some((item) => item.minLevel === 100)).toBe(true);
     }
   });
 
