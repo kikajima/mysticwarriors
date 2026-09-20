@@ -841,7 +841,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'callout',
         tone: 'warn',
         title: 'Matriz de ocupação (v0.16 — definitiva)',
-        text: '**TRABALHANDO bloqueia APENAS 2 ações:** combate PvE contra inimigos e torneio. **TUDO mais fica liberado durante o turno:** treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), hospital, equipamento/inventário, perfil e Shenron. **Em luta em andamento:** não iniciar outra luta/treino/trabalho até o desfecho — mas coletas seguem liberadas.',
+        text: '**TRABALHANDO bloqueia APENAS 3 ações:** combate PvE contra inimigos, torneio e iniciar uma nova Busca pelas Esferas. **TUDO mais fica liberado durante o turno:** treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), hospital, equipamento/inventário, perfil e Shenron. **Em luta em andamento:** não iniciar outra luta/treino/trabalho/Busca pelas Esferas até o desfecho — mas coletas seguem liberadas.',
       },
       {
         kind: 'table',
@@ -852,6 +852,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Treino de atributo', '✅', '❌ Bloqueado', '✅'],
             ['Batalha PvE (inimigos)', '❌ Bloqueado', '❌ Bloqueado', '✅'],
             ['Torneio', '❌ Bloqueado', '❌ Bloqueado', '✅'],
+            ['Busca pelas Esferas', '❌ Bloqueado', '❌ Bloqueado', '✅'],
             ['PvP (atacar jogador)', '✅ Liberado', '❌ (uma luta por vez)', '✅'],
             ['Ameaça Universal', '✅ Liberado', '✅ Liberado (ataque instantâneo)', '✅'],
             ['Loja (comprar/vender/usar/equipar)', '✅ Liberado', '✅ Liberado', '✅'],
