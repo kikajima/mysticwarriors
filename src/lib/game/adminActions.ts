@@ -107,7 +107,7 @@ async function setAdminDragonBallCount(
   return owned.length;
 }
 
-async function grantAdminDragonBallStar(
+export async function grantAdminDragonBallStar(
   tx: Prisma.TransactionClient,
   player: Player,
   rawStar: number
