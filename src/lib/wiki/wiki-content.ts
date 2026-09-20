@@ -589,9 +589,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'table',
             table: {
               caption: 'Técnicas (ORIGEM: content/techniques.ts — TECHNIQUES)',
-              headers: ['Técnica', 'Tipo', 'Poder', 'Ki', 'Precisão', 'Nível', 'Preço'],
+              headers: ['Técnica', 'Descrição', 'Tipo', 'Poder', 'Ki', 'Precisão', 'Nível', 'Preço'],
               rows: TECHNIQUES.map((t) => [
                 `${t.icon} ${t.name}`,
+                t.description,
                 t.type === 'energy' ? 'Energia' : 'Física',
                 `${String(t.power).replace('.', ',')}×`,
                 String(t.kiCost),
@@ -1123,7 +1124,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
               'Tier 3 ou superior sempre usa insumos ligados a **pelo menos duas profissões**.',
               'Os itens principais de Tier 3+ exigem um **blueprint Acadêmico**.',
               'Itens fabricados não são revendidos para a loja NPC; eles permanecem no inventário do jogador para uso.',
-              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+35 Defesa** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
+              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Radar do Dragão Básico equipado adiciona **+2 p.p.** à chance de encontrar uma Esfera do Dragão ao concluir um turno de profissão; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+35 Defesa** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
             ],
           },
         ],
