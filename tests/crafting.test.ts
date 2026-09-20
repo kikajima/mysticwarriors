@@ -5,6 +5,11 @@ import {
   CRAFTED_ITEMS,
   CRAFT_TIER_PROFESSION_LEVEL,
   MAX_CRAFT_BATCH,
+  CRAFTING_LEVEL_XP,
+  craftingLevelFromXp,
+  craftingQueueCapacity,
+  craftingProgress,
+  craftingXpReward,
   getCraftRecipe,
 } from '../src/lib/game/content/crafting';
 import {
@@ -45,6 +50,7 @@ describe('Oficina — contratos de crafting', () => {
     expect(blueprintRequirements).toEqual([
       [2, [{ professionId: 'academico', level: 2 }]],
       [3, [{ professionId: 'academico', level: 4 }]],
+      [4, [{ professionId: 'academico', level: 6 }]],
       [4, [{ professionId: 'academico', level: 6 }]],
       [4, [{ professionId: 'academico', level: 6 }]],
       [5, [{ professionId: 'academico', level: 8 }]],
@@ -122,18 +128,42 @@ describe('Oficina — contratos de crafting', () => {
     }
   });
 
-  test('novos slots corporais possuem itens e receitas fabricáveis', () => {
-    const expected = [
-      ['bandana_foco_ki', 'head', 1],
-      ['bracadeiras_combate', 'wrists', 2],
-      ['calcas_gravidade', 'legs', 3],
-      ['botas_propulsao_ki', 'boots', 4],
-    ] as const;
-    for (const [id, category, tier] of expected) {
-      expect(CRAFTED_ITEMS.find((item) => item.id === id)?.category).toBe(category);
-      expect(CRAFT_RECIPES.find((recipe) => recipe.id === id)?.tier).toBe(tier);
+  test('Cabeça, Punhos, Pernas e Botas têm progressão completa Tier 1–5', () => {
+    const slots = ['head', 'wrists', 'legs', 'boots'] as const;
+    for (const slot of slots) {
+      const items = CRAFTED_ITEMS.filter((item) => item.category === slot);
+      expect(items).toHaveLength(5);
+      const tiers = items
+        .map((item) => CRAFT_RECIPES.find((recipe) => recipe.outputItemId === item.id)?.tier)
+        .sort();
+      expect(tiers).toEqual([1, 2, 3, 4, 5]);
     }
+    expect(CRAFT_STACK_ITEMS.some((item) => item.id === 'projeto_reforco_ki')).toBe(true);
     expect(CRAFT_STACK_ITEMS.some((item) => item.id === 'projeto_propulsao_ki')).toBe(true);
+  });
+
+  test('Maestria da Oficina sobe por Tier e amplia a fila nos níveis 4 e 8', () => {
+    expect(CRAFTING_LEVEL_XP).toEqual([0, 100, 250, 500, 900, 1500, 2400, 3600, 5200, 7500]);
+    expect(craftingLevelFromXp(0)).toBe(1);
+    expect(craftingLevelFromXp(499)).toBe(3);
+    expect(craftingLevelFromXp(500)).toBe(4);
+    expect(craftingLevelFromXp(3599)).toBe(7);
+    expect(craftingLevelFromXp(3600)).toBe(8);
+    expect(craftingLevelFromXp(999999)).toBe(10);
+
+    expect(craftingQueueCapacity(1)).toBe(1);
+    expect(craftingQueueCapacity(4)).toBe(2);
+    expect(craftingQueueCapacity(8)).toBe(3);
+    expect(craftingXpReward(1, 3)).toBe(75);
+    expect(craftingXpReward(5, 2)).toBe(600);
+
+    expect(craftingProgress(500)).toMatchObject({
+      level: 4,
+      currentLevelXp: 500,
+      nextLevelXp: 900,
+      progressPct: 0,
+      queueCapacity: 2,
+    });
   });
 
   test('fabricação em lote tem limite compartilhado e duração linear', () => {
@@ -167,6 +197,9 @@ describe('Oficina — contratos de crafting', () => {
     expect(src).toContain('CRAFT_TIER_PROFESSION_LEVEL');
     expect(src).toContain('MAX_CRAFT_BATCH');
     expect(src).toContain("quantity: batchQuantity");
+    expect(src).toContain('Maestria da Oficina');
+    expect(src).toContain('Fila {jobs.length}/{mastery.queueCapacity}');
+    expect(src).toContain("jobId: queued.id");
   });
 
   test('efeitos dos itens fabricados correspondem ao desenho', () => {
