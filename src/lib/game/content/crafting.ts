@@ -66,52 +66,52 @@ export const CRAFT_STACK_ITEMS: CraftStackItemDef[] = [
 
 
 const SLOT_CRAFTED_ITEMS: ShopItem[] = [
-  // Armas
-  { id: 'bastao_liga_leve', name: 'Bastão de Liga Leve', description: 'Arma simples e resistente feita para combate corpo a corpo.', category: 'weapon', price: 0, minLevel: 1, atk: 5, icon: '🔧' },
-  { id: 'lamina_carbono', name: 'Lâmina de Carbono', description: 'Lâmina leve de carbono que favorece golpes rápidos.', category: 'weapon', price: 0, minLevel: 1, atk: 10, spd: 2, icon: '🗡️' },
-  { id: 'lanca_saiyajin', name: 'Lança Saiyajin', description: 'Arma alienígena de impacto com canalização básica de Ki.', category: 'weapon', price: 0, minLevel: 1, atk: 18, ki: 4, icon: '🔱' },
-  { id: 'lamina_ki_condensado', name: 'Lâmina de Ki Condensado', description: 'Arma avançada que estabiliza Ki ao longo do fio.', category: 'weapon', price: 0, minLevel: 1, atk: 26, ki: 8, icon: '⚔️' },
-  { id: 'espada_gravidade_100x', name: 'Espada de Gravidade 100x', description: 'Arma endgame forjada para manter corte e energia sob gravidade extrema.', category: 'weapon', price: 0, minLevel: 1, atk: 38, ki: 12, icon: '🌌' },
+  // Armas — a Oficina supera os equivalentes comerciais em cada faixa.
+  { id: 'bastao_liga_leve', name: 'Bastão de Liga Leve', description: 'Slot: Arma. Fabricação Tier 1. Bônus: +7 ATQ.', category: 'weapon', price: 0, minLevel: 1, atk: 7, icon: '🦯' },
+  { id: 'lamina_carbono', name: 'Lâmina de Carbono', description: 'Slot: Arma. Fabricação Tier 2. Bônus: +18 ATQ e +3 VEL.', category: 'weapon', price: 0, minLevel: 1, atk: 18, spd: 3, icon: '🗡️' },
+  { id: 'lanca_saiyajin', name: 'Lança Saiyajin', description: 'Slot: Arma. Fabricação Tier 3. Bônus: +36 ATQ e +8 KI.', category: 'weapon', price: 0, minLevel: 1, atk: 36, ki: 8, icon: '🔱' },
+  { id: 'lamina_ki_condensado', name: 'Lâmina de Ki Condensado', description: 'Slot: Arma. Fabricação Tier 4. Bônus: +55 ATQ e +14 KI.', category: 'weapon', price: 0, minLevel: 1, atk: 55, ki: 14, icon: '⚔️' },
+  { id: 'espada_gravidade_100x', name: 'Espada de Gravidade 100x', description: 'Slot: Arma. Fabricação Tier 5, superior às armas da loja. Bônus: +85 ATQ e +24 KI.', category: 'weapon', price: 0, minLevel: 1, atk: 85, ki: 24, icon: '⚔️' },
 
   // Torso
-  { id: 'colete_fibra_reforcada', name: 'Colete de Fibra Reforçada', description: 'Proteção básica de torso feita com fibras profissionais.', category: 'armor', price: 0, minLevel: 1, def: 5, icon: '🥋' },
-  { id: 'colete_carbono_tatico', name: 'Colete de Carbono Tático', description: 'Colete rígido sem perder completamente a mobilidade.', category: 'armor', price: 0, minLevel: 1, def: 10, spd: 2, icon: '🦺' },
-  { id: 'armadura_fluxo_ki', name: 'Armadura de Fluxo de Ki', description: 'Armadura avançada que reforça defesa e circulação de Ki.', category: 'armor', price: 0, minLevel: 1, def: 28, ki: 10, icon: '🔷' },
-  { id: 'armadura_gravidade_100x', name: 'Armadura de Gravidade 100x', description: 'Blindagem endgame preparada para pressão gravitacional extrema.', category: 'armor', price: 0, minLevel: 1, def: 45, ki: 12, icon: '🛡️' },
+  { id: 'colete_fibra_reforcada', name: 'Colete de Fibra Reforçada', description: 'Slot: Torso. Fabricação Tier 1. Bônus: +8 DEF.', category: 'armor', price: 0, minLevel: 1, def: 8, icon: '🥋' },
+  { id: 'colete_carbono_tatico', name: 'Colete de Carbono Tático', description: 'Slot: Torso. Fabricação Tier 2. Bônus: +18 DEF e +3 VEL.', category: 'armor', price: 0, minLevel: 1, def: 18, spd: 3, icon: '🦺' },
+  { id: 'armadura_fluxo_ki', name: 'Armadura de Fluxo de Ki', description: 'Slot: Torso. Fabricação Tier 4. Bônus: +55 DEF e +14 KI.', category: 'armor', price: 0, minLevel: 1, def: 55, ki: 14, icon: '🛡️' },
+  { id: 'armadura_gravidade_100x', name: 'Armadura de Gravidade 100x', description: 'Slot: Torso. Fabricação Tier 5, superior às armaduras da loja. Bônus: +82 DEF e +22 KI.', category: 'armor', price: 0, minLevel: 1, def: 82, ki: 22, icon: '🛡️' },
 
   // Acessórios
-  { id: 'pingente_foco_ki', name: 'Pingente de Foco de Ki', description: 'Pequeno foco artesanal que ajuda a estabilizar energia.', category: 'accessory', price: 0, minLevel: 1, ki: 3, icon: '📿' },
-  { id: 'modulo_reacao_saiyajin', name: 'Módulo de Reação Saiyajin', description: 'Sensor compacto que melhora reação e leitura de Ki.', category: 'accessory', price: 0, minLevel: 1, ki: 6, spd: 5, icon: '📟' },
-  { id: 'nucleo_fluxo_ki', name: 'Núcleo de Fluxo de Ki', description: 'Núcleo avançado que amplia Ki e velocidade de resposta.', category: 'accessory', price: 0, minLevel: 1, ki: 12, spd: 8, icon: '💠' },
-  { id: 'nucleo_gravidade_100x', name: 'Núcleo de Gravidade 100x', description: 'Acessório endgame que estabiliza Ki e movimento em campos extremos.', category: 'accessory', price: 0, minLevel: 1, atk: 6, ki: 16, spd: 12, icon: '🌀' },
+  { id: 'pingente_foco_ki', name: 'Pingente de Foco de Ki', description: 'Slot: Acessório I ou II. Fabricação Tier 1. Bônus: +6 KI.', category: 'accessory', price: 0, minLevel: 1, ki: 6, icon: '📿' },
+  { id: 'modulo_reacao_saiyajin', name: 'Módulo de Reação Saiyajin', description: 'Slot: Acessório I ou II. Fabricação Tier 3. Bônus: +14 KI e +10 VEL.', category: 'accessory', price: 0, minLevel: 1, ki: 14, spd: 10, icon: '📟' },
+  { id: 'nucleo_fluxo_ki', name: 'Núcleo de Fluxo de Ki', description: 'Slot: Acessório I ou II. Fabricação Tier 4. Bônus: +22 KI e +15 VEL.', category: 'accessory', price: 0, minLevel: 1, ki: 22, spd: 15, icon: '💠' },
+  { id: 'nucleo_gravidade_100x', name: 'Núcleo de Gravidade 100x', description: 'Slot: Acessório I ou II. Fabricação Tier 5, superior aos acessórios da loja. Bônus: +10 ATQ, +10 DEF, +30 KI e +20 VEL.', category: 'accessory', price: 0, minLevel: 1, atk: 10, def: 10, ki: 30, spd: 20, icon: '💠' },
 
   // Cabeça
-  { id: 'bandana_oficina', name: 'Bandana Reforçada', description: 'Proteção leve de Oficina que estabiliza o fluxo de Ki.', category: 'head', price: 0, minLevel: 1, def: 2, ki: 2, icon: '🎗️' },
-  { id: 'visor_scouter_tatico', name: 'Visor Scouter Tático', description: 'Visor calibrado para leitura de Ki e reação rápida.', category: 'head', price: 0, minLevel: 1, ki: 5, spd: 2, icon: '🕶️' },
-  { id: 'elmo_combate_saiyajin', name: 'Elmo de Combate Saiyajin', description: 'Elmo flexível com blindagem alienígena e leitura de energia.', category: 'head', price: 0, minLevel: 1, def: 8, ki: 4, icon: '🪖' },
-  { id: 'visor_fluxo_ki', name: 'Visor de Fluxo de Ki', description: 'Módulo avançado que canaliza Ki e acelera a leitura de movimentos.', category: 'head', price: 0, minLevel: 1, ki: 12, spd: 5, icon: '🔷' },
-  { id: 'elmo_gravidade_100x', name: 'Elmo de Gravidade 100x', description: 'Elmo endgame projetado para combate sob gravidade extrema.', category: 'head', price: 0, minLevel: 1, def: 16, ki: 8, icon: '🌀' },
+  { id: 'bandana_oficina', name: 'Bandana Reforçada', description: 'Slot: Cabeça. Fabricação Tier 1. Bônus: +4 DEF e +4 KI.', category: 'head', price: 0, minLevel: 1, def: 4, ki: 4, icon: '🎗️' },
+  { id: 'visor_scouter_tatico', name: 'Visor Scouter Tático', description: 'Slot: Cabeça. Fabricação Tier 2. Bônus: +10 KI e +4 VEL.', category: 'head', price: 0, minLevel: 1, ki: 10, spd: 4, icon: '🥽' },
+  { id: 'elmo_combate_saiyajin', name: 'Elmo de Combate Saiyajin', description: 'Slot: Cabeça. Fabricação Tier 3. Bônus: +15 DEF e +8 KI.', category: 'head', price: 0, minLevel: 1, def: 15, ki: 8, icon: '🪖' },
+  { id: 'visor_fluxo_ki', name: 'Visor de Fluxo de Ki', description: 'Slot: Cabeça. Fabricação Tier 4. Bônus: +18 KI e +8 VEL.', category: 'head', price: 0, minLevel: 1, ki: 18, spd: 8, icon: '🥽' },
+  { id: 'elmo_gravidade_100x', name: 'Elmo de Gravidade 100x', description: 'Slot: Cabeça. Fabricação Tier 5, superior aos equipamentos de cabeça da loja. Bônus: +24 DEF, +18 KI e +8 VEL.', category: 'head', price: 0, minLevel: 1, def: 24, ki: 18, spd: 8, icon: '🪖' },
 
   // Punhos
-  { id: 'munhequeiras_reforcadas', name: 'Munhequeiras Reforçadas', description: 'Suporte de impacto para golpes físicos repetidos.', category: 'wrists', price: 0, minLevel: 1, atk: 3, icon: '🥊' },
-  { id: 'luvas_impacto_carbono', name: 'Luvas de Impacto de Carbono', description: 'Luvas táticas com placas de carbono para golpes mais pesados.', category: 'wrists', price: 0, minLevel: 1, atk: 6, def: 2, icon: '🧤' },
-  { id: 'braceletes_saiyajin', name: 'Braceletes Saiyajin', description: 'Braceletes de combate que reforçam ataque e guarda.', category: 'wrists', price: 0, minLevel: 1, atk: 10, def: 4, icon: '💪' },
-  { id: 'manoplas_ki_condensado', name: 'Manoplas de Ki Condensado', description: 'Manoplas capazes de condensar Ki junto ao impacto físico.', category: 'wrists', price: 0, minLevel: 1, atk: 14, ki: 6, icon: '💥' },
-  { id: 'manoplas_gravidade_100x', name: 'Manoplas de Gravidade 100x', description: 'Manoplas para golpes devastadores em gravidade extrema.', category: 'wrists', price: 0, minLevel: 1, atk: 20, def: 8, icon: '🌌' },
+  { id: 'munhequeiras_reforcadas', name: 'Munhequeiras Reforçadas', description: 'Slot: Punhos. Fabricação Tier 1. Bônus: +6 ATQ.', category: 'wrists', price: 0, minLevel: 1, atk: 6, icon: '🥊' },
+  { id: 'luvas_impacto_carbono', name: 'Luvas de Impacto de Carbono', description: 'Slot: Punhos. Fabricação Tier 2. Bônus: +14 ATQ e +3 DEF.', category: 'wrists', price: 0, minLevel: 1, atk: 14, def: 3, icon: '🧤' },
+  { id: 'braceletes_saiyajin', name: 'Braceletes Saiyajin', description: 'Slot: Punhos. Fabricação Tier 3. Bônus: +26 ATQ e +6 DEF.', category: 'wrists', price: 0, minLevel: 1, atk: 26, def: 6, icon: '🧤' },
+  { id: 'manoplas_ki_condensado', name: 'Manoplas de Ki Condensado', description: 'Slot: Punhos. Fabricação Tier 4. Bônus: +40 ATQ e +10 KI.', category: 'wrists', price: 0, minLevel: 1, atk: 40, ki: 10, icon: '🥊' },
+  { id: 'manoplas_gravidade_100x', name: 'Manoplas de Gravidade 100x', description: 'Slot: Punhos. Fabricação Tier 5, superior às manoplas da loja. Bônus: +60 ATQ, +18 DEF e +8 KI.', category: 'wrists', price: 0, minLevel: 1, atk: 60, def: 18, ki: 8, icon: '🥊' },
 
   // Pernas
-  { id: 'calca_treino_reforcada', name: 'Calça de Treino Reforçada', description: 'Tecido reforçado para absorver impactos nas pernas.', category: 'legs', price: 0, minLevel: 1, def: 3, icon: '👖' },
-  { id: 'calca_compressao_tatica', name: 'Calça de Compressão Tática', description: 'Compressão muscular e fibras resistentes para manter mobilidade.', category: 'legs', price: 0, minLevel: 1, def: 6, spd: 2, icon: '🥋' },
-  { id: 'grevas_saiyajin', name: 'Grevas Saiyajin', description: 'Proteção de pernas alienígena, leve e resistente.', category: 'legs', price: 0, minLevel: 1, def: 10, spd: 4, icon: '🦿' },
-  { id: 'calca_fluxo_ki', name: 'Calça de Fluxo de Ki', description: 'Circuitos internos distribuem Ki para reforçar a defesa.', category: 'legs', price: 0, minLevel: 1, def: 14, ki: 5, icon: '🔹' },
-  { id: 'calca_gravidade_100x', name: 'Calça de Gravidade 100x', description: 'Blindagem de pernas preparada para pressão gravitacional extrema.', category: 'legs', price: 0, minLevel: 1, def: 20, spd: 8, icon: '🌠' },
+  { id: 'calca_treino_reforcada', name: 'Calça de Treino Reforçada', description: 'Slot: Pernas. Fabricação Tier 1. Bônus: +6 DEF e +3 VEL.', category: 'legs', price: 0, minLevel: 1, def: 6, spd: 3, icon: '👖' },
+  { id: 'calca_compressao_tatica', name: 'Calça de Compressão Tática', description: 'Slot: Pernas. Fabricação Tier 2. Bônus: +14 DEF e +5 VEL.', category: 'legs', price: 0, minLevel: 1, def: 14, spd: 5, icon: '👖' },
+  { id: 'grevas_saiyajin', name: 'Grevas Saiyajin', description: 'Slot: Pernas. Fabricação Tier 3. Bônus: +24 DEF e +8 VEL.', category: 'legs', price: 0, minLevel: 1, def: 24, spd: 8, icon: '🦿' },
+  { id: 'calca_fluxo_ki', name: 'Calça de Fluxo de Ki', description: 'Slot: Pernas. Fabricação Tier 4. Bônus: +34 DEF, +8 VEL e +8 KI.', category: 'legs', price: 0, minLevel: 1, def: 34, spd: 8, ki: 8, icon: '👖' },
+  { id: 'calca_gravidade_100x', name: 'Calça de Gravidade 100x', description: 'Slot: Pernas. Fabricação Tier 5, superior às peças de pernas da loja. Bônus: +48 DEF, +20 VEL e +8 KI.', category: 'legs', price: 0, minLevel: 1, def: 48, spd: 20, ki: 8, icon: '🦿' },
 
   // Botas
-  { id: 'botas_corrida_reforcadas', name: 'Botas de Corrida Reforçadas', description: 'Botas leves com sola de alta tração.', category: 'boots', price: 0, minLevel: 1, spd: 3, icon: '🥾' },
-  { id: 'botas_propulsao_tatica', name: 'Botas de Propulsão Tática', description: 'Micropropulsores ajudam em arrancadas e mudanças de direção.', category: 'boots', price: 0, minLevel: 1, spd: 6, def: 2, icon: '👢' },
-  { id: 'botas_saiyajin_craft', name: 'Botas Saiyajin', description: 'Botas de combate alienígenas resistentes sem sacrificar velocidade.', category: 'boots', price: 0, minLevel: 1, spd: 10, def: 4, icon: '🥾' },
-  { id: 'botas_impulso_ki', name: 'Botas de Impulso de Ki', description: 'Canalizam Ki para acelerar deslocamentos explosivos.', category: 'boots', price: 0, minLevel: 1, spd: 14, ki: 5, icon: '💨' },
-  { id: 'botas_gravidade_100x', name: 'Botas de Gravidade 100x', description: 'Botas endgame que convertem resistência gravitacional em velocidade e impacto.', category: 'boots', price: 0, minLevel: 1, spd: 20, atk: 8, icon: '🚀' },
+  { id: 'botas_corrida_reforcadas', name: 'Botas de Corrida Reforçadas', description: 'Slot: Botas. Fabricação Tier 1. Bônus: +7 VEL.', category: 'boots', price: 0, minLevel: 1, spd: 7, icon: '🥾' },
+  { id: 'botas_propulsao_tatica', name: 'Botas de Propulsão Tática', description: 'Slot: Botas. Fabricação Tier 2. Bônus: +15 VEL e +4 DEF.', category: 'boots', price: 0, minLevel: 1, spd: 15, def: 4, icon: '👢' },
+  { id: 'botas_saiyajin_craft', name: 'Botas Saiyajin', description: 'Slot: Botas. Fabricação Tier 3. Bônus: +24 VEL e +7 DEF.', category: 'boots', price: 0, minLevel: 1, spd: 24, def: 7, icon: '🥾' },
+  { id: 'botas_impulso_ki', name: 'Botas de Impulso de Ki', description: 'Slot: Botas. Fabricação Tier 4. Bônus: +32 VEL e +8 KI.', category: 'boots', price: 0, minLevel: 1, spd: 32, ki: 8, icon: '👢' },
+  { id: 'botas_gravidade_100x', name: 'Botas de Gravidade 100x', description: 'Slot: Botas. Fabricação Tier 5, superior às botas da loja. Bônus: +44 VEL, +14 ATQ e +10 KI.', category: 'boots', price: 0, minLevel: 1, spd: 44, atk: 14, ki: 10, icon: '🥾' },
 ];
 
 export const CRAFTED_ITEMS: ShopItem[] = [
@@ -128,22 +128,23 @@ export const CRAFTED_ITEMS: ShopItem[] = [
   {
     id: 'foco_combate_tatico',
     name: 'Foco de Combate Tático',
-    description: 'Acessório calibrado para estabilizar a defesa e a velocidade durante o combate.',
+    description: 'Slot: Acessório I ou II. Fabricação Tier 2. Bônus: +8 DEF e +8 VEL.',
     category: 'accessory',
     price: 0,
     minLevel: 1,
-    def: 2,
-    spd: 2,
+    def: 8,
+    spd: 8,
     icon: '📟',
   },
   {
     id: 'armadura_combate_saiyajin_craft',
     name: 'Armadura de Combate Saiyajin',
-    description: 'Armadura flexível de Oficina. Concede +35 de Defesa enquanto equipada.',
+    description: 'Slot: Torso. Fabricação Tier 3. Bônus: +38 DEF e +8 KI.',
     category: 'armor',
     price: 0,
     minLevel: 1,
-    def: 35,
+    def: 38,
+    ki: 8,
     icon: '🛡️',
   },
   {
