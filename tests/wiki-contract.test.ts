@@ -34,6 +34,7 @@ import {
   PROFESSION_LEVELS,
   PROFESSION_SHIFTS,
   PROFESSION_MATERIALS,
+  PROFESSION_MATERIAL_TIER_LEVEL,
   PROFESSION_MASTERY_HOURS,
   xpToNextLevel,
 } from '../src/lib/game/content/world';
@@ -365,6 +366,9 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(t).toContain('um único teste ao concluir o turno');
     for (const material of PROFESSION_MATERIALS) {
       expect(t).toContain(material.name);
+    }
+    for (const tier of [1, 2, 3, 4, 5] as const) {
+      expect(t).toContain(`Nível ${PROFESSION_MATERIAL_TIER_LEVEL[tier]}`);
     }
   });
 
