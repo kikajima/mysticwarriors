@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { getItem, SELL_PRICE_RATIO } from '@/lib/game/constants';
-import type { ItemsState, PlayerView, ShopItem } from '@/lib/game/types';
+import type { EquipmentSlot, ItemsState, PlayerView, ShopItem } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { WorkshopPanel } from './WorkshopPanel';
 import { Backpack, Hammer, Shield, Wrench } from 'lucide-react';
@@ -237,7 +237,7 @@ function ItemInventory({
   );
 }
 
-type RealEquipmentSlot = 'weapon' | 'armor' | 'accessory';
+type RealEquipmentSlot = EquipmentSlot;
 type DisplaySlot = {
   key: string;
   label: string;
@@ -247,13 +247,13 @@ type DisplaySlot = {
 };
 
 const DISPLAY_SLOTS: DisplaySlot[] = [
-  { key: 'head', label: 'Cabeça', icon: '🪖', grid: 'col-start-2 row-start-1' },
-  { key: 'wrists', label: 'Punhos', icon: '🥊', grid: 'col-start-1 row-start-2' },
+  { key: 'head', label: 'Cabeça', icon: '🪖', backing: 'head', grid: 'col-start-2 row-start-1' },
+  { key: 'wrists', label: 'Punhos', icon: '🥊', backing: 'wrists', grid: 'col-start-1 row-start-2' },
   { key: 'armor', label: 'Torso', icon: '🛡️', backing: 'armor', grid: 'col-start-2 row-start-2' },
   { key: 'accessory', label: 'Acessório', icon: '💍', backing: 'accessory', grid: 'col-start-3 row-start-2' },
   { key: 'weapon', label: 'Arma', icon: '⚔️', backing: 'weapon', grid: 'col-start-1 row-start-3' },
-  { key: 'legs', label: 'Pernas', icon: '👖', grid: 'col-start-2 row-start-3' },
-  { key: 'boots', label: 'Botas', icon: '🥾', grid: 'col-start-2 row-start-4' },
+  { key: 'legs', label: 'Pernas', icon: '👖', backing: 'legs', grid: 'col-start-2 row-start-3' },
+  { key: 'boots', label: 'Botas', icon: '🥾', backing: 'boots', grid: 'col-start-2 row-start-4' },
 ];
 
 function EquipmentSlot({
@@ -315,14 +315,14 @@ function EquipmentInventory({
         .map((id) => getItem(id))
         .filter(
           (item): item is ShopItem =>
-            !!item && (item.category === 'weapon' || item.category === 'armor' || item.category === 'accessory')
+            !!item && ['weapon', 'armor', 'head', 'wrists', 'legs', 'boots', 'accessory'].includes(item.category)
         ),
     [player.items.owned]
   );
 
   const totals = useMemo(() => {
     const out = { atk: 0, def: 0, spd: 0, ki: 0 };
-    for (const slot of ['weapon', 'armor', 'accessory'] as const) {
+    for (const slot of ['weapon', 'armor', 'head', 'wrists', 'legs', 'boots', 'accessory'] as const) {
       const item = player.items[slot] ? getItem(player.items[slot]!) : undefined;
       if (!item) continue;
       out.atk += item.atk ?? 0;
@@ -338,7 +338,11 @@ function EquipmentInventory({
 
   const groups = [
     { key: 'weapon', label: 'Armas', icon: '⚔️' },
-    { key: 'armor', label: 'Armaduras', icon: '🛡️' },
+    { key: 'head', label: 'Cabeça', icon: '🪖' },
+    { key: 'wrists', label: 'Punhos', icon: '🥊' },
+    { key: 'armor', label: 'Torso', icon: '🛡️' },
+    { key: 'legs', label: 'Pernas', icon: '👖' },
+    { key: 'boots', label: 'Botas', icon: '🥾' },
     { key: 'accessory', label: 'Acessórios', icon: '💍' },
   ] as const;
 
