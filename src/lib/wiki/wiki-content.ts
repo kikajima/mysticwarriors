@@ -1491,7 +1491,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Loja e Itens',
     icon: '🏪',
     group: 'Coleção e Social',
-    summary: 'A Loja vende itens; posse, uso, venda e equipamento ficam organizados no Inventário.'
+    summary: 'A Loja vende itens; posse, uso, venda e equipamento ficam organizados no Inventário.',
     resumo: [
       'Equipamentos de combate custam **Zeni**; consumíveis, treino e cosméticos custam **💎**.',
       'Itens comprados vão para o **Inventário**; lá você usa, vende e equipa. Vender devolve **50%** na moeda original.',
