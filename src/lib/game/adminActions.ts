@@ -739,7 +739,6 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 export interface CloudCharacterPatch {
   zeniDelta?: number;
   crystalDelta?: number;
-  ballDelta?: number;
   xpGain?: number;
   strength?: number;
   defense?: number;
@@ -748,8 +747,13 @@ export interface CloudCharacterPatch {
   level?: number;
   xp?: number;
   restoreEnergy?: boolean;
-  finishMission?: boolean;
+  restoreHealth?: boolean;
+  accelerateActivity?: boolean;
   itemId?: string;
+  materialId?: string;
+  materialQuantity?: number;
+  craftedItemId?: string;
+  craftedItemQuantity?: number;
   cosmeticId?: string;
   transformationId?: string;
 }
@@ -766,7 +770,8 @@ export function patchCloudCharacterState(raw: unknown, patch: CloudCharacterPatc
 
   if (patch.zeniDelta) after.zeni = clampAdminInt((before.zeni ?? 0) + patch.zeniDelta, 0, ADMIN_LIMITS.zeni);
   if (patch.crystalDelta) after.crystals = clampAdminInt((before.crystals ?? 0) + patch.crystalDelta, 0, ADMIN_LIMITS.crystals);
-  if (patch.ballDelta) after.dragonBalls = clampAdminInt((before.dragonBalls ?? 0) + patch.ballDelta, 0, ADMIN_LIMITS.dragonBalls);
+  // Esferas não são restauráveis/editáveis pelo snapshot: a fonte de verdade
+  // é DragonBallPossession no mundo global.
   if (patch.xpGain && patch.xpGain > 0) after.xp = clampAdminInt((before.xp ?? 0) + Math.floor(patch.xpGain), 0, ADMIN_LIMITS.xp);
   if (patch.strength !== undefined) after.strength = clampAdminInt(patch.strength, 0, ADMIN_LIMITS.stat);
   if (patch.defense !== undefined) after.defense = clampAdminInt(patch.defense, 0, ADMIN_LIMITS.stat);
@@ -774,12 +779,52 @@ export function patchCloudCharacterState(raw: unknown, patch: CloudCharacterPatc
   if (patch.ki !== undefined) after.ki = clampAdminInt(patch.ki, 0, ADMIN_LIMITS.stat);
   if (patch.level !== undefined) after.level = clampAdminInt(patch.level, 1, ADMIN_LIMITS.level);
   if (patch.xp !== undefined) after.xp = clampAdminInt(patch.xp, 0, ADMIN_LIMITS.xp);
-  if (patch.restoreEnergy) after.energy = MAX_ACTION_ENERGY; // mesma fórmula do jogo
-  // "completar profissão" na nuvem = turno vence agora (o jogador coleta
-  // o pagamento normalmente quando entrar)
-  if (patch.finishMission && after.missionId && after.missionEndsAt) {
-    after.missionEndsAt = new Date(Date.now() - 1000).toISOString();
+  if (patch.restoreEnergy) after.energy = MAX_ACTION_ENERGY;
+  if (patch.restoreHealth) {
+    after.hp = Math.max(1, 80 + Math.max(1, after.level ?? 1) * 15 + Math.max(0, after.defense ?? 0) * 5);
   }
+  if (patch.accelerateActivity) {
+    const doneAt = new Date(Date.now() - 1000).toISOString();
+    if (after.missionId && after.missionEndsAt) after.missionEndsAt = doneAt;
+    if (after.craftJob) after.craftJob = { ...after.craftJob, endsAt: doneAt };
+    // Batalhas/Busca vivem na tabela Activity e portanto só podem ser
+    // aceleradas quando o personagem está carregado no servidor local.
+  }
+
+  if (patch.materialId) {
+    const material = getProfessionMaterial(patch.materialId) ?? getCraftStackItem(patch.materialId);
+    if (material) {
+      const quantity = clampAdminInt(patch.materialQuantity ?? 1, 1, 999);
+      const materials = [...(after.materials ?? [])];
+      const idx = materials.findIndex((entry) => entry.itemId === patch.materialId);
+      if (idx >= 0) {
+        materials[idx] = {
+          itemId: patch.materialId,
+          quantity: Math.min(1_000_000, materials[idx].quantity + quantity),
+        };
+      } else {
+        materials.push({ itemId: patch.materialId, quantity });
+      }
+      after.materials = materials.slice(0, 200);
+    }
+  }
+
+  if (patch.craftedItemId) {
+    const crafted = getCraftedItem(patch.craftedItemId);
+    if (crafted) {
+      const quantity = clampAdminInt(patch.craftedItemQuantity ?? 1, 1, 999);
+      const items = { ...(after.items ?? { weapon: null, armor: null, accessory: null, owned: [], consumables: {} }) };
+      items.consumables = { ...(items.consumables ?? {}) };
+      items.owned = [...(items.owned ?? [])];
+      if (crafted.category === 'consumable') {
+        items.consumables[crafted.id] = Math.min(999, (items.consumables[crafted.id] ?? 0) + quantity);
+      } else if (!items.owned.includes(crafted.id) && items.owned.length < 200) {
+        items.owned.push(crafted.id);
+      }
+      after.items = items;
+    }
+  }
+
   // dar item/cosmético/transformação direto no estado
   if (patch.itemId) {
     const item = getItem(patch.itemId);
