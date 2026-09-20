@@ -10,8 +10,13 @@ import type { RaceCombatDef, RaceEconomyDef, RaceId } from './types';
 // Nenhuma rota pode alterar atributos/saldos sem passar por aqui.
 // =====================================================================
 
-/** Limite máximo absoluto de qualquer atributo. */
-export const STAT_CAP = 999;
+/**
+ * Não existe mais teto de gameplay para atributos. O limite abaixo é
+ * exclusivamente técnico: protege a coluna INTEGER do banco contra overflow.
+ * Ele NÃO é exibido ao jogador, não é tratado como objetivo/máximo e fica
+ * milhares de vezes acima do antigo cap 999.
+ */
+export const STAT_STORAGE_LIMIT = 2_000_000_000;
 
 /**
  * VERSÃO DO BALANCEAMENTO (v0.6) — política de atualizações:
@@ -160,23 +165,25 @@ export type StatKey = 'strength' | 'defense' | 'speed' | 'ki';
 
 export function capStat(value: number): number {
   if (!Number.isFinite(value)) return 0;
-  return Math.min(STAT_CAP, Math.max(0, Math.floor(value)));
+  return Math.min(STAT_STORAGE_LIMIT, Math.max(0, Math.floor(value)));
 }
 
 /**
  * Única forma permitida de aumentar/diminuir atributos.
- * Aplica o limite global (STAT_CAP) — Elixir, desejos, treino, Zenkai,
- * bônus raciais e qualquer fonte futura passam obrigatoriamente por aqui.
+ * Sem teto de gameplay: Elixir, desejos, treino, Zenkai e profissões podem
+ * continuar elevando atributos indefinidamente do ponto de vista do jogo.
+ * Só existe proteção técnica contra overflow do armazenamento.
  */
 export function addStat(player: Pick<Player, StatKey>, stat: StatKey, amount: number): { before: number; after: number; capped: boolean } {
   const before = player[stat];
   const after = capStat(before + amount);
   player[stat] = after;
-  return { before, after, capped: after === STAT_CAP && after > before };
+  return { before, after, capped: after === STAT_STORAGE_LIMIT && after > before };
 }
 
+/** @deprecated Não há mais cap de gameplay. Mantido apenas para compatibilidade. */
 export function statAtCap(player: Pick<Player, StatKey>, stat: StatKey): boolean {
-  return player[stat] >= STAT_CAP;
+  return player[stat] >= STAT_STORAGE_LIMIT;
 }
 
 // ===== Raças: helpers com fallback seguro =====
