@@ -90,11 +90,12 @@ describe('PvP offline e preservação do estado', () => {
     expect(after.zeni).toBe(target.zeni);
     expect(after.battlesLost).toBe(target.battlesLost);
   });
-  test('mantém restrições de nível e de autoataque', async () => {
+  test('mantém autoataque proibido e permite desafio sem limite de nível', async () => {
     const attacker = await db.player.findUniqueOrThrow({ where: { name: 'Online Attacker' } });
     await expect(db.$transaction((tx) => actionStartPvp(tx, attacker, attacker.id))).rejects.toThrow('si mesmo');
     await db.player.update({ where: { id: 'offline-test-1' }, data: { level: attacker.level + 6 } });
-    await expect(db.$transaction((tx) => actionStartPvp(tx, attacker, 'offline-test-1'))).rejects.toThrow('5 níveis');
+    const result = await db.$transaction((tx) => actionStartPvp(tx, attacker, 'offline-test-1'));
+    expect(result.activity).toBeDefined();
   });
   test('snapshots pré-reset não ressuscitam jogadores', async () => {
     await db.gameMeta.create({ data: { key: 'serverResetAt', value: new Date(Date.now() + 60000).toISOString() } });
