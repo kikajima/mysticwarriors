@@ -57,7 +57,7 @@ export const TECHNIQUES: TechniqueDef[] = [
   {
     id: 'kienzan',
     name: 'Kienzan',
-    description: 'Disco Destruidor: um disco de Ki que corta absolutamente qualquer coisa.',
+    description: 'Disco de Ki de alta perfuração: ignora parte da defesa, mas é um pouco mais fácil de esquivar.',
     type: 'energy',
     category: 'basic',
     power: 1.4,
@@ -71,7 +71,7 @@ export const TECHNIQUES: TechniqueDef[] = [
   {
     id: 'dodonpa',
     name: 'Dodonpa',
-    description: 'O raio mortal da Escola da Garça, disparado pela ponta dos dedos.',
+    description: 'Raio concentrado da Escola da Garça, disparado pela ponta dos dedos com leve bônus de precisão.',
     type: 'energy',
     category: 'basic',
     power: 1.32,
@@ -84,7 +84,7 @@ export const TECHNIQUES: TechniqueDef[] = [
   {
     id: 'kikoho',
     name: 'Kikoho',
-    description: 'Canhão de Ki em forma de triângulo. Arriscado para quem usa — devastador para o alvo.',
+    description: 'Canhão de Ki em forma de triângulo, concentrado em um único disparo de alto poder.',
     type: 'energy',
     category: 'advanced',
     power: 1.45,
@@ -97,7 +97,7 @@ export const TECHNIQUES: TechniqueDef[] = [
   {
     id: 'makankosappo',
     name: 'Makankosappo',
-    description: 'Canhão Especial de Raio: concentração total, disparo perfurante, orgulho namekuseijin.',
+    description: 'Canhão Especial de Raio: disparo de alta potência, preciso e capaz de ignorar parte da defesa.',
     type: 'energy',
     category: 'advanced',
     power: 1.5,
@@ -124,7 +124,7 @@ export const TECHNIQUES: TechniqueDef[] = [
   {
     id: 'kaioken',
     name: 'Kaioken ×20',
-    description: 'Multiplica todo o seu poder de luta por instantes. O corpo cobra o preço depois.',
+    description: 'Explosão física concentrada em um único ataque de alto poder.',
     type: 'physical',
     category: 'advanced',
     power: 1.5,
@@ -150,7 +150,7 @@ export const TECHNIQUES: TechniqueDef[] = [
   {
     id: 'genki_dama',
     name: 'Genki Dama',
-    description: 'A Esfera da Genki: energia de todo o universo vivo concentrada em um único golpe.',
+    description: 'Golpe supremo de enorme poder e perfuração, mas mais fácil de esquivar.',
     type: 'energy',
     category: 'supreme',
     power: 1.75,
