@@ -127,7 +127,10 @@ describe('contratos anti-regressão de latência', () => {
   test('request novo não faz leitura de dedup antes do INSERT e pós-commit roda em paralelo', async () => {
     const route = await Bun.file(path.join(process.cwd(), 'src/app/api/game/action/route.ts')).text();
     expect(route).not.toContain('// FAST PATH (leitura, sem lock)');
-    expect(route).toContain('const [fresh] = await Promise.all([loadFresh(), cacheResultPromise])');
+    expect(route).toContain('const [fresh, dragonBallsAvailable] = await Promise.all([');
+    expect(route).toContain('loadFresh(),');
+    expect(route).toContain("db.dragonBallPossession.count({ where: { playerId: null } })");
+    expect(route).toContain('cacheResultPromise,');
     expect(route).toContain('void db.requestDedup.deleteMany');
   });
 
