@@ -44,7 +44,7 @@ import { RACES } from '@/lib/game/content/races';
 import { TECHNIQUES, STRATEGIES } from '@/lib/game/content/techniques';
 import { TRANSFORMATIONS } from '@/lib/game/content/transformations';
 import { PROFESSIONS, PROFESSION_MATERIALS, SHOP_ITEMS, MAX_CHARACTERS_PER_ACCOUNT } from '@/lib/game/content/world';
-import { CRAFTED_ITEMS, CRAFT_STACK_ITEMS, CRAFT_RECIPES, getCraftRecipe } from '@/lib/game/content/crafting';
+import { CRAFTED_ITEMS, CRAFT_STACK_ITEMS, CRAFT_RECIPES, MAX_CRAFT_BATCH, getCraftRecipe } from '@/lib/game/content/crafting';
 import { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS } from '@/lib/game/content/quests';
 import { TALENTS } from '@/lib/game/content/talents';
 import { TOURNAMENT_ROUNDS } from '@/lib/game/content/tournament';
@@ -117,6 +117,7 @@ export interface CloudCraftJobSnapshot {
   outputItemId: string;
   outputQuantity: number;
   outputKind: 'stack' | 'player_item';
+  batchQuantity: number;
   academicLevelStart: number;
   startedAt: string;
   endsAt: string;
@@ -382,11 +383,20 @@ function sanitizeCraftJob(raw: unknown): CloudCraftJobSnapshot | null {
     sanitizeIsoDate(c.startedAt, 14 * 86400_000, 5 * 60_000) ??
     new Date(endsAt.getTime() - recipe.baseDurationMin * 60_000);
 
+  const inferredBatch = Math.max(
+    1,
+    Math.min(
+      MAX_CRAFT_BATCH,
+      clampInt(c.batchQuantity ?? Math.max(1, Math.floor(Number(c.outputQuantity ?? recipe.outputQuantity) / recipe.outputQuantity)), [1, MAX_CRAFT_BATCH])
+    )
+  );
+
   return {
     recipeId: recipe.id,
     outputItemId: recipe.outputItemId,
-    outputQuantity: recipe.outputQuantity,
+    outputQuantity: recipe.outputQuantity * inferredBatch,
     outputKind: recipe.outputKind,
+    batchQuantity: inferredBatch,
     academicLevelStart: clampInt(c.academicLevelStart, [0, 10]),
     startedAt: startedAt.toISOString(),
     endsAt: endsAt.toISOString(),
