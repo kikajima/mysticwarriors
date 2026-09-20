@@ -549,7 +549,7 @@ export class CloudValidationError extends Error {
 function sanitizeItems(raw: unknown): ItemsState {
   const src = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const owned = dedupeFilter(src.owned, KNOWN.items, 200);
-  const pickEquipped = (key: 'weapon' | 'armor' | 'accessory'): string | null => {
+  const pickEquipped = (key: 'weapon' | 'armor' | 'accessory' | 'head' | 'wrists' | 'legs' | 'boots'): string | null => {
     const id = asString(src[key], 64);
     return id && KNOWN.items.has(id) && owned.includes(id) ? id : null;
   };
@@ -580,6 +580,10 @@ function sanitizeItems(raw: unknown): ItemsState {
     weapon: pickEquipped('weapon'),
     armor: pickEquipped('armor'),
     accessory: pickEquipped('accessory'),
+    head: pickEquipped('head'),
+    wrists: pickEquipped('wrists'),
+    legs: pickEquipped('legs'),
+    boots: pickEquipped('boots'),
     owned,
     consumables,
     stacks,
