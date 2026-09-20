@@ -32,6 +32,12 @@ const muteSchema = z.object({
   targetId: z.string().min(1).max(80),
 });
 
+const relationSchema = z.object({
+  action: z.enum(['friend_add', 'friend_remove', 'block', 'unblock']),
+  playerId: z.string().min(1).max(80).optional(),
+  targetId: z.string().min(1).max(80),
+});
+
 function parseBefore(value: string | null): Date | null {
   if (!value) return null;
   const date = new Date(value);
@@ -50,6 +56,27 @@ async function mutedIds(playerId: string): Promise<string[]> {
   return rows.map((row) => row.mutedPlayerId);
 }
 
+async function blockedIds(playerId: string): Promise<string[]> {
+  const rows = await db.playerRelation.findMany({
+    where: { playerId, status: 'blocked' },
+    select: { targetPlayerId: true },
+  });
+  return rows.map((row) => row.targetPlayerId);
+}
+
+async function blockedEitherWay(playerId: string, targetId: string): Promise<boolean> {
+  const count = await db.playerRelation.count({
+    where: {
+      status: 'blocked',
+      OR: [
+        { playerId, targetPlayerId: targetId },
+        { playerId: targetId, targetPlayerId: playerId },
+      ],
+    },
+  });
+  return count > 0;
+}
+
 async function listMessages(request: Request) {
   const auth = await requireAuth();
   const player = await requireChatPlayer(auth, requestPlayerId(request));
@@ -60,9 +87,9 @@ async function listMessages(request: Request) {
   }
 
   const before = parseBefore(url.searchParams.get('before'));
-  const muted = await mutedIds(player.id);
-  const visibleSender: Prisma.ChatMessageWhereInput | undefined = muted.length
-    ? { OR: [{ senderPlayerId: player.id }, { senderPlayerId: { notIn: muted } }] }
+  const hidden = Array.from(new Set([...(await mutedIds(player.id)), ...(await blockedIds(player.id))]));
+  const visibleSender: Prisma.ChatMessageWhereInput | undefined = hidden.length
+    ? { OR: [{ senderPlayerId: player.id }, { senderPlayerId: { notIn: hidden } }] }
     : undefined;
 
   let channelWhere: Prisma.ChatMessageWhereInput;
@@ -106,6 +133,7 @@ async function listConversations(request: Request) {
   const auth = await requireAuth();
   const player = await requireChatPlayer(auth, requestPlayerId(request));
   const muted = new Set(await mutedIds(player.id));
+  const blocked = new Set(await blockedIds(player.id));
   const rows = await db.chatMessage.findMany({
     where: {
       channel: 'private',
@@ -128,7 +156,7 @@ async function listConversations(request: Request) {
     const mine = row.senderPlayerId === player.id;
     const otherId = mine ? row.recipientPlayerId : row.senderPlayerId;
     const otherName = mine ? row.recipientName : row.senderName;
-    if (!otherId || !otherName || seen.has(otherId) || muted.has(otherId)) continue;
+    if (!otherId || !otherName || seen.has(otherId) || muted.has(otherId) || blocked.has(otherId)) continue;
     seen.add(otherId);
     conversations.push({
       playerId: otherId,
@@ -172,11 +200,18 @@ async function context(request: Request) {
 
   if (!player) return ok({ authenticated: true, player: null, muted: [] });
 
-  const muted = await db.chatMute.findMany({
-    where: { playerId: player.id },
-    select: { mutedPlayerId: true, mutedPlayerName: true, createdAt: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  const [muted, relations] = await Promise.all([
+    db.chatMute.findMany({
+      where: { playerId: player.id },
+      select: { mutedPlayerId: true, mutedPlayerName: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.playerRelation.findMany({
+      where: { playerId: player.id },
+      select: { targetPlayerId: true, targetPlayerName: true, status: true, createdAt: true },
+      orderBy: { targetPlayerName: 'asc' },
+    }),
+  ]);
   return ok({
     authenticated: true,
     player: {
@@ -189,6 +224,16 @@ async function context(request: Request) {
     muted: muted.map((row) => ({
       playerId: row.mutedPlayerId,
       name: row.mutedPlayerName,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    friends: relations.filter((row) => row.status === 'friend').map((row) => ({
+      playerId: row.targetPlayerId,
+      name: row.targetPlayerName,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    blocked: relations.filter((row) => row.status === 'blocked').map((row) => ({
+      playerId: row.targetPlayerId,
+      name: row.targetPlayerName,
       createdAt: row.createdAt.toISOString(),
     })),
   });
@@ -221,6 +266,9 @@ async function sendMessage(data: z.infer<typeof sendSchema>) {
       select: { id: true, name: true },
     });
     if (!target) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado.');
+    if (await blockedEitherWay(player.id, target.id)) {
+      throw new ApiError('FORBIDDEN', 'A conversa privada está indisponível porque existe um bloqueio entre estes personagens.');
+    }
     const mutedByMe = await db.chatMute.findUnique({
       where: { playerId_mutedPlayerId: { playerId: player.id, mutedPlayerId: target.id } },
       select: { id: true },
@@ -286,6 +334,75 @@ async function changeMute(data: z.infer<typeof muteSchema>) {
   return ok({ muted: true, target: { playerId: target.id, name: target.name } });
 }
 
+async function changeRelation(data: z.infer<typeof relationSchema>) {
+  const auth = await requireAuth();
+  const player = await requireChatPlayer(auth, data.playerId);
+  if (data.targetId === player.id) throw new ApiError('VALIDATION_ERROR', 'Você não pode criar uma relação consigo mesmo.');
+
+  const target = await db.player.findFirst({
+    where: { id: data.targetId, isBot: false },
+    select: { id: true, name: true },
+  });
+  if (!target) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado.');
+
+  if (data.action === 'friend_add') {
+    if (await blockedEitherWay(player.id, target.id)) {
+      throw new ApiError('FORBIDDEN', 'Remova o bloqueio antes de adicionar este guerreiro como amigo.');
+    }
+    await db.$transaction(async (tx) => {
+      await tx.playerRelation.upsert({
+        where: { playerId_targetPlayerId: { playerId: player.id, targetPlayerId: target.id } },
+        update: { status: 'friend', targetPlayerName: target.name },
+        create: { playerId: player.id, targetPlayerId: target.id, targetPlayerName: target.name, status: 'friend' },
+      });
+      await tx.playerRelation.upsert({
+        where: { playerId_targetPlayerId: { playerId: target.id, targetPlayerId: player.id } },
+        update: { status: 'friend', targetPlayerName: player.name },
+        create: { playerId: target.id, targetPlayerId: player.id, targetPlayerName: player.name, status: 'friend' },
+      });
+    });
+    return ok({ status: 'friend', target: { playerId: target.id, name: target.name } });
+  }
+
+  if (data.action === 'friend_remove') {
+    await db.playerRelation.deleteMany({
+      where: {
+        status: 'friend',
+        OR: [
+          { playerId: player.id, targetPlayerId: target.id },
+          { playerId: target.id, targetPlayerId: player.id },
+        ],
+      },
+    });
+    return ok({ status: null, target: { playerId: target.id, name: target.name } });
+  }
+
+  if (data.action === 'unblock') {
+    await db.playerRelation.deleteMany({
+      where: { playerId: player.id, targetPlayerId: target.id, status: 'blocked' },
+    });
+    return ok({ status: null, target: { playerId: target.id, name: target.name } });
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.playerRelation.deleteMany({
+      where: {
+        status: 'friend',
+        OR: [
+          { playerId: player.id, targetPlayerId: target.id },
+          { playerId: target.id, targetPlayerId: player.id },
+        ],
+      },
+    });
+    await tx.playerRelation.upsert({
+      where: { playerId_targetPlayerId: { playerId: player.id, targetPlayerId: target.id } },
+      update: { status: 'blocked', targetPlayerName: target.name },
+      create: { playerId: player.id, targetPlayerId: target.id, targetPlayerName: target.name, status: 'blocked' },
+    });
+  });
+  return ok({ status: 'blocked', target: { playerId: target.id, name: target.name } });
+}
+
 export async function GET(request: Request) {
   try {
     const view = new URL(request.url).searchParams.get('view') ?? 'context';
@@ -306,6 +423,11 @@ export async function POST(request: Request) {
       const parsed = sendSchema.safeParse(raw);
       if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message);
       return await sendMessage(parsed.data);
+    }
+    if (['friend_add', 'friend_remove', 'block', 'unblock'].includes(raw?.action)) {
+      const parsed = relationSchema.safeParse(raw);
+      if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Ação social inválida.');
+      return await changeRelation(parsed.data);
     }
     const parsed = muteSchema.safeParse(raw);
     if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Ação inválida.');
