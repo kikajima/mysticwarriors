@@ -184,7 +184,7 @@ export function WorkshopPanel({
 
   return (
     <div className="space-y-6">
-      <SectionTitle icon="🔧">Oficina de Crafting</SectionTitle>
+      <SectionTitle icon="🔧">Oficina</SectionTitle>
 
       <GameCard className="p-4">
         <p className="text-sm text-amber-100/80">
