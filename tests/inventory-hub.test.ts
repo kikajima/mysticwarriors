@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { EQUIPPED_SLOT_META, EQUIPPED_SLOTS } from '../src/lib/game/types';
 
 describe('Inventário — reorganização de navegação e responsabilidades', () => {
   test('Inventário substitui Oficina na navegação principal e contém as três subabas', async () => {
@@ -24,15 +25,17 @@ describe('Inventário — reorganização de navegação e responsabilidades', (
     expect(shop).not.toContain("type: 'use_item'");
   });
 
-  test('Equipamento publica os sete slots corporais como slots reais', async () => {
+  test('Equipamento publica oito espaços, incluindo Acessório II logo abaixo do I', async () => {
     const inventory = await Bun.file(`${import.meta.dir}/../src/components/game/InventoryPanel.tsx`).text();
 
-    for (const label of ['Cabeça', 'Torso', 'Pernas', 'Botas', 'Punhos', 'Acessório', 'Arma']) {
-      expect(inventory).toContain(`label: '${label}'`);
-    }
-    for (const slot of ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots']) {
+    expect(EQUIPPED_SLOTS).toHaveLength(8);
+    expect(EQUIPPED_SLOT_META.accessory.label).toBe('Acessório I');
+    expect(EQUIPPED_SLOT_META.accessory2.label).toBe('Acessório II');
+    for (const slot of EQUIPPED_SLOTS) {
       expect(inventory).toContain(`key: '${slot}'`);
     }
+    expect(inventory).toContain("accessory', ...EQUIPPED_SLOT_META.accessory, grid: 'col-start-3 row-start-2'");
+    expect(inventory).toContain("accessory2', ...EQUIPPED_SLOT_META.accessory2, grid: 'col-start-3 row-start-3'");
 
     expect(inventory).not.toContain('backing:');
     expect(inventory).toContain("type: 'equip'");
