@@ -3,11 +3,13 @@ import {
   CRAFT_RECIPES,
   CRAFT_STACK_ITEMS,
   CRAFTED_ITEMS,
+  CRAFT_TIER_PROFESSION_LEVEL,
+  getCraftRecipe,
 } from '../src/lib/game/content/crafting';
 import {
   academicCraftTimeMultiplier,
 } from '../src/lib/game/professionCareer';
-import { craftDurationMs } from '../src/lib/game/crafting';
+import { craftDurationMs, missingCraftProfessionRequirements } from '../src/lib/game/crafting';
 import { PROFESSION_MATERIALS, equippedDragonBallChanceBonus } from '../src/lib/game/content/world';
 
 describe('Oficina — contratos de crafting', () => {
@@ -19,6 +21,69 @@ describe('Oficina — contratos de crafting', () => {
     expect(CRAFT_RECIPES.find((r) => r.id === 'armadura_combate_saiyajin')).toMatchObject({ costZeni: 2500, baseDurationMin: 120, tier: 3 });
     expect(CRAFT_RECIPES.find((r) => r.id === 'senzu_processado')).toMatchObject({ costZeni: 5000, baseDurationMin: 240, tier: 4 });
     expect(CRAFT_RECIPES.find((r) => r.id === 'sala_gravidade_pessoal_100x')).toMatchObject({ costZeni: 20000, baseDurationMin: 720, tier: 5 });
+  });
+
+  test('Tiers 2–5 exigem progressão profissional crescente', () => {
+    expect(CRAFT_TIER_PROFESSION_LEVEL).toEqual({
+      1: 0,
+      2: 2,
+      3: 4,
+      4: 6,
+      5: 8,
+    });
+
+    for (const recipe of CRAFT_RECIPES) {
+      for (const requirement of recipe.professionRequirements ?? []) {
+        expect(requirement.level).toBe(CRAFT_TIER_PROFESSION_LEVEL[recipe.tier]);
+      }
+    }
+
+    const blueprintRequirements = CRAFT_RECIPES
+      .filter((recipe) => recipe.requiresAcademic)
+      .map((recipe) => [recipe.tier, recipe.professionRequirements]);
+    expect(blueprintRequirements).toEqual([
+      [2, [{ professionId: 'academico', level: 2 }]],
+      [3, [{ professionId: 'academico', level: 4 }]],
+      [4, [{ professionId: 'academico', level: 6 }]],
+      [5, [{ professionId: 'academico', level: 8 }]],
+    ]);
+
+    expect(getCraftRecipe('radar_dragao_basico')?.professionRequirements).toEqual([
+      { professionId: 'cientista', level: 2 },
+    ]);
+    expect(getCraftRecipe('armadura_combate_saiyajin')?.professionRequirements).toEqual([
+      { professionId: 'policial', level: 4 },
+      { professionId: 'cientista', level: 4 },
+    ]);
+    expect(getCraftRecipe('senzu_processado')?.professionRequirements).toEqual([
+      { professionId: 'agricultor', level: 6 },
+      { professionId: 'atleta', level: 6 },
+    ]);
+    expect(getCraftRecipe('sala_gravidade_pessoal_100x')?.professionRequirements).toEqual([
+      { professionId: 'cientista', level: 8 },
+      { professionId: 'atleta', level: 8 },
+    ]);
+  });
+
+  test('servidor detecta requisito profissional ausente antes do craft', () => {
+    const radar = getCraftRecipe('radar_dragao_basico');
+    expect(radar).toBeTruthy();
+    if (!radar) return;
+
+    expect(missingCraftProfessionRequirements({ professions: '{}' }, radar)).toEqual([
+      { professionId: 'cientista', requiredLevel: 2, currentLevel: 0 },
+    ]);
+
+    const professions = JSON.stringify({
+      cientista: {
+        hours: 40,
+        lifetimeHours: 40,
+        prestige: 0,
+        statMilliRemainder: 0,
+        cycleStatGranted: 40,
+      },
+    });
+    expect(missingCraftProfessionRequirements({ professions }, radar)).toEqual([]);
   });
 
   test('todo craft Tier 3+ usa insumos de pelo menos duas profissões', () => {
@@ -73,6 +138,13 @@ describe('Oficina — contratos de crafting', () => {
     expect(body).toContain('item.price <= 0');
     expect(body).toContain('Itens fabricados só podem ser obtidos na Oficina');
   });
+  test('Oficina mostra os requisitos profissionais e usa a trava no botão', async () => {
+    const src = await Bun.file(`${import.meta.dir}/../src/components/game/WorkshopPanel.tsx`).text();
+    expect(src).toContain('Requisitos profissionais');
+    expect(src).toContain('professionRequirementsOk');
+    expect(src).toContain('CRAFT_TIER_PROFESSION_LEVEL');
+  });
+
   test('efeitos dos itens fabricados correspondem ao desenho', () => {
     const capsule = CRAFTED_ITEMS.find((i) => i.id === 'capsula_recuperacao_simples');
     const radar = CRAFTED_ITEMS.find((i) => i.id === 'radar_dragao_basico');
