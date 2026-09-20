@@ -68,6 +68,44 @@ function ingredientName(itemId: string): string {
   return getProfessionMaterial(itemId)?.name ?? getCraftStackItem(itemId)?.name ?? itemId;
 }
 
+interface CraftInputSnapshot {
+  itemId: string;
+  quantity: number;
+}
+
+function recipeInputsForBatch(recipe: CraftRecipeDef, batch: number): CraftInputSnapshot[] {
+  return recipe.ingredients.map((ingredient) => ({
+    itemId: ingredient.itemId,
+    quantity: ingredient.quantity * batch,
+  }));
+}
+
+function refundInputsFromJob(
+  raw: string,
+  recipe: CraftRecipeDef,
+  batch: number
+): CraftInputSnapshot[] {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed.length <= 50) {
+      const normalized: CraftInputSnapshot[] = [];
+      for (const entry of parsed) {
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return recipeInputsForBatch(recipe, batch);
+        const itemId = String((entry as Record<string, unknown>).itemId ?? '');
+        const quantity = Math.trunc(Number((entry as Record<string, unknown>).quantity));
+        if (!itemId || !Number.isFinite(quantity) || quantity <= 0 || quantity > 1_000_000) {
+          return recipeInputsForBatch(recipe, batch);
+        }
+        normalized.push({ itemId, quantity });
+      }
+      return normalized;
+    }
+  } catch {
+    // Jobs legados não tinham snapshot de insumos.
+  }
+  return recipeInputsForBatch(recipe, batch);
+}
+
 async function assertStackCapacity(tx: Tx, playerId: string, itemId: string, quantity: number) {
   const current = await tx.inventoryStack.findUnique({
     where: { playerId_itemId: { playerId, itemId } },
@@ -192,6 +230,7 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, quant
   }
 
   const totalCost = recipe.costZeni * batch;
+  const inputIngredients = recipeInputsForBatch(recipe, batch);
   await spendCurrency(tx, player.id, 'zeni', totalCost, {
     type: 'spend',
     source: 'craft',
@@ -199,15 +238,14 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, quant
     metadata: { recipeId: recipe.id, tier: recipe.tier, batch, unitCost: recipe.costZeni, totalCost },
   });
 
-  for (const ingredient of recipe.ingredients) {
-    const needed = ingredient.quantity * batch;
+  for (const ingredient of inputIngredients) {
     const res = await tx.inventoryStack.updateMany({
       where: {
         playerId: player.id,
         itemId: ingredient.itemId,
-        quantity: { gte: needed },
+        quantity: { gte: ingredient.quantity },
       },
-      data: { quantity: { decrement: needed } },
+      data: { quantity: { decrement: ingredient.quantity } },
     });
     if (res.count !== 1) {
       throw new ApiError('VALIDATION_ERROR', 'Seu estoque mudou durante a fabricação. Tente novamente.');
@@ -226,6 +264,8 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, quant
       outputQuantity,
       outputKind: recipe.outputKind,
       academicLevelStart: academicLevel,
+      inputZeni: totalCost,
+      inputIngredients: JSON.stringify(inputIngredients),
       startedAt,
       endsAt,
     },
@@ -327,8 +367,11 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
   }
 
   const batch = job.outputQuantity / recipe.outputQuantity;
-  for (const ingredient of recipe.ingredients) {
-    await assertStackCapacity(tx, player.id, ingredient.itemId, ingredient.quantity * batch);
+  const refundIngredients = refundInputsFromJob(job.inputIngredients, recipe, batch);
+  const refundZeni = job.inputZeni > 0 ? job.inputZeni : recipe.costZeni * batch;
+
+  for (const ingredient of refundIngredients) {
+    await assertStackCapacity(tx, player.id, ingredient.itemId, ingredient.quantity);
   }
 
   const deleted = await tx.craftJob.deleteMany({ where: { id: job.id, playerId: player.id } });
@@ -336,23 +379,22 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
     throw new ApiError('VALIDATION_ERROR', 'Esta fabricação já foi alterada. Recarregue a Oficina.');
   }
 
-  for (const ingredient of recipe.ingredients) {
-    await grantStack(tx, player.id, ingredient.itemId, ingredient.quantity * batch);
+  for (const ingredient of refundIngredients) {
+    await grantStack(tx, player.id, ingredient.itemId, ingredient.quantity);
   }
-  const refundZeni = recipe.costZeni * batch;
   if (refundZeni > 0) {
     await addCurrency(tx, player.id, 'zeni', refundZeni, {
       type: 'refund',
       source: 'craft_cancel',
       accountId: player.accountId,
-      metadata: { recipeId: recipe.id, batch, refundZeni },
+      metadata: { recipeId: recipe.id, batch, refundZeni, refundIngredients },
     });
   }
 
   await trackEvent('craft_cancel', {
     playerId: player.id,
     accountId: player.accountId,
-    metadata: { recipeId: recipe.id, batch, refundZeni },
+    metadata: { recipeId: recipe.id, batch, refundZeni, refundIngredients },
   }, tx);
 
   return {
