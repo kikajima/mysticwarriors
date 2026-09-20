@@ -389,14 +389,14 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
       type: 'refund',
       source: 'craft_cancel',
       accountId: player.accountId,
-      metadata: { recipeId: recipe.id, batch, refundZeni, refundIngredients },
+      metadata: { recipeId: job.recipeId, batch, refundZeni, refundIngredients },
     });
   }
 
   await trackEvent('craft_cancel', {
     playerId: player.id,
     accountId: player.accountId,
-    metadata: { recipeId: recipe.id, batch, refundZeni, refundIngredients },
+    metadata: { recipeId: job.recipeId, batch, refundZeni, refundIngredients },
   }, tx);
 
   return {
