@@ -25,7 +25,6 @@ import {
 import {
   BATTLE_ENERGY_COST,
   HEAL_COST_PER_HP,
-  PVP_LEVEL_RANGE,
   GUILD_CREATION_COST,
   REGEN,
   SHOP_ITEMS,
@@ -292,8 +291,7 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
 
   test('PvP: range de níveis e porcentagens de roubo publicadas', () => {
     const t = wikiText('pvp');
-    expect(PVP_LEVEL_RANGE).toBe(5);
-    expect(t).toContain(`${PVP_LEVEL_RANGE} níveis`);
+    expect(t).toContain('É possível desafiar qualquer nível');
     expect(t).toContain('8%');
     expect(t).toContain('5%');
   });

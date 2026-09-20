@@ -15,6 +15,7 @@ import {
   academicXpBonusPct,
   DRAGON_BALL_SEARCH_ENERGY_COST,
   DRAGON_BALL_SEARCH_SHIFTS,
+  DRAGON_BALL_SEARCH_MAX_CHANCE,
   getItem,
 } from '@/lib/game/constants';
 import { useServerNow } from '@/lib/game/clock';
@@ -485,7 +486,7 @@ function DragonBallSearchTab({
   const accessory = player.items.accessory ? getItem(player.items.accessory) : null;
   const itemBonus = Math.max(0, accessory?.dragonBallSearchChanceBonus ?? 0);
   const baseChance = DRAGON_BALL_SEARCH_SHIFTS.find((shift) => shift.hours === selectedHours)?.chance ?? 0;
-  const chance = Math.min(0.2, baseChance + itemBonus);
+  const chance = Math.min(DRAGON_BALL_SEARCH_MAX_CHANCE, baseChance + itemBonus);
   const remaining = search ? Math.max(0, new Date(search.endsAt).getTime() - now) : 0;
   const totalHours = search ? Math.max(1, Math.ceil((new Date(search.endsAt).getTime() - new Date(search.startedAt).getTime()) / 3600000)) : 0;
   const countdown = remaining > 0
@@ -517,7 +518,7 @@ function DragonBallSearchTab({
                     className={`rounded-lg border px-2 py-2 text-center transition-all disabled:opacity-40 ${selectedHours === shift.hours ? 'border-yellow-400 bg-yellow-950/60 text-yellow-200' : 'border-amber-900/40 bg-black/20 text-amber-200/70'}`}
                   >
                     <span className="font-heading block">{shift.hours}h</span>
-                    <span className="text-[10px]">{Math.round(Math.min(0.2, shift.chance + itemBonus) * 100)}%</span>
+                    <span className="text-[10px]">{Math.round(Math.min(DRAGON_BALL_SEARCH_MAX_CHANCE, shift.chance + itemBonus) * 100)}%</span>
                   </button>
                 ))}
               </div>

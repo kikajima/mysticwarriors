@@ -219,15 +219,24 @@ async function applyDragonBallSearchResult(
   if (!payload.apply.found) {
     return { message: 'A busca terminou sem encontrar uma Esfera do Dragão.', levelsGained: 0 };
   }
-  const result = await tx.player.updateMany({
-    where: { id: player.id, dragonBalls: { lt: 7 } },
-    data: { dragonBalls: { increment: 1 } },
+  const freeStar = await tx.dragonBallPossession.findFirst({
+    where: { playerId: null },
+    orderBy: { star: 'asc' },
   });
-  if (result.count === 0) {
+  const ownedCount = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
+  if (!freeStar || ownedCount >= 7) {
     return { message: 'A busca encontrou uma assinatura, mas seu conjunto já está completo.', levelsGained: 0 };
   }
+  const claimed = await tx.dragonBallPossession.updateMany({
+    where: { star: freeStar.star, playerId: null },
+    data: { playerId: player.id, acquiredAt: new Date() },
+  });
+  if (claimed.count === 0) {
+    return { message: 'Outro guerreiro encontrou essa esfera primeiro. A busca terminou.', levelsGained: 0 };
+  }
+  await tx.player.update({ where: { id: player.id }, data: { dragonBalls: { increment: 1 } } });
   player.dragonBalls = Math.min(7, player.dragonBalls + 1);
-  return { message: `Busca concluída: você encontrou 1 Esfera do Dragão! (${player.dragonBalls}/7)`, levelsGained: 0 };
+  return { message: `Busca concluída: você encontrou a Esfera de ${freeStar.star} estrela${freeStar.star === 1 ? '' : 's'}! (${ownedCount + 1}/7)`, levelsGained: 0 };
 }
 
 // ===== APLICAÇÃO: TREINO =====
@@ -378,18 +387,24 @@ async function applyPvpResult(
   let zeniStolen = 0;
   let zeniLost = 0;
     let dragonBallStolen = 0;
-      if (target && data.dragonBallStealChance > 0 && Math.random() < data.dragonBallStealChance) {
-        const ballTransfer = await tx.player.updateMany({
-          where: { id: target.id, dragonBalls: { gte: 1 } },
-          data: { dragonBalls: { decrement: 1 } },
+  let dragonBallStolenStar: number | undefined;
+      const winnerBalls = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
+      if (target && winnerBalls < 7 && data.dragonBallStealChance > 0 && Math.random() < data.dragonBallStealChance) {
+        const targetBall = await tx.dragonBallPossession.findFirst({
+          where: { playerId: target.id },
+          orderBy: { star: 'asc' },
         });
-        if (ballTransfer.count > 0) {
-          const winnerTransfer = await tx.player.updateMany({
-            where: { id: player.id, dragonBalls: { lt: 7 } },
-            data: { dragonBalls: { increment: 1 } },
+        if (targetBall) {
+          const moved = await tx.dragonBallPossession.updateMany({
+            where: { star: targetBall.star, playerId: target.id },
+            data: { playerId: player.id, acquiredAt: new Date() },
           });
-          if (winnerTransfer.count > 0) dragonBallStolen = 1;
-          else await tx.player.update({ where: { id: target.id }, data: { dragonBalls: { increment: 1 } } });
+          if (moved.count > 0) {
+            dragonBallStolen = 1;
+            dragonBallStolenStar = targetBall.star;
+            await tx.player.update({ where: { id: player.id }, data: { dragonBalls: { increment: 1 } } });
+            await tx.player.update({ where: { id: target.id }, data: { dragonBalls: { decrement: 1 } } });
+          }
         }
       }
   let levelsGained = 0;
@@ -523,11 +538,12 @@ async function applyPvpResult(
     zeniGain: 0,
     zeniStolen,
     dragonBallStolen,
+    dragonBallStolenStar,
     zenkaiGranted: data.zenkai,
   };
 
   const message = data.won
-    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Zeni${dragonBallStolen ? ' e 1 Esfera do Dragão' : ''}!`
+    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Zeni${dragonBallStolen ? ` e a Esfera de ${dragonBallStolenStar} estrela${dragonBallStolenStar === 1 ? '' : 's'}` : ''}!`
     : `${payload.display.battle.enemyName} te derrotou... ${zeniLost > 0 ? `Você perdeu ${zeniLost.toLocaleString('pt-BR')} Zeni ` : ''}mas ganhou experiência.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`;
 
   return { message, levelsGained, battle: finalBattle };

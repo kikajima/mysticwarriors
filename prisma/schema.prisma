@@ -229,6 +229,7 @@ model Player {
   activities       Activity[]
   inventoryStacks  InventoryStack[]
   craftJob         CraftJob?
+  dragonBallPossessions DragonBallPossession[]
   accountActive    Account?  @relation("ActivePlayer")
 
   @@index([accountId])
@@ -236,6 +237,16 @@ model Player {
   @@index([level, battlesWon, xp])
   @@index([isBot])
   @@index([transformationId])
+}
+
+// Posse global: cada estrela existe uma única vez no mundo.
+model DragonBallPossession {
+  star       Int      @id
+  playerId   String?
+  acquiredAt DateTime @default(now())
+  player     Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@index([playerId])
 }
 
 // ===== Inventário relacional de materiais profissionais =====

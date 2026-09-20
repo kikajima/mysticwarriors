@@ -531,6 +531,7 @@ export interface BattleResult extends BattleSimulation {
   crystalsGain?: number;
   zeniStolen?: number;
   dragonBallStolen?: number;
+  dragonBallStolenStar?: number;
   enemyName: string;
   enemyEmoji: string;
   opponentLevel: number;
@@ -677,6 +678,8 @@ export interface RankingEntry {
   isBot: boolean;
   attackable: boolean;
   guildName?: string | null;
+  /** Visível apenas para quem possui o Radar das Esferas. */
+  dragonBallStars?: number[] | null;
   position?: number;
   /** Only level differences restrict ranking challenges. */
   blockReason?: 'level' | null;

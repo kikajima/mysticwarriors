@@ -84,15 +84,6 @@ export function RankingPanel({
   // v0.6 — duelos PvP gastam energia como qualquer batalha
   const noEnergy = player.energy < BATTLE_ENERGY_COST;
 
-  // v0.9.24 (A2) — motivo ESPECÍFICO por impedimento (fim do genérico
-  // "fora de alcance" que contradizia a regra publicada dos ±5 níveis)
-  const blockLabel = (entry: (typeof ranking)[number]): { text: string; title: string } => {
-    return {
-      text: `${Math.abs(entry.level - player.level)} níveis de distância`,
-      title: 'Só é possível desafiar guerreiros com até 5 níveis de diferença.',
-    };
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -154,6 +145,11 @@ export function RankingPanel({
                       {entry.isMe && (
                         <Chip className="ml-2 bg-orange-900/60 text-orange-200 border-orange-700/60">você</Chip>
                       )}
+                      {entry.dragonBallStars && entry.dragonBallStars.length > 0 && (
+                        <Chip className="ml-1.5 bg-orange-950/60 text-orange-300 border-orange-800/50">
+                          🔮 {entry.dragonBallStars.map((star) => `${star}★`).join(' ')}
+                        </Chip>
+                      )}
                       {entry.guildName && (
                         <Chip className="ml-1.5 bg-emerald-950/60 text-emerald-300 border-emerald-800/50">
                           🛡 {entry.guildName}
@@ -192,14 +188,7 @@ export function RankingPanel({
                         >
                           <Crosshair className="w-3.5 h-3.5" /> {noEnergy ? 'Sem energia' : 'Atacar'}
                         </GameButton>
-                      ) : (
-                        <span
-                          className="text-amber-200/30 text-xs italic"
-                          title={blockLabel(entry).title}
-                        >
-                          {blockLabel(entry).text}
-                        </span>
-                      )}
+                      ) : null}
                     </td>
                   </tr>
                 ))}
@@ -227,6 +216,9 @@ export function RankingPanel({
                     {RACE_EMOJI[entry.race]} Nv {entry.level} • ⚡ {entry.power.toLocaleString('pt-BR')} •{' '}
                     {entry.battlesWon}V/{entry.battlesLost}D
                     {entry.guildName ? ` • 🛡 ${entry.guildName}` : ''}
+                    {entry.dragonBallStars && entry.dragonBallStars.length > 0
+                      ? ` • 🔮 ${entry.dragonBallStars.map((star) => `${star}★`).join(' ')}`
+                      : ''}
                   </p>
                 </div>
                 {!entry.isMe &&
@@ -241,11 +233,7 @@ export function RankingPanel({
                     >
                       <Crosshair className="w-3.5 h-3.5" />
                     </GameButton>
-                  ) : (
-                    <span className="text-amber-200/30 text-[10px] italic text-right max-w-[92px]" title={blockLabel(entry).title}>
-                      {blockLabel(entry).text}
-                    </span>
-                  ))}
+                  ) : null)}
               </div>
             ))}
           </div>

@@ -90,6 +90,8 @@ export const DRAGON_BALL_SEARCH_SHIFTS = [
   { hours: 8, chance: 0.16 },
   { hours: 12, chance: 0.20 },
 ] as const;
+export const DRAGON_BALL_SEARCH_MAX_CHANCE = 0.50;
+export const DRAGON_BALL_PVP_STEAL_CHANCE = 0.50;
 
 export function dragonBallSearchShift(hours: number) {
   return DRAGON_BALL_SEARCH_SHIFTS.find((shift) => shift.hours === hours);
@@ -329,6 +331,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'cristal_baba', name: 'Cristal de Uma Estrela', description: 'Amuleto raro que amplifica o fluxo de Ki do portador.', category: 'accessory', price: 2400, minLevel: 6, ki: 18, icon: '🔮' },
   { id: 'potara', name: 'Brinco Potara', description: 'Brincos divinos que fundem o seu Ki com o universo. Apenas um, por favor.', category: 'accessory', price: 8000, minLevel: 12, ki: 34, spd: 10, icon: '💚' },
   { id: 'coracao_dourado', name: 'Coração do Dragão Eterno', description: 'Dizem que Shenlon o cospe ao realizar um desejo impossível.', category: 'accessory', price: 22000, minLevel: 18, atk: 30, def: 30, ki: 30, spd: 30, icon: '❤️‍🔥' },
+  { id: 'radar_esferas', name: 'Radar das Esferas', description: 'Radar premium que aumenta a chance da Busca pelas Esferas em até 30 pontos percentuais, respeitando o limite mundial de 50%.', category: 'accessory', price: 500, currency: 'crystal', minLevel: 1, dragonBallSearchChanceBonus: 0.30, icon: '📡' },
   // Consumíveis (v0.9.2 — custam DIAMANTES; ficam no inventário e são
   // usados sob demanda. Conveniência premium: energia/vida instantâneas
   // e atributos extras numa economia onde energia é escassa.)
@@ -380,7 +383,6 @@ export function trainingGain(owned: string[], stat: 'strength' | 'defense' | 'sp
 
 export const MAX_CHARACTERS_PER_ACCOUNT = 3;
 export const GUILD_CREATION_COST = 5000;
-export const PVP_LEVEL_RANGE = 5;
 
 /** Regeneração base (segundos por ponto) — multiplicadores raciais aplicados pela engine.
  * v0.6: energia recarrega em ~5 MINUTOS por ponto (era 5s) — decisão do

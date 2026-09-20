@@ -39,7 +39,6 @@ export type ErrorCode =
   | 'GUILD_LIMIT'
   | 'CHARACTER_LIMIT_REACHED'
   | 'CHARACTER_NAME_TAKEN'
-  | 'PVP_OUT_OF_RANGE'
   | 'ACTIVITY_IN_PROGRESS'
   | 'TOURNAMENT_COOLDOWN'
   | 'ZENKAI_LIMIT'
@@ -95,7 +94,6 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
   GUILD_LIMIT: 400,
   CHARACTER_LIMIT_REACHED: 409,
   CHARACTER_NAME_TAKEN: 409,
-  PVP_OUT_OF_RANGE: 400,
   ACTIVITY_IN_PROGRESS: 409,
   TOURNAMENT_COOLDOWN: 429,
   ZENKAI_LIMIT: 400,
@@ -198,8 +196,6 @@ function defaultMessage(code: ErrorCode): string {
       return 'Você deve manter pelo menos 1 personagem.';
     case 'GUILD_NAME_TAKEN':
       return 'Já existe uma guilda com este nome.';
-    case 'PVP_OUT_OF_RANGE':
-      return 'Nível do adversário fora do alcance permitido.';
     case 'RATE_LIMITED':
       return 'Muitas tentativas. Aguarde um momento.';
     case 'CONFLICT':

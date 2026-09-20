@@ -60,7 +60,6 @@ import {
   HEAL_COST_PER_HP,
   TRAIN_ENERGY_COST,
   BATTLE_ENERGY_COST,
-  PVP_LEVEL_RANGE,
   MAX_CHARACTERS_PER_ACCOUNT,
   GUILD_CREATION_COST,
   SELL_PRICE_RATIO,
@@ -1211,15 +1210,15 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Progressão',
     summary: 'Regras de ataque, roubo de Zeni, política de vida e o Zenkai.',
     resumo: [
-      'Ataque guerreiros reais ou bots pelo Ranking — **até 5 níveis de diferença**.',
-      'Vencer **rouba 8% do Zeni** da vítima; perder paga 5% do seu.',
+      'Ataque qualquer guerreiro real ou bot pelo Ranking, sem limite de nível.',
+      'Vencer **rouba 8% do Zeni** e pode roubar uma esfera da vítima; perder paga 5% do seu.',
       'A vítima é **sempre atacável**; o atacante pode atacar **durante o próprio trabalho** — só não pode estar em luta em andamento.',
     ],
     blocks: [
-      { kind: 'text', text: 'Todos os guerreiros pertencem ao mesmo servidor. Você pode desafiar um personagem **offline**, sem exigir que o dono esteja conectado. O servidor recupera os personagens salvos na nuvem quando necessário e preserva os resultados do duelo para o próximo login. A diferença máxima continua sendo de 5 níveis.' },
+      { kind: 'text', text: 'Todos os guerreiros pertencem ao mesmo servidor. Você pode desafiar um personagem **offline**, sem exigir que o dono esteja conectado. O servidor recupera os personagens salvos na nuvem quando necessário e preserva os resultados do duelo para o próximo login. Não existe limite de nível para o desafio.' },
       {
         kind: 'text',
-        text: `Ataque pelo Ranking. As regras: diferença máxima de **${PVP_LEVEL_RANGE} níveis**, atacante com pelo menos **20% de vida** e **${BATTLE_ENERGY_COST} de energia** — e fora de luta em andamento (atacar durante o próprio turno de trabalho é permitido). Quem SOFRE o ataque pode estar fazendo qualquer coisa: o duelo processa por completo. (Entrar na luta com pouca vida por vontade própria é a única punição do atacante descuidado.)`,
+        text: `Ataque pelo Ranking. É possível desafiar qualquer nível; o atacante ainda precisa de pelo menos **20% de vida**, **${BATTLE_ENERGY_COST} de energia** e estar fora de outra luta. Atacar durante o próprio turno de trabalho é permitido. Quem SOFRE o ataque pode estar fazendo qualquer coisa: o duelo processa por completo.`,
       },
       {
         kind: 'table',

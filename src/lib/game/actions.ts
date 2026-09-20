@@ -21,6 +21,7 @@ import {
   BATTLE_ENERGY_COST,
   DRAGON_BALL_SEARCH_ENERGY_COST,
   dragonBallSearchShift,
+  DRAGON_BALL_SEARCH_MAX_CHANCE,
   ENEMIES,
   HEAL_COST_PER_HP,
   PROFESSIONS,
@@ -30,7 +31,6 @@ import {
   SHOP_MAX_STACK,
   getProfession,
   getProfessionMaterial,
-  PVP_LEVEL_RANGE,
   TRAIN_ENERGY_COST,
   getItem,
   trainingGain,
@@ -409,7 +409,8 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
 // Busca ativa separada dos turnos: o jogador decide quando gastar energia
 // para procurar, em vez de depender do encerramento de uma profissão.
 async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown): Promise<ActionResult> {
-  if (player.dragonBalls >= 7) {
+  const ownedCount = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
+  if (ownedCount >= 7 || player.dragonBalls >= 7) {
     throw new ApiError('VALIDATION_ERROR', 'Você já reuniu as 7 Esferas do Dragão. Faça um desejo antes de procurar mais.');
   }
   const hours = Number(rawHours);
@@ -427,11 +428,12 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
   const rng = battleRng();
   const items = parseItems(player.items);
   const searchBonus = Math.max(0, getItem(items.accessory ? items.accessory : '')?.dragonBallSearchChanceBonus ?? 0);
-  const chance = Math.min(0.20, shift.chance + searchBonus);
+  const chance = Math.min(DRAGON_BALL_SEARCH_MAX_CHANCE, shift.chance + searchBonus);
+  const freeStars = await tx.dragonBallPossession.count({ where: { playerId: null } });
   const payload: DragonBallSearchActivityResult = {
     kind: 'dragon_ball_search',
     display: { message: `Busca iniciada por ${hours}h. Chance de encontrar 1 esfera: ${Math.round(chance * 100)}%.`, levelsGained: 0 },
-    apply: { found: rng() < chance, chance },
+    apply: { found: freeStars > 0 && rng() < chance, chance },
   };
   const activity = await tx.activity.create({
     data: {
@@ -1051,9 +1053,6 @@ export async function actionStartPvp(tx: Tx, player: Player, targetId: string): 
   if (target.id === player.id) {
     throw new ApiError('VALIDATION_ERROR', 'Você não pode lutar contra si mesmo!');
   }
-  if (Math.abs(target.level - player.level) > PVP_LEVEL_RANGE) {
-    throw new ApiError('PVP_OUT_OF_RANGE', `Só é possível atacar guerreiros com até ${PVP_LEVEL_RANGE} níveis de diferença.`);
-  }
   // v0.9.20 — REGRA DE NEGÓCIO: o estado do ALVO NUNCA protege a vítima.
   // Quem SOFRE a ação pode estar trabalhando, treinando ou lutando — e é
   // atacável normalmente (o combate processa por completo: dano, defesa,
@@ -1472,6 +1471,10 @@ async function actionWish(tx: Tx, player: Player, wishType: string): Promise<Act
   if (consume.count === 0) {
     throw new ApiError('CONFLICT', 'As esferas já foram usadas.');
   }
+  await tx.dragonBallPossession.updateMany({
+    where: { playerId: player.id },
+    data: { playerId: null, acquiredAt: new Date() },
+  });
   player.dragonBalls = 0;
 
   let message = '';

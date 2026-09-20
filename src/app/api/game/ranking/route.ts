@@ -1,8 +1,9 @@
 import { db } from '@/lib/db';
 import { ok, toErrorResponse } from '@/lib/api';
 import { getAuth, requirePlayer } from '@/lib/auth';
-import { PVP_LEVEL_RANGE } from '@/lib/game/content/world';
 import { RACES } from '@/lib/game/content/races';
+import { getItem } from '@/lib/game/content/world';
+import { parseItems } from '@/lib/game/engine';
 import { fetchCloudRanking } from '@/lib/supabase/ranking';
 import type { RaceId, RankingEntry, RankingPage } from '@/lib/game/types';
 
@@ -18,12 +19,18 @@ export async function GET(request: Request) {
     const playerId = searchParams.get('playerId');
 
     // contexto opcional (para attackable/isMe/posição global)
-    let me: { id: string; level: number; name: string } | null = null;
+    let me: { id: string; level: number; name: string; hasRadar: boolean } | null = null;
     const auth = await getAuth();
     if (auth && playerId) {
       try {
         const player = await requirePlayer(auth, playerId);
-        me = { id: player.id, level: player.level, name: player.name };
+        const items = parseItems(player.items);
+        me = {
+          id: player.id,
+          level: player.level,
+          name: player.name,
+          hasRadar: getItem(items.accessory ?? '')?.id === 'radar_esferas',
+        };
       } catch {
         me = null; // personagem inválido → ranking público
       }
@@ -44,6 +51,8 @@ export async function GET(request: Request) {
               level: true,
               battlesWon: true,
               battlesLost: true,
+              items: true,
+              dragonBallPossessions: { select: { star: true }, orderBy: { star: 'asc' } },
               guild: { select: { name: true } },
             },
           })
@@ -53,9 +62,8 @@ export async function GET(request: Request) {
       const entries = cloud.entries.map((e) => {
         const local = byName.get(e.nome);
         const isMe = !!me && (local?.id === me.id || e.nome === me.name);
-        const inRange = !!me && Math.abs((local?.level ?? e.nivel) - me.level) <= PVP_LEVEL_RANGE;
-        const attackable = !!me && !isMe && inRange;
-        const blockReason: RankingEntry['blockReason'] = !me || isMe || inRange ? null : 'level';
+        const attackable = !!me && !isMe;
+        const blockReason: RankingEntry['blockReason'] = null;
         // raça: nuvem (SQL v2) → linha local → desconhecida (vazio)
         const raceRaw = e.raca ?? local?.race ?? '';
         const race = (Object.keys(RACES) as string[]).includes(raceRaw)
@@ -74,6 +82,7 @@ export async function GET(request: Request) {
           attackable,
           blockReason,
           guildName: local?.guild?.name ?? null,
+          dragonBallStars: me?.hasRadar ? (local?.dragonBallPossessions.map((ball) => ball.star) ?? []) : null,
           position: e.posicao,
         };
       });
@@ -108,6 +117,8 @@ export async function GET(request: Request) {
           ki: true,
           battlesWon: true,
           battlesLost: true,
+          items: true,
+          dragonBallPossessions: { select: { star: true }, orderBy: { star: 'asc' } },
           guild: { select: { name: true } },
         },
         skip: (page - 1) * pageSize,
@@ -144,9 +155,10 @@ export async function GET(request: Request) {
       battlesLost: p.battlesLost,
       isMe: me?.id === p.id,
       isBot: false,
-      attackable: !!me && me.id !== p.id && Math.abs(p.level - me.level) <= PVP_LEVEL_RANGE,
-      blockReason: !me || me.id === p.id ? null : Math.abs(p.level - me.level) > PVP_LEVEL_RANGE ? ('level' as const) : null,
+      attackable: !!me && me.id !== p.id,
+      blockReason: null,
       guildName: p.guild?.name ?? null,
+      dragonBallStars: me?.hasRadar ? p.dragonBallPossessions.map((ball) => ball.star) : null,
       position: (page - 1) * pageSize + i + 1,
     }));
 
