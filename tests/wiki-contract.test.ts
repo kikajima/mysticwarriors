@@ -42,7 +42,7 @@ import { IMPETO } from '../src/lib/game/impeto';
 import { POWER_SCALES } from '../src/lib/game/powerScale';
 import { TOURNAMENT_ROUNDS, TOURNAMENT_COOLDOWN_MS, TOURNAMENT_ENTRY_FEE } from '../src/lib/game/content/tournament';
 import { RACES } from '../src/lib/game/content/races';
-import { CRAFT_RECIPES, CRAFT_STACK_ITEMS } from '../src/lib/game/content/crafting';
+import { CRAFT_RECIPES, CRAFT_STACK_ITEMS, CRAFT_TIER_PROFESSION_LEVEL } from '../src/lib/game/content/crafting';
 import {
   ATTACK_COOLDOWN_SEC,
   ATTACK_ENERGY_COST,
@@ -373,9 +373,16 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(t).toContain('Oficina');
     expect(t).toContain('1% por nível');
     expect(t).toContain('10%');
+    for (const tier of [2, 3, 4, 5] as const) {
+      expect(t).toContain(`Tier ${tier}`);
+      expect(t).toContain(`Nv. ${CRAFT_TIER_PROFESSION_LEVEL[tier]}`);
+    }
     for (const recipe of CRAFT_RECIPES) {
       expect(t).toContain(recipe.name);
       expect(t).toContain(recipe.costZeni.toLocaleString('pt-BR'));
+      for (const requirement of recipe.professionRequirements ?? []) {
+        expect(t).toContain(`Nv. ${requirement.level}`);
+      }
     }
     for (const blueprint of CRAFT_STACK_ITEMS) {
       expect(t).toContain(blueprint.name);
