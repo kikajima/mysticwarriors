@@ -1005,7 +1005,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `O trabalho continua contando com o jogo fechado. Você escolhe a duração do turno e coleta tudo ao final. **Quanto maior o turno, maior o bônus de XP e de chance de material raro**; Zeni, atributo, horas de carreira, material comum e a chance de Esfera seguem a regra base. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
+        text: `O trabalho continua contando com o jogo fechado. O **XP é proporcional ao nível do personagem**: cada nível da carreira define quantos pontos de XP você recebe por nível do personagem a cada hora. Ex.: no Nível 1 da profissão são 4 × seu nível por hora; um personagem nível 20 recebe 80 XP/h antes dos bônus. **Quanto maior o turno, maior o bônus de XP e de chance de material raro**; Zeni, atributo, horas de carreira, material comum e a chance de Esfera seguem a regra base. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
       },
       {
         kind: 'table',
@@ -1030,7 +1030,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             `${br(r.cumulativeHours)}h`,
             br(r.zeniPerHour),
             `+${(r.attributeMilliPerHour / 1000).toLocaleString('pt-BR')}`,
-            `${(r.xpPctPerHour * 100).toLocaleString('pt-BR')}%`,
+            `${r.xpPerPlayerLevel} × nível do personagem`,
             `${(r.rareChance * 100).toLocaleString('pt-BR')}%`,
             `${(r.dragonBallChance * 100).toLocaleString('pt-BR')}%`,
           ]),
@@ -1060,6 +1060,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         items: [
           `A carreira fecha o ciclo em **${br(PROFESSION_MASTERY_HOURS)} horas**. No Nível 10 você continua recebendo as recompensas do Nível 10; Mestria/Prestígio será uma etapa própria.`,
           'O ganho de atributo usa frações internas e respeita o teto global de **999**; ao chegar no teto, Zeni, XP, horas e loot continuam normalmente.',
+          'O XP de trabalho é **linear com o nível do personagem**: dobrar o nível dobra o XP base por hora na mesma carreira e duração.',
           'A chance de material raro é testada **uma vez por hora** e recebe o bônus da duração do turno. O material comum nunca deixa de vir: **1–2 unidades por hora**.',
           'A Esfera do Dragão faz **um único teste ao concluir o turno**, independentemente de o turno ter 1h ou 8h.',
           'Cancelar um turno em andamento não concede recompensa parcial.',
