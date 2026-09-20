@@ -7,7 +7,7 @@ import { MAX_ACTION_ENERGY } from '@/lib/game/rules';
 //    conta dona aparece apenas como INFORMAÇÃO;
 //  * TODAS as ações agem sobre o personagem escolhido: dar zenni/
 //    diamantes/esferas, editar atributos, dar XP/nível, restaurar
-//    energia, completar profissão/treinamento, dar itens/auras/
+//    energia/vida, acelerar atividades, dar itens/auras/
 //    cosméticos/transformações e resetar progresso (DAQUELE personagem).
 //
 // QUEM PODE CHAMAR: apenas as rotas /api/admin/* — que validam o admin
@@ -676,7 +676,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           // cosmético sobrevivente). Agora ele ESCREVE O ESTADO INICIAL
           // de um personagem novo (characterInitial.ts — a MESMA fonte
           // da criação) e preserva apenas a IDENTIDADE: id, conta, nome,
-          // raça, sexo e guilda. Todo o resto zera: cosméticos
+          // raça e guilda. Todo o resto zera: cosméticos
           // (comprados e equipados), avatar, itens, auras,
           // transformações, zenni, diamantes, esferas, XP/nível/
           // atributos, vida/energia, conquistas, missões, profissão,
@@ -707,7 +707,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           });
           await trackEvent('admin_reset_progress', { accountId, metadata: { character: fresh.name } }, tx);
           return (
-            `${fresh.name} voltou ao estado de criação — só nome, raça e sexo preservados. ` +
+            `${fresh.name} voltou ao estado de criação — só nome e raça preservados. ` +
             `Zerados: cosméticos, avatar, diamantes (${fresh.crystals}), itens, transformações, ` +
             `conquistas, missões, profissão e pontos de temporada` +
             `${bossRemoved.count > 0 ? ' — dano no Ameaça Universal atual removido' : ''}.`
