@@ -9,6 +9,9 @@ import {
   getCraftRecipe,
   getCraftStackItem,
   MAX_CRAFT_BATCH,
+  craftingLevelFromXp,
+  craftingQueueCapacity,
+  craftingXpReward,
 } from './content/crafting';
 import {
   academicCraftTimeMultiplier,
@@ -110,6 +113,39 @@ async function grantPlayerItem(tx: Tx, player: Player, itemId: string, quantity:
   await updateJsonState(tx, player, { items: JSON.stringify(items) });
 }
 
+async function orderedCraftJobs(tx: Tx, playerId: string) {
+  return tx.craftJob.findMany({
+    where: { playerId },
+    orderBy: [{ position: 'asc' }, { startedAt: 'asc' }],
+  });
+}
+
+async function collapseCraftQueue(
+  tx: Tx,
+  playerId: string,
+  removedPosition: number,
+  shiftMs: number
+): Promise<void> {
+  const later = await tx.craftJob.findMany({
+    where: { playerId, position: { gt: removedPosition } },
+    orderBy: { position: 'asc' },
+  });
+  for (const next of later) {
+    await tx.craftJob.update({
+      where: { id: next.id },
+      data: {
+        position: next.position - 1,
+        ...(shiftMs > 0
+          ? {
+              startedAt: new Date(next.startedAt.getTime() - shiftMs),
+              endsAt: new Date(next.endsAt.getTime() - shiftMs),
+            }
+          : {}),
+      },
+    });
+  }
+}
+
 export async function startCraft(tx: Tx, player: Player, recipeId: string, batchQuantity = 1): Promise<{ message: string }> {
   const recipe = getCraftRecipe(recipeId);
   if (!recipe) throw new ApiError('VALIDATION_ERROR', 'Receita de fabricação inválida.');
@@ -117,9 +153,14 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, batch
     throw new ApiError('VALIDATION_ERROR', `Quantidade de fabricação deve ficar entre 1 e ${MAX_CRAFT_BATCH}.`);
   }
 
-  const existing = await tx.craftJob.findUnique({ where: { playerId: player.id } });
-  if (existing) {
-    throw new ApiError('VALIDATION_ERROR', 'Sua Oficina já está fabricando um item. Colete-o antes de iniciar outro.');
+  const existingJobs = await orderedCraftJobs(tx, player.id);
+  const craftingLevel = craftingLevelFromXp(player.craftingXp);
+  const queueCapacity = craftingQueueCapacity(craftingLevel);
+  if (existingJobs.length >= queueCapacity) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      `Sua fila da Oficina está cheia (${existingJobs.length}/${queueCapacity}). Colete ou cancele uma fabricação, ou aumente sua Maestria da Oficina.`
+    );
   }
 
   const academicLevel = craftAcademicLevel(player);
@@ -133,13 +174,8 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, batch
       `Requisito profissional não atendido: ${professionName} Nível ${requirement.requiredLevel} (atual: ${current}).`
     );
   }
-  // Guarda de compatibilidade para futuras receitas acadêmicas que ainda não
-  // declarem professionRequirements explicitamente.
   if (recipe.requiresAcademic && academicLevel <= 0) {
-    throw new ApiError(
-      'VALIDATION_ERROR',
-      'Este projeto precisa de experiência como Acadêmico.'
-    );
+    throw new ApiError('VALIDATION_ERROR', 'Este projeto precisa de experiência como Acadêmico.');
   }
 
   const ingredientIds = recipe.ingredients.map((i) => i.itemId);
@@ -183,12 +219,16 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, batch
   }
   await tx.inventoryStack.deleteMany({ where: { playerId: player.id, quantity: { lte: 0 } } });
 
-  const startedAt = new Date();
+  const now = Date.now();
+  const previous = existingJobs.at(-1);
+  const position = previous ? previous.position + 1 : 0;
+  const startedAt = new Date(Math.max(now, previous?.endsAt.getTime() ?? now));
   const durationMs = craftDurationMs(recipe.baseDurationMin * batchQuantity, academicLevel);
   const endsAt = new Date(startedAt.getTime() + durationMs);
   await tx.craftJob.create({
     data: {
       playerId: player.id,
+      position,
       recipeId: recipe.id,
       outputItemId: recipe.outputItemId,
       outputQuantity: recipe.outputQuantity * batchQuantity,
@@ -214,17 +254,20 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, batch
       recipeId: recipe.id,
       tier: recipe.tier,
       academicLevel,
+      craftingLevel,
+      queuePosition: position,
       durationMs,
       batchQuantity,
     },
   }, tx);
 
   const reduction = academicLevel > 0 ? academicLevel : 0;
+  const timeText = `${Math.ceil(durationMs / 60_000)} min${reduction > 0 ? ` (Acadêmico -${reduction}%)` : ''}`;
   return {
     message:
-      `🔧 Fabricação iniciada: ${batchQuantity}× ${recipe.name}. ` +
-      `Tempo: ${Math.ceil(durationMs / 60_000)} min` +
-      (reduction > 0 ? ` (Acadêmico -${reduction}%).` : '.'),
+      position === 0
+        ? `🔧 Fabricação iniciada: ${batchQuantity}× ${recipe.name}. Tempo: ${timeText}.`
+        : `📋 ${batchQuantity}× ${recipe.name} adicionado à fila na posição ${position + 1}. Tempo de produção: ${timeText}.`,
   };
 }
 
@@ -248,9 +291,11 @@ function craftRefundIngredients(raw: string): Array<{ itemId: string; quantity: 
   }
 }
 
-export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: string }> {
-  const job = await tx.craftJob.findUnique({ where: { playerId: player.id } });
-  if (!job) throw new ApiError('VALIDATION_ERROR', 'Sua Oficina não tem fabricação para cancelar.');
+export async function cancelCraft(tx: Tx, player: Player, jobId?: string): Promise<{ message: string }> {
+  const job = jobId
+    ? await tx.craftJob.findFirst({ where: { id: jobId, playerId: player.id } })
+    : await tx.craftJob.findFirst({ where: { playerId: player.id }, orderBy: { position: 'asc' } });
+  if (!job) throw new ApiError('VALIDATION_ERROR', 'Sua Oficina não tem esta fabricação para cancelar.');
 
   const recipe = getCraftRecipe(job.recipeId);
   const inferredBatch = Math.max(
@@ -269,6 +314,10 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
       }));
   const refundedZeni = job.spentZeni > 0 ? job.spentZeni : (recipe?.costZeni ?? 0) * inferredBatch;
 
+  const now = Date.now();
+  const effectiveStart = Math.max(now, job.startedAt.getTime());
+  const shiftMs = Math.max(0, job.endsAt.getTime() - effectiveStart);
+
   const removed = await tx.craftJob.deleteMany({ where: { id: job.id, playerId: player.id } });
   if (removed.count !== 1) {
     throw new ApiError('CONFLICT', 'Esta fabricação já foi finalizada ou cancelada.');
@@ -285,9 +334,12 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
       metadata: {
         recipeId: job.recipeId,
         batchQuantity: inferredBatch,
+        queuePosition: job.position,
       },
     });
   }
+
+  await collapseCraftQueue(tx, player.id, job.position, shiftMs);
 
   await trackEvent('craft_cancel', {
     playerId: player.id,
@@ -295,8 +347,10 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
     metadata: {
       recipeId: job.recipeId,
       batchQuantity: inferredBatch,
+      queuePosition: job.position,
       refundedZeni,
       ingredients,
+      queueShiftMs: shiftMs,
     },
   }, tx);
 
@@ -306,7 +360,10 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
 }
 
 export async function claimCraft(tx: Tx, player: Player): Promise<{ message: string }> {
-  const job = await tx.craftJob.findUnique({ where: { playerId: player.id } });
+  const job = await tx.craftJob.findFirst({
+    where: { playerId: player.id },
+    orderBy: { position: 'asc' },
+  });
   if (!job) throw new ApiError('VALIDATION_ERROR', 'Sua Oficina não tem fabricação aguardando coleta.');
   if (job.endsAt.getTime() > Date.now()) {
     const min = Math.max(1, Math.ceil((job.endsAt.getTime() - Date.now()) / 60_000));
@@ -333,6 +390,21 @@ export async function claimCraft(tx: Tx, player: Player): Promise<{ message: str
     await grantPlayerItem(tx, player, job.outputItemId, job.outputQuantity);
   }
 
+  await collapseCraftQueue(tx, player.id, job.position, 0);
+
+  const batchQuantity = Math.max(1, job.batchQuantity || Math.floor(job.outputQuantity / recipe.outputQuantity));
+  const masteryXp = craftingXpReward(recipe.tier, batchQuantity);
+  const previousLevel = craftingLevelFromXp(player.craftingXp);
+  const nextCraftingXp = player.craftingXp + masteryXp;
+  const nextLevel = craftingLevelFromXp(nextCraftingXp);
+  await tx.player.update({
+    where: { id: player.id },
+    data: {
+      craftingXp: { increment: masteryXp },
+      craftsCompleted: { increment: batchQuantity },
+    },
+  });
+
   const outputName =
     getCraftedItem(job.outputItemId)?.name ??
     getCraftStackItem(job.outputItemId)?.name ??
@@ -341,10 +413,20 @@ export async function claimCraft(tx: Tx, player: Player): Promise<{ message: str
   await trackEvent('craft_claim', {
     playerId: player.id,
     accountId: player.accountId,
-    metadata: { recipeId: job.recipeId, outputItemId: job.outputItemId, quantity: job.outputQuantity },
+    metadata: {
+      recipeId: job.recipeId,
+      outputItemId: job.outputItemId,
+      quantity: job.outputQuantity,
+      batchQuantity,
+      masteryXp,
+      craftingLevelBefore: previousLevel,
+      craftingLevelAfter: nextLevel,
+    },
   }, tx);
 
   return {
-    message: `✅ Fabricação concluída: +${job.outputQuantity}× ${outputName}.`,
+    message:
+      `✅ Fabricação concluída: +${job.outputQuantity}× ${outputName}. +${masteryXp} XP de Oficina.` +
+      (nextLevel > previousLevel ? ` 🔧 Maestria da Oficina subiu para o Nível ${nextLevel}!` : ''),
   };
 }
