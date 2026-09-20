@@ -116,7 +116,7 @@ describe('v0.9.10 — parseItems com stacks (retrocompatível)', () => {
 
   test('JSON inválido → estado padrão com stacks vazias', () => {
     const items = parseItems('lixo total');
-    expect(items).toEqual({ weapon: null, armor: null, accessory: null, owned: [], consumables: {}, stacks: {} });
+    expect(items).toEqual({ weapon: null, armor: null, head: null, wrists: null, legs: null, boots: null, accessory: null, owned: [], consumables: {}, stacks: {} });
   });
 });
 
