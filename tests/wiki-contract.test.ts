@@ -382,11 +382,14 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(t).toContain('1% por nível');
     expect(t).toContain('10%');
     expect(t).toContain('canceladas com reembolso integral');
-    expect(t).toContain('7 slots reais');
+    expect(t).toContain('8 espaços equipáveis em 7 categorias');
     expect(t).toContain('Cabeça');
     expect(t).toContain('Punhos');
     expect(t).toContain('Pernas');
     expect(t).toContain('Botas');
+    expect(t).toContain('Acessório I');
+    expect(t).toContain('Acessório II');
+    expect(t).toContain('Oficina é a progressão superior');
     for (const tier of [2, 3, 4, 5] as const) {
       expect(t).toContain(`Tier ${tier}`);
       expect(t).toContain(`Nv. ${CRAFT_TIER_PROFESSION_LEVEL[tier]}`);

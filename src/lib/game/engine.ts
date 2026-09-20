@@ -28,7 +28,7 @@ import { raceCombat, raceEconomy, ACTIVITY_DURATION, dayKey } from './rules';
 import { scaleCombatRules, aberturaChance, SCALE_COMBAT, scaleDiff } from './powerScale';
 import { IMPETO, IMPETO_COMBO_THRESHOLD, clampImpeto, isHeavyBlow, effectiveScalePower } from './impeto';
 import { activityToView } from './activities';
-import { EQUIPMENT_SLOTS } from './types';
+import { EQUIPPED_SLOTS } from './types';
 import type {
   BattleRound,
   BattleSimulation,
@@ -77,16 +77,24 @@ export function parseItems(raw: string): ItemsState {
       const n = typeof qty === 'number' && Number.isFinite(qty) ? Math.floor(qty) : 0;
       if (owned.includes(id) && n >= 2 && n <= 999) stacks[id] = n; // 1 = implícito (sem entrada)
     }
-    const pickSlot = (key: string): string | null => {
+    const pickSlot = (key: string, expectedCategory = key): string | null => {
       const id = parsed[key];
       if (typeof id !== 'string' || !owned.includes(id)) return null;
       const item = getItem(id);
-      return item?.category === key ? id : null;
+      return item?.category === expectedCategory ? id : null;
     };
+    const accessory = pickSlot('accessory', 'accessory');
+    let accessory2 = pickSlot('accessory2', 'accessory');
+    // O mesmo acessório só pode ocupar os dois espaços quando existem
+    // fisicamente duas unidades dele no inventário.
+    if (accessory && accessory2 === accessory && (stacks[accessory] ?? 1) < 2) {
+      accessory2 = null;
+    }
     return {
       weapon: pickSlot('weapon'),
       armor: pickSlot('armor'),
-      accessory: pickSlot('accessory'),
+      accessory,
+      accessory2,
       head: pickSlot('head'),
       wrists: pickSlot('wrists'),
       legs: pickSlot('legs'),
@@ -96,7 +104,7 @@ export function parseItems(raw: string): ItemsState {
       stacks,
     };
   } catch {
-    return { weapon: null, armor: null, accessory: null, head: null, wrists: null, legs: null, boots: null, owned: [], consumables: {}, stacks: {} };
+    return { weapon: null, armor: null, accessory: null, accessory2: null, head: null, wrists: null, legs: null, boots: null, owned: [], consumables: {}, stacks: {} };
   }
 }
 
@@ -190,7 +198,7 @@ function equipmentBonuses(items: ItemsState) {
   let def = 0;
   let spd = 0;
   let ki = 0;
-  for (const slot of EQUIPMENT_SLOTS) {
+  for (const slot of EQUIPPED_SLOTS) {
     const id = items[slot] ?? null;
     if (!id) continue;
     const item = getItem(id);
@@ -219,10 +227,32 @@ export function computeDerived(player: Player): DerivedStats {
   const defPower = Math.round(player.defense * 1.8 * rc.defenseMult * (tm?.defense ?? 1)) + eq.def;
   const resPower = Math.round((player.defense * 1.1 + (player.ki + eq.ki) * 0.9) * rc.defenseMult * (tm?.defense ?? 1));
   const speedTotal = Math.round((player.speed + eq.spd) * rc.speedMult * (tm?.speed ?? 1));
+  const equipmentStatBonuses = {
+    strength: eq.atk,
+    defense: eq.def,
+    speed: eq.spd,
+    ki: eq.ki,
+  };
+  const totalStats = {
+    strength: player.strength + equipmentStatBonuses.strength,
+    defense: player.defense + equipmentStatBonuses.defense,
+    speed: player.speed + equipmentStatBonuses.speed,
+    ki: player.ki + equipmentStatBonuses.ki,
+  };
   const power = Math.round(
     player.level * 15 + atkPower + kiPower * 0.9 + defPower + resPower * 0.6 + speedTotal * 2
   );
-  return { maxHp, maxEnergy, atkPower, kiPower, defPower, resPower, power };
+  return {
+    maxHp,
+    maxEnergy,
+    atkPower,
+    kiPower,
+    defPower,
+    resPower,
+    equipmentBonuses: equipmentStatBonuses,
+    totalStats,
+    power,
+  };
 }
 
 // ===== Progresso de profissões =====

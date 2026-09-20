@@ -311,27 +311,56 @@ export function npcCombatPower(enemy: {
 // =====================================================================
 
 export const SHOP_ITEMS: ShopItem[] = [
-  // Armas (ataque físico)
-  { id: 'luvas', name: 'Luvas de Treino', description: 'Luvas de couro surradas do Mestre Kame. Melhor que soco nu.', category: 'weapon', price: 300, minLevel: 1, atk: 6, icon: '🥊' },
-  { id: 'bastao', name: 'Bastão Sagrado', description: 'O bastão vermelho que cresce infinitamente. Alcance é tudo.', category: 'weapon', price: 900, minLevel: 3, atk: 14, icon: '🪄' },
-  { id: 'katana', name: 'Katana do Gohan', description: 'A lâmina que cortou a armadura de um dinossauro de uma vez só.', category: 'weapon', price: 2500, minLevel: 6, atk: 26, icon: '🗡️' },
-  { id: 'espada_z', name: 'Espada Z', description: 'A lendária espada sagrada do mundo dos Kaioshins. Vai quebrar... talvez.', category: 'weapon', price: 6000, minLevel: 10, atk: 42, icon: '⚔️' },
-  { id: 'punho_dragao', name: 'Punho do Dragão', description: 'Um soco tão forte que invoca um dragão dourado de fogo. Sério.', category: 'weapon', price: 15000, minLevel: 15, atk: 70, icon: '🐲' },
-  { id: 'energia_infinita', name: 'Lâmina do Ki Puro', description: 'Forjada com a energia de uma supernova. Corta a própria gravidade.', category: 'weapon', price: 40000, minLevel: 22, atk: 110, icon: '💫' },
-  // Armaduras (defesa física)
-  { id: 'gi', name: 'Gi de Batalha Laranja', description: 'O uniforme clássico da Escola da Tartaruga. Leve e resistente.', category: 'armor', price: 250, minLevel: 1, def: 5, icon: '🥋' },
-  { id: 'armadura_saiyajin', name: 'Armadura Saiyajin', description: 'Elástica, resistente e estilosa. Padrão do exército de Vegeta.', category: 'armor', price: 800, minLevel: 3, def: 12, icon: '🛡️' },
-  { id: 'armadura_freeza', name: 'Armadura de Elite Freeza', description: 'Technology do Império de Freeza. Absorve impactos mortais.', category: 'armor', price: 2200, minLevel: 6, def: 24, icon: '🦺' },
-  { id: 'traje_ponderado', name: 'Traje Ponderado', description: 'Roupas com pesos escondidos. Tire-as e sinta a diferença.', category: 'armor', price: 5500, minLevel: 10, def: 40, icon: '🧥' },
-  { id: 'armadura_kaio', name: 'Armadura do Grande Kaio', description: 'Benzida pelos próprios deuses do universo 7.', category: 'armor', price: 14000, minLevel: 15, def: 65, icon: '✨' },
-  { id: 'manto_kaioshin', name: 'Manto do Kaioshin', description: 'Tecido dimensional que desvia golpes para outro universo.', category: 'armor', price: 38000, minLevel: 22, def: 100, icon: '👑' },
-  // Acessórios (velocidade + Ki)
-  { id: 'botas', name: 'Botas Ponderadas', description: 'Cada passo é um treino. Fora delas, você voa.', category: 'accessory', price: 400, minLevel: 1, spd: 8, icon: '🥾' },
-  { id: 'bandana', name: 'Bandana do Guerreiro', description: 'Ninguém segura um guerreiro de bandana. Ninguém.', category: 'accessory', price: 600, minLevel: 2, ki: 6, icon: '🎀' },
-  { id: 'cristal_baba', name: 'Cristal de Uma Estrela', description: 'Amuleto raro que amplifica o fluxo de Ki do portador.', category: 'accessory', price: 2400, minLevel: 6, ki: 18, icon: '🔮' },
-  { id: 'potara', name: 'Brinco Potara', description: 'Brincos divinos que fundem o seu Ki com o universo. Apenas um, por favor.', category: 'accessory', price: 8000, minLevel: 12, ki: 34, spd: 10, icon: '💚' },
-  { id: 'coracao_dourado', name: 'Coração do Dragão Eterno', description: 'Dizem que Shenlon o cospe ao realizar um desejo impossível.', category: 'accessory', price: 22000, minLevel: 18, atk: 30, def: 30, ki: 30, spd: 30, icon: '❤️‍🔥' },
-  { id: 'radar_esferas', name: 'Radar das Esferas', description: 'Radar premium que aumenta a chance da Busca pelas Esferas em até 30 pontos percentuais, respeitando o limite mundial de 50%.', category: 'accessory', price: 500, currency: 'crystal', minLevel: 1, dragonBallSearchChanceBonus: 0.30, icon: '📡' },
+  // ===== EQUIPAMENTOS DA LOJA =====
+  // A Oficina continua sendo a progressão de equipamento mais forte.
+  // A loja oferece uma escada útil e acessível, mas não o melhor item final.
+
+  // Armas
+  { id: 'bastao_treino', name: 'Bastão de Treino', description: 'Slot: Arma. Bastão simples para quem está começando. Bônus: +4 ATQ.', category: 'weapon', price: 180, minLevel: 1, atk: 4, icon: '🦯' },
+  { id: 'bastao', name: 'Bastão Sagrado', description: 'Slot: Arma. Alcance e equilíbrio para combate corpo a corpo. Bônus: +9 ATQ.', category: 'weapon', price: 900, minLevel: 3, atk: 9, icon: '🦯' },
+  { id: 'katana', name: 'Katana do Gohan', description: 'Slot: Arma. Lâmina leve que favorece golpes rápidos. Bônus: +18 ATQ e +2 VEL.', category: 'weapon', price: 2600, minLevel: 6, atk: 18, spd: 2, icon: '🗡️' },
+  { id: 'espada_z', name: 'Espada Z', description: 'Slot: Arma. Espada sagrada com boa condução de energia. Bônus: +30 ATQ e +4 KI.', category: 'weapon', price: 7000, minLevel: 10, atk: 30, ki: 4, icon: '⚔️' },
+  { id: 'lamina_capsula', name: 'Lâmina de Liga Capsule', description: 'Slot: Arma. Liga tecnológica leve e estável. Bônus: +45 ATQ e +5 VEL.', category: 'weapon', price: 16000, minLevel: 15, atk: 45, spd: 5, icon: '🗡️' },
+  { id: 'energia_infinita', name: 'Lâmina do Ki Puro', description: 'Slot: Arma. Melhor arma comercial da loja, ainda abaixo das criações de alto Tier da Oficina. Bônus: +65 ATQ e +10 KI.', category: 'weapon', price: 36000, minLevel: 22, atk: 65, ki: 10, icon: '⚔️' },
+
+  // Cabeça
+  { id: 'bandana', name: 'Bandana do Guerreiro', description: 'Slot: Cabeça. Proteção leve que ajuda a manter o foco. Bônus: +2 DEF e +3 KI.', category: 'head', price: 550, minLevel: 2, def: 2, ki: 3, icon: '🎗️' },
+  { id: 'scouter_basico', name: 'Scouter Básico', description: 'Slot: Cabeça. Visor comercial para leitura de energia e reação. Bônus: +5 KI e +2 VEL.', category: 'head', price: 1800, minLevel: 5, ki: 5, spd: 2, icon: '🥽' },
+  { id: 'capacete_saiyajin_loja', name: 'Capacete Saiyajin', description: 'Slot: Cabeça. Proteção militar alienígena de linha comercial. Bônus: +8 DEF e +4 KI.', category: 'head', price: 5200, minLevel: 10, def: 8, ki: 4, icon: '🪖' },
+  { id: 'coroa_kaio', name: 'Coroa de Treino do Kaio', description: 'Slot: Cabeça. Foco e proteção para guerreiros experientes. Bônus: +12 DEF, +8 KI e +3 VEL.', category: 'head', price: 14500, minLevel: 16, def: 12, ki: 8, spd: 3, icon: '👑' },
+
+  // Punhos
+  { id: 'luvas', name: 'Luvas de Treino', description: 'Slot: Punhos. Luvas acolchoadas para impacto físico. Bônus: +4 ATQ.', category: 'wrists', price: 300, minLevel: 1, atk: 4, icon: '🥊' },
+  { id: 'braceletes_tartaruga', name: 'Braceletes da Tartaruga', description: 'Slot: Punhos. Braceletes firmes para ataque e guarda. Bônus: +8 ATQ e +2 DEF.', category: 'wrists', price: 1100, minLevel: 4, atk: 8, def: 2, icon: '🧤' },
+  { id: 'manoplas_capsula', name: 'Manoplas Capsule', description: 'Slot: Punhos. Placas leves de impacto da Corporação Cápsula. Bônus: +14 ATQ e +4 DEF.', category: 'wrists', price: 3600, minLevel: 8, atk: 14, def: 4, icon: '🧤' },
+  { id: 'punho_dragao', name: 'Manoplas do Dragão', description: 'Slot: Punhos. Manoplas comerciais de alta potência inspiradas no Golpe do Dragão. Bônus: +24 ATQ e +5 KI.', category: 'wrists', price: 12000, minLevel: 15, atk: 24, ki: 5, icon: '🥊' },
+
+  // Torso
+  { id: 'gi', name: 'Gi de Batalha Laranja', description: 'Slot: Torso. Uniforme leve da Escola da Tartaruga. Bônus: +4 DEF.', category: 'armor', price: 250, minLevel: 1, def: 4, icon: '🥋' },
+  { id: 'armadura_saiyajin', name: 'Armadura Saiyajin', description: 'Slot: Torso. Armadura flexível de combate. Bônus: +10 DEF.', category: 'armor', price: 800, minLevel: 3, def: 10, icon: '🛡️' },
+  { id: 'armadura_freeza', name: 'Armadura de Elite Freeza', description: 'Slot: Torso. Blindagem militar reforçada. Bônus: +18 DEF.', category: 'armor', price: 2400, minLevel: 6, def: 18, icon: '🦺' },
+  { id: 'traje_ponderado', name: 'Traje Ponderado', description: 'Slot: Torso. Proteção pesada sem eliminar a mobilidade. Bônus: +28 DEF e +3 VEL.', category: 'armor', price: 6500, minLevel: 10, def: 28, spd: 3, icon: '🥋' },
+  { id: 'armadura_kaio', name: 'Armadura do Grande Kaio', description: 'Slot: Torso. Proteção divina comercial de alto nível. Bônus: +42 DEF e +5 KI.', category: 'armor', price: 15000, minLevel: 15, def: 42, ki: 5, icon: '🛡️' },
+  { id: 'manto_kaioshin', name: 'Manto do Kaioshin', description: 'Slot: Torso. Melhor proteção vendida pronta na loja. Bônus: +60 DEF e +8 KI.', category: 'armor', price: 34000, minLevel: 22, def: 60, ki: 8, icon: '🦺' },
+
+  // Pernas
+  { id: 'calca_gi_loja', name: 'Calça de Gi', description: 'Slot: Pernas. Tecido leve para treino e combate. Bônus: +4 DEF e +2 VEL.', category: 'legs', price: 350, minLevel: 1, def: 4, spd: 2, icon: '👖' },
+  { id: 'calca_ponderada_loja', name: 'Calça Ponderada', description: 'Slot: Pernas. Pesos distribuídos para resistência sem travar o movimento. Bônus: +9 DEF e +4 VEL.', category: 'legs', price: 1300, minLevel: 4, def: 9, spd: 4, icon: '👖' },
+  { id: 'grevas_capsula_loja', name: 'Grevas Capsule', description: 'Slot: Pernas. Proteção tecnológica para joelhos e canelas. Bônus: +16 DEF e +7 VEL.', category: 'legs', price: 4200, minLevel: 9, def: 16, spd: 7, icon: '🦿' },
+  { id: 'calca_kaio_loja', name: 'Calça de Combate do Kaio', description: 'Slot: Pernas. Equipamento avançado de mobilidade e defesa. Bônus: +24 DEF, +10 VEL e +4 KI.', category: 'legs', price: 13500, minLevel: 16, def: 24, spd: 10, ki: 4, icon: '👖' },
+
+  // Botas
+  { id: 'botas', name: 'Botas Ponderadas', description: 'Slot: Botas. Pesos discretos que fortalecem arrancadas. Bônus: +5 VEL e +1 DEF.', category: 'boots', price: 400, minLevel: 1, spd: 5, def: 1, icon: '🥾' },
+  { id: 'botas_voo_capsula', name: 'Botas de Voo Capsule', description: 'Slot: Botas. Estabilizadores para aceleração aérea. Bônus: +12 VEL e +2 DEF.', category: 'boots', price: 1700, minLevel: 5, spd: 12, def: 2, icon: '👢' },
+  { id: 'botas_impulso_loja', name: 'Botas de Impulso de Ki', description: 'Slot: Botas. Canalizam energia em deslocamentos curtos. Bônus: +18 VEL e +4 KI.', category: 'boots', price: 5600, minLevel: 10, spd: 18, ki: 4, icon: '👢' },
+  { id: 'botas_kaio_loja', name: 'Botas do Grande Kaio', description: 'Slot: Botas. Melhor calçado comercial para combate de alta velocidade. Bônus: +26 VEL e +6 DEF.', category: 'boots', price: 14500, minLevel: 16, spd: 26, def: 6, icon: '🥾' },
+
+  // Acessórios — dois podem ser equipados simultaneamente
+  { id: 'medalhao_kame', name: 'Medalhão da Tartaruga', description: 'Slot: Acessório I ou II. Medalhão equilibrado para iniciantes. Bônus: +3 ATQ e +3 DEF.', category: 'accessory', price: 900, minLevel: 2, atk: 3, def: 3, icon: '📿' },
+  { id: 'cristal_baba', name: 'Cristal de Uma Estrela', description: 'Slot: Acessório I ou II. Amuleto que amplifica o fluxo de Ki. Bônus: +8 KI.', category: 'accessory', price: 2400, minLevel: 6, ki: 8, icon: '🔮' },
+  { id: 'potara', name: 'Brinco Potara', description: 'Slot: Acessório I ou II. Relíquia divina focada em Ki e reação. Bônus: +14 KI e +6 VEL.', category: 'accessory', price: 8000, minLevel: 12, ki: 14, spd: 6, icon: '💍' },
+  { id: 'coracao_dourado', name: 'Coração do Dragão Eterno', description: 'Slot: Acessório I ou II. Melhor acessório de combate vendido pronto. Bônus: +10 ATQ, +10 DEF, +10 KI e +10 VEL.', category: 'accessory', price: 26000, minLevel: 20, atk: 10, def: 10, ki: 10, spd: 10, icon: '💎' },
+  { id: 'radar_esferas', name: 'Radar das Esferas', description: 'Slot: Acessório I ou II. Aumenta a chance da Busca pelas Esferas em +30 pontos percentuais, respeitando o teto mundial de 50%.', category: 'accessory', price: 500, currency: 'crystal', minLevel: 1, dragonBallSearchChanceBonus: 0.30, icon: '📡' },
   // Consumíveis (v0.9.2 — custam DIAMANTES; ficam no inventário e são
   // usados sob demanda. Conveniência premium: energia/vida instantâneas
   // e atributos extras numa economia onde energia é escassa.)

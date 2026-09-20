@@ -84,7 +84,7 @@ export async function GET(request: Request) {
     const battlesWon = player.battlesWon;
     const xp = player.xp;
     const now = new Date();
-    const [ahead, totalPlayers, questRows, withActivity, guildInvites] = await Promise.all([
+    const [ahead, totalPlayers, questRows, withActivity, guildInvites, dragonBallsAvailable] = await Promise.all([
       db.player.count({
         where: {
           isBot: false,
@@ -111,6 +111,7 @@ export async function GET(request: Request) {
       db.guildInvitation.count({
         where: { playerId: player.id, expiresAt: { gt: now }, guild: { disbandedAt: null } },
       }),
+      db.dragonBallPossession.count({ where: { playerId: null } }),
     ]);
 
     const rankingPosition = ahead + 1;
@@ -127,8 +128,11 @@ export async function GET(request: Request) {
     }
     applyRegen(currentPlayer);
 
+    const playerView = playerToView(currentPlayer, rankingPosition);
+    playerView.dragonBallsAvailable = dragonBallsAvailable;
+
     return ok({
-      player: playerToView(currentPlayer, rankingPosition),
+      player: playerView,
       totalPlayers,
       questsReady,
       guildInvites,

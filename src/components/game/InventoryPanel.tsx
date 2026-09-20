@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { getItem, SELL_PRICE_RATIO } from '@/lib/game/constants';
-import type { EquipmentSlot, ItemsState, PlayerView, ShopItem } from '@/lib/game/types';
+import { EQUIPPED_SLOT_META } from '@/lib/game/types';
+import type { EquipmentSlot, EquippedSlot, ItemsState, PlayerView, ShopItem } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { WorkshopPanel } from './WorkshopPanel';
 import { Backpack, Hammer, Shield, Wrench } from 'lucide-react';
@@ -238,20 +239,21 @@ function ItemInventory({
 }
 
 type DisplaySlot = {
-  key: EquipmentSlot;
+  key: EquippedSlot;
   label: string;
   icon: string;
   grid: string;
 };
 
 const DISPLAY_SLOTS: DisplaySlot[] = [
-  { key: 'head', label: 'Cabeça', icon: '🪖', grid: 'col-start-2 row-start-1' },
-  { key: 'wrists', label: 'Punhos', icon: '🥊', grid: 'col-start-1 row-start-2' },
-  { key: 'armor', label: 'Torso', icon: '🛡️', grid: 'col-start-2 row-start-2' },
-  { key: 'accessory', label: 'Acessório', icon: '💍', grid: 'col-start-3 row-start-2' },
-  { key: 'weapon', label: 'Arma', icon: '⚔️', grid: 'col-start-1 row-start-3' },
-  { key: 'legs', label: 'Pernas', icon: '👖', grid: 'col-start-2 row-start-3' },
-  { key: 'boots', label: 'Botas', icon: '🥾', grid: 'col-start-2 row-start-4' },
+  { key: 'head', ...EQUIPPED_SLOT_META.head, grid: 'col-start-2 row-start-1' },
+  { key: 'wrists', ...EQUIPPED_SLOT_META.wrists, grid: 'col-start-1 row-start-2' },
+  { key: 'armor', ...EQUIPPED_SLOT_META.armor, grid: 'col-start-2 row-start-2' },
+  { key: 'accessory', ...EQUIPPED_SLOT_META.accessory, grid: 'col-start-3 row-start-2' },
+  { key: 'weapon', ...EQUIPPED_SLOT_META.weapon, grid: 'col-start-1 row-start-3' },
+  { key: 'legs', ...EQUIPPED_SLOT_META.legs, grid: 'col-start-2 row-start-3' },
+  { key: 'accessory2', ...EQUIPPED_SLOT_META.accessory2, grid: 'col-start-3 row-start-3' },
+  { key: 'boots', ...EQUIPPED_SLOT_META.boots, grid: 'col-start-2 row-start-4' },
 ];
 
 function EquipmentSlot({
@@ -319,9 +321,13 @@ function EquipmentInventory({
   );
 
   const totals = useMemo(() => {
+    const server = player.derived.equipmentBonuses;
+    if (server) {
+      return { atk: server.strength, def: server.defense, spd: server.speed, ki: server.ki };
+    }
     const out = { atk: 0, def: 0, spd: 0, ki: 0 };
-    for (const slot of ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots'] as const) {
-      const itemId = player.items[slot] ?? null;
+    for (const slot of DISPLAY_SLOTS) {
+      const itemId = player.items[slot.key] ?? null;
       const item = itemId ? getItem(itemId) : undefined;
       if (!item) continue;
       out.atk += item.atk ?? 0;
@@ -330,7 +336,7 @@ function EquipmentInventory({
       out.ki += item.ki ?? 0;
     }
     return out;
-  }, [player.items]);
+  }, [player.derived.equipmentBonuses, player.items]);
 
   const sell = (itemId: string) =>
     onAction({ type: 'sell', itemId, quantity: sellQty[itemId] ?? 1 });
@@ -339,7 +345,7 @@ function EquipmentInventory({
     { key: 'head', label: 'Cabeça', icon: '🪖' },
     { key: 'wrists', label: 'Punhos', icon: '🥊' },
     { key: 'armor', label: 'Torso', icon: '🛡️' },
-    { key: 'accessory', label: 'Acessórios', icon: '💍' },
+    { key: 'accessory', label: 'Acessórios (2 espaços)', icon: '💍' },
     { key: 'weapon', label: 'Armas', icon: '⚔️' },
     { key: 'legs', label: 'Pernas', icon: '👖' },
     { key: 'boots', label: 'Botas', icon: '🥾' },
@@ -392,8 +398,14 @@ function EquipmentInventory({
               <div className="grid md:grid-cols-2 gap-3">
                 {rows.map((item) => {
                   const total = unitsOf(player.items, item.id);
-                  const equipped = (player.items[group.key] ?? null) === item.id;
-                  const sellable = item.price > 0 ? total - (equipped ? 1 : 0) : 0;
+                  const equippedSlots: EquippedSlot[] =
+                    group.key === 'accessory'
+                      ? (['accessory', 'accessory2'] as const).filter(
+                          (slot) => (player.items[slot] ?? null) === item.id
+                        )
+                      : ((player.items[group.key] ?? null) === item.id ? [group.key] : []);
+                  const equipped = equippedSlots.length > 0;
+                  const sellable = item.price > 0 ? total - equippedSlots.length : 0;
                   const q = Math.min(sellQty[item.id] ?? 1, Math.max(1, sellable));
                   return (
                     <GameCard key={item.id} className={`p-4 ${equipped ? 'border-emerald-700/50 bg-emerald-950/15' : ''}`}>
@@ -402,7 +414,11 @@ function EquipmentInventory({
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-heading text-amber-100">{item.name}</p>
-                            {equipped && <Chip className="bg-emerald-950/50 text-emerald-300 border-emerald-700/50">equipado</Chip>}
+                            {equippedSlots.map((slot) => (
+                              <Chip key={slot} className="bg-emerald-950/50 text-emerald-300 border-emerald-700/50">
+                                {slot === 'accessory' ? 'Acessório I' : slot === 'accessory2' ? 'Acessório II' : 'equipado'}
+                              </Chip>
+                            ))}
                             {total > 1 && <Chip className="bg-black/40 text-amber-200/70 border-amber-900/50">×{total}</Chip>}
                           </div>
                           <p className="text-xs text-amber-200/50 mt-1">{item.description}</p>
@@ -412,18 +428,44 @@ function EquipmentInventory({
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <GameButton
-                          size="sm"
-                          variant={equipped ? 'ghost' : 'primary'}
-                          disabled={busy}
-                          onClick={() =>
-                            equipped
-                              ? onAction({ type: 'unequip', slot: group.key })
-                              : onAction({ type: 'equip', itemId: item.id })
-                          }
-                        >
-                          {equipped ? 'Desequipar' : 'Equipar'}
-                        </GameButton>
+                        {group.key === 'accessory' ? (
+                          <>
+                            {(['accessory', 'accessory2'] as const).map((slot) => {
+                              const active = (player.items[slot] ?? null) === item.id;
+                              const otherSlot = slot === 'accessory' ? 'accessory2' : 'accessory';
+                              const sameInOther = (player.items[otherSlot] ?? null) === item.id;
+                              const canUseSecondCopy = !sameInOther || total >= 2;
+                              return (
+                                <GameButton
+                                  key={slot}
+                                  size="sm"
+                                  variant={active ? 'ghost' : 'primary'}
+                                  disabled={busy || (!active && !canUseSecondCopy)}
+                                  onClick={() =>
+                                    active
+                                      ? onAction({ type: 'unequip', slot })
+                                      : onAction({ type: 'equip', itemId: item.id, slot })
+                                  }
+                                >
+                                  {active ? 'Remover' : 'Equipar'} {slot === 'accessory' ? 'I' : 'II'}
+                                </GameButton>
+                              );
+                            })}
+                          </>
+                        ) : (
+                          <GameButton
+                            size="sm"
+                            variant={equipped ? 'ghost' : 'primary'}
+                            disabled={busy}
+                            onClick={() =>
+                              equipped
+                                ? onAction({ type: 'unequip', slot: group.key })
+                                : onAction({ type: 'equip', itemId: item.id, slot: group.key })
+                            }
+                          >
+                            {equipped ? 'Desequipar' : 'Equipar'}
+                          </GameButton>
+                        )}
                         <span className="flex-1" />
                         {sellable > 0 ? (
                           <SellControls

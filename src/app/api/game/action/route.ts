@@ -300,7 +300,11 @@ export async function POST(request: Request) {
       return fresh;
     };
 
-    const [fresh] = await Promise.all([loadFresh(), cacheResultPromise]);
+    const [fresh, dragonBallsAvailable] = await Promise.all([
+      loadFresh(),
+      db.dragonBallPossession.count({ where: { playerId: null } }),
+      cacheResultPromise,
+    ]);
     if (!fresh) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado (sincronize pelo painel).');
 
     const totalMs = Date.now() - requestStartedAt;
@@ -310,8 +314,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const playerView = playerToView(fresh);
+    playerView.dragonBallsAvailable = dragonBallsAvailable;
+
     const response = ok({
-      player: playerToView(fresh),
+      player: playerView,
       message: result.message,
       levelsGained: result.levelsGained,
       battle: result.battle ?? null,
@@ -319,6 +326,7 @@ export async function POST(request: Request) {
       bossAttack: result.bossAttack ?? null,
       activity: result.activity ?? null,
       appliedResults: result.appliedResults ?? [],
+      notifications: result.notifications ?? [],
       deduplicated,
       // v0.9.6 (Mudança 1): hora do servidor para o cliente ajustar os
       // contadores (mesma fonte da verdade dos timestamps de fim).

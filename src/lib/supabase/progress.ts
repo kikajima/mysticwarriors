@@ -561,10 +561,14 @@ export class CloudValidationError extends Error {
 function sanitizeItems(raw: unknown): ItemsState {
   const src = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const owned = dedupeFilter(src.owned, KNOWN.items, 200);
-  const pickEquipped = (key: 'weapon' | 'armor' | 'accessory' | 'head' | 'wrists' | 'legs' | 'boots'): string | null => {
+  const pickEquipped = (
+    key: 'weapon' | 'armor' | 'accessory' | 'accessory2' | 'head' | 'wrists' | 'legs' | 'boots',
+    expectedCategory: 'weapon' | 'armor' | 'accessory' | 'head' | 'wrists' | 'legs' | 'boots' =
+      key === 'accessory2' ? 'accessory' : key
+  ): string | null => {
     const id = asString(src[key], 64);
     if (!id || !KNOWN.items.has(id) || !owned.includes(id)) return null;
-    return ITEM_BY_ID.get(id)?.category === key ? id : null;
+    return ITEM_BY_ID.get(id)?.category === expectedCategory ? id : null;
   };
   const consumablesSrc = (src.consumables && typeof src.consumables === 'object' ? src.consumables : {}) as Record<string, unknown>;
   const consumables: Record<string, number> = {};
@@ -589,10 +593,16 @@ function sanitizeItems(raw: unknown): ItemsState {
       }
     }
   }
+  const accessory = pickEquipped('accessory');
+  let accessory2 = pickEquipped('accessory2', 'accessory');
+  if (accessory && accessory2 === accessory && (stacks[accessory] ?? 1) < 2) {
+    accessory2 = null;
+  }
   return {
     weapon: pickEquipped('weapon'),
     armor: pickEquipped('armor'),
-    accessory: pickEquipped('accessory'),
+    accessory,
+    accessory2,
     head: pickEquipped('head'),
     wrists: pickEquipped('wrists'),
     legs: pickEquipped('legs'),

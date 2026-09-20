@@ -483,8 +483,16 @@ function DragonBallSearchTab({
   const now = useServerNow(1000);
   const [selectedHours, setSelectedHours] = useState<1 | 2 | 4 | 8 | 12>(4);
   const search = player.runningActivity?.kind === 'dragon_ball_search' ? player.runningActivity : null;
-  const accessory = player.items.accessory ? getItem(player.items.accessory) : null;
-  const itemBonus = Math.max(0, accessory?.dragonBallSearchChanceBonus ?? 0);
+  const accessories = [player.items.accessory, player.items.accessory2]
+    .filter((id): id is string => !!id)
+    .map((id) => getItem(id))
+    .filter((item): item is NonNullable<typeof item> => !!item);
+  const itemBonus = accessories.reduce(
+    (sum, item) => sum + Math.max(0, item.dragonBallSearchChanceBonus ?? 0),
+    0
+  );
+  const freeBalls = player.dragonBallsAvailable;
+  const noFreeBalls = freeBalls !== undefined && freeBalls <= 0;
   const baseChance = DRAGON_BALL_SEARCH_SHIFTS.find((shift) => shift.hours === selectedHours)?.chance ?? 0;
   const chance = Math.min(DRAGON_BALL_SEARCH_MAX_CHANCE, baseChance + itemBonus);
   const remaining = search ? Math.max(0, new Date(search.endsAt).getTime() - now) : 0;
@@ -499,7 +507,25 @@ function DragonBallSearchTab({
           <div className="text-6xl shrink-0 text-center" aria-hidden>🔮</div>
           <div className="flex-1">
             <h3 className="font-heading text-xl text-amber-100">Busca pelas Esferas</h3>
-            <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">Escolha quanto tempo seu radar ficará procurando. A chance base cresce até 20%; bônus de equipamento podem elevar a chance total até 50%. Cada busca encontra no máximo uma esfera.</p>
+            <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">
+              Escolha quanto tempo seu radar ficará procurando. A chance base cresce até 20%; bônus dos dois espaços de acessório podem elevar a chance total até 50%. Cada busca encontra no máximo uma esfera e só pode começar se existir uma estrela sem dono no mundo.
+            </p>
+            {freeBalls !== undefined && (
+              <div className={`mt-3 rounded-lg border p-3 ${
+                noFreeBalls
+                  ? 'border-red-700/60 bg-red-950/30'
+                  : 'border-yellow-700/50 bg-yellow-950/25'
+              }`}>
+                <p className={`font-heading ${noFreeBalls ? 'text-red-200' : 'text-yellow-200'}`}>
+                  🌍 {freeBalls}/7 {freeBalls === 1 ? 'Esfera espalhada' : 'Esferas espalhadas'} pelo mundo
+                </p>
+                <p className="text-[11px] text-amber-200/55 mt-1">
+                  {noFreeBalls
+                    ? 'As 7 Esferas estão em posse de guerreiros. A busca está indisponível; dispute uma no PvP ou aguarde alguém invocar Shenlon.'
+                    : `Ainda existem ${freeBalls} ${freeBalls === 1 ? 'estrela sem dono que pode ser encontrada' : 'estrelas sem dono que podem ser encontradas'} pela busca.`}
+                </p>
+              </div>
+            )}
             {search && (
               <div className="mt-3 rounded-lg border border-orange-700/50 bg-orange-950/30 p-3">
                 <p className="font-heading text-orange-200">Busca em andamento: {totalHours}h</p>
@@ -523,7 +549,7 @@ function DragonBallSearchTab({
                     key={shift.hours}
                     type="button"
                     onClick={() => setSelectedHours(shift.hours)}
-                    disabled={busy || complete}
+                    disabled={busy || complete || noFreeBalls}
                     className={`rounded-lg border px-2 py-2 text-center transition-all disabled:opacity-40 ${selectedHours === shift.hours ? 'border-yellow-400 bg-yellow-950/60 text-yellow-200' : 'border-amber-900/40 bg-black/20 text-amber-200/70'}`}
                   >
                     <span className="font-heading block">{shift.hours}h</span>
@@ -534,6 +560,11 @@ function DragonBallSearchTab({
             )}
             <div className="flex flex-wrap gap-2 mt-3">
               <Chip className="bg-yellow-950/50 text-yellow-300 border-yellow-800/50">🔮 {player.dragonBalls}/7 coletadas</Chip>
+              {freeBalls !== undefined && (
+                <Chip className={noFreeBalls ? 'bg-red-950/50 text-red-300 border-red-800/50' : 'bg-emerald-950/50 text-emerald-300 border-emerald-800/50'}>
+                  🌍 {freeBalls}/7 espalhadas
+                </Chip>
+              )}
               <Chip className="bg-amber-950/50 text-amber-200 border-amber-800/50">⚡ -{DRAGON_BALL_SEARCH_ENERGY_COST} energia</Chip>
               <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">🎯 {Math.round(chance * 100)}% de chance</Chip>
               {itemBonus > 0 && <Chip className="bg-emerald-950/50 text-emerald-300 border-emerald-800/50">📟 +{Math.round(itemBonus * 100)}% do acessório</Chip>}
@@ -542,10 +573,10 @@ function DragonBallSearchTab({
           <GameButton
             variant="gold"
             className="shrink-0"
-            disabled={busy || complete || !!search || player.energy < DRAGON_BALL_SEARCH_ENERGY_COST}
+            disabled={busy || complete || noFreeBalls || !!search || player.energy < DRAGON_BALL_SEARCH_ENERGY_COST}
             onClick={() => void onAction({ type: 'search_dragon_ball', hours: selectedHours })}
           >
-            {complete ? 'Conjunto completo' : search ? 'Busca em andamento' : player.energy < DRAGON_BALL_SEARCH_ENERGY_COST ? 'Sem energia' : `Iniciar busca (${selectedHours}h)`}
+            {complete ? 'Conjunto completo' : noFreeBalls ? 'Nenhuma esfera espalhada' : search ? 'Busca em andamento' : player.energy < DRAGON_BALL_SEARCH_ENERGY_COST ? 'Sem energia' : `Iniciar busca (${selectedHours}h)`}
           </GameButton>
         </div>
       </GameCard>

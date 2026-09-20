@@ -233,7 +233,7 @@ describe('Oficina — contratos de crafting', () => {
     const senzu = CRAFTED_ITEMS.find((i) => i.id === 'senzu_processado');
     const gravity = CRAFTED_ITEMS.find((i) => i.id === 'sala_gravidade_pessoal_100x');
     expect(capsule?.effect).toBe('heal_30pct');
-    expect(armor?.def).toBe(35);
+    expect(armor).toMatchObject({ def: 38, ki: 8 });
     expect(senzu?.effect).toBe('full_hp');
     expect(gravity?.trainBonus?.all).toBe(3);
   });
