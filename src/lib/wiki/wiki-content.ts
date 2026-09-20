@@ -1122,7 +1122,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             items: [
               'Tier 3 ou superior sempre usa insumos ligados a **pelo menos duas profissões**.',
               'Os itens principais de Tier 3+ exigem um **blueprint Acadêmico**.',
-              'Itens fabricados não são revendidos para a loja NPC; eles ficam reservados para uso próprio e, na etapa seguinte, para o **Mercado entre jogadores**.',
+              'Itens fabricados não são revendidos para a loja NPC; eles permanecem no inventário do jogador para uso.',
               'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+35 Defesa** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
             ],
           },
