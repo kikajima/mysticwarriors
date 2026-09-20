@@ -314,6 +314,28 @@ describe('v0.9.10 — stacks na sincronização da nuvem', () => {
     expect(clean!.items.consumables).toEqual({ senzu: 3 });
   });
 
+  test('sanitize da nuvem valida a categoria de cada slot equipado', () => {
+    const dirty = snapFixture({
+      head: 'energia_infinita',
+      wrists: 'munhequeiras_reforcadas',
+      legs: 'calca_treino_reforcada',
+      boots: 'botas_corrida_reforcadas',
+      owned: [
+        'energia_infinita',
+        'munhequeiras_reforcadas',
+        'calca_treino_reforcada',
+        'botas_corrida_reforcadas',
+      ],
+      consumables: {},
+      stacks: {},
+    });
+    const clean = sanitizeCloudCharacterState(dirty);
+    expect(clean!.items.head).toBeNull();
+    expect(clean!.items.wrists).toBe('munhequeiras_reforcadas');
+    expect(clean!.items.legs).toBe('calca_treino_reforcada');
+    expect(clean!.items.boots).toBe('botas_corrida_reforcadas');
+  });
+
   test('sanitize NUNCA inventa unidades (valor 1 é implícito, lixo vira nada)', () => {
     const dirty = snapFixture({
       owned: ['gi'],
