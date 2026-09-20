@@ -1175,7 +1175,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `A sequência começa no **${ENEMIES[0].name}** (nível ${ENEMIES[0].level}, escala ${POWER_SCALES[0].nome}), que paga ~${br(ENEMIES[0].zeniReward)} Zeni e ~${br(ENEMIES[0].xpReward)} XP, e termina no **${ENEMIES[ENEMIES.length - 1].name}** (nível ${ENEMIES[ENEMIES.length - 1].level}, escala ${POWER_SCALES[POWER_SCALES.length - 1].nome), com ~${br(ENEMIES[ENEMIES.length - 1].zeniReward)} Zeni e ~${br(ENEMIES[ENEMIES.length - 1].xpReward)} XP por vitória. São ${ENEMIES.length} capangas ao todo — exatamente um por escala. O painel de Batalha mostra os atributos, recompensas e a comparação de [[escala-poder|escala]] com o seu poder atual.`,
+        text: `A sequência começa no **${ENEMIES[0].name}** (nível ${ENEMIES[0].level}, escala ${POWER_SCALES[0].nome}), que paga ~${br(ENEMIES[0].zeniReward)} Zeni e ~${br(ENEMIES[0].xpReward)} XP, e termina no **${ENEMIES[ENEMIES.length - 1].name}** (nível ${ENEMIES[ENEMIES.length - 1].level}, escala ${POWER_SCALES[POWER_SCALES.length - 1].nome}), com ~${br(ENEMIES[ENEMIES.length - 1].zeniReward)} Zeni e ~${br(ENEMIES[ENEMIES.length - 1].xpReward)} XP por vitória. São ${ENEMIES.length} capangas ao todo — exatamente um por escala. O painel de Batalha mostra os atributos, recompensas e a comparação de [[escala-poder|escala]] com o seu poder atual.`,
       },
       {
         kind: 'list',
