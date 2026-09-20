@@ -3,13 +3,42 @@ import { ok, toErrorResponse } from '@/lib/api';
 import { getAuth, requirePlayer } from '@/lib/auth';
 import { RACES } from '@/lib/game/content/races';
 import { getItem } from '@/lib/game/content/world';
-import { parseItems } from '@/lib/game/engine';
-import { fetchCloudRanking } from '@/lib/supabase/ranking';
-import type { RaceId, RankingEntry, RankingPage } from '@/lib/game/types';
+import { computeDerived, parseItems } from '@/lib/game/engine';
+import {
+  GUILD_RANKING_CATEGORIES,
+  PLAYER_RANKING_CATEGORIES,
+  sortGuildRankingEntries,
+  sortPlayerRankingEntries,
+} from '@/lib/game/ranking';
+import type {
+  GuildRankingCategory,
+  GuildRankingEntry,
+  PlayerRankingCategory,
+  RaceId,
+  RankingEntry,
+  RankingPage,
+} from '@/lib/game/types';
 
-// One shared world: cloud-only characters can be restored for offline duels.
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const MAX_PAGE_SIZE = 50;
+
+function playerCategory(raw: string | null): PlayerRankingCategory {
+  return PLAYER_RANKING_CATEGORIES.some((item) => item.id === raw)
+    ? (raw as PlayerRankingCategory)
+    : 'power';
+}
+
+function guildCategory(raw: string | null): GuildRankingCategory {
+  return GUILD_RANKING_CATEGORIES.some((item) => item.id === raw)
+    ? (raw as GuildRankingCategory)
+    : 'guild_power';
+}
+
+function raceFilter(raw: string | null): RaceId | 'all' {
+  return raw && Object.prototype.hasOwnProperty.call(RACES, raw) ? (raw as RaceId) : 'all';
+}
 
 export async function GET(request: Request) {
   try {
@@ -17,9 +46,13 @@ export async function GET(request: Request) {
     const page = Math.max(1, Number(searchParams.get('page') ?? 1) || 1);
     const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(5, Number(searchParams.get('pageSize') ?? 20) || 20));
     const playerId = searchParams.get('playerId');
+    const mode = searchParams.get('mode') === 'guilds' ? 'guilds' : 'players';
+    const race = mode === 'players' ? raceFilter(searchParams.get('race')) : 'all';
+    const category = mode === 'guilds'
+      ? guildCategory(searchParams.get('category'))
+      : playerCategory(searchParams.get('category'));
 
-    // contexto opcional (para attackable/isMe/posição global)
-    let me: { id: string; level: number; name: string; hasRadar: boolean } | null = null;
+    let me: { id: string; guildId: string | null; hasRadar: boolean } | null = null;
     const auth = await getAuth();
     if (auth && playerId) {
       try {
@@ -27,160 +60,122 @@ export async function GET(request: Request) {
         const items = parseItems(player.items);
         me = {
           id: player.id,
-          level: player.level,
-          name: player.name,
+          guildId: player.guildId,
           hasRadar: [items.accessory, items.accessory2].some((id) => getItem(id ?? '')?.id === 'radar_esferas'),
         };
       } catch {
-        me = null; // personagem inválido → ranking público
+        me = null;
       }
     }
 
-    // ===== 1) NUVEM PRIMEIRO: todos os personagens salvos no Supabase =====
-    const cloud = await fetchCloudRanking(pageSize, (page - 1) * pageSize, me?.name ?? undefined);
-    if (cloud) {
-      // busca as linhas locais APENAS dos nomes desta página (para atacar)
-      const names = [...new Set(cloud.entries.map((e) => e.nome))];
-      const localRows = names.length
-        ? await db.player.findMany({
-            where: { isBot: false, name: { in: names } },
-            select: {
-              id: true,
-              name: true,
-              race: true,
-              level: true,
-              battlesWon: true,
-              battlesLost: true,
-              items: true,
-              dragonBallPossessions: { select: { star: true }, orderBy: { star: 'asc' } },
-              guild: { select: { name: true } },
-            },
-          })
-        : [];
-      const byName = new Map(localRows.map((r) => [r.name, r]));
+    const damageRows = await db.worldBossDamage.groupBy({
+      by: ['playerId'],
+      _sum: { damage: true },
+    });
+    const damageByPlayer = new Map(damageRows.map((row) => [row.playerId, row._sum.damage ?? 0]));
 
-      const entries = cloud.entries.map((e) => {
-        const local = byName.get(e.nome);
-        const isMe = !!me && (local?.id === me.id || e.nome === me.name);
-        const attackable = !!me && !isMe;
-        const blockReason: RankingEntry['blockReason'] = null;
-        // raça: nuvem (SQL v2) → linha local → desconhecida (vazio)
-        const raceRaw = e.raca ?? local?.race ?? '';
-        const race = (Object.keys(RACES) as string[]).includes(raceRaw)
-          ? (raceRaw as RaceId)
-          : ('' as RaceId);
-        return {
-          id: local?.id ?? `cloud:${encodeURIComponent(e.nome)}`,
-          name: e.nome,
-          race,
-          level: local?.level ?? e.nivel,
-          power: e.poder,
-          battlesWon: local?.battlesWon ?? e.vitorias ?? 0,
-          battlesLost: local?.battlesLost ?? e.derrotas ?? 0,
-          isMe,
-          isBot: false,
-          attackable,
-          blockReason,
-          guildName: local?.guild?.name ?? null,
-          dragonBallStars: me?.hasRadar ? (local?.dragonBallPossessions.map((ball) => ball.star) ?? []) : null,
-          position: e.posicao,
-        };
-      });
+    const players = await db.player.findMany({
+      where: {
+        isBot: false,
+        ...(mode === 'players' && race !== 'all' ? { race } : {}),
+      },
+      include: {
+        guild: { select: { id: true, name: true } },
+        dragonBallPossessions: { select: { star: true }, orderBy: { star: 'asc' } },
+      },
+    });
 
-      const result: RankingPage & { source: 'cloud' | 'local' } = {
-        entries,
-        total: cloud.total,
-        page,
-        pageSize,
-        myPosition: cloud.myPosition,
-        source: 'cloud',
-      };
-      return ok({ ranking: result });
-    }
-
-    // ===== 2) RESERVA: banco do servidor (nuvem indisponível — já logada) =====
-    const where = { isBot: false };
-
-    const [total, rows] = await Promise.all([
-      db.player.count({ where }),
-      db.player.findMany({
-        where,
-        orderBy: [{ level: 'desc' }, { battlesWon: 'desc' }, { xp: 'desc' }],
-        select: {
-          id: true,
-          name: true,
-          race: true,
-          level: true,
-          strength: true,
-          defense: true,
-          speed: true,
-          ki: true,
-          battlesWon: true,
-          battlesLost: true,
-          items: true,
-          dragonBallPossessions: { select: { star: true }, orderBy: { star: 'asc' } },
-          guild: { select: { name: true } },
-        },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-    ]);
-
-    let myPosition: number | null = null;
-    if (me) {
-      const mine = await db.player.findUniqueOrThrow({
-        where: { id: me.id },
-        select: { level: true, battlesWon: true, xp: true },
-      });
-      const ahead = await db.player.count({
-        where: {
-          isBot: false,
-          OR: [
-            { level: { gt: mine.level } },
-            { level: mine.level, battlesWon: { gt: mine.battlesWon } },
-            { level: mine.level, battlesWon: mine.battlesWon, xp: { gt: mine.xp } },
-          ],
-        },
-      });
-      myPosition = ahead + 1;
-    }
-
-    const entries = rows.map((p, i) => ({
+    const playerEntries: RankingEntry[] = players.map((p) => ({
       id: p.id,
       name: p.name,
       race: p.race as RaceId,
       level: p.level,
-      power: scouterPower(p),
+      power: computeDerived(p).power,
       battlesWon: p.battlesWon,
       battlesLost: p.battlesLost,
+      tournamentWins: p.tournamentRoundWins,
+      tournamentTitles: p.tournamentTitles,
+      totalBossDamage: damageByPlayer.get(p.id) ?? 0,
       isMe: me?.id === p.id,
       isBot: false,
       attackable: !!me && me.id !== p.id,
       blockReason: null,
       guildName: p.guild?.name ?? null,
       dragonBallStars: me?.hasRadar ? p.dragonBallPossessions.map((ball) => ball.star) : null,
-      position: (page - 1) * pageSize + i + 1,
     }));
 
-    const result: RankingPage & { source: 'cloud' | 'local' } = {
-      entries,
+    if (mode === 'players') {
+      const sorted = sortPlayerRankingEntries(playerEntries, category as PlayerRankingCategory)
+        .map((entry, index) => ({ ...entry, position: index + 1 }));
+      const total = sorted.length;
+      const start = (page - 1) * pageSize;
+      const entries = sorted.slice(start, start + pageSize);
+      const myPosition = me ? sorted.find((entry) => entry.id === me!.id)?.position ?? null : null;
+      const result: RankingPage = {
+        mode,
+        category,
+        race,
+        entries,
+        guildEntries: [],
+        total,
+        page,
+        pageSize,
+        myPosition,
+        source: 'local',
+      };
+      return ok({ ranking: result });
+    }
+
+    const guilds = await db.guild.findMany({
+      where: { disbandedAt: null },
+      select: { id: true, name: true, level: true, xp: true },
+    });
+    const playersByGuild = new Map<string, RankingEntry[]>();
+    for (const entry of playerEntries) {
+      const original = players.find((p) => p.id === entry.id);
+      const guildId = original?.guildId;
+      if (!guildId) continue;
+      const list = playersByGuild.get(guildId) ?? [];
+      list.push(entry);
+      playersByGuild.set(guildId, list);
+    }
+
+    const guildEntries: GuildRankingEntry[] = guilds.map((guild) => {
+      const members = playersByGuild.get(guild.id) ?? [];
+      const totalPower = members.reduce((sum, member) => sum + member.power, 0);
+      return {
+        id: guild.id,
+        name: guild.name,
+        level: guild.level,
+        xp: guild.xp,
+        totalPower,
+        averagePower: members.length ? Math.round(totalPower / members.length) : 0,
+        memberCount: members.length,
+        tournamentWins: members.reduce((sum, member) => sum + member.tournamentWins, 0),
+        tournamentTitles: members.reduce((sum, member) => sum + member.tournamentTitles, 0),
+        totalBossDamage: members.reduce((sum, member) => sum + member.totalBossDamage, 0),
+        isMine: me?.guildId === guild.id,
+      };
+    });
+
+    const sortedGuilds = sortGuildRankingEntries(guildEntries, category as GuildRankingCategory)
+      .map((entry, index) => ({ ...entry, position: index + 1 }));
+    const total = sortedGuilds.length;
+    const start = (page - 1) * pageSize;
+    const result: RankingPage = {
+      mode,
+      category,
+      race: 'all',
+      entries: [],
+      guildEntries: sortedGuilds.slice(start, start + pageSize),
       total,
       page,
       pageSize,
-      myPosition,
+      myPosition: me?.guildId ? sortedGuilds.find((entry) => entry.id === me!.guildId)?.position ?? null : null,
       source: 'local',
     };
     return ok({ ranking: result });
   } catch (error) {
     return toErrorResponse(error);
   }
-}
-
-/** Poder aproximado calculado a partir das colunas selecionadas (sem carregar JSONs). */
-function scouterPower(p: { level: number; strength: number; defense: number; speed: number; ki: number }): number {
-  const atk = Math.round(p.strength * 2.2);
-  const kiP = Math.round(p.ki * 2.4);
-  const def = Math.round(p.defense * 1.8);
-  const res = Math.round(p.defense * 1.1 + p.ki * 0.9);
-  return Math.round(p.level * 15 + atk + kiP * 0.9 + def + res * 0.6 + p.speed * 2);
 }
