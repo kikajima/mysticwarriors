@@ -112,16 +112,22 @@ describe('Integridade do conteúdo', () => {
     expect(PROFESSION_MATERIALS).toHaveLength(20);
   });
 
-  test('inimigos: exatamente um capanga genérico por Escala de Poder', () => {
-    expect(ENEMIES).toHaveLength(POWER_SCALES.length);
+  test('inimigos: três capangas I/II/III por Escala de Poder, com intenção própria', () => {
+    expect(ENEMIES).toHaveLength(POWER_SCALES.length * 3);
     const forbiddenMainVillains = /freeza|cell|broly|dabura|buu|vegeta|nappa|raditz|goku black|zamasu/i;
-    for (let i = 0; i < ENEMIES.length; i++) {
-      const enemy = ENEMIES[i];
-      expect(getPowerScale(npcCombatPower(enemy)).scale.index).toBe(i);
-      expect(enemy.name).not.toMatch(forbiddenMainVillains);
-      expect(enemy.zeniReward).toBeGreaterThan(0);
-      expect(enemy.xpReward).toBeGreaterThan(0);
-      if (i > 0) expect(enemy.level).toBeGreaterThan(ENEMIES[i - 1].level);
+    for (let scaleIndex = 0; scaleIndex < POWER_SCALES.length; scaleIndex++) {
+      const group = ENEMIES.slice(scaleIndex * 3, scaleIndex * 3 + 3);
+      expect(group.map((enemy) => enemy.enemyTier)).toEqual([1, 2, 3]);
+      const powers = group.map(npcCombatPower);
+      expect(powers[0]).toBeLessThan(powers[1]);
+      expect(powers[1]).toBeLessThan(powers[2]);
+      for (const enemy of group) {
+        expect(getPowerScale(npcCombatPower(enemy)).scale.index).toBe(scaleIndex);
+        expect(enemy.name).not.toMatch(forbiddenMainVillains);
+        expect(enemy.intent.trim().length).toBeGreaterThan(30);
+        expect(enemy.zeniReward).toBeGreaterThan(0);
+        expect(enemy.xpReward).toBeGreaterThan(0);
+      }
     }
   });
 
