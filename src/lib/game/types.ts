@@ -721,6 +721,9 @@ export interface PlayerView {
   rankingPosition?: number | null;
 }
 
+export type PlayerRankingCategory = 'level' | 'power' | 'tournament' | 'boss_damage';
+export type GuildRankingCategory = 'guild_power' | 'guild_level' | 'guild_tournament' | 'guild_boss_damage';
+
 export interface RankingEntry {
   id: string;
   name: string;
@@ -729,6 +732,9 @@ export interface RankingEntry {
   power: number;
   battlesWon: number;
   battlesLost: number;
+  tournamentWins: number;
+  tournamentTitles: number;
+  totalBossDamage: number;
   isMe: boolean;
   isBot: boolean;
   attackable: boolean;
@@ -736,19 +742,35 @@ export interface RankingEntry {
   /** Visível apenas para quem possui o Radar das Esferas. */
   dragonBallStars?: number[] | null;
   position?: number;
-  /** Only level differences restrict ranking challenges. */
   blockReason?: 'level' | null;
 }
 
+export interface GuildRankingEntry {
+  id: string;
+  name: string;
+  level: number;
+  xp: number;
+  totalPower: number;
+  averagePower: number;
+  memberCount: number;
+  tournamentWins: number;
+  tournamentTitles: number;
+  totalBossDamage: number;
+  isMine: boolean;
+  position?: number;
+}
+
 export interface RankingPage {
+  mode: 'players' | 'guilds';
+  category: PlayerRankingCategory | GuildRankingCategory;
+  race: RaceId | 'all';
   entries: RankingEntry[];
+  guildEntries: GuildRankingEntry[];
   total: number;
   page: number;
   pageSize: number;
   myPosition: number | null;
-  /** v0.9.5 — de onde veio a lista: nuvem (todos do Supabase) ou servidor (reserva). */
-  source?: 'cloud' | 'local';
-
+  source?: 'local';
 }
 
 // ===== Ameaça Universal =====
