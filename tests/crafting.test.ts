@@ -10,6 +10,7 @@ import {
   academicCraftTimeMultiplier,
 } from '../src/lib/game/professionCareer';
 import { craftDurationMs, missingCraftProfessionRequirements } from '../src/lib/game/crafting';
+import { MAX_CRAFT_BATCH } from '../src/lib/game/content/crafting';
 import { PROFESSION_MATERIALS, equippedDragonBallChanceBonus } from '../src/lib/game/content/world';
 
 describe('Oficina — contratos de crafting', () => {
@@ -44,6 +45,7 @@ describe('Oficina — contratos de crafting', () => {
     expect(blueprintRequirements).toEqual([
       [2, [{ professionId: 'academico', level: 2 }]],
       [3, [{ professionId: 'academico', level: 4 }]],
+      [4, [{ professionId: 'academico', level: 6 }]],
       [4, [{ professionId: 'academico', level: 6 }]],
       [5, [{ professionId: 'academico', level: 8 }]],
     ]);
@@ -120,6 +122,26 @@ describe('Oficina — contratos de crafting', () => {
     }
   });
 
+  test('novos slots corporais possuem itens e receitas fabricáveis', () => {
+    const expected = [
+      ['bandana_foco_ki', 'head', 1],
+      ['bracadeiras_combate', 'wrists', 2],
+      ['calcas_gravidade', 'legs', 3],
+      ['botas_propulsao_ki', 'boots', 4],
+    ] as const;
+    for (const [id, category, tier] of expected) {
+      expect(CRAFTED_ITEMS.find((item) => item.id === id)?.category).toBe(category);
+      expect(CRAFT_RECIPES.find((recipe) => recipe.id === id)?.tier).toBe(tier);
+    }
+    expect(CRAFT_STACK_ITEMS.some((item) => item.id === 'projeto_propulsao_ki')).toBe(true);
+  });
+
+  test('fabricação em lote tem limite compartilhado e duração linear', () => {
+    expect(MAX_CRAFT_BATCH).toBe(20);
+    expect(craftDurationMs(10 * 3, 0)).toBe(30 * 60_000);
+    expect(craftDurationMs(10 * 3, 10)).toBe(27 * 60_000);
+  });
+
   test('Acadêmico reduz 1% por nível e nunca passa de 10%', () => {
     expect(academicCraftTimeMultiplier(0)).toBe(1);
     expect(academicCraftTimeMultiplier(1)).toBe(0.99);
@@ -143,6 +165,8 @@ describe('Oficina — contratos de crafting', () => {
     expect(src).toContain('Requisitos profissionais');
     expect(src).toContain('professionRequirementsOk');
     expect(src).toContain('CRAFT_TIER_PROFESSION_LEVEL');
+    expect(src).toContain('MAX_CRAFT_BATCH');
+    expect(src).toContain("quantity: batchQuantity");
   });
 
   test('efeitos dos itens fabricados correspondem ao desenho', () => {
