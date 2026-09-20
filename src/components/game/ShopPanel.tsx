@@ -4,13 +4,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { SHOP_ITEMS, COSMETICS, PRODUCTS, SHOP_MAX_QUANTITY, TALENTS } from '@/lib/game/constants';
 import type { CosmeticDef } from '@/lib/game/content/cosmetics';
 import type { TalentDef } from '@/lib/game/content/talents';
-import type { PlayerView, ShopItem } from '@/lib/game/types';
+import { EQUIPMENT_SLOT_META, EQUIPMENT_SLOTS } from '@/lib/game/types';
+import type { EquipmentSlot, PlayerView, ShopItem } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { Coins, Lock, Swords, Shield, Gauge, Sparkles, TrendingUp, Gem, Flame, CheckCircle2 } from 'lucide-react';
 
 const CATEGORIES = [
   { key: 'weapon', label: 'Armas', icon: '⚔️' },
-  { key: 'armor', label: 'Armaduras', icon: '🛡️' },
+  { key: 'head', label: 'Cabeça', icon: '🪖' },
+  { key: 'wrists', label: 'Punhos', icon: '🥊' },
+  { key: 'armor', label: 'Torso', icon: '🛡️' },
+  { key: 'legs', label: 'Pernas', icon: '👖' },
+  { key: 'boots', label: 'Botas', icon: '🥾' },
   { key: 'accessory', label: 'Acessórios', icon: '💍' },
   { key: 'training', label: 'Treino', icon: '🏋️' },
   { key: 'consumable', label: 'Consumíveis', icon: '🧪' },
@@ -19,6 +24,13 @@ const CATEGORIES = [
 ] as const;
 
 type CategoryKey = (typeof CATEGORIES)[number]['key'];
+
+function slotText(item: ShopItem): string | null {
+  if (!EQUIPMENT_SLOTS.includes(item.category as EquipmentSlot)) return null;
+  return item.category === 'accessory'
+    ? 'Acessório I ou II'
+    : EQUIPMENT_SLOT_META[item.category as EquipmentSlot].label;
+}
 
 function bonusText(item: ShopItem): string {
   const parts: string[] = [];
@@ -218,6 +230,11 @@ export function ShopPanel({
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-3">
+                  {slotText(item) && (
+                    <Chip className="bg-sky-950/40 text-sky-300 border-sky-800/50">
+                      {EQUIPMENT_SLOT_META[item.category as EquipmentSlot]?.icon ?? '🎒'} Slot: {slotText(item)}
+                    </Chip>
+                  )}
                   {item.category === 'training' ? (
                     <Chip className="bg-emerald-950/50 text-emerald-300 border-emerald-800/50">
                       <TrendingUp className="w-3 h-3" /> {trainBonusText(item)} por treino
