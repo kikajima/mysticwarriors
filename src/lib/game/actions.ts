@@ -157,7 +157,7 @@ export async function executeGameAction(
   return db.$transaction(
     async (tx) => {
     // ===== AUTORIZAÇÃO CENTRAL =====
-    const player = await requirePlayer(auth, playerId, tx);
+    let player = await requirePlayer(auth, playerId, tx);
 
     if (type === 'guild_invite' && guildInviteName && guildOffline) {
       const local = await tx.player.findUnique({ where: { name: guildInviteName } });
@@ -171,6 +171,12 @@ export async function executeGameAction(
     // ===== ATIVIDADES VENCIDAS: aplicar ANTES de qualquer coisa =====
     // (resultado pendente é concedido no primeiro toque após o término)
     const appliedResults = await resolveDueActivities(tx, player);
+    if (appliedResults.length > 0) {
+      // A resolução pode alterar HP, XP, nível, Zeni e, no torneio, a rodada
+      // atual. Qualquer ação feita imediatamente após o fim da luta precisa
+      // enxergar o estado PÓS-resultado, não o objeto carregado antes do apply.
+      player = await requirePlayer(auth, playerId, tx);
+    }
 
     // ===== BLOQUEIO CENTRAL: personagem em missão ativa =====
     // O frontend só DESABILITA botões — quem decide é o servidor.
@@ -224,6 +230,12 @@ export async function executeGameAction(
         result = { message: craft.message, levelsGained: 0 };
         break;
       }
+      // Sincronização leve do fim de uma atividade. O trabalho real acontece
+      // acima, em resolveDueActivities(); este case existe para o cliente
+      // pedir a conclusão sem carregar ranking/quests/guildas do /state.
+      case 'sync_activity':
+        result = { message: '', levelsGained: 0 };
+        break;
       case 'battle':
         result = await actionStartBattle(tx, player, String(args.enemyId ?? ''));
         break;
