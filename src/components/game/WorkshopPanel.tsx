@@ -348,7 +348,7 @@ export function WorkshopPanel({
                 <span>{countdown(remaining)}</span>
                 <span>{Math.round(progress)}%</span>
               </div>
-              {remaining <= 0 && (
+              {remaining <= 0 ? (
                 <GameButton
                   className="mt-4"
                   disabled={busy}
@@ -356,6 +356,23 @@ export function WorkshopPanel({
                 >
                   🎁 Coletar item fabricado
                 </GameButton>
+              ) : (
+                <div className="mt-4">
+                  <GameButton
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => {
+                      if (window.confirm('Cancelar a fabricação? Todos os materiais e o Zeni serão devolvidos.')) {
+                        void runAction({ type: 'craft_cancel' });
+                      }
+                    }}
+                  >
+                    ↩️ Cancelar e reembolsar
+                  </GameButton>
+                  <p className="text-[10px] text-amber-200/40 mt-1">
+                    O cancelamento devolve integralmente os materiais e o Zeni consumidos.
+                  </p>
+                </div>
               )}
             </div>
           </div>
