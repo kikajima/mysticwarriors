@@ -80,7 +80,7 @@ export function ShenronPanel({
             <p className="text-sm text-amber-200/60 leading-relaxed mb-4">
               {hasAll
                 ? 'Os céus escurecem, o chão treme... Shenlon aguarda seu desejo. Escolha com sabedoria, guerreiro.'
-                : 'Use a Busca pelas Esferas em Atividades ou conclua turnos profissionais para encontrar as esferas. Vitórias no PvP também podem tomar uma esfera do adversário. Reúna todas as sete para invocar o dragão sagrado.'}
+                : 'Use a Busca pelas Esferas em Atividades para procurar as sete estrelas globais. Vitórias no PvP também podem tomar uma esfera do adversário. Reúna todas as sete para invocar o dragão sagrado.'}
             </p>
             <div className="flex flex-wrap justify-center sm:justify-start gap-2" aria-label={`${player.dragonBalls} de 7 esferas coletadas`}>
               {Array.from({ length: 7 }, (_, i) => {

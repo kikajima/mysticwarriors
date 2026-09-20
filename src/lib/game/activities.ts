@@ -236,9 +236,10 @@ async function applyDragonBallSearchResult(
   if (claimed.count === 0) {
     return { message: 'Outro guerreiro encontrou essa esfera primeiro. A busca terminou.', levelsGained: 0 };
   }
-  await tx.player.update({ where: { id: player.id }, data: { dragonBalls: { increment: 1 } } });
-  player.dragonBalls = Math.min(7, player.dragonBalls + 1);
-  return { message: `Busca concluída: você encontrou a Esfera de ${freeStar.star} estrela${freeStar.star === 1 ? '' : 's'}! (${ownedCount + 1}/7)`, levelsGained: 0 };
+  const newOwnedCount = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
+  await tx.player.update({ where: { id: player.id }, data: { dragonBalls: newOwnedCount } });
+  player.dragonBalls = newOwnedCount;
+  return { message: `Busca concluída: você encontrou a Esfera de ${freeStar.star} estrela${freeStar.star === 1 ? '' : 's'}! (${newOwnedCount}/7)`, levelsGained: 0 };
 }
 
 // ===== APLICAÇÃO: TREINO =====
@@ -388,27 +389,8 @@ async function applyPvpResult(
 
   let zeniStolen = 0;
   let zeniLost = 0;
-    let dragonBallStolen = 0;
+  let dragonBallStolen = 0;
   let dragonBallStolenStar: number | undefined;
-      const winnerBalls = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
-      if (target && winnerBalls < 7 && data.dragonBallStealChance > 0 && Math.random() < data.dragonBallStealChance) {
-        const targetBall = await tx.dragonBallPossession.findFirst({
-          where: { playerId: target.id },
-          orderBy: { star: 'asc' },
-        });
-        if (targetBall) {
-          const moved = await tx.dragonBallPossession.updateMany({
-            where: { star: targetBall.star, playerId: target.id },
-            data: { playerId: player.id, acquiredAt: new Date() },
-          });
-          if (moved.count > 0) {
-            dragonBallStolen = 1;
-            dragonBallStolenStar = targetBall.star;
-            await tx.player.update({ where: { id: player.id }, data: { dragonBalls: { increment: 1 } } });
-            await tx.player.update({ where: { id: target.id }, data: { dragonBalls: { decrement: 1 } } });
-          }
-        }
-      }
   let levelsGained = 0;
 
   // reabastece bot drenado (injeção de moeda REGISTRADA no ledger)
@@ -437,6 +419,36 @@ async function applyPvpResult(
   }
 
   if (data.won) {
+    // Esfera só pode ser tomada pelo VENCEDOR. A tabela global é a fonte
+    // de verdade; os contadores de Player são sincronizados após a transferência.
+    if (target && data.dragonBallStealChance > 0) {
+      const winnerBalls = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
+      if (winnerBalls < 7 && Math.random() < data.dragonBallStealChance) {
+        const targetBall = await tx.dragonBallPossession.findFirst({
+          where: { playerId: target.id },
+          orderBy: { star: 'asc' },
+        });
+        if (targetBall) {
+          const moved = await tx.dragonBallPossession.updateMany({
+            where: { star: targetBall.star, playerId: target.id },
+            data: { playerId: player.id, acquiredAt: new Date() },
+          });
+          if (moved.count > 0) {
+            dragonBallStolen = 1;
+            dragonBallStolenStar = targetBall.star;
+            const [winnerCount, targetCount] = await Promise.all([
+              tx.dragonBallPossession.count({ where: { playerId: player.id } }),
+              tx.dragonBallPossession.count({ where: { playerId: target.id } }),
+            ]);
+            await tx.player.update({ where: { id: player.id }, data: { dragonBalls: winnerCount } });
+            await tx.player.update({ where: { id: target.id }, data: { dragonBalls: targetCount } });
+            player.dragonBalls = winnerCount;
+            target.dragonBalls = targetCount;
+          }
+        }
+      }
+    }
+
     // roubo atômico com ledger de DUAS pontas (transferência entre jogadores)
     if (target) {
       const stealAttempt = Math.min(target.zeni, Math.max(100, Math.floor(target.zeni * 0.08)));

@@ -115,6 +115,10 @@ export async function resetCharacterProgression(
       .then((r) => r.count);
     await txOrDb.inventoryStack.deleteMany({ where: { playerId: p.id } });
     await txOrDb.craftJob.deleteMany({ where: { playerId: p.id } });
+    await txOrDb.dragonBallPossession.updateMany({
+      where: { playerId: p.id },
+      data: { playerId: null, acquiredAt: now },
+    });
   }
 
   // bots: recalibra level/stats/zeni pela MESMA fórmula do ensureSeed

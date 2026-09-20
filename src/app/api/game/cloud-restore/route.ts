@@ -201,6 +201,9 @@ export async function POST(request: Request) {
           created = await tx.player.create({
             data: {
               ...cloudCharacterToPlayerData(char, name),
+              // Esferas são recurso GLOBAL do mundo, não estado restaurável
+              // do personagem. A posse real vive em DragonBallPossession.
+              dragonBalls: 0,
               accountId: auth.account.id,
             },
           });
@@ -211,6 +214,7 @@ export async function POST(request: Request) {
           created = await tx.player.create({
             data: {
               ...cloudCharacterToPlayerData({ ...char, id: null }, name),
+              dragonBalls: 0,
               accountId: auth.account.id,
             },
           });

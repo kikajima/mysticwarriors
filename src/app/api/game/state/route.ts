@@ -104,6 +104,7 @@ export async function GET(request: Request) {
         include: {
           guild: true,
           activities: { where: { completedAt: null, endsAt: { gt: now } }, take: 1 },
+          dragonBallPossessions: { select: { star: true } },
         },
       }),
       db.guildInvitation.count({
@@ -117,6 +118,9 @@ export async function GET(request: Request) {
     // Usa a leitura mais recente, inclusive se uma batalha ocorreu durante
     // a consulta. O tempo acumulado permanece nos relógios salvos até a ação.
     const currentPlayer = withActivity ?? player;
+    if (withActivity) {
+      currentPlayer.dragonBalls = withActivity.dragonBallPossessions.length;
+    }
     applyRegen(currentPlayer);
 
     return ok({

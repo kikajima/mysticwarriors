@@ -499,7 +499,7 @@ function DragonBallSearchTab({
           <div className="text-6xl shrink-0 text-center" aria-hidden>🔮</div>
           <div className="flex-1">
             <h3 className="font-heading text-xl text-amber-100">Busca pelas Esferas</h3>
-            <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">Escolha quanto tempo seu radar ficará procurando. Quanto maior o turno, maior a chance, até 20%. Cada busca encontra no máximo uma esfera.</p>
+            <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">Escolha quanto tempo seu radar ficará procurando. A chance base cresce até 20%; bônus de equipamento podem elevar a chance total até 50%. Cada busca encontra no máximo uma esfera.</p>
             {search && (
               <div className="mt-3 rounded-lg border border-orange-700/50 bg-orange-950/30 p-3">
                 <p className="font-heading text-orange-200">Busca em andamento: {totalHours}h</p>
