@@ -75,8 +75,8 @@ R=$(curl -s -b $JAR_A "$BASE/api/game/state?playerId=$PA" | python3 -c 'import j
 check "energia visível respeita o teto derivado (clamp)" "True" "$R"
 
 # 2.6 batalha PvE como atividade + aplicação pós-duração
-R=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"saibaman\"}" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["activity"]["result"]["battle"]["enemyName"])' 2>/dev/null)
-check "batalha PvE inicia com battle no result" "Saibaman Verde" "$R"
+R=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"arruaceiro_ermo\"}" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["activity"]["result"]["battle"]["enemyName"])' 2>/dev/null)
+check "batalha PvE inicia com battle no result" "Arruaceiro do Ermo" "$R"
 sleep 6
 R=$(curl -s -b $JAR_A "$BASE/api/game/state?playerId=$PA" | python3 -c '
 import json,sys
@@ -92,7 +92,7 @@ echo "=== 3. FARM LIVRE (sem penalidade diária) ==="
 # 3.1 três batalhas seguidas: recompensas constantes (não decaem)
 ZENI_1=-1; ZENI_2=-1; ZENI_3=-1
 for i in 1 2 3; do
-  curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"saibaman\"}" > /dev/null
+  curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PA\",\"type\":\"battle\",\"enemyId\":\"arruaceiro_ermo\"}" > /dev/null
   sleep 6
   curl -s -b $JAR_A "$BASE/api/game/state?playerId=$PA" > /dev/null
 done
@@ -107,8 +107,8 @@ const txs = await db.walletTransaction.findMany({
 });
 await db.\$disconnect();
 const amounts = txs.map(t => t.amount).filter(a => a > 0);
-// saibaman: 70 zeni base × rand(0.9-1.15) → todas devem estar >= 63 (70*0.9)
-const todasIntegrais = amounts.length >= 4 && amounts.every(a => a >= 63);
+// arruaceiro_ermo: 60 zeni base × rand(0.9-1.15) → todas devem estar >= 54 (60*0.9)
+const todasIntegrais = amounts.length >= 4 && amounts.every(a => a >= 54);
 console.log(todasIntegrais ? 'integral' : 'reduzida:' + JSON.stringify(amounts));" 2>/dev/null)
 check "4+ batalhas no dia: TODAS com recompensa integral (≥63 zeni)" "integral" "$R"
 
