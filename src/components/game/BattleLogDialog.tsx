@@ -254,7 +254,7 @@ function BattleContent({
             <span className="text-amber-200/40 font-heading mr-2">R{round.round}{' '}</span>
             {/* v0.9.24 (A3): TODO marcador termina com {' '} — espaço REAL
                 entre marcador e nome (o mr-1 de 4px era lido como texto
-                colado: "COMBOSaibaman", "TÉCNICAPríncipe Aisurom"). */}
+                colado: "COMBOArruaceiro", "TÉCNICAPríncipe Aisurom"). */}
             {round.decision === 'round-limit' && (
               <span className="font-heading font-bold mr-1.5 text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-amber-400 animate-pulse">
                 ⚖️ DECISÃO{' '}
