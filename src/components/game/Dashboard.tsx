@@ -11,7 +11,10 @@ import { getPowerScale, POWER_SCALES } from '@/lib/game/powerScale';
 import { useToast } from '@/hooks/use-toast';
 import { Swords, Shield, Gauge, Sparkles, Trophy, Hourglass, GraduationCap, Zap, Crown, Target, Flame, ChevronRight, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 
-const STAT_META: Record<string, { label: string; icon: React.ReactNode }> = {
+const STAT_KEYS = ['strength', 'defense', 'speed', 'ki'] as const;
+type DisplayStat = (typeof STAT_KEYS)[number];
+
+const STAT_META: Record<DisplayStat, { label: string; icon: React.ReactNode }> = {
   strength: { label: 'Força', icon: <Swords className="w-4 h-4" /> },
   defense: { label: 'Defesa', icon: <Shield className="w-4 h-4" /> },
   speed: { label: 'Velocidade', icon: <Gauge className="w-4 h-4" /> },
@@ -436,23 +439,43 @@ export function Dashboard({
           <Flame className="w-4 h-4" /> Atributos de Batalha
         </h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {(Object.keys(STAT_META) as Array<keyof typeof STAT_META>).map((key) => (
-            <GameCard key={key} className="p-4">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-heading text-amber-200 text-sm flex items-center gap-1.5">
-                  {STAT_META[key].icon} {STAT_META[key].label}
-                </span>
-                <span className="font-heading text-2xl text-orange-400">{player[key]}</span>
-              </div>
+          {STAT_KEYS.map((key) => {
+            const base = player[key];
+            const bonus = player.derived.equipmentBonuses?.[key] ?? 0;
+            const total = player.derived.totalStats?.[key] ?? base + bonus;
+            return (
+              <GameCard key={key} className="p-4">
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="font-heading text-amber-200 text-sm flex items-center gap-1.5">
+                    {STAT_META[key].icon} {STAT_META[key].label}
+                  </span>
+                  <span className="font-heading text-2xl text-orange-400 tabular-nums">{total}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                  <Chip className="bg-black/30 text-amber-200/60 border-amber-900/40 text-[10px]">
+                    Base {base}
+                  </Chip>
+                  <Chip className={`text-[10px] ${
+                    bonus > 0
+                      ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/50'
+                      : 'bg-black/30 text-amber-200/35 border-amber-900/30'
+                  }`}>
+                    Equip. {bonus > 0 ? `+${bonus}` : '+0'}
+                  </Chip>
+                </div>
+                <p className="text-[10px] text-amber-200/35 mt-1">
+                  Total = atributo base + bônus dos equipamentos
+                </p>
 
-              <button
-                onClick={() => onNavigate('training')}
-                className="text-[10px] text-amber-200/30 mt-2 hover:text-orange-300 transition-colors"
-              >
-                treinar por {trainingCost(player[key], player.race).toLocaleString('pt-BR')} Zeni →
-              </button>
-            </GameCard>
-          ))}
+                <button
+                  onClick={() => onNavigate('training')}
+                  className="text-[10px] text-amber-200/30 mt-2 hover:text-orange-300 transition-colors"
+                >
+                  treinar base por {trainingCost(base, player.race).toLocaleString('pt-BR')} Zeni →
+                </button>
+              </GameCard>
+            );
+          })}
         </div>
       </div>
 
