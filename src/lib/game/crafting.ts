@@ -1,6 +1,6 @@
 import type { Player, Prisma } from '@prisma/client';
 import { ApiError } from '@/lib/api';
-import { spendCurrency } from '@/lib/economy';
+import { addCurrency, spendCurrency } from '@/lib/economy';
 import { trackEvent } from '@/lib/analytics';
 import { getProfession, getProfessionMaterial } from './content/world';
 import type { CraftRecipeDef } from './types';
@@ -193,6 +193,14 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, batch
       outputItemId: recipe.outputItemId,
       outputQuantity: recipe.outputQuantity * batchQuantity,
       outputKind: recipe.outputKind,
+      batchQuantity,
+      spentZeni: totalCostZeni,
+      ingredientsJson: JSON.stringify(
+        recipe.ingredients.map((ingredient) => ({
+          itemId: ingredient.itemId,
+          quantity: ingredient.quantity * batchQuantity,
+        }))
+      ),
       academicLevelStart: academicLevel,
       startedAt,
       endsAt,
@@ -217,6 +225,67 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, batch
       `🔧 Fabricação iniciada: ${batchQuantity}× ${recipe.name}. ` +
       `Tempo: ${Math.ceil(durationMs / 60_000)} min` +
       (reduction > 0 ? ` (Acadêmico -${reduction}%).` : '.'),
+  };
+}
+
+function craftRefundIngredients(raw: string): Array<{ itemId: string; quantity: number }> {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+      const row = entry as Record<string, unknown>;
+      const itemId = typeof row.itemId === 'string' ? row.itemId : '';
+      const quantity = typeof row.quantity === 'number' && Number.isInteger(row.quantity) ? row.quantity : 0;
+      if (
+        quantity <= 0 ||
+        (!getProfessionMaterial(itemId) && !getCraftStackItem(itemId))
+      ) return [];
+      return [{ itemId, quantity }];
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: string }> {
+  const job = await tx.craftJob.findUnique({ where: { playerId: player.id } });
+  if (!job) throw new ApiError('VALIDATION_ERROR', 'Sua Oficina não tem fabricação para cancelar.');
+
+  const ingredients = craftRefundIngredients(job.ingredientsJson);
+  const removed = await tx.craftJob.deleteMany({ where: { id: job.id, playerId: player.id } });
+  if (removed.count !== 1) {
+    throw new ApiError('CONFLICT', 'Esta fabricação já foi finalizada ou cancelada.');
+  }
+
+  for (const ingredient of ingredients) {
+    await grantStack(tx, player.id, ingredient.itemId, ingredient.quantity);
+  }
+  if (job.spentZeni > 0) {
+    await addCurrency(tx, player.id, 'zeni', job.spentZeni, {
+      type: 'refund',
+      source: 'craft_cancel',
+      accountId: player.accountId,
+      metadata: {
+        recipeId: job.recipeId,
+        batchQuantity: job.batchQuantity,
+      },
+    });
+  }
+
+  await trackEvent('craft_cancel', {
+    playerId: player.id,
+    accountId: player.accountId,
+    metadata: {
+      recipeId: job.recipeId,
+      batchQuantity: job.batchQuantity,
+      refundedZeni: job.spentZeni,
+      ingredients,
+    },
+  }, tx);
+
+  return {
+    message: `↩️ Fabricação cancelada. Reembolso integral: ${job.spentZeni.toLocaleString('pt-BR')} Zeni e todos os ingredientes.`,
   };
 }
 
