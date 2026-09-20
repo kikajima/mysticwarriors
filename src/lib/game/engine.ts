@@ -79,13 +79,17 @@ export function parseItems(raw: string): ItemsState {
     return {
       weapon: parsed.weapon ?? null,
       armor: parsed.armor ?? null,
+      head: parsed.head ?? null,
+      wrists: parsed.wrists ?? null,
+      legs: parsed.legs ?? null,
+      boots: parsed.boots ?? null,
       accessory: parsed.accessory ?? null,
       owned,
       consumables: parsed.consumables && typeof parsed.consumables === 'object' ? parsed.consumables : {},
       stacks,
     };
   } catch {
-    return { weapon: null, armor: null, accessory: null, owned: [], consumables: {}, stacks: {} };
+    return { weapon: null, armor: null, head: null, wrists: null, legs: null, boots: null, accessory: null, owned: [], consumables: {}, stacks: {} };
   }
 }
 
@@ -179,7 +183,7 @@ function equipmentBonuses(items: ItemsState) {
   let def = 0;
   let spd = 0;
   let ki = 0;
-  for (const id of [items.weapon, items.armor, items.accessory]) {
+  for (const id of [items.weapon, items.armor, items.head, items.wrists, items.legs, items.boots, items.accessory]) {
     if (!id) continue;
     const item = getItem(id);
     if (!item) continue;
