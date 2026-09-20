@@ -376,13 +376,10 @@ function sanitizeCraftJob(raw: unknown): CloudCraftJobSnapshot | null {
   const recipe = getCraftRecipe(recipeId);
   if (!recipe) return null;
 
-  // Craft máximo atual = 12h. Janela ampla tolera jobs vencidos/offline,
-  // sem aceitar datas absurdas trazidas de JSON editável pelo cliente.
+  // O maior lote atual fica abaixo de 24h base. A janela de 36h tolera
+  // o craft completo + variações de relógio sem aceitar datas absurdas.
   const endsAt = sanitizeIsoDate(c.endsAt, 14 * 86400_000, 36 * 3600_000);
   if (!endsAt) return null;
-  const startedAt =
-    sanitizeIsoDate(c.startedAt, 14 * 86400_000, 5 * 60_000) ??
-    new Date(endsAt.getTime() - recipe.baseDurationMin * 60_000);
 
   const requestedOutput = Math.trunc(Number(c.outputQuantity) || recipe.outputQuantity);
   const maxOutput = recipe.outputQuantity * Math.max(1, recipe.maxBatch ?? 1);
@@ -392,6 +389,10 @@ function sanitizeCraftJob(raw: unknown): CloudCraftJobSnapshot | null {
     requestedOutput % recipe.outputQuantity === 0
       ? requestedOutput
       : recipe.outputQuantity;
+  const batch = outputQuantity / recipe.outputQuantity;
+  const startedAt =
+    sanitizeIsoDate(c.startedAt, 14 * 86400_000, 5 * 60_000) ??
+    new Date(endsAt.getTime() - recipe.baseDurationMin * batch * 60_000);
 
   return {
     recipeId: recipe.id,
