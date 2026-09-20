@@ -317,7 +317,7 @@ export const SHOP_ITEMS: ShopItem[] = [
 
   // Armas
   { id: 'bastao_treino', name: 'Bastão de Treino', description: 'Slot: Arma. Bastão simples para quem está começando. Bônus: +4 ATQ.', category: 'weapon', price: 180, minLevel: 1, atk: 4, icon: '🦯' },
-  { id: 'bastao', name: 'Bastão Sagrado', description: 'Slot: Arma. Alcance e equilíbrio para combate corpo a corpo. Bônus: +9 ATQ.', category: 'weapon', price: 850, minLevel: 3, atk: 9, icon: '🦯' },
+  { id: 'bastao', name: 'Bastão Sagrado', description: 'Slot: Arma. Alcance e equilíbrio para combate corpo a corpo. Bônus: +9 ATQ.', category: 'weapon', price: 900, minLevel: 3, atk: 9, icon: '🦯' },
   { id: 'katana', name: 'Katana do Gohan', description: 'Slot: Arma. Lâmina leve que favorece golpes rápidos. Bônus: +18 ATQ e +2 VEL.', category: 'weapon', price: 2600, minLevel: 6, atk: 18, spd: 2, icon: '🗡️' },
   { id: 'espada_z', name: 'Espada Z', description: 'Slot: Arma. Espada sagrada com boa condução de energia. Bônus: +30 ATQ e +4 KI.', category: 'weapon', price: 7000, minLevel: 10, atk: 30, ki: 4, icon: '⚔️' },
   { id: 'lamina_capsula', name: 'Lâmina de Liga Capsule', description: 'Slot: Arma. Liga tecnológica leve e estável. Bônus: +45 ATQ e +5 VEL.', category: 'weapon', price: 16000, minLevel: 15, atk: 45, spd: 5, icon: '🗡️' },
