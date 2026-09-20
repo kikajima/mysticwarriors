@@ -142,6 +142,8 @@ export interface CraftRecipeDef {
   outputKind: 'stack' | 'player_item';
   costZeni: number;
   baseDurationMin: number;
+  /** Quantidade máxima por lote. Ausente = apenas 1 unidade por fabricação. */
+  maxBatch?: number;
   /** Blueprints são receitas acadêmicas e aparecem na seção de Projetos. */
   requiresAcademic?: boolean;
   /** Níveis mínimos de carreira exigidos para iniciar esta fabricação. */
