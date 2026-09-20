@@ -22,6 +22,7 @@ import {
   DRAGON_BALL_SEARCH_ENERGY_COST,
   dragonBallSearchShift,
   DRAGON_BALL_SEARCH_MAX_CHANCE,
+  DRAGON_BALL_PVP_STEAL_CHANCE,
   ENEMIES,
   HEAL_COST_PER_HP,
   PROFESSIONS,
@@ -413,7 +414,11 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
 // para procurar, em vez de depender do encerramento de uma profissão.
 async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown): Promise<ActionResult> {
   const ownedCount = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
-  if (ownedCount >= 7 || player.dragonBalls >= 7) {
+  if (player.dragonBalls !== ownedCount) {
+    await tx.player.update({ where: { id: player.id }, data: { dragonBalls: ownedCount } });
+    player.dragonBalls = ownedCount;
+  }
+  if (ownedCount >= 7) {
     throw new ApiError('VALIDATION_ERROR', 'Você já reuniu as 7 Esferas do Dragão. Faça um desejo antes de procurar mais.');
   }
   const hours = Number(rawHours);
@@ -1168,7 +1173,7 @@ export async function actionStartPvp(tx: Tx, player: Player, targetId: string): 
         // v0.9.17 — conquistas narrativas (flags puras da engine)
         miracleWin: sim.miracleWin ?? false,
         davidReposition: sim.davidReposition ?? false,
-        dragonBallStealChance: 0.25,
+        dragonBallStealChance: DRAGON_BALL_PVP_STEAL_CHANCE,
       },
     },
   };
@@ -1481,22 +1486,25 @@ async function actionWish(tx: Tx, player: Player, wishType: string): Promise<Act
   if (!['riqueza', 'poder', 'vitalidade', 'sabedoria'].includes(wishType)) {
     throw new ApiError('VALIDATION_ERROR', 'Desejo inválido.');
   }
-  if (player.dragonBalls < 7) {
-    throw new ApiError('VALIDATION_ERROR', `Você tem apenas ${player.dragonBalls}/7 esferas. Continue procurando!`);
+  const ownedCount = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
+  if (ownedCount < 7) {
+    if (player.dragonBalls !== ownedCount) {
+      await tx.player.update({ where: { id: player.id }, data: { dragonBalls: ownedCount } });
+      player.dragonBalls = ownedCount;
+    }
+    throw new ApiError('VALIDATION_ERROR', `Você tem apenas ${ownedCount}/7 esferas. Continue procurando!`);
   }
 
-  // consumo atômico das 7 esferas — apenas um desejo por coleta
-  const consume = await tx.player.updateMany({
-    where: { id: player.id, dragonBalls: { gte: 7 } },
-    data: { dragonBalls: 0 },
-  });
-  if (consume.count === 0) {
-    throw new ApiError('CONFLICT', 'As esferas já foram usadas.');
-  }
-  await tx.dragonBallPossession.updateMany({
+  // A tabela global é a fonte de verdade: libera exatamente as estrelas
+  // possuídas e só então zera o contador denormalizado do Player.
+  const released = await tx.dragonBallPossession.updateMany({
     where: { playerId: player.id },
     data: { playerId: null, acquiredAt: new Date() },
   });
+  if (released.count !== 7) {
+    throw new ApiError('CONFLICT', 'A posse das Esferas mudou. Tente novamente.');
+  }
+  await tx.player.update({ where: { id: player.id }, data: { dragonBalls: 0 } });
   player.dragonBalls = 0;
 
   let message = '';
