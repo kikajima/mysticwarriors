@@ -78,7 +78,7 @@ import {
   type TrainActivityResult,
 } from './activities';
 import { addCurrency, grantRewards, spendCurrency } from '@/lib/economy';
-import { startCraft, claimCraft } from './crafting';
+import { startCraft, claimCraft, cancelCraft } from './crafting';
 import { bumpQuests, claimAchievement, claimQuest } from '@/lib/progression';
 import { attackWorldBoss } from '@/lib/worldboss';
 import { scoreSeasonVictory } from '@/lib/seasons';
@@ -229,6 +229,11 @@ export async function executeGameAction(
       }
       case 'craft_claim': {
         const craft = await claimCraft(tx, player);
+        result = { message: craft.message, levelsGained: 0 };
+        break;
+      }
+      case 'craft_cancel': {
+        const craft = await cancelCraft(tx, player);
         result = { message: craft.message, levelsGained: 0 };
         break;
       }
