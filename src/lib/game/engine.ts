@@ -227,22 +227,32 @@ export function computeDerived(player: Player): DerivedStats {
   const defPower = Math.round(player.defense * 1.8 * rc.defenseMult * (tm?.defense ?? 1)) + eq.def;
   const resPower = Math.round((player.defense * 1.1 + (player.ki + eq.ki) * 0.9) * rc.defenseMult * (tm?.defense ?? 1));
   const speedTotal = Math.round((player.speed + eq.spd) * rc.speedMult * (tm?.speed ?? 1));
-  const equipmentBonuses = {
+  const equipmentStatBonuses = {
     strength: eq.atk,
     defense: eq.def,
     speed: eq.spd,
     ki: eq.ki,
   };
   const totalStats = {
-    strength: player.strength + equipmentBonuses.strength,
-    defense: player.defense + equipmentBonuses.defense,
-    speed: player.speed + equipmentBonuses.speed,
-    ki: player.ki + equipmentBonuses.ki,
+    strength: player.strength + equipmentStatBonuses.strength,
+    defense: player.defense + equipmentStatBonuses.defense,
+    speed: player.speed + equipmentStatBonuses.speed,
+    ki: player.ki + equipmentStatBonuses.ki,
   };
   const power = Math.round(
     player.level * 15 + atkPower + kiPower * 0.9 + defPower + resPower * 0.6 + speedTotal * 2
   );
-  return { maxHp, maxEnergy, atkPower, kiPower, defPower, resPower, equipmentBonuses, totalStats, power };
+  return {
+    maxHp,
+    maxEnergy,
+    atkPower,
+    kiPower,
+    defPower,
+    resPower,
+    equipmentBonuses: equipmentStatBonuses,
+    totalStats,
+    power,
+  };
 }
 
 // ===== Progresso de profissões =====
