@@ -226,9 +226,12 @@ export async function POST(request: Request) {
         queueWaitMs = Date.now() - waitingSince;
         const execStartedAt = Date.now();
         try {
-          // Garante quests uma vez por período ANTES da ação: além de tirar
-          // uma consulta do caminho quente, a primeira ação do dia já conta.
-          await ensureQuestsForAction(playerId).catch(() => undefined);
+          // Garante quests uma vez por período ANTES das ações reais.
+          // sync_activity apenas conclui uma luta já iniciada; o início da
+          // luta já garantiu as quests e não deve pagar esse round-trip.
+          if (type !== 'sync_activity') {
+            await ensureQuestsForAction(playerId).catch(() => undefined);
+          }
 
         if (requestId) {
           // LOCK: cria o registro antes de executar. Unique violation
