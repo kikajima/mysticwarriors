@@ -2,7 +2,8 @@ import type { Player, Prisma } from '@prisma/client';
 import { ApiError } from '@/lib/api';
 import { spendCurrency } from '@/lib/economy';
 import { trackEvent } from '@/lib/analytics';
-import { getProfessionMaterial } from './content/world';
+import { getProfession, getProfessionMaterial } from './content/world';
+import type { CraftRecipeDef } from './types';
 import {
   getCraftedItem,
   getCraftRecipe,
@@ -34,6 +35,33 @@ export function craftAcademicLevel(player: Pick<Player, 'professions'>): number 
 export function craftDurationMs(baseDurationMin: number, academicLevel: number): number {
   const mult = academicCraftTimeMultiplier(academicLevel);
   return Math.max(60_000, Math.ceil(baseDurationMin * 60_000 * mult));
+}
+
+export interface MissingCraftProfessionRequirement {
+  professionId: string;
+  requiredLevel: number;
+  currentLevel: number;
+}
+
+export function missingCraftProfessionRequirements(
+  player: Pick<Player, 'professions'>,
+  recipe: CraftRecipeDef
+): MissingCraftProfessionRequirement[] {
+  const professions = parseProfessions(player.professions);
+  return (recipe.professionRequirements ?? []).flatMap((requirement) => {
+    const progress = professions[requirement.professionId];
+    const currentLevel =
+      progress && progress.lifetimeHours > 0
+        ? professionLevel(progress)
+        : 0;
+    return currentLevel >= requirement.level
+      ? []
+      : [{
+          professionId: requirement.professionId,
+          requiredLevel: requirement.level,
+          currentLevel,
+        }];
+  });
 }
 
 function ingredientName(itemId: string): string {
@@ -91,10 +119,22 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string): Prom
   }
 
   const academicLevel = craftAcademicLevel(player);
+  const missingRequirements = missingCraftProfessionRequirements(player, recipe);
+  if (missingRequirements.length > 0) {
+    const requirement = missingRequirements[0];
+    const professionName = getProfession(requirement.professionId)?.name ?? requirement.professionId;
+    const current = requirement.currentLevel > 0 ? `Nível ${requirement.currentLevel}` : 'sem experiência';
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      `Requisito profissional não atendido: ${professionName} Nível ${requirement.requiredLevel} (atual: ${current}).`
+    );
+  }
+  // Guarda de compatibilidade para futuras receitas acadêmicas que ainda não
+  // declarem professionRequirements explicitamente.
   if (recipe.requiresAcademic && academicLevel <= 0) {
     throw new ApiError(
       'VALIDATION_ERROR',
-      'Este projeto precisa de experiência como Acadêmico. Conclua ao menos 1h de trabalho Acadêmico.'
+      'Este projeto precisa de experiência como Acadêmico.'
     );
   }
 

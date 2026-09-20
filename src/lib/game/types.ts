@@ -117,6 +117,11 @@ export interface CraftIngredientDef {
   quantity: number;
 }
 
+export interface CraftProfessionRequirement {
+  professionId: ProfessionId;
+  level: number;
+}
+
 export interface CraftStackItemDef {
   id: string;
   name: string;
@@ -137,8 +142,10 @@ export interface CraftRecipeDef {
   outputKind: 'stack' | 'player_item';
   costZeni: number;
   baseDurationMin: number;
-  /** Blueprints são fabricados por quem já trabalhou como Acadêmico. */
+  /** Blueprints são receitas acadêmicas e aparecem na seção de Projetos. */
   requiresAcademic?: boolean;
+  /** Níveis mínimos de carreira exigidos para iniciar esta fabricação. */
+  professionRequirements?: CraftProfessionRequirement[];
   ingredients: CraftIngredientDef[];
 }
 

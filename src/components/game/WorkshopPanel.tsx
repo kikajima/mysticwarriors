@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PlayerView } from '@/lib/game/types';
 import {
   CRAFT_RECIPES,
+  CRAFT_TIER_PROFESSION_LEVEL,
   getCraftStackItem,
   getCraftedItem,
 } from '@/lib/game/content/crafting';
-import { getProfessionMaterial } from '@/lib/game/content/world';
+import { getProfession, getProfessionMaterial } from '@/lib/game/content/world';
 import {
   academicCraftTimeMultiplier,
   professionLevel,
@@ -126,8 +127,30 @@ export function WorkshopPanel({
   const renderRecipe = (recipe: (typeof CRAFT_RECIPES)[number]) => {
     const output = getCraftedItem(recipe.outputItemId) ?? getCraftStackItem(recipe.outputItemId);
     const academicOk = !recipe.requiresAcademic || academicLevel > 0;
+    const professionRequirements = (recipe.professionRequirements ?? []).map((requirement) => {
+      const def = getProfession(requirement.professionId);
+      const progress = player.professions?.[requirement.professionId];
+      const currentLevel =
+        progress && progress.lifetimeHours > 0
+          ? professionLevel(progress)
+          : 0;
+      return {
+        ...requirement,
+        currentLevel,
+        name: def?.name ?? requirement.professionId,
+        icon: def?.icon ?? '📚',
+        ok: currentLevel >= requirement.level,
+      };
+    });
+    const professionRequirementsOk = professionRequirements.every((requirement) => requirement.ok);
     const ingredientsOk = recipe.ingredients.every((i) => (counts.get(i.itemId) ?? 0) >= i.quantity);
-    const canStart = !job && academicOk && ingredientsOk && player.zeni >= recipe.costZeni && !busy;
+    const canStart =
+      !job &&
+      academicOk &&
+      professionRequirementsOk &&
+      ingredientsOk &&
+      player.zeni >= recipe.costZeni &&
+      !busy;
     const effectiveMin = Math.ceil(recipe.baseDurationMin * craftMult);
 
     return (
@@ -158,6 +181,28 @@ export function WorkshopPanel({
               )}
             </div>
 
+            {professionRequirements.length > 0 && (
+              <div className="mt-3 rounded-lg border border-sky-900/40 bg-sky-950/15 p-3">
+                <p className="text-[11px] font-heading text-sky-200/80 mb-2">Requisitos profissionais</p>
+                <div className="grid gap-1.5">
+                  {professionRequirements.map((requirement) => (
+                    <div
+                      key={requirement.professionId}
+                      className="flex items-center gap-2 text-xs"
+                    >
+                      <span aria-hidden>{requirement.icon}</span>
+                      <span className="text-amber-100/80">{requirement.name}</span>
+                      <span className={requirement.ok ? 'text-emerald-300 ml-auto' : 'text-red-300 ml-auto'}>
+                        {requirement.currentLevel > 0 ? `Nv. ${requirement.currentLevel}` : 'sem experiência'}
+                        {' / '}
+                        Nv. {requirement.level}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-3 grid gap-1.5">
               {recipe.ingredients.map((ingredient) => {
                 const def = getProfessionMaterial(ingredient.itemId) ?? getCraftStackItem(ingredient.itemId);
@@ -175,9 +220,9 @@ export function WorkshopPanel({
               })}
             </div>
 
-            {!academicOk && (
+            {!academicOk && professionRequirements.length === 0 && (
               <p className="text-xs text-sky-300/80 mt-3">
-                Conclua ao menos 1h como Acadêmico para fabricar blueprints.
+                Esta receita exige experiência como Acadêmico.
               </p>
             )}
 
@@ -206,6 +251,9 @@ export function WorkshopPanel({
         </p>
         <p className="text-xs text-amber-200/50 mt-2">
           🎓 Mestria Acadêmica reduz o tempo de fabricação em 1% por nível, até 10%.
+          Os Tiers agora têm progressão real: Tier 2 exige carreira Nv. {CRAFT_TIER_PROFESSION_LEVEL[2]},
+          Tier 3 Nv. {CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4 Nv. {CRAFT_TIER_PROFESSION_LEVEL[4]} e
+          Tier 5 Nv. {CRAFT_TIER_PROFESSION_LEVEL[5]} nas profissões indicadas pela receita.
         </p>
       </GameCard>
 

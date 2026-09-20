@@ -45,7 +45,7 @@ import {
 } from '@/lib/game/content/tournament';
 import { ACHIEVEMENTS, DAILY_QUESTS, WEEKLY_QUESTS } from '@/lib/game/content/quests';
 import { TALENTS } from '@/lib/game/content/talents';
-import { CRAFT_RECIPES, CRAFT_STACK_ITEMS } from '@/lib/game/content/crafting';
+import { CRAFT_RECIPES, CRAFT_STACK_ITEMS, CRAFT_TIER_PROFESSION_LEVEL } from '@/lib/game/content/crafting';
 import {
   ENEMIES,
   SHOP_ITEMS,
@@ -1095,16 +1095,24 @@ export const WIKI_SECTIONS: WikiSection[] = [
         blocks: [
           {
             kind: 'text',
-            text: 'A Oficina fabrica um item por vez e continua contando offline. Os ingredientes e o Zeni são consumidos **ao iniciar** a fabricação; o resultado entra no inventário somente na coleta. Trabalhar não bloqueia a Oficina. O Acadêmico reduz o tempo em **1% por nível** (até **10%** no Nível 10). Blueprints exigem que você já tenha concluído ao menos 1h como Acadêmico.',
+            text: `A Oficina fabrica um item por vez e continua contando offline. Os ingredientes e o Zeni são consumidos **ao iniciar** a fabricação; o resultado entra no inventário somente na coleta. Trabalhar não bloqueia a Oficina. O Acadêmico reduz o tempo em **1% por nível** (até **10%** no Nível 10). Os Tiers agora são progressão real: Tier 2 exige carreira Nível ${CRAFT_TIER_PROFESSION_LEVEL[2]}, Tier 3 Nível ${CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4 Nível ${CRAFT_TIER_PROFESSION_LEVEL[4]} e Tier 5 Nível ${CRAFT_TIER_PROFESSION_LEVEL[5]} nas profissões indicadas pela receita.`,
           },
           {
             kind: 'table',
             table: {
               caption: 'Receitas da Oficina (ORIGEM: content/crafting.ts — CRAFT_RECIPES)',
-              headers: ['Tier', 'Receita', 'Custo', 'Tempo base', 'Ingredientes'],
+              headers: ['Tier', 'Receita', 'Requisitos', 'Custo', 'Tempo base', 'Ingredientes'],
               rows: CRAFT_RECIPES.map((r) => [
                 String(r.tier),
                 `${r.icon} ${r.name}`,
+                (r.professionRequirements ?? []).length > 0
+                  ? (r.professionRequirements ?? [])
+                      .map((requirement) => {
+                        const profession = PROFESSIONS.find((p) => p.id === requirement.professionId);
+                        return `${profession?.icon ?? '📚'} ${profession?.name ?? requirement.professionId} Nv. ${requirement.level}`;
+                      })
+                      .join(' + ')
+                  : 'Livre',
                 `${br(r.costZeni)} Zeni`,
                 r.baseDurationMin >= 60
                   ? `${Math.floor(r.baseDurationMin / 60)}h${r.baseDurationMin % 60 ? ` ${r.baseDurationMin % 60}min` : ''}`
@@ -1122,8 +1130,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
           {
             kind: 'list',
             items: [
+              `Escada de progressão: Tier 2 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[2]}**, Tier 3 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[3]}**, Tier 4 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[4]}** e Tier 5 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[5]}** nas carreiras indicadas.`,
               'Tier 3 ou superior sempre usa insumos ligados a **pelo menos duas profissões**.',
-              'Os itens principais de Tier 3+ exigem um **blueprint Acadêmico**.',
+              'Os itens principais de Tier 3+ exigem um **blueprint Acadêmico**, e cada blueprint tem seu próprio requisito de nível Acadêmico.',
               'Itens fabricados não são revendidos para a loja NPC; eles permanecem no inventário do jogador para uso.',
               'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Radar do Dragão Básico equipado adiciona **+2 p.p.** à chance de encontrar uma Esfera do Dragão ao concluir um turno de profissão; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+35 Defesa** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
             ],

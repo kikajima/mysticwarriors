@@ -13,6 +13,14 @@ import type { CraftRecipeDef, CraftStackItemDef, ShopItem } from '../types';
 // * blueprints são produzidos na Oficina e exigem experiência Acadêmica.
 // =====================================================================
 
+export const CRAFT_TIER_PROFESSION_LEVEL = {
+  1: 0,
+  2: 2,
+  3: 4,
+  4: 6,
+  5: 8,
+} as const;
+
 export const CRAFT_STACK_ITEMS: CraftStackItemDef[] = [
   {
     id: 'esquema_deteccao_ki',
@@ -115,6 +123,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
     costZeni: 250,
     baseDurationMin: 20,
     requiresAcademic: true,
+    professionRequirements: [{ professionId: 'academico', level: CRAFT_TIER_PROFESSION_LEVEL[2] }],
     ingredients: [
       { itemId: 'papel_pergaminho', quantity: 2 },
       { itemId: 'tinta_arcana', quantity: 1 },
@@ -133,6 +142,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
     costZeni: 800,
     baseDurationMin: 60,
     requiresAcademic: true,
+    professionRequirements: [{ professionId: 'academico', level: CRAFT_TIER_PROFESSION_LEVEL[3] }],
     ingredients: [
       { itemId: 'papel_pergaminho', quantity: 3 },
       { itemId: 'tinta_arcana', quantity: 2 },
@@ -152,6 +162,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
     costZeni: 1500,
     baseDurationMin: 120,
     requiresAcademic: true,
+    professionRequirements: [{ professionId: 'academico', level: CRAFT_TIER_PROFESSION_LEVEL[4] }],
     ingredients: [
       { itemId: 'papel_pergaminho', quantity: 3 },
       { itemId: 'tinta_arcana', quantity: 2 },
@@ -172,6 +183,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
     costZeni: 3500,
     baseDurationMin: 240,
     requiresAcademic: true,
+    professionRequirements: [{ professionId: 'academico', level: CRAFT_TIER_PROFESSION_LEVEL[5] }],
     ingredients: [
       { itemId: 'papel_pergaminho', quantity: 5 },
       { itemId: 'tinta_arcana', quantity: 3 },
@@ -210,6 +222,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
     outputKind: 'player_item',
     costZeni: 500,
     baseDurationMin: 30,
+    professionRequirements: [{ professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[2] }],
     ingredients: [
       { itemId: 'microchip_controle', quantity: 3 },
       { itemId: 'fibra_reforcada', quantity: 2 },
@@ -227,6 +240,10 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
     outputKind: 'player_item',
     costZeni: 2500,
     baseDurationMin: 120,
+    professionRequirements: [
+      { professionId: 'policial', level: CRAFT_TIER_PROFESSION_LEVEL[3] },
+      { professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[3] },
+    ],
     ingredients: [
       { itemId: 'liga_metais_leves', quantity: 5 },
       { itemId: 'kevlar_alienigena', quantity: 5 },
@@ -245,6 +262,10 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
     outputKind: 'player_item',
     costZeni: 5000,
     baseDurationMin: 240,
+    professionRequirements: [
+      { professionId: 'agricultor', level: CRAFT_TIER_PROFESSION_LEVEL[4] },
+      { professionId: 'atleta', level: CRAFT_TIER_PROFESSION_LEVEL[4] },
+    ],
     ingredients: [
       { itemId: 'semente_deuses_virgem', quantity: 2 },
       { itemId: 'fluido_recuperacao_extrema', quantity: 2 },
@@ -262,6 +283,10 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
     outputKind: 'player_item',
     costZeni: 20000,
     baseDurationMin: 720,
+    professionRequirements: [
+      { professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[5] },
+      { professionId: 'atleta', level: CRAFT_TIER_PROFESSION_LEVEL[5] },
+    ],
     ingredients: [
       { itemId: 'capsula_vazia_tipo_b', quantity: 10 },
       { itemId: 'pesos_gravidade_10x', quantity: 5 },
