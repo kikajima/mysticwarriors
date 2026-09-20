@@ -68,7 +68,7 @@ function ingredientName(itemId: string): string {
   return getProfessionMaterial(itemId)?.name ?? getCraftStackItem(itemId)?.name ?? itemId;
 }
 
-async function grantStack(tx: Tx, playerId: string, itemId: string, quantity: number) {
+async function assertStackCapacity(tx: Tx, playerId: string, itemId: string, quantity: number) {
   const current = await tx.inventoryStack.findUnique({
     where: { playerId_itemId: { playerId, itemId } },
     select: { quantity: true },
@@ -76,6 +76,14 @@ async function grantStack(tx: Tx, playerId: string, itemId: string, quantity: nu
   if ((current?.quantity ?? 0) + quantity > 1_000_000) {
     throw new ApiError('VALIDATION_ERROR', 'Limite de estoque deste material atingido.');
   }
+}
+
+async function grantStack(tx: Tx, playerId: string, itemId: string, quantity: number) {
+  await assertStackCapacity(tx, playerId, itemId, quantity);
+  const current = await tx.inventoryStack.findUnique({
+    where: { playerId_itemId: { playerId, itemId } },
+    select: { quantity: true },
+  });
   await tx.inventoryStack.upsert({
     where: { playerId_itemId: { playerId, itemId } },
     update: { quantity: { increment: quantity } },
@@ -169,6 +177,8 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, quant
 
   if (recipe.outputKind === 'player_item') {
     await assertPlayerItemCapacity(player, recipe.outputItemId, outputQuantity);
+  } else {
+    await assertStackCapacity(tx, player.id, recipe.outputItemId, outputQuantity);
   }
 
   const totalCost = recipe.costZeni * batch;
@@ -244,6 +254,14 @@ export async function claimCraft(tx: Tx, player: Player): Promise<{ message: str
   const recipe = getCraftRecipe(job.recipeId);
   if (!recipe || recipe.outputItemId !== job.outputItemId || recipe.outputKind !== job.outputKind) {
     throw new ApiError('VALIDATION_ERROR', 'Receita da fabricação não existe mais. Contate a administração.');
+  }
+  const maxOutput = recipe.outputQuantity * Math.max(1, recipe.maxBatch ?? 1);
+  if (
+    job.outputQuantity < recipe.outputQuantity ||
+    job.outputQuantity > maxOutput ||
+    job.outputQuantity % recipe.outputQuantity !== 0
+  ) {
+    throw new ApiError('VALIDATION_ERROR', 'Quantidade da fabricação inválida. Contate a administração.');
   }
 
   if (job.outputKind === 'player_item') {
