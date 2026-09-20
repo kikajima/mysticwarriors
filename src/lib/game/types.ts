@@ -86,13 +86,13 @@ export interface ProfessionLevelRewards {
   xpPctPerHour: number;
   /** Chance de Esfera por TURNO concluído. */
   dragonBallChance: number;
-  /** Chance base de material raro por HORA, antes da eficiência do turno. */
+  /** Chance base de material raro por HORA, antes do multiplicador do turno. */
   rareChance: number;
 }
 
 export interface ProfessionShiftDef {
   hours: 1 | 2 | 4 | 8;
-  /** Eficiência aplicada a XP e à chance de raro; demais ganhos são integrais. */
+  /** Multiplicador aplicado a XP e à chance de raro; turnos longos podem passar de 100%. */
   efficiency: number;
 }
 

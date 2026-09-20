@@ -1005,16 +1005,16 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `O trabalho continua contando com o jogo fechado. Você escolhe a duração do turno e coleta tudo ao final. Turnos maiores são mais cômodos, mas reduzem somente **XP e chance de material raro**; Zeni, atributo, horas de carreira, material comum e a chance de Esfera não sofrem redução. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
+        text: `O trabalho continua contando com o jogo fechado. Você escolhe a duração do turno e coleta tudo ao final. **Quanto maior o turno, maior o bônus de XP e de chance de material raro**; Zeni, atributo, horas de carreira, material comum e a chance de Esfera seguem a regra base. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
       },
       {
         kind: 'table',
         table: {
           caption: 'Turnos flexíveis (ORIGEM: content/world.ts — PROFESSION_SHIFTS)',
-          headers: ['Turno', 'Eficiência de XP e raros', 'Zeni / atributo / comuns'],
+          headers: ['Turno', 'Bônus de XP e raros', 'Zeni / atributo / comuns'],
           rows: PROFESSION_SHIFTS.map((s) => [
             `${s.hours}h`,
-            `${Math.round(s.efficiency * 100)}%`,
+            s.efficiency <= 1 ? 'Base' : `+${Math.round((s.efficiency - 1) * 100)}%`,
             '100%',
           ]),
         },
@@ -1060,7 +1060,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         items: [
           `A carreira fecha o ciclo em **${br(PROFESSION_MASTERY_HOURS)} horas**. No Nível 10 você continua recebendo as recompensas do Nível 10; Mestria/Prestígio será uma etapa própria.`,
           'O ganho de atributo usa frações internas e respeita o teto global de **999**; ao chegar no teto, Zeni, XP, horas e loot continuam normalmente.',
-          'A chance de material raro é testada **uma vez por hora** e multiplicada pela eficiência do turno. O material comum nunca deixa de vir: **1–2 unidades por hora**.',
+          'A chance de material raro é testada **uma vez por hora** e recebe o bônus da duração do turno. O material comum nunca deixa de vir: **1–2 unidades por hora**.',
           'A Esfera do Dragão faz **um único teste ao concluir o turno**, independentemente de o turno ter 1h ou 8h.',
           'Cancelar um turno em andamento não concede recompensa parcial.',
           '**Androide:** o bônus racial de Zeni de trabalho continua valendo.',

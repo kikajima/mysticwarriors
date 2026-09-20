@@ -349,7 +349,8 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(t).toContain(`${PROFESSION_MASTERY_HOURS.toLocaleString('pt-BR')} horas`);
     for (const shift of PROFESSION_SHIFTS) {
       expect(t).toContain(`${shift.hours}h`);
-      expect(t).toContain(`${Math.round(shift.efficiency * 100)}%`);
+      const bonus = shift.efficiency <= 1 ? 'Base' : `+${Math.round((shift.efficiency - 1) * 100)}%`;
+      expect(t).toContain(bonus);
     }
     expect(t).toContain(`${(PROFESSION_LEVELS[0].xpPctPerHour * 100).toLocaleString('pt-BR')}%`);
     expect(t).toContain(`${(PROFESSION_LEVELS[9].xpPctPerHour * 100).toLocaleString('pt-BR')}%`);

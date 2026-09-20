@@ -443,10 +443,11 @@ async function actionStartProfession(
 
   const progress = parseProfessions(player.professions);
   const level = professionLevel(progress[def.id]);
-  const efficiency = Math.round((professionShift(hours)?.efficiency ?? 1) * 100);
+  const shiftMultiplier = professionShift(hours)?.efficiency ?? 1;
+  const shiftBonusPct = Math.max(0, Math.round((shiftMultiplier - 1) * 100));
 
   return {
-    message: `Trabalho iniciado: ${def.name} (${professionLevelTitle(level)}), turno de ${hours}h. Eficiência de XP/raros: ${efficiency}%.`,
+    message: `Trabalho iniciado: ${def.name} (${professionLevelTitle(level)}), turno de ${hours}h. Bônus de duração em XP/raros: +${shiftBonusPct}%.`,
     levelsGained: 0,
   };
 }
