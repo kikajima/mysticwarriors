@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { SHOP_ITEMS } from '../src/lib/game/content/world';
-import { CRAFTED_ITEMS } from '../src/lib/game/content/crafting';
+import { ENDGAME_SHOP_ITEMS, SHOP_ITEMS } from '../src/lib/game/content/world';
+import { CRAFTED_ITEMS, ENDGAME_CRAFTED_ITEMS } from '../src/lib/game/content/crafting';
 import {
   EQUIPMENT_SLOTS,
   EQUIPMENT_SLOT_META,
@@ -56,6 +56,18 @@ describe('Loja e Oficina — equipamentos claros e progressão coerente', () => 
     }
   });
 
+  test('endgame cobre níveis 30, 50, 75 e 100 em todos os slots e o craft vence a loja por faixa', () => {
+    for (const level of [30, 50, 75, 100]) {
+      for (const slot of EQUIPMENT_SLOTS) {
+        const shop = ENDGAME_SHOP_ITEMS.find((item) => item.category === slot && item.minLevel === level);
+        const craft = ENDGAME_CRAFTED_ITEMS.find((item) => item.category === slot && item.minLevel === level);
+        expect(shop).toBeDefined();
+        expect(craft).toBeDefined();
+        expect(combatScore(craft!)).toBeGreaterThan(combatScore(shop!));
+      }
+    }
+  });
+
   test('contrato publica exatamente dois espaços de acessório e oito espaços equipáveis', () => {
     expect(EQUIPPED_SLOTS.filter((slot) => slot === 'accessory' || slot === 'accessory2')).toEqual([
       'accessory',
@@ -70,11 +82,13 @@ describe('Loja e Oficina — equipamentos claros e progressão coerente', () => 
       expect(shop).toContain(`key: '${slot}'`);
     }
     expect(shop).toContain('Slot: {slotText(item)}');
+    expect(shop).toContain('Você possui: {owned}');
 
     const dashboard = await Bun.file(`${import.meta.dir}/../src/components/game/Dashboard.tsx`).text();
     expect(dashboard).toContain('Base {base}');
-    expect(dashboard).toContain("Equip. {bonus > 0 ? `+${bonus}` : '+0'}");
-    expect(dashboard).toContain('Total = atributo base + bônus dos equipamentos');
-    expect(dashboard).toContain('player.derived.totalStats');
+    expect(dashboard).toContain("Equipamento {bonus > 0 ? `+${bonus}` : '+0'}");
+    expect(dashboard).toContain('Total com equipamento');
+    expect(dashboard).toContain('equippedBonusForStat(player, key)');
+    expect(dashboard).toContain('Total {total}');
   });
 });
