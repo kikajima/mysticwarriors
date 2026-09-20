@@ -39,11 +39,11 @@ export async function createPlayerNotification(
 }
 
 /**
- * Entrega notificações exatamente uma vez. Duas polls concorrentes podem
- * ler os mesmos ids, mas somente quem conseguir marcar deliveredAt=null
- * -> timestamp inclui a linha na resposta.
+ * Lista avisos ainda não confirmados. Não marca como entregue aqui:
+ * a confirmação só acontece depois que o navegador realmente recebeu e
+ * exibiu o pop-up, evitando perder uma notificação por queda de rede.
  */
-export async function claimPlayerNotifications(
+export async function listPendingPlayerNotifications(
   tx: Tx,
   playerId: string,
   limit = 10
@@ -54,22 +54,26 @@ export async function claimPlayerNotifications(
     take: Math.max(1, Math.min(25, Math.trunc(limit))),
   });
 
-  const delivered: PlayerNotificationView[] = [];
-  const now = new Date();
-  for (const row of rows) {
-    const claimed = await tx.playerNotification.updateMany({
-      where: { id: row.id, playerId, deliveredAt: null },
-      data: { deliveredAt: now },
-    });
-    if (claimed.count !== 1) continue;
-    delivered.push({
-      id: row.id,
-      kind: row.kind as PlayerNotificationView['kind'],
-      title: row.title,
-      message: row.message,
-      createdAt: row.createdAt.toISOString(),
-      metadata: parseMetadata(row.metadata),
-    });
-  }
-  return delivered;
+  return rows.map((row) => ({
+    id: row.id,
+    kind: row.kind as PlayerNotificationView['kind'],
+    title: row.title,
+    message: row.message,
+    createdAt: row.createdAt.toISOString(),
+    metadata: parseMetadata(row.metadata),
+  }));
+}
+
+export async function acknowledgePlayerNotifications(
+  tx: Tx,
+  playerId: string,
+  ids: string[]
+): Promise<number> {
+  const unique = [...new Set(ids.filter((id) => typeof id === 'string' && id.length > 0))].slice(0, 25);
+  if (unique.length === 0) return 0;
+  const result = await tx.playerNotification.updateMany({
+    where: { playerId, id: { in: unique }, deliveredAt: null },
+    data: { deliveredAt: new Date() },
+  });
+  return result.count;
 }
