@@ -68,6 +68,15 @@ describe('Loja e Oficina — equipamentos claros e progressão coerente', () => 
     }
   });
 
+  test('equipamentos de endgame não podem ser equipados antes do nível exigido', async () => {
+    const actions = await Bun.file(`${import.meta.dir}/../src/lib/game/actions.ts`).text();
+    const start = actions.indexOf('async function actionEquip');
+    const end = actions.indexOf('async function actionUnequip', start);
+    const body = actions.slice(start, end);
+    expect(body).toContain('player.level < item.minLevel');
+    expect(body).toContain('Nível ${item.minLevel} necessário para equipar ${item.name}');
+  });
+
   test('contrato publica exatamente dois espaços de acessório e oito espaços equipáveis', () => {
     expect(EQUIPPED_SLOTS.filter((slot) => slot === 'accessory' || slot === 'accessory2')).toEqual([
       'accessory',
