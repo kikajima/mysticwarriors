@@ -53,7 +53,7 @@ export const INITIAL_PLAYER_DATA = {
   missionsDone: 0,
   dragonBalls: 0,
   avatarUrl: null, // avatar volta ao padrão da raça
-  items: '{"weapon":null,"armor":null,"accessory":null,"owned":[],"consumables":{}}',
+  items: '{"weapon":null,"armor":null,"accessory":null,"head":null,"wrists":null,"legs":null,"boots":null,"owned":[],"consumables":{},"stacks":{}}',
   techniques: '[]',
   loadout: '{"1":null,"2":null,"3":null,"S":null}',
   strategy: 'balanced',
@@ -122,7 +122,7 @@ export function initialCloudCharacterState(identity: CharacterIdentity): CloudCh
     guildDonated: 0,
     missionsDone: 0,
     dragonBalls: 0,
-    items: { weapon: null, armor: null, accessory: null, owned: [], consumables: {}, stacks: {} },
+    items: { weapon: null, armor: null, accessory: null, head: null, wrists: null, legs: null, boots: null, owned: [], consumables: {}, stacks: {} },
     techniques: [],
     loadout: { '1': null, '2': null, '3': null, S: null },
     strategy: 'balanced',

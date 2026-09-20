@@ -137,6 +137,7 @@ describe('v0.16 anti-drift — TRABALHANDO: tudo liberado EXCETO os 2 negados', 
     expect(() => assertPlayerAvailableForAction(working, 'unequip')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'craft_start')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'craft_claim')).not.toThrow();
+    expect(() => assertPlayerAvailableForAction(working, 'craft_cancel')).not.toThrow();
   });
 
   test('trabalhando → doar na guilda ok · fundar/entrar/sair ok', () => {
@@ -233,6 +234,9 @@ describe('v0.16 anti-drift — EM LUTA: coleta NUNCA espera ocupação', () => {
         await expect(assertNoRunningActivityTx(tx, player.id, 'heal')).resolves.toBeUndefined();
         await expect(assertNoRunningActivityTx(tx, player.id, 'donate_guild')).resolves.toBeUndefined();
         await expect(assertNoRunningActivityTx(tx, player.id, 'select_player')).resolves.toBeUndefined();
+        await expect(assertNoRunningActivityTx(tx, player.id, 'craft_start')).resolves.toBeUndefined();
+        await expect(assertNoRunningActivityTx(tx, player.id, 'craft_claim')).resolves.toBeUndefined();
+        await expect(assertNoRunningActivityTx(tx, player.id, 'craft_cancel')).resolves.toBeUndefined();
       });
 
       // as ações de luta/treino/trabalho/torneio são negadas (uma por vez)

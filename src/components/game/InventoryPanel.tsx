@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { getItem, SELL_PRICE_RATIO } from '@/lib/game/constants';
-import type { ItemsState, PlayerView, ShopItem } from '@/lib/game/types';
+import type { EquipmentSlot, ItemsState, PlayerView, ShopItem } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { WorkshopPanel } from './WorkshopPanel';
 import { Backpack, Hammer, Shield, Wrench } from 'lucide-react';
@@ -237,21 +237,19 @@ function ItemInventory({
   );
 }
 
-type RealEquipmentSlot = 'weapon' | 'armor' | 'accessory';
 type DisplaySlot = {
-  key: string;
+  key: EquipmentSlot;
   label: string;
   icon: string;
-  backing?: RealEquipmentSlot;
   grid: string;
 };
 
 const DISPLAY_SLOTS: DisplaySlot[] = [
   { key: 'head', label: 'Cabeça', icon: '🪖', grid: 'col-start-2 row-start-1' },
   { key: 'wrists', label: 'Punhos', icon: '🥊', grid: 'col-start-1 row-start-2' },
-  { key: 'armor', label: 'Torso', icon: '🛡️', backing: 'armor', grid: 'col-start-2 row-start-2' },
-  { key: 'accessory', label: 'Acessório', icon: '💍', backing: 'accessory', grid: 'col-start-3 row-start-2' },
-  { key: 'weapon', label: 'Arma', icon: '⚔️', backing: 'weapon', grid: 'col-start-1 row-start-3' },
+  { key: 'armor', label: 'Torso', icon: '🛡️', grid: 'col-start-2 row-start-2' },
+  { key: 'accessory', label: 'Acessório', icon: '💍', grid: 'col-start-3 row-start-2' },
+  { key: 'weapon', label: 'Arma', icon: '⚔️', grid: 'col-start-1 row-start-3' },
   { key: 'legs', label: 'Pernas', icon: '👖', grid: 'col-start-2 row-start-3' },
   { key: 'boots', label: 'Botas', icon: '🥾', grid: 'col-start-2 row-start-4' },
 ];
@@ -267,7 +265,7 @@ function EquipmentSlot({
   busy: boolean;
   onAction: (payload: Record<string, unknown>) => void | Promise<boolean>;
 }) {
-  const itemId = slot.backing ? player.items[slot.backing] : null;
+  const itemId = player.items[slot.key] ?? null;
   const item = itemId ? getItem(itemId) : undefined;
 
   return (
@@ -284,11 +282,11 @@ function EquipmentSlot({
         <span className="mt-1 text-[10px] font-heading text-amber-200/55">{slot.label}</span>
         {item && <span className="text-[10px] text-amber-100/80 line-clamp-2">{item.name}</span>}
       </div>
-      {item && slot.backing && (
+      {item && (
         <button
           type="button"
           disabled={busy}
-          onClick={() => onAction({ type: 'unequip', slot: slot.backing })}
+          onClick={() => onAction({ type: 'unequip', slot: slot.key })}
           className="mt-1 w-full text-[10px] text-amber-200/45 hover:text-amber-100 disabled:opacity-40"
         >
           remover
@@ -315,15 +313,16 @@ function EquipmentInventory({
         .map((id) => getItem(id))
         .filter(
           (item): item is ShopItem =>
-            !!item && (item.category === 'weapon' || item.category === 'armor' || item.category === 'accessory')
+            !!item && ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots'].includes(item.category)
         ),
     [player.items.owned]
   );
 
   const totals = useMemo(() => {
     const out = { atk: 0, def: 0, spd: 0, ki: 0 };
-    for (const slot of ['weapon', 'armor', 'accessory'] as const) {
-      const item = player.items[slot] ? getItem(player.items[slot]!) : undefined;
+    for (const slot of ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots'] as const) {
+      const itemId = player.items[slot] ?? null;
+      const item = itemId ? getItem(itemId) : undefined;
       if (!item) continue;
       out.atk += item.atk ?? 0;
       out.def += item.def ?? 0;
@@ -336,11 +335,15 @@ function EquipmentInventory({
   const sell = (itemId: string) =>
     onAction({ type: 'sell', itemId, quantity: sellQty[itemId] ?? 1 });
 
-  const groups = [
-    { key: 'weapon', label: 'Armas', icon: '⚔️' },
-    { key: 'armor', label: 'Armaduras', icon: '🛡️' },
+  const groups: Array<{ key: EquipmentSlot; label: string; icon: string }> = [
+    { key: 'head', label: 'Cabeça', icon: '🪖' },
+    { key: 'wrists', label: 'Punhos', icon: '🥊' },
+    { key: 'armor', label: 'Torso', icon: '🛡️' },
     { key: 'accessory', label: 'Acessórios', icon: '💍' },
-  ] as const;
+    { key: 'weapon', label: 'Armas', icon: '⚔️' },
+    { key: 'legs', label: 'Pernas', icon: '👖' },
+    { key: 'boots', label: 'Botas', icon: '🥾' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -389,7 +392,7 @@ function EquipmentInventory({
               <div className="grid md:grid-cols-2 gap-3">
                 {rows.map((item) => {
                   const total = unitsOf(player.items, item.id);
-                  const equipped = player.items[group.key] === item.id;
+                  const equipped = (player.items[group.key] ?? null) === item.id;
                   const sellable = item.price > 0 ? total - (equipped ? 1 : 0) : 0;
                   const q = Math.min(sellQty[item.id] ?? 1, Math.max(1, sellable));
                   return (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { EQUIPMENT_SLOTS } from '@/lib/game/types';
 import type { PlayerView } from '@/lib/game/types';
 import {
   CRAFT_RECIPES,
@@ -70,6 +71,9 @@ export function WorkshopPanel({
 }) {
   const [inventory, setInventory] = useState<InventoryRow[] | null>(null);
   const [job, setJob] = useState<CraftJobRow | null>(null);
+  const [batchQty, setBatchQty] = useState<Record<string, number>>({});
+  const [tierFilter, setTierFilter] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all');
+  const [kindFilter, setKindFilter] = useState<'all' | 'equipment' | 'consumable' | 'training'>('all');
   const [failed, setFailed] = useState(false);
   const now = useServerNow(500);
 
@@ -121,12 +125,33 @@ export function WorkshopPanel({
     : 1;
   const progress = job ? Math.max(0, Math.min(100, ((totalMs - Math.max(0, remaining)) / totalMs) * 100)) : 0;
 
-  const blueprints = CRAFT_RECIPES.filter((r) => r.requiresAcademic);
-  const mainRecipes = CRAFT_RECIPES.filter((r) => !r.requiresAcademic);
+  const byTierThenName = (a: (typeof CRAFT_RECIPES)[number], b: (typeof CRAFT_RECIPES)[number]) =>
+    a.tier - b.tier || a.name.localeCompare(b.name, 'pt-BR');
+  const matchesTier = (recipe: (typeof CRAFT_RECIPES)[number]) =>
+    tierFilter === 'all' || recipe.tier === tierFilter;
+  const matchesKind = (recipe: (typeof CRAFT_RECIPES)[number]) => {
+    if (kindFilter === 'all') return true;
+    const item = getCraftedItem(recipe.outputItemId);
+    if (!item) return false;
+    if (kindFilter === 'equipment') return EQUIPMENT_SLOTS.includes(item.category as (typeof EQUIPMENT_SLOTS)[number]);
+    return item.category === kindFilter;
+  };
+  const blueprints = CRAFT_RECIPES.filter((r) => r.requiresAcademic && matchesTier(r)).sort(byTierThenName);
+  const mainRecipes = CRAFT_RECIPES
+    .filter((r) => !r.requiresAcademic && matchesTier(r) && matchesKind(r))
+    .sort(byTierThenName);
 
   const renderRecipe = (recipe: (typeof CRAFT_RECIPES)[number]) => {
-    const output = getCraftedItem(recipe.outputItemId) ?? getCraftStackItem(recipe.outputItemId);
+    const playerItemOutput = getCraftedItem(recipe.outputItemId);
+    const output = playerItemOutput ?? getCraftStackItem(recipe.outputItemId);
+    const uniqueAlreadyOwned =
+      !!playerItemOutput &&
+      playerItemOutput.category !== 'consumable' &&
+      player.items.owned.includes(playerItemOutput.id);
     const academicOk = !recipe.requiresAcademic || academicLevel > 0;
+    const maxBatch = Math.max(1, recipe.maxBatch ?? 1);
+    const quantity = Math.max(1, Math.min(maxBatch, batchQty[recipe.id] ?? 1));
+    const totalCost = recipe.costZeni * quantity;
     const professionRequirements = (recipe.professionRequirements ?? []).map((requirement) => {
       const def = getProfession(requirement.professionId);
       const progress = player.professions?.[requirement.professionId];
@@ -143,15 +168,18 @@ export function WorkshopPanel({
       };
     });
     const professionRequirementsOk = professionRequirements.every((requirement) => requirement.ok);
-    const ingredientsOk = recipe.ingredients.every((i) => (counts.get(i.itemId) ?? 0) >= i.quantity);
+    const ingredientsOk = recipe.ingredients.every(
+      (i) => (counts.get(i.itemId) ?? 0) >= i.quantity * quantity
+    );
     const canStart =
       !job &&
       academicOk &&
       professionRequirementsOk &&
       ingredientsOk &&
-      player.zeni >= recipe.costZeni &&
+      player.zeni >= totalCost &&
+      !uniqueAlreadyOwned &&
       !busy;
-    const effectiveMin = Math.ceil(recipe.baseDurationMin * craftMult);
+    const effectiveMin = Math.ceil(recipe.baseDurationMin * craftMult * quantity);
 
     return (
       <GameCard key={recipe.id} className="p-4">
@@ -164,12 +192,29 @@ export function WorkshopPanel({
               {recipe.requiresAcademic && (
                 <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">Acadêmico</Chip>
               )}
+              <Chip
+                className={
+                  academicOk && professionRequirementsOk
+                    ? ingredientsOk && player.zeni >= totalCost
+                      ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/50'
+                      : 'bg-yellow-950/50 text-yellow-300 border-yellow-800/50'
+                    : 'bg-red-950/50 text-red-300 border-red-800/50'
+                }
+              >
+                {uniqueAlreadyOwned
+                  ? 'já fabricado'
+                  : academicOk && professionRequirementsOk
+                    ? ingredientsOk && player.zeni >= totalCost
+                      ? 'pronta'
+                      : 'faltam recursos'
+                    : 'bloqueada'}
+              </Chip>
             </div>
             <p className="text-xs text-amber-200/55 mt-1">{recipe.description}</p>
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               <Chip className="bg-yellow-950/40 text-yellow-300 border-yellow-800/40">
-                <Coins className="w-3.5 h-3.5" /> {recipe.costZeni.toLocaleString('pt-BR')} Zeni
+                <Coins className="w-3.5 h-3.5" /> {totalCost.toLocaleString('pt-BR')} Zeni
               </Chip>
               <Chip className="bg-black/30 text-amber-200/70 border-amber-900/40">
                 <Clock3 className="w-3.5 h-3.5" /> {durationLabel(effectiveMin)}
@@ -207,13 +252,14 @@ export function WorkshopPanel({
               {recipe.ingredients.map((ingredient) => {
                 const def = getProfessionMaterial(ingredient.itemId) ?? getCraftStackItem(ingredient.itemId);
                 const have = counts.get(ingredient.itemId) ?? 0;
-                const ok = have >= ingredient.quantity;
+                const needed = ingredient.quantity * quantity;
+                const ok = have >= needed;
                 return (
                   <div key={ingredient.itemId} className="flex items-center gap-2 text-xs">
                     <span aria-hidden>{def?.icon ?? '📦'}</span>
                     <span className="text-amber-100/80">{def?.name ?? ingredient.itemId}</span>
                     <span className={ok ? 'text-emerald-300 ml-auto' : 'text-red-300 ml-auto'}>
-                      {have}/{ingredient.quantity}
+                      {have}/{needed}
                     </span>
                   </div>
                 );
@@ -225,14 +271,49 @@ export function WorkshopPanel({
                 Esta receita exige experiência como Acadêmico.
               </p>
             )}
+            {uniqueAlreadyOwned && (
+              <p className="text-xs text-emerald-300/70 mt-3">
+                Você já possui este item permanente. A Oficina não fabrica duplicatas sem utilidade.
+              </p>
+            )}
+
+            {maxBatch > 1 && (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-900/40 bg-black/20 p-2.5">
+                <div>
+                  <p className="text-[11px] font-heading text-amber-100">Quantidade do lote</p>
+                  <p className="text-[10px] text-amber-200/45">Tempo, custo e materiais escalam com a quantidade.</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    aria-label="Diminuir lote"
+                    disabled={busy || quantity <= 1}
+                    onClick={() => setBatchQty((m) => ({ ...m, [recipe.id]: Math.max(1, quantity - 1) }))}
+                    className="w-7 h-7 rounded-md border border-amber-800/60 bg-black/40 text-amber-200 disabled:opacity-30"
+                  >
+                    −
+                  </button>
+                  <span className="w-8 text-center font-heading text-sm text-amber-100 tabular-nums">{quantity}</span>
+                  <button
+                    type="button"
+                    aria-label="Aumentar lote"
+                    disabled={busy || quantity >= maxBatch}
+                    onClick={() => setBatchQty((m) => ({ ...m, [recipe.id]: Math.min(maxBatch, quantity + 1) }))}
+                    className="w-7 h-7 rounded-md border border-amber-800/60 bg-black/40 text-amber-200 disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            )}
 
             <GameButton
               className="w-full mt-4"
               disabled={!canStart}
-              onClick={() => void runAction({ type: 'craft_start', recipeId: recipe.id })}
+              onClick={() => void runAction({ type: 'craft_start', recipeId: recipe.id, quantity })}
             >
               <Wrench className="w-4 h-4" />
-              Fabricar {output?.name ?? recipe.name}
+              Fabricar {quantity > 1 ? `${quantity}× ` : ''}{output?.name ?? recipe.name}
             </GameButton>
           </div>
         </div>
@@ -257,6 +338,48 @@ export function WorkshopPanel({
         </p>
       </GameCard>
 
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-amber-200/55 mr-1">Tier:</span>
+          {(['all', 1, 2, 3, 4, 5] as const).map((tier) => (
+            <button
+              key={tier}
+              type="button"
+              onClick={() => setTierFilter(tier)}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-heading transition-colors ${
+                tierFilter === tier
+                  ? 'border-orange-500/70 bg-orange-950/40 text-orange-200'
+                  : 'border-amber-900/40 bg-black/20 text-amber-200/55 hover:border-amber-700/60'
+              }`}
+            >
+              {tier === 'all' ? 'Todos' : `Tier ${tier}`}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-amber-200/55 mr-1">Tipo:</span>
+          {([
+            ['all', 'Todos'],
+            ['equipment', 'Equipamentos'],
+            ['consumable', 'Consumíveis'],
+            ['training', 'Treino'],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setKindFilter(key)}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-heading transition-colors ${
+                kindFilter === key
+                  ? 'border-sky-500/70 bg-sky-950/40 text-sky-200'
+                  : 'border-amber-900/40 bg-black/20 text-amber-200/55 hover:border-amber-700/60'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {job && (
         <GameCard className="p-5 border-orange-600/50" glow={remaining <= 0}>
           <div className="flex items-start gap-4">
@@ -273,7 +396,7 @@ export function WorkshopPanel({
                 <span>{countdown(remaining)}</span>
                 <span>{Math.round(progress)}%</span>
               </div>
-              {remaining <= 0 && (
+              {remaining <= 0 ? (
                 <GameButton
                   className="mt-4"
                   disabled={busy}
@@ -281,6 +404,23 @@ export function WorkshopPanel({
                 >
                   🎁 Coletar item fabricado
                 </GameButton>
+              ) : (
+                <div className="mt-4">
+                  <GameButton
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => {
+                      if (window.confirm('Cancelar a fabricação? Todos os materiais e o Zeni serão devolvidos.')) {
+                        void runAction({ type: 'craft_cancel' });
+                      }
+                    }}
+                  >
+                    ↩️ Cancelar e reembolsar
+                  </GameButton>
+                  <p className="text-[10px] text-amber-200/40 mt-1">
+                    O cancelamento devolve integralmente os materiais e o Zeni consumidos.
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -304,6 +444,15 @@ export function WorkshopPanel({
                 <div key={row.itemId} className="rounded-lg border border-amber-900/40 bg-black/20 px-3 py-2 flex items-center gap-2">
                   <span aria-hidden>{row.icon}</span>
                   <span className="text-xs text-amber-100/80 truncate">{row.name}</span>
+                  {row.tier && (
+                    <Chip className="bg-black/30 text-amber-200/55 border-amber-900/40">T{row.tier}</Chip>
+                  )}
+                  {row.rarity === 'rare' && (
+                    <Chip className="bg-violet-950/40 text-violet-300 border-violet-800/40">raro</Chip>
+                  )}
+                  {row.rarity === null && (
+                    <Chip className="bg-sky-950/40 text-sky-300 border-sky-800/40">projeto</Chip>
+                  )}
                   <span className="ml-auto font-heading text-amber-300">×{row.quantity}</span>
                 </div>
               ))}
@@ -316,7 +465,11 @@ export function WorkshopPanel({
         <>
           <div>
             <h2 className="font-heading text-amber-100 mb-3">Receitas da Oficina</h2>
-            <div className="grid lg:grid-cols-2 gap-4">{mainRecipes.map(renderRecipe)}</div>
+            {mainRecipes.length === 0 ? (
+              <GameCard className="p-4 text-sm text-amber-200/45">Nenhuma receita principal neste Tier.</GameCard>
+            ) : (
+              <div className="grid lg:grid-cols-2 gap-4">{mainRecipes.map(renderRecipe)}</div>
+            )}
           </div>
 
           <div>
@@ -324,7 +477,11 @@ export function WorkshopPanel({
             <p className="text-xs text-amber-200/50 mb-3">
               Blueprints avançados alimentam o crafting cross-profession e entram como ingredientes dos tiers superiores.
             </p>
-            <div className="grid lg:grid-cols-2 gap-4">{blueprints.map(renderRecipe)}</div>
+            {blueprints.length === 0 ? (
+              <GameCard className="p-4 text-sm text-amber-200/45">Nenhum projeto acadêmico neste Tier.</GameCard>
+            ) : (
+              <div className="grid lg:grid-cols-2 gap-4">{blueprints.map(renderRecipe)}</div>
+            )}
           </div>
         </>
       )}

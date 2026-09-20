@@ -28,6 +28,7 @@ import { raceCombat, raceEconomy, ACTIVITY_DURATION, dayKey } from './rules';
 import { scaleCombatRules, aberturaChance, SCALE_COMBAT, scaleDiff } from './powerScale';
 import { IMPETO, IMPETO_COMBO_THRESHOLD, clampImpeto, isHeavyBlow, effectiveScalePower } from './impeto';
 import { activityToView } from './activities';
+import { EQUIPMENT_SLOTS } from './types';
 import type {
   BattleRound,
   BattleSimulation,
@@ -76,16 +77,26 @@ export function parseItems(raw: string): ItemsState {
       const n = typeof qty === 'number' && Number.isFinite(qty) ? Math.floor(qty) : 0;
       if (owned.includes(id) && n >= 2 && n <= 999) stacks[id] = n; // 1 = implícito (sem entrada)
     }
+    const pickSlot = (key: string): string | null => {
+      const id = parsed[key];
+      if (typeof id !== 'string' || !owned.includes(id)) return null;
+      const item = getItem(id);
+      return item?.category === key ? id : null;
+    };
     return {
-      weapon: parsed.weapon ?? null,
-      armor: parsed.armor ?? null,
-      accessory: parsed.accessory ?? null,
+      weapon: pickSlot('weapon'),
+      armor: pickSlot('armor'),
+      accessory: pickSlot('accessory'),
+      head: pickSlot('head'),
+      wrists: pickSlot('wrists'),
+      legs: pickSlot('legs'),
+      boots: pickSlot('boots'),
       owned,
       consumables: parsed.consumables && typeof parsed.consumables === 'object' ? parsed.consumables : {},
       stacks,
     };
   } catch {
-    return { weapon: null, armor: null, accessory: null, owned: [], consumables: {}, stacks: {} };
+    return { weapon: null, armor: null, accessory: null, head: null, wrists: null, legs: null, boots: null, owned: [], consumables: {}, stacks: {} };
   }
 }
 
@@ -179,7 +190,8 @@ function equipmentBonuses(items: ItemsState) {
   let def = 0;
   let spd = 0;
   let ki = 0;
-  for (const id of [items.weapon, items.armor, items.accessory]) {
+  for (const slot of EQUIPMENT_SLOTS) {
+    const id = items[slot] ?? null;
     if (!id) continue;
     const item = getItem(id);
     if (!item) continue;

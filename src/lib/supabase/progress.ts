@@ -212,6 +212,8 @@ export interface CloudProgress {
 
 // ===== Conjuntos de ids conhecidos (catálogos do jogo) =====
 
+const ITEM_BY_ID = new Map([...SHOP_ITEMS, ...CRAFTED_ITEMS].map((item) => [item.id, item]));
+
 const KNOWN = {
   races: new Set(Object.keys(RACES)),
   techniques: new Set(TECHNIQUES.map((t) => t.id)),
@@ -374,18 +376,28 @@ function sanitizeCraftJob(raw: unknown): CloudCraftJobSnapshot | null {
   const recipe = getCraftRecipe(recipeId);
   if (!recipe) return null;
 
-  // Craft máximo atual = 12h. Janela ampla tolera jobs vencidos/offline,
-  // sem aceitar datas absurdas trazidas de JSON editável pelo cliente.
+  // O maior lote atual fica abaixo de 24h base. A janela de 36h tolera
+  // o craft completo + variações de relógio sem aceitar datas absurdas.
   const endsAt = sanitizeIsoDate(c.endsAt, 14 * 86400_000, 36 * 3600_000);
   if (!endsAt) return null;
+
+  const requestedOutput = Math.trunc(Number(c.outputQuantity) || recipe.outputQuantity);
+  const maxOutput = recipe.outputQuantity * Math.max(1, recipe.maxBatch ?? 1);
+  const outputQuantity =
+    requestedOutput >= recipe.outputQuantity &&
+    requestedOutput <= maxOutput &&
+    requestedOutput % recipe.outputQuantity === 0
+      ? requestedOutput
+      : recipe.outputQuantity;
+  const batch = outputQuantity / recipe.outputQuantity;
   const startedAt =
     sanitizeIsoDate(c.startedAt, 14 * 86400_000, 5 * 60_000) ??
-    new Date(endsAt.getTime() - recipe.baseDurationMin * 60_000);
+    new Date(endsAt.getTime() - recipe.baseDurationMin * batch * 60_000);
 
   return {
     recipeId: recipe.id,
     outputItemId: recipe.outputItemId,
-    outputQuantity: recipe.outputQuantity,
+    outputQuantity,
     outputKind: recipe.outputKind,
     academicLevelStart: clampInt(c.academicLevelStart, [0, 10]),
     startedAt: startedAt.toISOString(),
@@ -549,9 +561,10 @@ export class CloudValidationError extends Error {
 function sanitizeItems(raw: unknown): ItemsState {
   const src = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const owned = dedupeFilter(src.owned, KNOWN.items, 200);
-  const pickEquipped = (key: 'weapon' | 'armor' | 'accessory'): string | null => {
+  const pickEquipped = (key: 'weapon' | 'armor' | 'accessory' | 'head' | 'wrists' | 'legs' | 'boots'): string | null => {
     const id = asString(src[key], 64);
-    return id && KNOWN.items.has(id) && owned.includes(id) ? id : null;
+    if (!id || !KNOWN.items.has(id) || !owned.includes(id)) return null;
+    return ITEM_BY_ID.get(id)?.category === key ? id : null;
   };
   const consumablesSrc = (src.consumables && typeof src.consumables === 'object' ? src.consumables : {}) as Record<string, unknown>;
   const consumables: Record<string, number> = {};
@@ -580,6 +593,10 @@ function sanitizeItems(raw: unknown): ItemsState {
     weapon: pickEquipped('weapon'),
     armor: pickEquipped('armor'),
     accessory: pickEquipped('accessory'),
+    head: pickEquipped('head'),
+    wrists: pickEquipped('wrists'),
+    legs: pickEquipped('legs'),
+    boots: pickEquipped('boots'),
     owned,
     consumables,
     stacks,

@@ -53,6 +53,8 @@ import {
   PROFESSION_LEVELS,
   PROFESSION_SHIFTS,
   PROFESSION_MATERIALS,
+  PROFESSION_MATERIAL_TIER_LEVEL,
+  professionMaterialRequiredLevel,
   PROFESSION_MASTERY_HOURS,
   REGEN,
   HEAL_COST_PER_HP,
@@ -1075,7 +1077,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'table',
             table: {
               caption: 'Drops profissionais (ORIGEM: content/world.ts — PROFESSION_MATERIALS)',
-              headers: ['Profissão', 'Material', 'Raridade', 'Tier'],
+              headers: ['Profissão', 'Material', 'Raridade', 'Tier', 'Libera no nível'],
               rows: PROFESSION_MATERIALS.map((m) => {
                 const p = PROFESSIONS.find((x) => x.id === m.professionId);
                 return [
@@ -1083,6 +1085,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
                   `${m.icon} ${m.name}`,
                   m.rarity === 'rare' ? 'Raro' : 'Comum',
                   String(m.tier),
+                  `Nível ${professionMaterialRequiredLevel(m.tier)}`,
                 ];
               }),
             },
@@ -1095,13 +1098,13 @@ export const WIKI_SECTIONS: WikiSection[] = [
         blocks: [
           {
             kind: 'text',
-            text: `A Oficina fabrica um item por vez e continua contando offline. Os ingredientes e o Zeni são consumidos **ao iniciar** a fabricação; o resultado entra no inventário somente na coleta. Trabalhar não bloqueia a Oficina. O Acadêmico reduz o tempo em **1% por nível** (até **10%** no Nível 10). Os Tiers agora são progressão real: Tier 2 exige carreira Nível ${CRAFT_TIER_PROFESSION_LEVEL[2]}, Tier 3 Nível ${CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4 Nível ${CRAFT_TIER_PROFESSION_LEVEL[4]} e Tier 5 Nível ${CRAFT_TIER_PROFESSION_LEVEL[5]} nas profissões indicadas pela receita.`,
+            text: `A Oficina fabrica um trabalho por vez e continua contando offline. Os ingredientes e o Zeni são consumidos **ao iniciar** e o resultado entra no inventário na coleta. Fabricações ainda em andamento podem ser **canceladas com reembolso integral** de materiais e Zeni. Receitas de consumíveis e projetos podem aceitar lotes; custo, materiais e tempo escalam pela quantidade. Trabalhar não bloqueia a Oficina. O Acadêmico reduz o tempo em **1% por nível** (até **10%** no Nível 10). Os Tiers são progressão real: Tier 2 exige carreira Nível ${CRAFT_TIER_PROFESSION_LEVEL[2]}, Tier 3 Nível ${CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4 Nível ${CRAFT_TIER_PROFESSION_LEVEL[4]} e Tier 5 Nível ${CRAFT_TIER_PROFESSION_LEVEL[5]} nas profissões indicadas pela receita.`,
           },
           {
             kind: 'table',
             table: {
               caption: 'Receitas da Oficina (ORIGEM: content/crafting.ts — CRAFT_RECIPES)',
-              headers: ['Tier', 'Receita', 'Requisitos', 'Custo', 'Tempo base', 'Ingredientes'],
+              headers: ['Tier', 'Receita', 'Requisitos', 'Lote', 'Custo', 'Tempo base', 'Ingredientes'],
               rows: CRAFT_RECIPES.map((r) => [
                 String(r.tier),
                 `${r.icon} ${r.name}`,
@@ -1113,6 +1116,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
                       })
                       .join(' + ')
                   : 'Livre',
+                r.maxBatch && r.maxBatch > 1 ? `1–${r.maxBatch}×` : '1×',
                 `${br(r.costZeni)} Zeni`,
                 r.baseDurationMin >= 60
                   ? `${Math.floor(r.baseDurationMin / 60)}h${r.baseDurationMin % 60 ? ` ${r.baseDurationMin % 60}min` : ''}`
@@ -1131,8 +1135,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'list',
             items: [
               `Escada de progressão: Tier 2 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[2]}**, Tier 3 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[3]}**, Tier 4 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[4]}** e Tier 5 = **Nv. ${CRAFT_TIER_PROFESSION_LEVEL[5]}** nas carreiras indicadas.`,
+              `Os materiais profissionais respeitam a mesma ideia de progressão: T1 libera no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[1]}**, T2 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[2]}**, T3 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[3]}**, T4 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[4]}** e T5 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[5]}**. Um turno só sorteia materiais já desbloqueados naquele nível da carreira.`,
               'Tier 3 ou superior sempre usa insumos ligados a **pelo menos duas profissões**.',
               'Os itens principais de Tier 3+ exigem um **blueprint Acadêmico**, e cada blueprint tem seu próprio requisito de nível Acadêmico.',
+              'O equipamento usa **7 slots reais**: Cabeça, Punhos, Torso, Acessório, Arma, Pernas e Botas. Os bônus de todos os slots equipados entram no cálculo de combate.',
               'Itens fabricados não são revendidos para a loja NPC; eles permanecem no inventário do jogador para uso.',
               'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Radar do Dragão Básico equipado adiciona **+2 p.p.** à chance de encontrar uma Esfera do Dragão ao concluir um turno de profissão; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+35 Defesa** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
             ],

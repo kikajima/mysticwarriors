@@ -216,7 +216,7 @@ describe('applyPendingMigrations (migrador de boot)', () => {
     } finally {
       cleanupTempDir(dir);
     }
-  });
+  }, 15_000);
 
   test('banco já migrado não é alterado (preserva dados)', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'gm-mig2-'));

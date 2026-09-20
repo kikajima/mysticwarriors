@@ -7,6 +7,8 @@ import {
   PROFESSION_MASTERY_HOURS,
   PROFESSION_SHIFTS,
   PROFESSION_MATERIALS,
+  PROFESSION_MATERIAL_TIER_LEVEL,
+  professionMaterialRequiredLevel,
   getProfession,
   REGEN,
   BATTLE_ENERGY_COST,
@@ -162,6 +164,38 @@ describe('PROFISSÕES — carreira 1–10', () => {
       expect(drops.filter((m) => m.rarity === 'common')).toHaveLength(2);
       expect(drops.filter((m) => m.rarity === 'rare')).toHaveLength(2);
     }
+  });
+
+  test('Tiers de materiais desbloqueiam nos níveis 1/2/4/6/8', () => {
+    expect(PROFESSION_MATERIAL_TIER_LEVEL).toEqual({ 1: 1, 2: 2, 3: 4, 4: 6, 5: 8 });
+    for (const material of PROFESSION_MATERIALS) {
+      expect(professionMaterialRequiredLevel(material.tier)).toBe(
+        PROFESSION_MATERIAL_TIER_LEVEL[material.tier]
+      );
+    }
+
+    const seq = (values: number[]) => {
+      let index = 0;
+      return () => values[index++] ?? 0;
+    };
+
+    // Nível 1: mesmo com RNG alto, o comum Tier 2 ainda não pode cair.
+    const level1 = rollProfessionLoot('cientista', [1], 1, seq([0.99, 0.99]));
+    expect(level1.some((drop) => drop.itemId === 'microchip_controle')).toBe(false);
+    expect(level1.some((drop) => drop.itemId === 'liga_metais_leves')).toBe(true);
+
+    // Nível 2: o comum Tier 2 entra no pool.
+    const level2 = rollProfessionLoot('cientista', [2], 1, seq([0.99, 0.99]));
+    expect(level2.some((drop) => drop.itemId === 'microchip_controle')).toBe(true);
+
+    // Nível 4: raro Tier 3 desbloqueado, mas Tier 5 ainda impossível.
+    const level4 = rollProfessionLoot('cientista', [4], 1, seq([0, 0, 0, 0.99]));
+    expect(level4.some((drop) => drop.itemId === 'capsula_vazia_tipo_b')).toBe(true);
+    expect(level4.some((drop) => drop.itemId === 'cristal_energia_ki')).toBe(false);
+
+    // Nível 8: o raro Tier 5 passa a integrar o pool.
+    const level8 = rollProfessionLoot('cientista', [8], 1, seq([0, 0, 0, 0.99]));
+    expect(level8.some((drop) => drop.itemId === 'cristal_energia_ki')).toBe(true);
   });
 
   test('loot comum é garantido 1–2 por hora', () => {

@@ -24,16 +24,17 @@ describe('Inventário — reorganização de navegação e responsabilidades', (
     expect(shop).not.toContain("type: 'use_item'");
   });
 
-  test('Equipamento visual publica os slots corporais pedidos e preserva slots reais atuais', async () => {
+  test('Equipamento publica os sete slots corporais como slots reais', async () => {
     const inventory = await Bun.file(`${import.meta.dir}/../src/components/game/InventoryPanel.tsx`).text();
 
     for (const label of ['Cabeça', 'Torso', 'Pernas', 'Botas', 'Punhos', 'Acessório', 'Arma']) {
       expect(inventory).toContain(`label: '${label}'`);
     }
+    for (const slot of ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots']) {
+      expect(inventory).toContain(`key: '${slot}'`);
+    }
 
-    expect(inventory).toContain("backing: 'weapon'");
-    expect(inventory).toContain("backing: 'armor'");
-    expect(inventory).toContain("backing: 'accessory'");
+    expect(inventory).not.toContain('backing:');
     expect(inventory).toContain("type: 'equip'");
     expect(inventory).toContain("type: 'unequip'");
   });

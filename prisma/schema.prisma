@@ -263,6 +263,8 @@ model CraftJob {
   outputQuantity     Int      @default(1)
   outputKind         String
   academicLevelStart Int      @default(0)
+  inputZeni          Int      @default(0)
+  inputIngredients   String   @default("[]")
   startedAt          DateTime @default(now())
   endsAt             DateTime
 

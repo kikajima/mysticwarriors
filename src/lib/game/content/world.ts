@@ -82,6 +82,18 @@ export const PROFESSION_SHIFTS: ProfessionShiftDef[] = [
   { hours: 8, efficiency: 1.30 },
 ];
 
+export const PROFESSION_MATERIAL_TIER_LEVEL = {
+  1: 1,
+  2: 2,
+  3: 4,
+  4: 6,
+  5: 8,
+} as const;
+
+export function professionMaterialRequiredLevel(tier: ProfessionMaterialDef['tier']): number {
+  return PROFESSION_MATERIAL_TIER_LEVEL[tier];
+}
+
 export const PROFESSION_MATERIALS: ProfessionMaterialDef[] = [
   { id: 'erva_medicinal', name: 'Erva Medicinal', professionId: 'agricultor', rarity: 'common', tier: 1, icon: '🌿' },
   { id: 'agua_purificada', name: 'Água Purificada', professionId: 'agricultor', rarity: 'common', tier: 2, icon: '💧' },

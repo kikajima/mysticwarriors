@@ -8,6 +8,7 @@ import {
   PROFESSION_LEVELS,
   PROFESSION_MASTERY_HOURS,
   PROFESSION_MATERIALS,
+  professionMaterialRequiredLevel,
   PROFESSION_SHIFTS,
   getProfession,
 } from './content/world';
@@ -227,12 +228,20 @@ export function rollProfessionLoot(
     amounts.set(itemId, (amounts.get(itemId) ?? 0) + quantity);
 
   for (const level of hourLevels) {
-    const common = commons[Math.min(commons.length - 1, Math.floor(rng() * commons.length))];
-    add(common.id, rng() < 0.5 ? 1 : 2);
+    const unlockedCommons = commons.filter(
+      (material) => professionMaterialRequiredLevel(material.tier) <= level
+    );
+    const common =
+      unlockedCommons[Math.min(unlockedCommons.length - 1, Math.floor(rng() * unlockedCommons.length))];
+    if (common) add(common.id, rng() < 0.5 ? 1 : 2);
 
+    const unlockedRares = rares.filter(
+      (material) => professionMaterialRequiredLevel(material.tier) <= level
+    );
     const rareChance = professionLevelDef(level).rareChance * efficiency;
-    if (rares.length > 0 && rng() < rareChance) {
-      const rare = rares[Math.min(rares.length - 1, Math.floor(rng() * rares.length))];
+    if (unlockedRares.length > 0 && rng() < rareChance) {
+      const rare =
+        unlockedRares[Math.min(unlockedRares.length - 1, Math.floor(rng() * unlockedRares.length))];
       add(rare.id, 1);
     }
   }

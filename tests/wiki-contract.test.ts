@@ -34,6 +34,7 @@ import {
   PROFESSION_LEVELS,
   PROFESSION_SHIFTS,
   PROFESSION_MATERIALS,
+  PROFESSION_MATERIAL_TIER_LEVEL,
   PROFESSION_MASTERY_HOURS,
   xpToNextLevel,
 } from '../src/lib/game/content/world';
@@ -366,6 +367,9 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     for (const material of PROFESSION_MATERIALS) {
       expect(t).toContain(material.name);
     }
+    for (const tier of [1, 2, 3, 4, 5] as const) {
+      expect(t).toContain(`Nível ${PROFESSION_MATERIAL_TIER_LEVEL[tier]}`);
+    }
   });
 
   test('Oficina: wiki publica receitas, custos, tempos e blueprints reais', () => {
@@ -373,6 +377,12 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(t).toContain('Oficina');
     expect(t).toContain('1% por nível');
     expect(t).toContain('10%');
+    expect(t).toContain('canceladas com reembolso integral');
+    expect(t).toContain('7 slots reais');
+    expect(t).toContain('Cabeça');
+    expect(t).toContain('Punhos');
+    expect(t).toContain('Pernas');
+    expect(t).toContain('Botas');
     for (const tier of [2, 3, 4, 5] as const) {
       expect(t).toContain(`Tier ${tier}`);
       expect(t).toContain(`Nv. ${CRAFT_TIER_PROFESSION_LEVEL[tier]}`);
@@ -380,6 +390,7 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     for (const recipe of CRAFT_RECIPES) {
       expect(t).toContain(recipe.name);
       expect(t).toContain(recipe.costZeni.toLocaleString('pt-BR'));
+      if ((recipe.maxBatch ?? 1) > 1) expect(t).toContain(`1–${recipe.maxBatch}×`);
       for (const requirement of recipe.professionRequirements ?? []) {
         expect(t).toContain(`Nv. ${requirement.level}`);
       }
