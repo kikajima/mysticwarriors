@@ -6,7 +6,6 @@ import {
   dayKey,
   weekKey,
   shouldGrantZenkai,
-  STAT_CAP,
   trainingCost,
   raceCombat,
   raceEconomy,
@@ -19,18 +18,18 @@ import { baseTrainingCost, elixirPrice, TRAINING_COST_CEILING, professionEnergyC
 
 // =====================================================================
 // TESTES — regras centralizadas v0.4
-//  * STAT CAP inalterado;
+//  * atributos sem teto de gameplay;
 //  * FARM diário REMOVIDO (nenhuma função de multiplicador existe mais);
 //  * ZENKAI por risco (sem cota diária);
 //  * curva de treino segura p/ Int32 + elixir dinâmico;
 //  * duração de atividades + allowlist de missão.
 // =====================================================================
 
-describe('STAT CAP (limite máximo de atributos)', () => {
-  test('capStat nunca ultrapassa 999', () => {
-    expect(capStat(998 + 5)).toBe(999);
-    expect(capStat(999)).toBe(999);
-    expect(capStat(1000000)).toBe(999);
+describe('ATRIBUTOS SEM TETO DE GAMEPLAY', () => {
+  test('capStat permite crescer muito além de 999', () => {
+    expect(capStat(998 + 5)).toBe(1003);
+    expect(capStat(10_000)).toBe(10_000);
+    expect(capStat(1_000_000)).toBe(1_000_000);
   });
 
   test('capStat nunca fica negativo e arredonda para baixo', () => {
@@ -39,18 +38,12 @@ describe('STAT CAP (limite máximo de atributos)', () => {
     expect(capStat(NaN)).toBe(0);
   });
 
-  test('addStat aplica o limite global (Elixir, desejo, treino, Zenkai...)', () => {
+  test('addStat continua crescendo após 999 sem sinalizar cap', () => {
     const player = { strength: 998, defense: 500, speed: 500, ki: 500 };
     const r = addStat(player, 'strength', 10);
-    expect(r.after).toBe(STAT_CAP);
-    expect(player.strength).toBe(999);
-    expect(r.capped).toBe(true);
-  });
-
-  test('addStat normal funciona abaixo do cap', () => {
-    const player = { strength: 10, defense: 10, speed: 10, ki: 10 };
-    addStat(player, 'ki', 5);
-    expect(player.ki).toBe(15);
+    expect(r.after).toBe(1008);
+    expect(player.strength).toBe(1008);
+    expect(r.capped).toBe(false);
   });
 });
 
