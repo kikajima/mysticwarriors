@@ -1224,7 +1224,7 @@ async function actionSell(tx: Tx, player: Player, itemId: string, quantity: numb
   if (!item) throw new ApiError('VALIDATION_ERROR', 'Item inválido.');
 
   if (item.price <= 0) {
-    throw new ApiError('VALIDATION_ERROR', 'Itens fabricados não são vendidos na loja. Use o Mercado quando ele estiver disponível.');
+    throw new ApiError('VALIDATION_ERROR', 'Itens fabricados não podem ser vendidos para a loja NPC.');
   }
   const items = parseItems(player.items);
   const currency = item.currency === 'crystal' ? ('crystal' as const) : ('zeni' as const);
