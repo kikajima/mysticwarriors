@@ -294,24 +294,63 @@ export function WorkshopPanel({
       <GameCard className="p-4">
         <p className="text-sm text-amber-100/80">
           A Oficina funciona em paralelo ao trabalho, treino, PvP, Ameaça Universal e guildas.
-          Ingredientes e Zeni são consumidos ao iniciar; o item é entregue somente na coleta.
+          Ingredientes e Zeni são consumidos ao entrar na fila; a produção segue em sequência mesmo offline.
         </p>
         <p className="text-xs text-amber-200/50 mt-2">
-          🎓 Mestria Acadêmica reduz o tempo de fabricação em 1% por nível, até 10%.
-          Os Tiers agora têm progressão real: Tier 2 exige carreira Nv. {CRAFT_TIER_PROFESSION_LEVEL[2]},
-          Tier 3 Nv. {CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4 Nv. {CRAFT_TIER_PROFESSION_LEVEL[4]} e
-          Tier 5 Nv. {CRAFT_TIER_PROFESSION_LEVEL[5]} nas profissões indicadas pela receita.
+          🔧 A Maestria da Oficina sobe ao coletar itens e amplia a fila: 1 espaço nos níveis 1–3,
+          2 nos níveis 4–7 e 3 nos níveis 8–10. 🎓 O nível de Acadêmico reduz o tempo em 1% por nível, até 10%.
+        </p>
+        <p className="text-xs text-amber-200/40 mt-1">
+          Tiers profissionais: T2 Nv. {CRAFT_TIER_PROFESSION_LEVEL[2]} · T3 Nv. {CRAFT_TIER_PROFESSION_LEVEL[3]} ·
+          T4 Nv. {CRAFT_TIER_PROFESSION_LEVEL[4]} · T5 Nv. {CRAFT_TIER_PROFESSION_LEVEL[5]}.
         </p>
       </GameCard>
 
-      {job && (
+      {mastery && (
+        <GameCard className="p-4 border-sky-800/40">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-2xl" aria-hidden>🔧</span>
+            <div>
+              <h3 className="font-heading text-amber-100">Maestria da Oficina · Nível {mastery.level}</h3>
+              <p className="text-[11px] text-amber-200/45">
+                {mastery.xp.toLocaleString('pt-BR')} XP total · {mastery.craftsCompleted.toLocaleString('pt-BR')} unidades concluídas
+              </p>
+            </div>
+            <span className="flex-1" />
+            <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">
+              Fila {jobs.length}/{mastery.queueCapacity}
+            </Chip>
+          </div>
+          <div className="h-2 rounded-full bg-black/50 border border-sky-900/40 overflow-hidden mt-3">
+            <div
+              className="h-full bg-gradient-to-r from-sky-600 to-cyan-400"
+              style={{ width: `${mastery.progressPct}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-[10px] text-amber-200/40 mt-1">
+            <span>
+              {mastery.nextLevelXp === null
+                ? 'Nível máximo'
+                : `${(mastery.xp - mastery.currentLevelXp).toLocaleString('pt-BR')} / ${(mastery.nextLevelXp - mastery.currentLevelXp).toLocaleString('pt-BR')} XP`}
+            </span>
+            <span>{Math.round(mastery.progressPct)}%</span>
+          </div>
+        </GameCard>
+      )}
+
+      {activeJob && (
         <GameCard className="p-5 border-orange-600/50" glow={remaining <= 0}>
           <div className="flex items-start gap-4">
-            <div className="text-4xl" aria-hidden>{job.outputIcon}</div>
+            <div className="text-4xl" aria-hidden>{activeJob.outputIcon}</div>
             <div className="flex-1">
-              <h3 className="font-heading text-amber-100">Fabricação em andamento</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-heading text-amber-100">
+                  {remaining <= 0 ? 'Fabricação concluída' : 'Fabricação em andamento'}
+                </h3>
+                <Chip className="bg-orange-950/50 text-orange-300 border-orange-800/50">#1 da fila</Chip>
+              </div>
               <p className="text-sm text-amber-200/70 mt-1">
-                {job.outputQuantity}× {job.outputName}
+                {activeJob.outputQuantity}× {activeJob.outputName}
               </p>
               <div className="h-2 rounded-full bg-black/50 border border-amber-900/40 overflow-hidden mt-3">
                 <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400" style={{ width: `${progress}%` }} />
@@ -334,9 +373,9 @@ export function WorkshopPanel({
                   disabled={busy}
                   onClick={() => {
                     const ok = window.confirm(
-                      `Cancelar esta fabricação? Você receberá de volta ${job.spentZeni.toLocaleString('pt-BR')} Zeni e todos os ingredientes.`
+                      `Cancelar esta fabricação? Você receberá de volta ${activeJob.spentZeni.toLocaleString('pt-BR')} Zeni e todos os ingredientes.`
                     );
-                    if (ok) void runAction({ type: 'craft_cancel' });
+                    if (ok) void runAction({ type: 'craft_cancel', jobId: activeJob.id });
                   }}
                 >
                   ↩️ Cancelar e reembolsar
@@ -346,6 +385,52 @@ export function WorkshopPanel({
                 Cancelamentos devolvem integralmente o Zeni e os ingredientes consumidos.
               </p>
             </div>
+          </div>
+        </GameCard>
+      )}
+
+      {queuedJobs.length > 0 && (
+        <GameCard className="p-4">
+          <h3 className="font-heading text-amber-100 mb-3">📋 Fila de produção</h3>
+          <div className="grid gap-2">
+            {queuedJobs.map((queued, index) => {
+              const startsIn = new Date(queued.startedAt).getTime() - now;
+              const endsIn = new Date(queued.endsAt).getTime() - now;
+              const status =
+                endsIn <= 0
+                  ? 'concluído — aguardando coleta dos anteriores'
+                  : startsIn > 0
+                    ? `inicia em ${countdown(startsIn)}`
+                    : `em produção · ${countdown(endsIn)}`;
+              return (
+                <div
+                  key={queued.id}
+                  className="rounded-lg border border-amber-900/40 bg-black/20 px-3 py-3 flex flex-wrap items-center gap-3"
+                >
+                  <span className="text-2xl" aria-hidden>{queued.outputIcon}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm text-amber-100">
+                      <span className="font-heading">#{index + 2}</span> · {queued.outputQuantity}× {queued.outputName}
+                    </p>
+                    <p className="text-[11px] text-amber-200/45">{status}</p>
+                  </div>
+                  <span className="flex-1" />
+                  <GameButton
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => {
+                      const ok = window.confirm(
+                        `Remover ${queued.outputName} da fila? O Zeni e todos os ingredientes serão devolvidos.`
+                      );
+                      if (ok) void runAction({ type: 'craft_cancel', jobId: queued.id });
+                    }}
+                  >
+                    cancelar
+                  </GameButton>
+                </div>
+              );
+            })}
           </div>
         </GameCard>
       )}
