@@ -31,6 +31,7 @@ import { trackEvent } from '@/lib/analytics';
 import { getItem, getProfessionMaterial } from './content/world';
 import { getCraftedItem, getCraftStackItem } from './content/crafting';
 import { createPlayerNotification } from './notifications';
+import { resolveDueActivities } from './activities';
 import { getTransformation } from './content/transformations';
 import { getCosmetic } from './content/cosmetics';
 import {
@@ -526,7 +527,8 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
             data: { endsAt: readyAt },
           });
           if (activities.count > 0) {
-            done.push(`${activities.count} atividade(s) pronta(s) para resolver`);
+            const resolved = await resolveDueActivities(tx, fresh);
+            done.push(`${resolved.length} atividade(s) concluída(s) instantaneamente`);
           }
 
           const craft = await tx.craftJob.updateMany({
