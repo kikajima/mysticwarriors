@@ -68,6 +68,8 @@ import {
 } from '@/lib/game/content/world';
 import { POWER_SCALES, SCALE_COMBAT } from '@/lib/game/powerScale';
 import { IMPETO, IMPETO_COMBO_THRESHOLD } from '@/lib/game/impeto';
+import { EQUIPMENT_SLOT_META, EQUIPMENT_SLOTS } from '@/lib/game/types';
+import type { EquipmentSlot } from '@/lib/game/types';
 
 // ---------------------------------------------------------------------
 // Constantes replicadas de módulos server-only (ORIGEM indicada).
@@ -668,7 +670,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     resumo: [
       '**Força** = golpes físicos · **Ki** = ondas de energia (sem aumentar a energia de ações).',
       '**Defesa** = vida máxima e resistência · **Velocidade** = iniciativa e esquiva.',
-      'Treino custa **3 ⚡ + Zeni** e é **instantâneo** (teto 999 por atributo).',
+      'Treino custa **3 ⚡ + Zeni** e é **instantâneo** (teto 999 por atributo); a ficha mostra **base + equipamento = total**.',
     ],
     blocks: [
       {
@@ -682,7 +684,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'text',
-        text: `**Treinar é instantâneo:** clique no "+", o ponto entra na hora. Cada sessão custa **${TRAIN_ENERGY_COST} de energia** e Zeni que cresce conforme o atributo sobe (Humano paga 10% menos). O ganho é +1 ponto — mais os bônus dos [[loja|equipamentos de treino]] que você possui.`,
+        text: `**Treinar é instantâneo:** clique no "+", o ponto entra na hora. Cada sessão custa **${TRAIN_ENERGY_COST} de energia** e Zeni que cresce conforme o atributo **base** sobe (Humano paga 10% menos). O ganho é +1 ponto — mais os bônus dos [[loja|equipamentos de treino]] que você possui. Na ficha, cada atributo aparece como **Total = Base + Equipamento**; por exemplo, Força 40 com +12 ATQ equipado aparece como Total 52, sem esconder o valor base.`,
       },
       {
         kind: 'callout',
@@ -703,8 +705,8 @@ export const WIKI_SECTIONS: WikiSection[] = [
                 ['Vida máxima', '`80 + 15 × nível + 5 × Defesa`'],
                 ['Energia máxima', '`100 (fixa)`'],
                 ['Poder de Luta (scouter)', '`15 × nível + ataque + 0,9×poder de Ki + defesa + 0,6×resistência + 2 × velocidade`'],
-                ['Poder físico', '`2,2 × Força` (+ arma)'],
-                ['Poder de Ki', '`2,4 × Ki` (+ acessório)'],
+                ['Poder físico', '`2,2 × Força base` + ATQ de todos os equipamentos'],
+                ['Poder de Ki', '`2,4 × Ki base` + KI de todos os equipamentos'],
               ],
             },
           },
@@ -1137,9 +1139,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
               `Os materiais profissionais respeitam a mesma ideia de progressão: T1 libera no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[1]}**, T2 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[2]}**, T3 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[3]}**, T4 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[4]}** e T5 no **Nv. ${PROFESSION_MATERIAL_TIER_LEVEL[5]}**. Um turno só sorteia materiais já desbloqueados naquele nível da carreira.`,
               'Tier 3 ou superior sempre usa insumos ligados a **pelo menos duas profissões**.',
               'Os itens principais de Tier 3+ exigem um **blueprint Acadêmico**, e cada blueprint tem seu próprio requisito de nível Acadêmico.',
-              'O equipamento usa **7 slots reais**: Cabeça, Punhos, Torso, Acessório, Arma, Pernas e Botas. Os bônus de todos os slots equipados entram no cálculo de combate.',
+              'O equipamento tem **8 espaços equipáveis em 7 categorias**: Cabeça, Punhos, Torso, Acessório I, Acessório II, Arma, Pernas e Botas. Você pode usar no máximo **2 acessórios** ao mesmo tempo; os bônus dos dois entram no cálculo.',
+              'A Oficina é a progressão superior de equipamento: os itens craftados de alto Tier superam os melhores equivalentes compráveis na loja, recompensando materiais, profissões e tempo de fabricação.',
               'Itens fabricados não são revendidos para a loja NPC; eles permanecem no inventário do jogador para uso.',
-              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+35 Defesa** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
+              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+38 DEF e +8 KI** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
             ],
           },
         ],
@@ -1382,14 +1385,14 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Coleção e Social',
     summary: 'Como coletar as 7 esferas e os 4 desejos do dragão.',
     resumo: [
-      'A Busca pelas Esferas dura de **1h a 12h**: a chance base chega a **20%** e, com bônus de equipamento, o teto mundial é **50%**; cada busca encontra no máximo uma esfera.',
+      'A Busca dura de **1h a 12h** e mostra quantas das 7 estrelas estão **espalhadas/sem dono**; com 0 disponíveis, a busca nem pode começar.',
       'Com as **7**, invoque Shenlon e escolha UM desejo — elas se dispersam.',
       'Colete a conquista *Colecionador de Esferas* **antes** de pedir o desejo.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: 'A aba **Busca** em [[profissoes|Atividades]] permite procurar esferas ativamente por energia e tempo: 1h, 2h, 4h, 8h ou 12h. A chance base vai até 20%; o **Radar das Esferas** adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais** no mundo, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Quando isso acontece, **os dois jogadores são avisados**: o vencedor vê o alerta ao terminar a batalha e a vítima recebe o aviso mesmo se estava offline, no próximo acesso. Junte as **7 esferas**, invoque Shenlon e escolha:',
+        text: 'A aba **Busca** em [[profissoes|Atividades]] mostra em tempo real quantas Esferas estão **espalhadas pelo mundo** (sem dono) e permite procurar por 1h, 2h, 4h, 8h ou 12h. Se o contador chegar a **0/7 espalhadas**, a busca é bloqueada **antes de gastar energia**: todas as estrelas já pertencem a guerreiros, então a alternativa é PvP ou aguardar um desejo dispersá-las. A chance base vai até 20%; o **Radar das Esferas** pode ser equipado em Acessório I ou II e adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais**, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Quando isso acontece, **os dois jogadores são avisados**: o vencedor vê o alerta ao terminar a batalha e a vítima recebe o aviso mesmo se estava offline, no próximo acesso. Junte as **7 esferas**, invoque Shenlon e escolha:',
       },
       {
         kind: 'table',
@@ -1509,14 +1512,14 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Coleção e Social',
     summary: 'A Loja vende itens; posse, uso, venda e equipamento ficam organizados no Inventário.',
     resumo: [
-      'Equipamentos de combate custam **Zeni**; consumíveis, treino e cosméticos custam **💎**.',
+      'Equipamentos de combate ficam separados por **slot** na loja; cada descrição diz onde equipa. Acessórios têm dois espaços.',
       'Itens comprados vão para o **Inventário**; lá você usa, vende e equipa. Vender devolve **50%** na moeda original.',
-      'Empilhe até 999 unidades; até 99 por transação de compra/venda.',
+      'A loja oferece bons equipamentos, mas a **Oficina produz os melhores**; consumíveis, treino e cosméticos usam 💎 quando indicado.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: `A Loja cuida apenas das compras. Depois de comprar, abra **Inventário → Itens** para consumíveis/treino ou **Inventário → Equipamento** para armas, armaduras e acessórios. As primeiras compras úteis são baratas: **Luvas de Treino** (300 Zeni) e **Gi de Batalha** (250 Zeni). Vender pelo Inventário devolve ${Math.round(SELL_PRICE_RATIO * 100)}% do preço na mesma moeda.`,
+        text: `A Loja cuida apenas das compras. Equipamentos aparecem nas categorias corretas — **Arma, Cabeça, Punhos, Torso, Pernas, Botas e Acessórios** — e cada card informa explicitamente o slot. Depois de comprar, abra **Inventário → Equipamento** para equipar. Há **Acessório I e Acessório II**, no máximo dois simultâneos. As opções iniciais continuam acessíveis: Bastão de Treino (180 Zeni), Gi de Batalha (250 Zeni) e Luvas de Treino para Punhos (300 Zeni). Vender pelo Inventário devolve ${Math.round(SELL_PRICE_RATIO * 100)}% do preço na mesma moeda. A progressão comercial é útil, mas os equipamentos fabricados na **Oficina** são deliberadamente superiores no topo de cada categoria.`,
       },
       {
         kind: 'text',
@@ -1536,36 +1539,26 @@ export const WIKI_SECTIONS: WikiSection[] = [
           {
             kind: 'table',
             table: {
-              caption: 'Armas e armaduras (ORIGEM: content/world.ts — SHOP_ITEMS)',
-              headers: ['Item', 'Categoria', 'Bônus', 'Nível', 'Preço'],
-              rows: SHOP_ITEMS.filter((i) => i.category === 'weapon' || i.category === 'armor').map((i) => [
+              caption: 'Equipamentos comerciais por slot (ORIGEM: content/world.ts — SHOP_ITEMS)',
+              headers: ['Item', 'Slot', 'Bônus', 'Nível', 'Preço'],
+              rows: SHOP_ITEMS.filter((i) => EQUIPMENT_SLOTS.includes(i.category as EquipmentSlot)).map((i) => [
                 `${i.icon} ${i.name}`,
-                i.category === 'weapon' ? 'Arma (físico)' : 'Armadura (defesa)',
+                i.category === 'accessory'
+                  ? 'Acessório I ou II'
+                  : EQUIPMENT_SLOT_META[i.category as EquipmentSlot].label,
                 [
-                  i.atk ? `+${i.atk} atk` : null,
-                  i.def ? `+${i.def} def` : null,
-                  i.spd ? `+${i.spd} vel` : null,
-                  i.ki ? `+${i.ki} ki` : null,
+                  i.atk ? `+${i.atk} ATQ` : null,
+                  i.def ? `+${i.def} DEF` : null,
+                  i.spd ? `+${i.spd} VEL` : null,
+                  i.ki ? `+${i.ki} KI` : null,
+                  i.dragonBallSearchChanceBonus
+                    ? `+${Math.round(i.dragonBallSearchChanceBonus * 100)} p.p. Busca`
+                    : null,
                 ]
                   .filter(Boolean)
-                  .join(' '),
+                  .join(' ') || '—',
                 String(i.minLevel),
-                `${br(i.price)} Zeni`,
-              ]),
-            },
-          },
-          {
-            kind: 'table',
-            table: {
-              caption: 'Acessórios (ORIGEM: content/world.ts — SHOP_ITEMS)',
-              headers: ['Item', 'Bônus', 'Nível', 'Preço'],
-              rows: SHOP_ITEMS.filter((i) => i.category === 'accessory').map((i) => [
-                `${i.icon} ${i.name}`,
-                [i.atk ? `+${i.atk} atk` : null, i.def ? `+${i.def} def` : null, i.spd ? `+${i.spd} vel` : null, i.ki ? `+${i.ki} ki` : null]
-                  .filter(Boolean)
-                  .join(' '),
-                String(i.minLevel),
-                `${br(i.price)} Zeni`,
+                i.currency === 'crystal' ? `${br(i.price)} 💎` : `${br(i.price)} Zeni`,
               ]),
             },
           },
