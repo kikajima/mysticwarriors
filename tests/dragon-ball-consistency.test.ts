@@ -44,6 +44,31 @@ describe('Esferas do Dragão — consistência global', () => {
     ).toBe(0.5);
   });
 
+  test('Busca mostra quantas estrelas estão livres e bloqueia antes de gastar energia quando são zero', async () => {
+    const actions = await Bun.file(`${import.meta.dir}/../src/lib/game/actions.ts`).text();
+    const start = actions.indexOf('async function actionSearchDragonBall');
+    const end = actions.indexOf('async function actionCancelDragonBallSearch', start);
+    const body = actions.slice(start, end);
+
+    const countAt = body.indexOf("dragonBallPossession.count({ where: { playerId: null } })");
+    const noFreeAt = body.indexOf("DRAGON_BALL_NONE_AVAILABLE");
+    const energyAt = body.indexOf("energy: { decrement: DRAGON_BALL_SEARCH_ENERGY_COST }");
+    expect(countAt).toBeGreaterThanOrEqual(0);
+    expect(noFreeAt).toBeGreaterThan(countAt);
+    expect(energyAt).toBeGreaterThan(noFreeAt);
+    expect(body).toContain('Há ${freeStars}');
+    expect(body).toContain('esferas espalhadas');
+
+    const state = await Bun.file(`${import.meta.dir}/../src/app/api/game/state/route.ts`).text();
+    expect(state).toContain("db.dragonBallPossession.count({ where: { playerId: null } })");
+    expect(state).toContain('playerView.dragonBallsAvailable = dragonBallsAvailable');
+
+    const panel = await Bun.file(`${import.meta.dir}/../src/components/game/ProfessionsPanel.tsx`).text();
+    expect(panel).toContain('Esferas espalhadas');
+    expect(panel).toContain('noFreeBalls');
+    expect(panel).toContain('Nenhuma esfera espalhada');
+  });
+
   test('restore de nuvem não recria posse global de esfera', async () => {
     const restore = await Bun.file(`${import.meta.dir}/../src/app/api/game/cloud-restore/route.ts`).text();
     expect(restore).toContain('Esferas são recurso GLOBAL do mundo');
