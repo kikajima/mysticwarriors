@@ -28,7 +28,9 @@ import { applyEquipmentBuy, computeDerived, itemCount, parseItems } from './engi
 import { isOnActiveMission } from './rules';
 import { grantRewards } from '@/lib/economy';
 import { trackEvent } from '@/lib/analytics';
-import { getItem } from './content/world';
+import { getItem, getProfessionMaterial } from './content/world';
+import { getCraftedItem, getCraftStackItem } from './content/crafting';
+import { createPlayerNotification } from './notifications';
 import { getTransformation } from './content/transformations';
 import { getCosmetic } from './content/cosmetics';
 import {
