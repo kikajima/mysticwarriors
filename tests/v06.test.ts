@@ -99,6 +99,26 @@ describe('PROFISSÕES — carreira 1–10', () => {
     ]);
   });
 
+  test('ganho de atributo por hora é sempre inteiro', () => {
+    expect(PROFESSION_LEVELS.map((r) => r.attributeMilliPerHour / 1000)).toEqual([
+      1, 1, 2, 2, 3, 4, 4, 6, 7, 9,
+    ]);
+    for (const tier of PROFESSION_LEVELS) {
+      expect(tier.attributeMilliPerHour % 1000).toBe(0);
+    }
+
+    // Exemplo da UI: 35h de carreira + turno de 8h cruza Nível 1 → 2
+    // e precisa continuar exibindo/concedendo um inteiro, nunca 8,9.
+    const crossing = professionShiftRewards(35, 8, 20);
+    expect(crossing.attributeMilli / 1000).toBe(8);
+    expect(Number.isInteger(crossing.attributeMilli / 1000)).toBe(true);
+  });
+
+  test('saldo fracionário legado é descartado na leitura', () => {
+    const migrated = parseProfessions('{"atleta":{"hours":35,"lifetimeHours":35,"prestige":0,"statMilliRemainder":900,"cycleStatGranted":35}}').atleta;
+    expect(migrated?.statMilliRemainder).toBe(0);
+  });
+
   test('turno que cruza nível calcula hora por hora', () => {
     const r = professionShiftRewards(38, 4, 20);
     expect(r.hourLevels).toEqual([1, 1, 2, 2]);
