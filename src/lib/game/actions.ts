@@ -86,9 +86,9 @@ import { bumpQuests, claimAchievement, claimQuest } from '@/lib/progression';
 import { attackWorldBoss } from '@/lib/worldboss';
 import { scoreSeasonVictory } from '@/lib/seasons';
 import { trackEvent } from '@/lib/analytics';
-import { EQUIPMENT_SLOTS } from './types';
+import { EQUIPMENT_SLOTS, EQUIPPED_SLOTS } from './types';
 import { listPendingPlayerNotifications } from './notifications';
-import type { ActivityView, BattleResult, EquipmentSlot, Loadout, PlayerNotificationView, ProfessionLootEntry, ShopItem } from './types';
+import type { ActivityView, BattleResult, EquipmentSlot, EquippedSlot, Loadout, PlayerNotificationView, ProfessionLootEntry, ShopItem } from './types';
 
 // =====================================================================
 // EXECUTOR DE AÇÕES DO JOGO (100% server-side)
@@ -287,7 +287,7 @@ export async function executeGameAction(
         result = await actionUseItem(tx, player, String(args.itemId ?? ''));
         break;
       case 'equip':
-        result = await actionEquip(tx, player, String(args.itemId ?? ''));
+        result = await actionEquip(tx, player, String(args.itemId ?? ''), String(args.slot ?? ''));
         break;
       case 'unequip':
         result = await actionUnequip(tx, player, String(args.slot ?? ''));
@@ -429,6 +429,17 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
   const hours = Number(rawHours);
   const shift = dragonBallSearchShift(hours);
   if (!shift) throw new ApiError('VALIDATION_ERROR', 'Duração de busca inválida.');
+
+  // Não cobra energia nem inicia timer quando todas as sete estrelas já
+  // estão em posse de alguém. A tabela global é a fonte autoritativa.
+  const freeStars = await tx.dragonBallPossession.count({ where: { playerId: null } });
+  if (freeStars <= 0) {
+    throw new ApiError(
+      'DRAGON_BALL_NONE_AVAILABLE',
+      'Nenhuma Esfera do Dragão está espalhada pelo mundo agora. As 7 estão em posse de guerreiros — tente recuperá-las pelo PvP ou aguarde um desejo dispersá-las.'
+    );
+  }
+
   const energyRes = await tx.player.updateMany({
     where: { id: player.id, energy: { gte: DRAGON_BALL_SEARCH_ENERGY_COST } },
     data: { energy: { decrement: DRAGON_BALL_SEARCH_ENERGY_COST } },
@@ -440,13 +451,17 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
   await bumpQuests(tx, player.id, 'energy_spent', DRAGON_BALL_SEARCH_ENERGY_COST);
   const rng = battleRng();
   const items = parseItems(player.items);
-  const searchBonus = Math.max(0, getItem(items.accessory ? items.accessory : '')?.dragonBallSearchChanceBonus ?? 0);
+  const searchBonus = [items.accessory, items.accessory2]
+    .filter((id): id is string => !!id)
+    .reduce((sum, id) => sum + Math.max(0, getItem(id)?.dragonBallSearchChanceBonus ?? 0), 0);
   const chance = Math.min(DRAGON_BALL_SEARCH_MAX_CHANCE, shift.chance + searchBonus);
-  const freeStars = await tx.dragonBallPossession.count({ where: { playerId: null } });
   const payload: DragonBallSearchActivityResult = {
     kind: 'dragon_ball_search',
-    display: { message: `Busca iniciada por ${hours}h. Chance de encontrar 1 esfera: ${Math.round(chance * 100)}%.`, levelsGained: 0 },
-    apply: { found: freeStars > 0 && rng() < chance, chance },
+    display: {
+      message: `Busca iniciada por ${hours}h. Há ${freeStars} ${freeStars === 1 ? 'esfera espalhada' : 'esferas espalhadas'} no mundo. Chance de encontrar 1: ${Math.round(chance * 100)}%.`,
+      levelsGained: 0,
+    },
+    apply: { found: rng() < chance, chance },
   };
   const activity = await tx.activity.create({
     data: {
@@ -1336,8 +1351,8 @@ async function actionSell(tx: Tx, player: Player, itemId: string, quantity: numb
     if (total <= 0) {
       throw new ApiError('ITEM_NOT_OWNED', `Você não possui ${item.name}.`);
     }
-    const inUse = EQUIPMENT_SLOTS.some((slot) => (items[slot] ?? null) === item.id);
-    const sellable = inUse ? total - 1 : total;
+    const inUse = EQUIPPED_SLOTS.filter((slot) => (items[slot] ?? null) === item.id).length;
+    const sellable = total - inUse;
     if (sellable <= 0) {
       // aviso amigável exigido: nunca vender silenciosamente o item equipado
       throw new ApiError('ITEM_EQUIPPED', `${item.name} está em uso! Desequipe-o primeiro para poder vendê-lo.`);
@@ -1345,7 +1360,7 @@ async function actionSell(tx: Tx, player: Player, itemId: string, quantity: numb
     if (quantity > sellable) {
       throw new ApiError(
         'VALIDATION_ERROR',
-        `Você só pode vender ${sellable} ${sellable === 1 ? 'unidade' : 'unidades'} de ${item.name} (a unidade em uso não pode ser vendida — deseque primeiro).`
+        `Você só pode vender ${sellable} ${sellable === 1 ? 'unidade' : 'unidades'} de ${item.name} (${inUse} em uso — desequipe antes de vender).`
       );
     }
     const ok = applyEquipmentSell(items, item.id, quantity);
@@ -1443,7 +1458,12 @@ async function actionUseItem(tx: Tx, player: Player, itemId: string): Promise<Ac
 
 // ===== EQUIPAR / DESEQUIPAR =====
 
-async function actionEquip(tx: Tx, player: Player, itemId: string): Promise<ActionResult> {
+async function actionEquip(
+  tx: Tx,
+  player: Player,
+  itemId: string,
+  requestedSlot = ''
+): Promise<ActionResult> {
   const item = getItem(itemId);
   if (!item || !EQUIPMENT_SLOTS.includes(item.category as EquipmentSlot)) {
     throw new ApiError('ITEM_NOT_EQUIPPABLE', 'Item não equipável.');
@@ -1452,17 +1472,55 @@ async function actionEquip(tx: Tx, player: Player, itemId: string): Promise<Acti
   if (!items.owned.includes(item.id)) {
     throw new ApiError('ITEM_NOT_OWNED', 'Você não possui este item!');
   }
-  items[item.category as EquipmentSlot] = item.id;
+
+  let targetSlot: EquippedSlot;
+  if (item.category === 'accessory') {
+    if (requestedSlot && requestedSlot !== 'accessory' && requestedSlot !== 'accessory2') {
+      throw new ApiError('VALIDATION_ERROR', 'Acessórios só podem ocupar Acessório I ou Acessório II.');
+    }
+    targetSlot =
+      requestedSlot === 'accessory2'
+        ? 'accessory2'
+        : requestedSlot === 'accessory'
+          ? 'accessory'
+          : !items.accessory
+            ? 'accessory'
+            : !items.accessory2
+              ? 'accessory2'
+              : 'accessory';
+
+    const otherSlot: EquippedSlot = targetSlot === 'accessory' ? 'accessory2' : 'accessory';
+    const otherUsesSameItem = (items[otherSlot] ?? null) === item.id;
+    if (otherUsesSameItem && itemCount(items, item.id) < 2) {
+      throw new ApiError(
+        'VALIDATION_ERROR',
+        `Você precisa de duas unidades de ${item.name} para equipá-lo nos dois espaços de acessório.`
+      );
+    }
+  } else {
+    if (requestedSlot && requestedSlot !== item.category) {
+      throw new ApiError('VALIDATION_ERROR', `${item.name} só pode ser equipado em ${item.category}.`);
+    }
+    targetSlot = item.category as EquipmentSlot;
+  }
+
+  items[targetSlot] = item.id;
   await updateJsonState(tx, player, { items: JSON.stringify(items) });
-  return { message: `${item.name} equipado!`, levelsGained: 0 };
+  const slotLabel =
+    targetSlot === 'accessory'
+      ? 'Acessório I'
+      : targetSlot === 'accessory2'
+        ? 'Acessório II'
+        : targetSlot;
+  return { message: `${item.name} equipado em ${slotLabel}!`, levelsGained: 0 };
 }
 
 async function actionUnequip(tx: Tx, player: Player, slot: string): Promise<ActionResult> {
-  if (!EQUIPMENT_SLOTS.includes(slot as EquipmentSlot)) {
+  if (!EQUIPPED_SLOTS.includes(slot as EquippedSlot)) {
     throw new ApiError('VALIDATION_ERROR', 'Slot inválido.');
   }
   const items = parseItems(player.items);
-  const slotKey = slot as EquipmentSlot;
+  const slotKey = slot as EquippedSlot;
   if (!items[slotKey]) {
     throw new ApiError('VALIDATION_ERROR', 'Nada equipado neste slot.');
   }
