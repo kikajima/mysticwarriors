@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
+  Ban,
+  Check,
   Globe2,
   MessageCircle,
   MessagesSquare,
@@ -10,6 +12,8 @@ import {
   Search,
   Send,
   Shield,
+  UserMinus,
+  UserPlus,
   UserRound,
   Volume2,
   VolumeX,
@@ -45,6 +49,7 @@ type Conversation = {
   mine: boolean;
 };
 type MutedPlayer = { playerId: string; name: string; createdAt: string };
+type SocialPerson = Person & { since?: string; requestedAt?: string; blockedAt?: string };
 
 const CHAT_MAX_MESSAGE = 500;
 
@@ -70,6 +75,10 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
   const [privateTarget, setPrivateTarget] = useState<Person | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [muted, setMuted] = useState<MutedPlayer[]>([]);
+  const [friends, setFriends] = useState<SocialPerson[]>([]);
+  const [friendRequests, setFriendRequests] = useState<SocialPerson[]>([]);
+  const [sentRequests, setSentRequests] = useState<SocialPerson[]>([]);
+  const [blocked, setBlocked] = useState<SocialPerson[]>([]);
   const [search, setSearch] = useState('');
   const [directory, setDirectory] = useState<Person[]>([]);
   const [directoryLoading, setDirectoryLoading] = useState(false);
@@ -80,6 +89,10 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
 
   const guildId = player.guild?.id ?? null;
   const mutedIds = useMemo(() => new Set(muted.map((item) => item.playerId)), [muted]);
+  const friendIds = useMemo(() => new Set(friends.map((item) => item.id)), [friends]);
+  const incomingRequestIds = useMemo(() => new Set(friendRequests.map((item) => item.id)), [friendRequests]);
+  const sentRequestIds = useMemo(() => new Set(sentRequests.map((item) => item.id)), [sentRequests]);
+  const blockedIds = useMemo(() => new Set(blocked.map((item) => item.id)), [blocked]);
   const filteredDirectory = useMemo(() => {
     const q = search.trim().toLocaleLowerCase('pt-BR');
     if (!q) return directory;
@@ -90,7 +103,13 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
     const params = new URLSearchParams({ view: 'context', playerId: player.id });
     const res = await fetch(`/api/chat?${params.toString()}`, { cache: 'no-store' });
     const data = await res.json();
-    if (res.ok) setMuted(Array.isArray(data.muted) ? data.muted : []);
+    if (res.ok) {
+      setMuted(Array.isArray(data.muted) ? data.muted : []);
+      setFriends(Array.isArray(data.friends) ? data.friends : []);
+      setFriendRequests(Array.isArray(data.friendRequests) ? data.friendRequests : []);
+      setSentRequests(Array.isArray(data.sentRequests) ? data.sentRequests : []);
+      setBlocked(Array.isArray(data.blocked) ? data.blocked : []);
+    }
   }, [player.id]);
 
   const loadConversations = useCallback(async () => {
@@ -166,6 +185,10 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
     setMessages([]);
     setConversations([]);
     setMuted([]);
+    setFriends([]);
+    setFriendRequests([]);
+    setSentRequests([]);
+    setBlocked([]);
     setDirectory([]);
     setPrivateTarget(null);
     setSearch('');
@@ -262,6 +285,30 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
     }
     await loadConversations();
   }, [player.id, loadContext, privateTarget?.id, loadMessages, loadConversations]);
+
+  const socialAction = useCallback(async (
+    action: 'friend_add' | 'friend_accept' | 'friend_remove' | 'block' | 'unblock',
+    target: Person
+  ) => {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, playerId: player.id, targetId: target.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error?.message ?? 'Não foi possível alterar a relação social.');
+      return;
+    }
+    setError(null);
+    if (action === 'block' && privateTarget?.id === target.id) {
+      setPrivateTarget(null);
+      messagesRef.current = [];
+      setMessages([]);
+    }
+    directoryLoadedRef.current = false;
+    await Promise.all([loadContext(), loadConversations()]);
+  }, [player.id, privateTarget?.id, loadContext, loadConversations]);
 
   const openPrivate = useCallback((target: Person) => {
     setChannel('private');
@@ -365,19 +412,78 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                     <p className="px-2 py-2 text-xs text-amber-200/40">Carregando guerreiros…</p>
                   ) : filteredDirectory.length > 0 ? (
                     filteredDirectory.map((person) => (
-                      <button
-                        type="button"
-                        key={person.id}
-                        onClick={() => openPrivate(person)}
-                        className="w-full text-left rounded-lg px-3 py-2 hover:bg-orange-950/30"
-                      >
-                        <span className="text-sm text-amber-100">{person.name}</span>
-                        {person.level ? <span className="ml-2 text-[10px] text-amber-200/40">Nv {person.level}</span> : null}
-                      </button>
+                      <div key={person.id} className="flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-orange-950/30">
+                        <button
+                          type="button"
+                          onClick={() => openPrivate(person)}
+                          className="flex-1 min-w-0 text-left px-1 py-1"
+                        >
+                          <span className="text-sm text-amber-100">{person.name}</span>
+                          {person.level ? <span className="ml-2 text-[10px] text-amber-200/40">Nv {person.level}</span> : null}
+                        </button>
+                        {incomingRequestIds.has(person.id) ? (
+                          <button type="button" onClick={() => void socialAction('friend_accept', person)} className="p-1.5 text-emerald-300" title="Aceitar amizade">
+                            <Check className="h-3.5 w-3.5" />
+                          </button>
+                        ) : !friendIds.has(person.id) && !sentRequestIds.has(person.id) ? (
+                          <button type="button" onClick={() => void socialAction('friend_add', person)} className="p-1.5 text-sky-300" title="Adicionar amigo">
+                            <UserPlus className="h-3.5 w-3.5" />
+                          </button>
+                        ) : null}
+                        <button type="button" onClick={() => void socialAction('block', person)} className="p-1.5 text-red-300/70 hover:text-red-300" title="Bloquear guerreiro">
+                          <Ban className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     ))
                   ) : (
                     <p className="px-2 py-2 text-xs text-amber-200/40">Nenhum guerreiro encontrado.</p>
                   )}
+                </div>
+              )}
+
+              {friendRequests.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-emerald-300/60 mb-1">Solicitações de amizade</p>
+                  <div className="space-y-1">
+                    {friendRequests.map((person) => (
+                      <div key={person.id} className="flex items-center gap-2 rounded-lg border border-emerald-900/40 bg-emerald-950/15 px-3 py-2">
+                        <button type="button" className="flex-1 text-left text-xs text-amber-100 truncate" onClick={() => openPrivate(person)}>{person.name}</button>
+                        <button type="button" onClick={() => void socialAction('friend_accept', person)} className="text-[10px] text-emerald-300 flex items-center gap-1"><Check className="h-3 w-3" /> Aceitar</button>
+                        <button type="button" onClick={() => void socialAction('friend_remove', person)} className="text-[10px] text-red-300">Recusar</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-sky-300/60 mb-1">Amigos ({friends.length})</p>
+                <div className="space-y-1">
+                  {friends.map((person) => (
+                    <div key={person.id} className="flex items-center gap-2 rounded-lg border border-sky-900/30 bg-sky-950/10 px-3 py-2">
+                      <button type="button" onClick={() => openPrivate(person)} className="flex-1 text-left min-w-0">
+                        <span className="text-xs text-amber-100 truncate block">{person.name}</span>
+                        {person.level ? <span className="text-[9px] text-amber-200/35">Nv {person.level}</span> : null}
+                      </button>
+                      <button type="button" onClick={() => void socialAction('friend_remove', person)} className="p-1 text-amber-200/35 hover:text-red-300" title="Remover amizade">
+                        <UserMinus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  {friends.length === 0 && <p className="text-xs text-amber-200/30">Nenhum amigo adicionado ainda.</p>}
+                </div>
+              </div>
+
+              {sentRequests.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-amber-200/40 mb-1">Pedidos enviados</p>
+                  <div className="flex flex-wrap gap-1">
+                    {sentRequests.map((person) => (
+                      <button key={person.id} type="button" onClick={() => void socialAction('friend_remove', person)} className="rounded-full border border-amber-900/40 px-2 py-1 text-[10px] text-amber-200/55" title="Cancelar pedido">
+                        {person.name} · pendente
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -401,6 +507,20 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                   {conversations.length === 0 && <p className="text-xs text-amber-200/35">Nenhuma conversa privada ainda.</p>}
                 </div>
               </div>
+
+              {blocked.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-red-300/60 mb-1">Bloqueados</p>
+                  <div className="space-y-1">
+                    {blocked.map((person) => (
+                      <div key={person.id} className="flex items-center justify-between gap-2 rounded-lg border border-red-900/30 bg-red-950/10 px-3 py-2">
+                        <span className="text-xs text-amber-100 truncate">{person.name}</span>
+                        <button type="button" onClick={() => void socialAction('unblock', person)} className="text-[10px] text-emerald-300">Desbloquear</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {muted.length > 0 && (
                 <div>
@@ -430,6 +550,24 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                   <span className="flex-1 truncate text-xs font-heading text-amber-100">{privateTarget.name}</span>
+                  {friendIds.has(privateTarget.id) ? (
+                    <button type="button" onClick={() => void socialAction('friend_remove', privateTarget)} className="p-1.5 text-sky-300/70" title="Remover amizade">
+                      <UserMinus className="h-3.5 w-3.5" />
+                    </button>
+                  ) : incomingRequestIds.has(privateTarget.id) ? (
+                    <button type="button" onClick={() => void socialAction('friend_accept', privateTarget)} className="p-1.5 text-emerald-300" title="Aceitar amizade">
+                      <Check className="h-3.5 w-3.5" />
+                    </button>
+                  ) : !sentRequestIds.has(privateTarget.id) ? (
+                    <button type="button" onClick={() => void socialAction('friend_add', privateTarget)} className="p-1.5 text-sky-300/70" title="Adicionar amigo">
+                      <UserPlus className="h-3.5 w-3.5" />
+                    </button>
+                  ) : null}
+                  {!blockedIds.has(privateTarget.id) && (
+                    <button type="button" onClick={() => void socialAction('block', privateTarget)} className="p-1.5 text-red-300/60 hover:text-red-300" title="Bloquear guerreiro">
+                      <Ban className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => void setMute(privateTarget, !mutedIds.has(privateTarget.id))}
