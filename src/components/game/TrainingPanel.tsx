@@ -574,6 +574,23 @@ function TransformTab({
                           )}
                         </div>
                         <p className="text-xs text-amber-200/55 mt-1.5 leading-relaxed">{tr!.description}</p>
+                        <p className="text-[11px] text-purple-300/80 mt-1.5 leading-relaxed">
+                          <span className="font-heading">Efeito ativo:</span>{' '}
+                          {[
+                            tr!.multipliers?.physical ? `Dano físico +${Math.round((tr!.multipliers.physical - 1) * 100)}%` : null,
+                            tr!.multipliers?.ki ? `Dano de Ki +${Math.round((tr!.multipliers.ki - 1) * 100)}%` : null,
+                            tr!.multipliers?.defense ? `Defesa +${Math.round((tr!.multipliers.defense - 1) * 100)}%` : null,
+                            tr!.multipliers?.speed ? `Velocidade +${Math.round((tr!.multipliers.speed - 1) * 100)}%` : null,
+                          ].filter(Boolean).join(' • ')}
+                        </p>
+                        {tr!.bonuses && (
+                          <p className="text-[10px] text-emerald-300/70 mt-1">
+                            <span className="font-heading">Ao desbloquear:</span>{' '}
+                            {Object.entries(tr!.bonuses)
+                              .map(([stat, value]) => `+${value} ${stat === 'strength' ? 'Força' : stat === 'defense' ? 'Defesa' : stat === 'speed' ? 'Velocidade' : 'Ki'}`)
+                              .join(' • ')}
+                          </p>
+                        )}
 
                         {!isOwned && req.missing.length > 0 && (
                           <p className="text-[11px] text-red-300/70 mt-1.5">🔒 Requisitos: {req.missing.join(' · ')}</p>
