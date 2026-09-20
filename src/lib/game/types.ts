@@ -82,8 +82,8 @@ export interface ProfessionLevelRewards {
   zeniPerHour: number;
   /** Ganho de atributo/hora em milésimos (1000 = +1,0). */
   attributeMilliPerHour: number;
-  /** XP/hora como fração do XP necessário para o próximo nível do personagem. */
-  xpPctPerHour: number;
+  /** XP/hora por nível do personagem (ex.: 4 = 4 × nível por hora). */
+  xpPerPlayerLevel: number;
   /** Chance de Esfera por TURNO concluído. */
   dragonBallChance: number;
   /** Chance base de material raro por HORA, antes do multiplicador do turno. */
