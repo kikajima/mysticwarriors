@@ -112,6 +112,12 @@ describe('TALENTOS — catálogo e validação de compra', () => {
   });
 });
 
+test('Loja exibe descrição e efeito dos Talentos', async () => {
+  const src = await Bun.file(`${import.meta.dir}/../src/components/game/ShopPanel.tsx`).text();
+  expect(src).toContain('{talent.description}');
+  expect(src).toContain('{talent.effect}');
+});
+
 describe('TALENTOS — Repetição do Destino (motor)', () => {
   test('sem o talento: batalha é byte a byte idêntica (determinismo)', () => {
     // o mesmo seed SEM talentos precisa produzir o MESMO resultado que
