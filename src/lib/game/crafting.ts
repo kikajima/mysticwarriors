@@ -80,30 +80,24 @@ function recipeInputsForBatch(recipe: CraftRecipeDef, batch: number): CraftInput
   }));
 }
 
-function refundInputsFromJob(
-  raw: string,
-  recipe: CraftRecipeDef,
-  batch: number
-): CraftInputSnapshot[] {
+function parseRefundInputsSnapshot(raw: string): CraftInputSnapshot[] | null {
   try {
     const parsed = JSON.parse(raw) as unknown;
-    if (Array.isArray(parsed) && parsed.length > 0 && parsed.length <= 50) {
-      const normalized: CraftInputSnapshot[] = [];
-      for (const entry of parsed) {
-        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return recipeInputsForBatch(recipe, batch);
-        const itemId = String((entry as Record<string, unknown>).itemId ?? '');
-        const quantity = Math.trunc(Number((entry as Record<string, unknown>).quantity));
-        if (!itemId || !Number.isFinite(quantity) || quantity <= 0 || quantity > 1_000_000) {
-          return recipeInputsForBatch(recipe, batch);
-        }
-        normalized.push({ itemId, quantity });
+    if (!Array.isArray(parsed) || parsed.length === 0 || parsed.length > 50) return null;
+    const normalized: CraftInputSnapshot[] = [];
+    for (const entry of parsed) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+      const itemId = String((entry as Record<string, unknown>).itemId ?? '');
+      const quantity = Math.trunc(Number((entry as Record<string, unknown>).quantity));
+      if (!itemId || !Number.isFinite(quantity) || quantity <= 0 || quantity > 1_000_000) {
+        return null;
       }
-      return normalized;
+      normalized.push({ itemId, quantity });
     }
+    return normalized;
   } catch {
-    // Jobs legados não tinham snapshot de insumos.
+    return null;
   }
-  return recipeInputsForBatch(recipe, batch);
 }
 
 async function assertStackCapacity(tx: Tx, playerId: string, itemId: string, quantity: number) {
@@ -302,16 +296,17 @@ export async function claimCraft(tx: Tx, player: Player): Promise<{ message: str
   }
 
   const recipe = getCraftRecipe(job.recipeId);
-  if (!recipe || recipe.outputItemId !== job.outputItemId || recipe.outputKind !== job.outputKind) {
-    throw new ApiError('VALIDATION_ERROR', 'Receita da fabricação não existe mais. Contate a administração.');
+  if (recipe && (recipe.outputItemId !== job.outputItemId || recipe.outputKind !== job.outputKind)) {
+    throw new ApiError('VALIDATION_ERROR', 'A saída desta fabricação mudou no catálogo. Contate a administração.');
   }
-  const maxOutput = recipe.outputQuantity * Math.max(1, recipe.maxBatch ?? 1);
-  if (
-    job.outputQuantity < recipe.outputQuantity ||
-    job.outputQuantity > maxOutput ||
-    job.outputQuantity % recipe.outputQuantity !== 0
-  ) {
-    throw new ApiError('VALIDATION_ERROR', 'Quantidade da fabricação inválida. Contate a administração.');
+  const outputExists =
+    job.outputKind === 'player_item'
+      ? !!getCraftedItem(job.outputItemId)
+      : job.outputKind === 'stack'
+        ? !!getCraftStackItem(job.outputItemId)
+        : false;
+  if (!outputExists || job.outputQuantity < 1 || job.outputQuantity > 1_000_000) {
+    throw new ApiError('VALIDATION_ERROR', 'Saída da fabricação inválida. Contate a administração.');
   }
 
   if (job.outputKind === 'player_item') {
@@ -354,21 +349,28 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
   }
 
   const recipe = getCraftRecipe(job.recipeId);
-  if (!recipe || recipe.outputItemId !== job.outputItemId || recipe.outputKind !== job.outputKind) {
-    throw new ApiError('VALIDATION_ERROR', 'Receita da fabricação não existe mais. Contate a administração.');
-  }
-  const maxOutput = recipe.outputQuantity * Math.max(1, recipe.maxBatch ?? 1);
-  if (
-    job.outputQuantity < recipe.outputQuantity ||
-    job.outputQuantity > maxOutput ||
-    job.outputQuantity % recipe.outputQuantity !== 0
-  ) {
-    throw new ApiError('VALIDATION_ERROR', 'Quantidade da fabricação inválida. Contate a administração.');
+  const storedInputs = parseRefundInputsSnapshot(job.inputIngredients);
+  let batch = 1;
+  if (recipe && recipe.outputQuantity > 0) {
+    batch = Math.max(1, Math.trunc(job.outputQuantity / recipe.outputQuantity));
   }
 
-  const batch = job.outputQuantity / recipe.outputQuantity;
-  const refundIngredients = refundInputsFromJob(job.inputIngredients, recipe, batch);
-  const refundZeni = job.inputZeni > 0 ? job.inputZeni : recipe.costZeni * batch;
+  const refundIngredients =
+    storedInputs ??
+    (recipe ? recipeInputsForBatch(recipe, batch) : null);
+  const refundZeni =
+    job.inputZeni > 0
+      ? job.inputZeni
+      : recipe
+        ? recipe.costZeni * batch
+        : 0;
+
+  if (!refundIngredients || refundIngredients.length === 0 || (refundZeni <= 0 && !recipe)) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      'Não foi possível reconstruir os insumos desta fabricação legada. Contate a administração.'
+    );
+  }
 
   for (const ingredient of refundIngredients) {
     await assertStackCapacity(tx, player.id, ingredient.itemId, ingredient.quantity);
