@@ -289,7 +289,7 @@ export const ENEMIES: Enemy[] = [
     color: 'from-orange-600 to-red-950',
     emoji: '👁️',
   },
-]
+];
 
 export function getEnemy(id: string): { enemy: Enemy; index: number } | null {
   const index = ENEMIES.findIndex((e) => e.id === id);
