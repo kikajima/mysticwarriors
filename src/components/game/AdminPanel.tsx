@@ -26,6 +26,9 @@ import type { AdminCharacterRow } from '@/lib/game/adminActions';
 import type { AdminGuildRow, AdminActionLogView } from '@/lib/game/adminErasure';
 import {
   SHOP_ITEMS,
+  CRAFTED_ITEMS,
+  CRAFT_STACK_ITEMS,
+  PROFESSION_MATERIALS,
   COSMETICS,
   TRANSFORMATIONS,
   RACES,
@@ -70,6 +73,12 @@ function num(v: string): number | undefined {
 const selectClass =
   'bg-black/50 border border-amber-800/60 rounded-lg px-2 py-1.5 text-amber-100 text-sm focus:outline-none focus:border-orange-500 max-w-[220px]';
 
+interface AdminDragonBallWorldRow {
+  star: number;
+  playerId: string | null;
+  playerName: string | null;
+}
+
 export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) {
   const [open, setOpen] = useState(false);
   // v0.14 — abas: personagens (tudo que existia) · guildas · auditoria
@@ -94,7 +103,6 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
   // campos de formulário
   const [fZeni, setFZeni] = useState('');
   const [fCrys, setFCrys] = useState('');
-  const [fBalls, setFBalls] = useState('');
   const [fXp, setFXp] = useState('');
   const [sStr, setSStr] = useState('');
   const [sDef, setSDef] = useState('');
@@ -106,6 +114,12 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
   const [gItem, setGItem] = useState('');
   const [gCosmetic, setGCosmetic] = useState('');
   const [gTransform, setGTransform] = useState('');
+  const [gBallStar, setGBallStar] = useState('');
+  const [gMaterial, setGMaterial] = useState('');
+  const [gMaterialQty, setGMaterialQty] = useState('1');
+  const [gCrafted, setGCrafted] = useState('');
+  const [gCraftedQty, setGCraftedQty] = useState('1');
+  const [dragonBallWorld, setDragonBallWorld] = useState<AdminDragonBallWorldRow[]>([]);
   // v0.14 — GUILDAS (lista + exclusão) e AUDITORIA
   const [guilds, setGuilds] = useState<AdminGuildRow[] | null>(null);
   const [guildsLoading, setGuildsLoading] = useState(false);
@@ -185,6 +199,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
       }
       const data = await res.json();
       setCharacters(Array.isArray(data.characters) ? data.characters : []);
+      setDragonBallWorld(Array.isArray(data.dragonBallWorld) ? data.dragonBallWorld : []);
       setCloudAvailable(data.cloudAvailable !== false);
     } catch {
       setStatus({ kind: 'err', text: 'Falha de conexão.' });
@@ -202,6 +217,10 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
     () => characters?.find((c) => c.id === selectedId) ?? null,
     [characters, selectedId]
   );
+  const selectedCraftedItem = useMemo(
+    () => CRAFTED_ITEMS.find((item) => item.id === gCrafted) ?? null,
+    [gCrafted]
+  );
 
   const prefillStats = useCallback((c: AdminCharacterRow | null) => {
     setSStr(c ? String(c.strength) : '');
@@ -215,6 +234,11 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
   useEffect(() => {
     prefillStats(selected);
     setConfirmReset(false);
+    setGBallStar('');
+    setGMaterial('');
+    setGMaterialQty('1');
+    setGCrafted('');
+    setGCraftedQty('1');
   }, [selected?.id, prefillStats, selected]);
 
   const runAction = useCallback(
@@ -245,12 +269,16 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
         setStatus({ kind: 'ok', text: data.message });
         setFZeni('');
         setFCrys('');
-        setFBalls('');
         setFXp('');
         setPXp('');
         setGItem('');
         setGCosmetic('');
         setGTransform('');
+        setGBallStar('');
+        setGMaterial('');
+        setGMaterialQty('1');
+        setGCrafted('');
+        setGCraftedQty('1');
         onSelfModified?.();
         await fetchCharacters();
       } catch {
@@ -744,10 +772,6 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                         <input value={fCrys} onChange={(e) => setFCrys(e.target.value)} inputMode="numeric" placeholder="+100" className={`${inputClass} block mt-1`} />
                       </label>
                       <label className="text-xs text-amber-200/60">
-                        Esferas
-                        <input value={fBalls} onChange={(e) => setFBalls(e.target.value)} inputMode="numeric" placeholder="+1" className={`${inputClass} block mt-1`} />
-                      </label>
-                      <label className="text-xs text-amber-200/60">
                         XP
                         <input value={fXp} onChange={(e) => setFXp(e.target.value)} inputMode="numeric" placeholder="+1000" className={`${inputClass} block mt-1`} />
                       </label>
@@ -757,11 +781,10 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                             action: 'grant',
                             zeniDelta: num(fZeni),
                             crystalDelta: num(fCrys),
-                            ballDelta: num(fBalls),
                             xpGain: num(fXp),
                           })
                         }
-                        disabled={working || (!fZeni && !fCrys && !fBalls && !fXp)}
+                        disabled={working || (!fZeni && !fCrys && !fXp)}
                         className="px-4 py-2 rounded-lg bg-gradient-to-b from-orange-500 to-amber-700 text-white text-sm font-heading disabled:opacity-40"
                       >
                         Conceder
@@ -826,6 +849,122 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                         className="px-4 py-2 rounded-lg bg-gradient-to-b from-orange-500 to-amber-700 text-white text-sm font-heading disabled:opacity-40"
                       >
                         Aplicar
+                      </button>
+                    </div>
+                  </section>
+
+                  {/* Esferas globais: a estrela é única no mundo */}
+                  <section className="bg-black/20 rounded-xl border border-amber-900/40 p-4">
+                    <h3 className="font-heading text-sm text-amber-100 mb-2 flex items-center gap-1.5">
+                      <CircleDot className="w-4 h-4 text-orange-300" /> Conceder Esfera do Dragão
+                    </h3>
+                    <p className="text-[11px] text-amber-200/45 mb-3">
+                      Cada estrela existe uma única vez no mundo. Estrelas já possuídas por outro guerreiro aparecem bloqueadas.
+                    </p>
+                    <div className="flex flex-wrap items-end gap-3">
+                      <label className="text-xs text-amber-200/60 flex-1 min-w-[220px]">
+                        Estrela específica
+                        <select
+                          value={gBallStar}
+                          onChange={(e) => setGBallStar(e.target.value)}
+                          className={`${selectClass} block mt-1 w-full`}
+                        >
+                          <option value="">— escolher —</option>
+                          {Array.from({ length: 7 }, (_, index) => index + 1).map((star) => {
+                            const world = dragonBallWorld.find((ball) => ball.star === star);
+                            const owner = world?.playerName ?? null;
+                            const isMine = world?.playerId === selected.id;
+                            return (
+                              <option key={star} value={star} disabled={!!world?.playerId}>
+                                ⭐ {star} estrela{star === 1 ? '' : 's'} — {isMine ? `já com ${selected.name}` : owner ? `com ${owner}` : 'livre'}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </label>
+                      <button
+                        onClick={() => runAction({ action: 'grant_dragon_ball', dragonBallStar: Number(gBallStar) })}
+                        disabled={working || !gBallStar || selected.source !== 'local'}
+                        className="px-4 py-2 rounded-lg bg-gradient-to-b from-orange-500 to-amber-700 text-white text-sm font-heading disabled:opacity-40"
+                      >
+                        Conceder estrela
+                      </button>
+                    </div>
+                    {selected.source !== 'local' && (
+                      <p className="text-[11px] text-orange-200/55 mt-2">
+                        Este personagem está apenas na nuvem. Esferas globais só podem ser atribuídas quando ele estiver carregado no servidor atual.
+                      </p>
+                    )}
+                  </section>
+
+                  {/* Recursos exclusivos da Oficina */}
+                  <section className="bg-black/20 rounded-xl border border-emerald-900/40 p-4 space-y-3">
+                    <h3 className="font-heading text-sm text-amber-100 flex items-center gap-1.5">
+                      <Backpack className="w-4 h-4 text-emerald-400" /> Recursos da Oficina
+                    </h3>
+                    <div className="flex flex-wrap items-end gap-3">
+                      <label className="text-xs text-amber-200/60 flex-1 min-w-[220px]">
+                        Material / projeto
+                        <select value={gMaterial} onChange={(e) => setGMaterial(e.target.value)} className={`${selectClass} block mt-1 w-full`}>
+                          <option value="">— escolher —</option>
+                          <optgroup label="Materiais profissionais">
+                            {PROFESSION_MATERIALS.map((m) => (
+                              <option key={m.id} value={m.id}>{m.icon} {m.name} (T{m.tier})</option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Projetos / blueprints">
+                            {CRAFT_STACK_ITEMS.map((m) => (
+                              <option key={m.id} value={m.id}>{m.icon} {m.name} (T{m.tier})</option>
+                            ))}
+                          </optgroup>
+                        </select>
+                      </label>
+                      <label className="text-xs text-amber-200/60">
+                        Qtd.
+                        <input
+                          value={gMaterialQty}
+                          onChange={(e) => setGMaterialQty(e.target.value)}
+                          inputMode="numeric"
+                          className={`${inputClass} block mt-1`}
+                        />
+                      </label>
+                      <button
+                        onClick={() => runAction({ action: 'grant_craft_material', materialId: gMaterial, quantity: num(gMaterialQty) ?? 1 })}
+                        disabled={working || !gMaterial}
+                        className="px-4 py-2 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-heading disabled:opacity-40"
+                      >
+                        Conceder material
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-end gap-3">
+                      <label className="text-xs text-amber-200/60 flex-1 min-w-[220px]">
+                        Item exclusivo de crafting
+                        <select value={gCrafted} onChange={(e) => { setGCrafted(e.target.value); setGCraftedQty('1'); }} className={`${selectClass} block mt-1 w-full`}>
+                          <option value="">— escolher —</option>
+                          {CRAFTED_ITEMS.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.icon} {item.name} ({item.category === 'consumable' ? 'consumível' : item.category})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="text-xs text-amber-200/60">
+                        Qtd.
+                        <input
+                          value={gCraftedQty}
+                          onChange={(e) => setGCraftedQty(e.target.value)}
+                          inputMode="numeric"
+                          disabled={selectedCraftedItem?.category !== 'consumable'}
+                          className={`${inputClass} block mt-1 disabled:opacity-40`}
+                        />
+                      </label>
+                      <button
+                        onClick={() => runAction({ action: 'grant_crafted_item', craftedItemId: gCrafted, quantity: num(gCraftedQty) ?? 1 })}
+                        disabled={working || !gCrafted}
+                        className="px-4 py-2 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-heading disabled:opacity-40"
+                      >
+                        Conceder item de craft
                       </button>
                     </div>
                   </section>
@@ -897,22 +1036,34 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                     </div>
                   </section>
 
-                  {/* 5-6: energia + completar */}
-                  <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button
-                      onClick={() => runAction({ action: 'restore_energy' })}
-                      disabled={working}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-950/40 border border-amber-800/50 text-amber-100 text-sm font-heading hover:border-amber-600/60 disabled:opacity-40"
-                    >
-                      <HeartPulse className="w-4 h-4 text-amber-400" /> Restaurar energia total
-                    </button>
-                    <button
-                      onClick={() => runAction({ action: 'finish' })}
-                      disabled={working}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-sky-950/40 border border-sky-800/50 text-sky-100 text-sm font-heading hover:border-sky-600/60 disabled:opacity-40"
-                    >
-                      <FastForward className="w-4 h-4 text-sky-400" /> Completar profissão/treino
-                    </button>
+                  {/* Ferramentas de suporte operacional */}
+                  <section className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <button
+                        onClick={() => runAction({ action: 'restore_energy' })}
+                        disabled={working}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-950/40 border border-amber-800/50 text-amber-100 text-sm font-heading hover:border-amber-600/60 disabled:opacity-40"
+                      >
+                        <HeartPulse className="w-4 h-4 text-amber-400" /> Restaurar energia
+                      </button>
+                      <button
+                        onClick={() => runAction({ action: 'restore_health' })}
+                        disabled={working}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-100 text-sm font-heading hover:border-red-600/60 disabled:opacity-40"
+                      >
+                        <HeartPulse className="w-4 h-4 text-red-400" /> Restaurar vida
+                      </button>
+                      <button
+                        onClick={() => runAction({ action: 'accelerate_activity' })}
+                        disabled={working}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-sky-950/40 border border-sky-800/50 text-sky-100 text-sm font-heading hover:border-sky-600/60 disabled:opacity-40"
+                      >
+                        <FastForward className="w-4 h-4 text-sky-400" /> Acelerar atividade
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-sky-200/45">
+                      Acelera imediatamente trabalho, batalha/PvP/torneio, Busca pelas Esferas e fabricação em andamento. Recompensas continuam sendo resolvidas/coletadas pelo fluxo normal.
+                    </p>
                   </section>
 
                   {/* 7: resetar (perigoso — SÓ ESTE personagem) */}
@@ -922,7 +1073,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                     </h3>
                     <p className="text-[11px] text-red-200/60 leading-relaxed mb-2">
                       O reset é SÓ de <b>{selected.name}</b> (os outros personagens da conta não mudam). Ele NÃO apaga o
-                      personagem: volta ao <b>estado de criação</b> preservando apenas <b>nome, raça e sexo</b> — cosméticos
+                      personagem: volta ao <b>estado de criação</b> preservando apenas <b>nome e raça</b> — cosméticos
                       comprados, avatar, diamantes, itens, equipamentos, auras, transformações, conquistas, missões,
                       profissão e dano na Ameaça Universal atual são <b>zerados</b>.
                     </p>
