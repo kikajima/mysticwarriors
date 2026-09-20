@@ -44,7 +44,7 @@ async function main() {
       where: { id },
       data: {
         level: 30, zeni: 5_000_000,
-        strength: 999, defense: 999, speed: 999, ki: 999,
+        strength: 1200, defense: 1200, speed: 1200, ki: 1200,
         items: JSON.stringify({
           weapon: null, armor: null, accessory: null,
           owned: ['elixir_dragao'],
