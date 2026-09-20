@@ -87,6 +87,19 @@ async function grantStack(tx: Tx, playerId: string, itemId: string, quantity: nu
   });
 }
 
+function assertCraftStartOutputEligibility(player: Player, itemId: string, quantity: number) {
+  const item = getCraftedItem(itemId);
+  if (!item) throw new ApiError('VALIDATION_ERROR', 'Saída de fabricação inválida.');
+  if (item.category === 'consumable') return;
+  const items = parseItems(player.items);
+  if (quantity > 1 || itemCount(items, item.id) > 0) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      `${item.name} é um item permanente/único. Você já possui uma unidade ou tentou fabricar duplicatas.`
+    );
+  }
+}
+
 async function assertPlayerItemCapacity(player: Player, itemId: string, quantity: number) {
   const item = getCraftedItem(itemId);
   if (!item) throw new ApiError('VALIDATION_ERROR', 'Saída de fabricação inválida.');
@@ -172,6 +185,7 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string, quant
   }
 
   if (recipe.outputKind === 'player_item') {
+    assertCraftStartOutputEligibility(player, recipe.outputItemId, outputQuantity);
     await assertPlayerItemCapacity(player, recipe.outputItemId, outputQuantity);
   } else {
     await assertStackCapacity(tx, player.id, recipe.outputItemId, outputQuantity);
