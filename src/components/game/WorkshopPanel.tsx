@@ -71,6 +71,7 @@ export function WorkshopPanel({
   const [inventory, setInventory] = useState<InventoryRow[] | null>(null);
   const [job, setJob] = useState<CraftJobRow | null>(null);
   const [batchQty, setBatchQty] = useState<Record<string, number>>({});
+  const [tierFilter, setTierFilter] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all');
   const [failed, setFailed] = useState(false);
   const now = useServerNow(500);
 
@@ -122,8 +123,12 @@ export function WorkshopPanel({
     : 1;
   const progress = job ? Math.max(0, Math.min(100, ((totalMs - Math.max(0, remaining)) / totalMs) * 100)) : 0;
 
-  const blueprints = CRAFT_RECIPES.filter((r) => r.requiresAcademic);
-  const mainRecipes = CRAFT_RECIPES.filter((r) => !r.requiresAcademic);
+  const byTierThenName = (a: (typeof CRAFT_RECIPES)[number], b: (typeof CRAFT_RECIPES)[number]) =>
+    a.tier - b.tier || a.name.localeCompare(b.name, 'pt-BR');
+  const matchesTier = (recipe: (typeof CRAFT_RECIPES)[number]) =>
+    tierFilter === 'all' || recipe.tier === tierFilter;
+  const blueprints = CRAFT_RECIPES.filter((r) => r.requiresAcademic && matchesTier(r)).sort(byTierThenName);
+  const mainRecipes = CRAFT_RECIPES.filter((r) => !r.requiresAcademic && matchesTier(r)).sort(byTierThenName);
 
   const renderRecipe = (recipe: (typeof CRAFT_RECIPES)[number]) => {
     const output = getCraftedItem(recipe.outputItemId) ?? getCraftStackItem(recipe.outputItemId);
@@ -170,6 +175,21 @@ export function WorkshopPanel({
               {recipe.requiresAcademic && (
                 <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">Acadêmico</Chip>
               )}
+              <Chip
+                className={
+                  academicOk && professionRequirementsOk
+                    ? ingredientsOk && player.zeni >= totalCost
+                      ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/50'
+                      : 'bg-yellow-950/50 text-yellow-300 border-yellow-800/50'
+                    : 'bg-red-950/50 text-red-300 border-red-800/50'
+                }
+              >
+                {academicOk && professionRequirementsOk
+                  ? ingredientsOk && player.zeni >= totalCost
+                    ? 'pronta'
+                    : 'faltam recursos'
+                  : 'bloqueada'}
+              </Chip>
             </div>
             <p className="text-xs text-amber-200/55 mt-1">{recipe.description}</p>
 
@@ -294,6 +314,24 @@ export function WorkshopPanel({
         </p>
       </GameCard>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-amber-200/55 mr-1">Filtrar receitas:</span>
+        {(['all', 1, 2, 3, 4, 5] as const).map((tier) => (
+          <button
+            key={tier}
+            type="button"
+            onClick={() => setTierFilter(tier)}
+            className={`rounded-lg border px-3 py-1.5 text-xs font-heading transition-colors ${
+              tierFilter === tier
+                ? 'border-orange-500/70 bg-orange-950/40 text-orange-200'
+                : 'border-amber-900/40 bg-black/20 text-amber-200/55 hover:border-amber-700/60'
+            }`}
+          >
+            {tier === 'all' ? 'Todos' : `Tier ${tier}`}
+          </button>
+        ))}
+      </div>
+
       {job && (
         <GameCard className="p-5 border-orange-600/50" glow={remaining <= 0}>
           <div className="flex items-start gap-4">
@@ -353,7 +391,11 @@ export function WorkshopPanel({
         <>
           <div>
             <h2 className="font-heading text-amber-100 mb-3">Receitas da Oficina</h2>
-            <div className="grid lg:grid-cols-2 gap-4">{mainRecipes.map(renderRecipe)}</div>
+            {mainRecipes.length === 0 ? (
+              <GameCard className="p-4 text-sm text-amber-200/45">Nenhuma receita principal neste Tier.</GameCard>
+            ) : (
+              <div className="grid lg:grid-cols-2 gap-4">{mainRecipes.map(renderRecipe)}</div>
+            )}
           </div>
 
           <div>
@@ -361,7 +403,11 @@ export function WorkshopPanel({
             <p className="text-xs text-amber-200/50 mb-3">
               Blueprints avançados alimentam o crafting cross-profession e entram como ingredientes dos tiers superiores.
             </p>
-            <div className="grid lg:grid-cols-2 gap-4">{blueprints.map(renderRecipe)}</div>
+            {blueprints.length === 0 ? (
+              <GameCard className="p-4 text-sm text-amber-200/45">Nenhum projeto acadêmico neste Tier.</GameCard>
+            ) : (
+              <div className="grid lg:grid-cols-2 gap-4">{blueprints.map(renderRecipe)}</div>
+            )}
           </div>
         </>
       )}
