@@ -13,7 +13,7 @@ import {
   getTransformation,
   RACES,
 } from '@/lib/game/constants';
-import type { PlayerView, Loadout, LoadoutSlot, TechniqueDef } from '@/lib/game/types';
+import type { PlayerView, Loadout, LoadoutSlot, TechniqueDef, TransformationDef } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { Swords, Shield, Gauge, Sparkles, Coins, Zap, Lock, Check, GraduationCap, Brain, Swords as SwordsIcon } from 'lucide-react';
 
@@ -34,6 +34,29 @@ const TABS: Array<{ key: Tab; label: string; icon: string }> = [
   { key: 'strategy', label: 'Estratégia', icon: '🧠' },
   { key: 'transform', label: 'Transformações', icon: '⚡' },
 ];
+
+function transformationEffectLabels(tr: TransformationDef): string[] {
+  const labels: string[] = [];
+  const permanent = tr.bonuses ?? {};
+  const permanentParts = [
+    permanent.strength ? `+${permanent.strength} Força` : '',
+    permanent.defense ? `+${permanent.defense} Defesa` : '',
+    permanent.speed ? `+${permanent.speed} Velocidade` : '',
+    permanent.ki ? `+${permanent.ki} Ki` : '',
+  ].filter(Boolean);
+  if (permanentParts.length) labels.push(`Permanente ao desbloquear: ${permanentParts.join(', ')}`);
+
+  const active = tr.multipliers ?? {};
+  const pct = (value?: number) => value && value !== 1 ? Math.round((value - 1) * 100) : 0;
+  const activeParts = [
+    pct(active.physical) ? `+${pct(active.physical)}% dano físico` : '',
+    pct(active.ki) ? `+${pct(active.ki)}% poder de Ki` : '',
+    pct(active.defense) ? `+${pct(active.defense)}% defesa/resistência` : '',
+    pct(active.speed) ? `+${pct(active.speed)}% velocidade` : '',
+  ].filter(Boolean);
+  if (activeParts.length) labels.push(`Enquanto ativa: ${activeParts.join(', ')}`);
+  return labels;
+}
 
 function techniqueDetailLabels(tech: TechniqueDef): string[] {
   const labels = [
@@ -574,6 +597,13 @@ function TransformTab({
                           )}
                         </div>
                         <p className="text-xs text-amber-200/55 mt-1.5 leading-relaxed">{tr!.description}</p>
+                        <div className="mt-2 space-y-1">
+                          {transformationEffectLabels(tr!).map((effect) => (
+                            <p key={effect} className="text-[10px] text-purple-300/80 leading-relaxed">
+                              <span className="font-heading">Efeito:</span> {effect}
+                            </p>
+                          ))}
+                        </div>
 
                         {!isOwned && req.missing.length > 0 && (
                           <p className="text-[11px] text-red-300/70 mt-1.5">🔒 Requisitos: {req.missing.join(' · ')}</p>
