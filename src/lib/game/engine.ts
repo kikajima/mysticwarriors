@@ -79,7 +79,9 @@ export function parseItems(raw: string): ItemsState {
     }
     const pickSlot = (key: string): string | null => {
       const id = parsed[key];
-      return typeof id === 'string' && owned.includes(id) ? id : null;
+      if (typeof id !== 'string' || !owned.includes(id)) return null;
+      const item = getItem(id);
+      return item?.category === key ? id : null;
     };
     return {
       weapon: pickSlot('weapon'),
