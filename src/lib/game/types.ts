@@ -56,7 +56,7 @@ export interface ProfessionProgress {
   lifetimeHours: number;
   /** Reservado para a PR de Prestígio. Nesta fase começa em 0. */
   prestige: number;
-  /** Fração de atributo em milésimos, para taxas como +1,3/h sem arredondar. */
+  /** Campo legado de compatibilidade; ganhos atuais são inteiros e este valor permanece 0. */
   statMilliRemainder: number;
   /** Atributo realmente concedido neste ciclo; necessário para Prestígio futuro. */
   cycleStatGranted: number;
@@ -80,7 +80,7 @@ export interface ProfessionLevelRewards {
   hoursInLevel: number;
   cumulativeHours: number;
   zeniPerHour: number;
-  /** Ganho de atributo/hora em milésimos (1000 = +1,0). */
+  /** Ganho inteiro de atributo/hora, codificado em milésimos por compatibilidade (sempre múltiplo de 1000). */
   attributeMilliPerHour: number;
   /** XP/hora por nível do personagem (ex.: 4 = 4 × nível por hora). */
   xpPerPlayerLevel: number;
