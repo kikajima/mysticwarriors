@@ -13,7 +13,7 @@ import {
   getTransformation,
   RACES,
 } from '@/lib/game/constants';
-import type { PlayerView, Loadout, LoadoutSlot } from '@/lib/game/types';
+import type { PlayerView, Loadout, LoadoutSlot, TechniqueDef } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { Swords, Shield, Gauge, Sparkles, Coins, Zap, Lock, Check, GraduationCap, Brain, Swords as SwordsIcon } from 'lucide-react';
 
@@ -34,6 +34,22 @@ const TABS: Array<{ key: Tab; label: string; icon: string }> = [
   { key: 'strategy', label: 'Estratégia', icon: '🧠' },
   { key: 'transform', label: 'Transformações', icon: '⚡' },
 ];
+
+function techniqueDetailLabels(tech: TechniqueDef): string[] {
+  const labels = [
+    `Poder ×${tech.power.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+  ];
+  if (tech.accuracy !== 0) {
+    labels.push(`Precisão ${tech.accuracy > 0 ? '+' : ''}${Math.round(tech.accuracy * 100)}%`);
+  }
+  if (tech.effects?.defensePierce) {
+    labels.push(`Ignora ${Math.round(tech.effects.defensePierce * 100)}% DEF`);
+  }
+  if (tech.effects?.selfHealPct) {
+    labels.push(`Cura ${Math.round(tech.effects.selfHealPct * 100)}% HP`);
+  }
+  return labels;
+}
 
 export function TrainingPanel({
   player,
@@ -263,12 +279,14 @@ function TrainTab({
                               <Chip className="bg-purple-950/60 text-purple-300 border-purple-800/50">SUPREMA</Chip>
                             )}
                           </p>
-
+                          <p className="text-[11px] text-amber-200/50 mt-1 leading-snug">{tech.description}</p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-2 mt-1.5">
                         <div className="flex flex-wrap gap-1.5">
-
+                          {techniqueDetailLabels(tech).map((label) => (
+                            <Chip key={label} className="bg-black/40 text-amber-200/70 border-amber-900/50">{label}</Chip>
+                          ))}
                           <Chip className="bg-black/40 text-sky-300/80 border-sky-900/50">{tech.kiCost} Ki</Chip>
                           {tech.minLevel > 1 && (
                             <Chip className="bg-black/40 text-amber-200/60 border-amber-900/50">Nv {tech.minLevel}+</Chip>
@@ -402,7 +420,13 @@ function LoadoutTab({
                           <Chip className="bg-purple-950/60 text-purple-300 border-purple-800/50">S</Chip>
                         )}
                       </p>
-
+                      <p className="text-[11px] text-amber-200/50 mt-1 leading-snug">{tech!.description}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {techniqueDetailLabels(tech!).map((label) => (
+                          <Chip key={label} className="bg-black/40 text-amber-200/70 border-amber-900/50">{label}</Chip>
+                        ))}
+                        <Chip className="bg-black/40 text-sky-300/80 border-sky-900/50">{tech!.kiCost} Ki</Chip>
+                      </div>
                     </div>
                     {slotNow ? (
                       <Chip className="bg-emerald-900/60 text-emerald-300 border-emerald-700/60 shrink-0">
@@ -456,6 +480,7 @@ function StrategyTab({
                 )}
               </div>
               <h3 className="font-heading text-amber-100 text-lg">{s.name}</h3>
+              <p className="text-xs text-amber-200/55 mt-1 leading-relaxed">{s.description}</p>
 
               <GameButton
                 className="w-full mt-3"

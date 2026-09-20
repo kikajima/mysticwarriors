@@ -1,6 +1,7 @@
 import { CRAFTED_ITEMS } from './crafting';
 import type {
   Enemy,
+  ItemsState,
   ProfessionDef,
   ProfessionLevelRewards,
   ProfessionMaterialDef,
@@ -323,6 +324,12 @@ export const SHOP_ITEMS: ShopItem[] = [
 
 export function getItem(id: string): ShopItem | undefined {
   return SHOP_ITEMS.find((i) => i.id === id) ?? CRAFTED_ITEMS.find((i) => i.id === id);
+}
+
+/** Bônus absoluto de chance de Esfera concedido pelo acessório atualmente equipado. */
+export function equippedDragonBallChanceBonus(items: ItemsState): number {
+  if (!items.accessory) return 0;
+  return Math.max(0, getItem(items.accessory)?.dragonBallChanceBonus ?? 0);
 }
 
 /**

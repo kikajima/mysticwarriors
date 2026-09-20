@@ -214,7 +214,7 @@ export function ShopPanel({
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-heading text-amber-100 text-sm leading-tight">{item.name}</h4>
-
+                    <p className="text-[11px] text-amber-200/50 mt-1 leading-snug">{item.description}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-3">

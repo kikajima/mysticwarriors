@@ -62,10 +62,11 @@ export const CRAFTED_ITEMS: ShopItem[] = [
   {
     id: 'radar_dragao_basico',
     name: 'Radar do Dragão Básico',
-    description: 'Acessório utilitário fabricado com circuitos de detecção de Ki.',
+    description: 'Acessório de rastreamento. Enquanto equipado, aumenta em 2 p.p. a chance de encontrar uma Esfera do Dragão ao concluir um turno de profissão.',
     category: 'accessory',
     price: 0,
     minLevel: 1,
+    dragonBallChanceBonus: 0.02,
     icon: '📟',
   },
   {
@@ -201,7 +202,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
   {
     id: 'radar_dragao_basico',
     name: 'Radar do Dragão Básico',
-    description: 'Acessório utilitário produzido com tecnologia de detecção de Ki.',
+    description: 'Acessório equipável: +2 p.p. de chance de encontrar uma Esfera do Dragão ao concluir um turno de profissão.',
     tier: 2,
     icon: '📟',
     outputItemId: 'radar_dragao_basico',

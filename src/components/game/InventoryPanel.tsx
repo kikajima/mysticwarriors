@@ -79,6 +79,9 @@ function itemBonusText(item: ShopItem): string {
   if (item.trainBonus?.defense) parts.push(`+${item.trainBonus.defense} Defesa/treino`);
   if (item.trainBonus?.speed) parts.push(`+${item.trainBonus.speed} Velocidade/treino`);
   if (item.trainBonus?.ki) parts.push(`+${item.trainBonus.ki} Ki/treino`);
+  if (item.dragonBallChanceBonus) {
+    parts.push(`+${(item.dragonBallChanceBonus * 100).toLocaleString('pt-BR')} p.p. chance de Esfera/turno`);
+  }
   return parts.join(' • ');
 }
 
@@ -201,7 +204,10 @@ function ItemInventory({
                     <span className="text-2xl" aria-hidden>{item.icon}</span>
                     <div className="min-w-0">
                       <p className="font-heading text-sm text-amber-100">{item.name}</p>
-                      <p className="text-[11px] text-emerald-300/65">{itemBonusText(item) || item.description}</p>
+                      <p className="text-[11px] text-amber-200/50 mt-0.5">{item.description}</p>
+                      {itemBonusText(item) && (
+                        <p className="text-[11px] text-emerald-300/75 mt-0.5">{itemBonusText(item)}</p>
+                      )}
                     </div>
                     <Chip className="bg-emerald-950/40 text-emerald-300 border-emerald-800/40">ativo</Chip>
                     {total > 1 && <Chip className="bg-black/40 text-amber-200/70 border-amber-900/50">×{total}</Chip>}
@@ -396,7 +402,10 @@ function EquipmentInventory({
                             {equipped && <Chip className="bg-emerald-950/50 text-emerald-300 border-emerald-700/50">equipado</Chip>}
                             {total > 1 && <Chip className="bg-black/40 text-amber-200/70 border-amber-900/50">×{total}</Chip>}
                           </div>
-                          <p className="text-xs text-amber-200/50 mt-1">{itemBonusText(item) || item.description}</p>
+                          <p className="text-xs text-amber-200/50 mt-1">{item.description}</p>
+                          {itemBonusText(item) && (
+                            <p className="text-[11px] text-emerald-300/75 mt-1">{itemBonusText(item)}</p>
+                          )}
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">

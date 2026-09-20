@@ -31,6 +31,7 @@ import {
   PVP_LEVEL_RANGE,
   TRAIN_ENERGY_COST,
   getItem,
+  equippedDragonBallChanceBonus,
   trainingGain,
 } from './content/world';
 import { getTechnique, slotsForCategory, STRATEGIES } from './content/techniques';
@@ -539,9 +540,14 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
   const loot = rollProfessionLoot(def.id, turn.hourLevels, turn.efficiency, rng);
   await addProfessionLoot(tx, player.id, loot);
 
-  // Esfera: UM teste por turno, preservando a mecânica histórica.
+  // Esfera: UM teste por turno. Acessórios utilitários podem somar bônus
+  // absoluto à chance base; o servidor continua sendo a fonte autoritativa.
+  const dragonBallChance = Math.min(
+    1,
+    turn.dragonBallChance + equippedDragonBallChanceBonus(parseItems(player.items))
+  );
   let foundBall = false;
-  if (rng() < turn.dragonBallChance) {
+  if (rng() < dragonBallChance) {
     const ballRes = await tx.player.updateMany({
       where: { id: player.id, dragonBalls: { lt: 7 } },
       data: { dragonBalls: { increment: 1 } },

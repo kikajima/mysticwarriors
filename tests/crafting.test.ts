@@ -8,7 +8,7 @@ import {
   academicCraftTimeMultiplier,
 } from '../src/lib/game/professionCareer';
 import { craftDurationMs } from '../src/lib/game/crafting';
-import { PROFESSION_MATERIALS } from '../src/lib/game/content/world';
+import { PROFESSION_MATERIALS, equippedDragonBallChanceBonus } from '../src/lib/game/content/world';
 
 describe('Oficina — contratos de crafting', () => {
   test('receitas principais Tier 1–5 existem com os custos/durações aprovados', () => {
@@ -75,10 +75,22 @@ describe('Oficina — contratos de crafting', () => {
   });
   test('efeitos dos itens fabricados correspondem ao desenho', () => {
     const capsule = CRAFTED_ITEMS.find((i) => i.id === 'capsula_recuperacao_simples');
+    const radar = CRAFTED_ITEMS.find((i) => i.id === 'radar_dragao_basico');
     const armor = CRAFTED_ITEMS.find((i) => i.id === 'armadura_combate_saiyajin_craft');
     const senzu = CRAFTED_ITEMS.find((i) => i.id === 'senzu_processado');
     const gravity = CRAFTED_ITEMS.find((i) => i.id === 'sala_gravidade_pessoal_100x');
     expect(capsule?.effect).toBe('heal_30pct');
+    expect(radar?.dragonBallChanceBonus).toBe(0.02);
+    expect(
+      equippedDragonBallChanceBonus({
+        weapon: null,
+        armor: null,
+        accessory: 'radar_dragao_basico',
+        owned: ['radar_dragao_basico'],
+        consumables: {},
+        stacks: {},
+      })
+    ).toBe(0.02);
     expect(armor?.def).toBe(35);
     expect(senzu?.effect).toBe('full_hp');
     expect(gravity?.trainBonus?.all).toBe(3);
