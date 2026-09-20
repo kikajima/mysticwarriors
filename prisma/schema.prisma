@@ -231,6 +231,11 @@ model Player {
   craftJob         CraftJob?
   notifications    PlayerNotification[]
   dragonBallPossessions DragonBallPossession[]
+  friendshipsA     Friendship[] @relation("FriendshipA")
+  friendshipsB     Friendship[] @relation("FriendshipB")
+  friendRequests   Friendship[] @relation("FriendshipRequester")
+  blocksMade       PlayerBlock[] @relation("PlayerBlocksMade")
+  blocksReceived   PlayerBlock[] @relation("PlayerBlocksReceived")
   accountActive    Account?  @relation("ActivePlayer")
 
   @@index([accountId])
@@ -544,6 +549,42 @@ model ChatMute {
 
   @@unique([playerId, mutedPlayerId])
   @@index([playerId])
+}
+
+/** Amizade é sempre um par canônico (playerAId < playerBId), pendente ou aceita. */
+model Friendship {
+  id            String   @id @default(cuid())
+  playerAId     String
+  playerBId     String
+  requestedById String
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  acceptedAt    DateTime?
+
+  playerA       Player @relation("FriendshipA", fields: [playerAId], references: [id], onDelete: Cascade)
+  playerB       Player @relation("FriendshipB", fields: [playerBId], references: [id], onDelete: Cascade)
+  requestedBy   Player @relation("FriendshipRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+
+  @@unique([playerAId, playerBId])
+  @@index([playerAId, status])
+  @@index([playerBId, status])
+  @@index([requestedById, status])
+}
+
+/** Bloqueio forte e unilateral. Impede conversa privada nos dois sentidos. */
+model PlayerBlock {
+  id              String   @id @default(cuid())
+  playerId        String
+  blockedPlayerId String
+  createdAt       DateTime @default(now())
+
+  player          Player @relation("PlayerBlocksMade", fields: [playerId], references: [id], onDelete: Cascade)
+  blockedPlayer   Player @relation("PlayerBlocksReceived", fields: [blockedPlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, blockedPlayerId])
+  @@index([playerId, createdAt])
+  @@index([blockedPlayerId])
 }
 
 // ===== Auditoria administrativa (v0.14) =====
