@@ -41,6 +41,13 @@ function bonusText(item: ShopItem): string {
   return parts.join(' ');
 }
 
+function ownedQuantity(player: PlayerView, item: ShopItem): number {
+  if (item.category === 'consumable') {
+    return player.items.consumables[item.id] ?? 0;
+  }
+  return player.items.stacks?.[item.id] ?? (player.items.owned.includes(item.id) ? 1 : 0);
+}
+
 const STAT_LABEL: Record<string, string> = {
   strength: 'Força',
   defense: 'Defesa',
@@ -212,6 +219,7 @@ export function ShopPanel({
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {items.map((item) => {
             const locked = player.level < item.minLevel;
+            const owned = ownedQuantity(player, item);
             const crystalItem = item.currency === 'crystal';
             const isConsumable = item.category === 'consumable';
             const q = buyQty[item.id] ?? 1;
@@ -249,6 +257,12 @@ export function ShopPanel({
                   {item.minLevel > 1 && (
                     <Chip className="bg-black/40 text-amber-200/60 border-amber-900/50">Nv {item.minLevel}+</Chip>
                   )}
+                  <Chip className={owned > 0
+                    ? "bg-cyan-950/45 text-cyan-300 border-cyan-800/50"
+                    : "bg-black/30 text-amber-200/40 border-amber-900/30"
+                  }>
+                    🎒 Você possui: {owned}
+                  </Chip>
                 </div>
                 <div className="flex-1" />
                 <div className="flex items-center justify-between gap-2 flex-wrap">
