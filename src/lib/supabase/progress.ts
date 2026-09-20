@@ -212,6 +212,8 @@ export interface CloudProgress {
 
 // ===== Conjuntos de ids conhecidos (catálogos do jogo) =====
 
+const ITEM_BY_ID = new Map([...SHOP_ITEMS, ...CRAFTED_ITEMS].map((item) => [item.id, item]));
+
 const KNOWN = {
   races: new Set(Object.keys(RACES)),
   techniques: new Set(TECHNIQUES.map((t) => t.id)),
@@ -560,7 +562,8 @@ function sanitizeItems(raw: unknown): ItemsState {
   const owned = dedupeFilter(src.owned, KNOWN.items, 200);
   const pickEquipped = (key: 'weapon' | 'armor' | 'accessory' | 'head' | 'wrists' | 'legs' | 'boots'): string | null => {
     const id = asString(src[key], 64);
-    return id && KNOWN.items.has(id) && owned.includes(id) ? id : null;
+    if (!id || !KNOWN.items.has(id) || !owned.includes(id)) return null;
+    return ITEM_BY_ID.get(id)?.category === key ? id : null;
   };
   const consumablesSrc = (src.consumables && typeof src.consumables === 'object' ? src.consumables : {}) as Record<string, unknown>;
   const consumables: Record<string, number> = {};
