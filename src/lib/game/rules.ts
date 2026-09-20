@@ -51,6 +51,7 @@ export const BALANCE_VERSION = 6;
 export const MISSION_BLOCKED_ACTIONS: ReadonlySet<string> = new Set([
   'battle', // ❌ combate PvE contra inimigos (Ameaça Universal é EXCEÇÃO — liberado)
   'tournament_fight', // ❌ torneio
+  'search_dragon_ball', // ❌ busca só começa fora de um turno profissional
 ]);
 
 /**

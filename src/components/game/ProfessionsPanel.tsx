@@ -505,6 +505,15 @@ function DragonBallSearchTab({
                 <p className="font-heading text-orange-200">Busca em andamento: {totalHours}h</p>
                 <p className="text-2xl text-amber-100 tabular-nums mt-1">⏳ {countdown}</p>
                 <p className="text-xs text-amber-200/50">A esfera será aplicada apenas quando a busca terminar.</p>
+                <GameButton
+                  size="sm"
+                  variant="ghost"
+                  className="mt-3 !border-red-800/60 !text-red-200"
+                  disabled={busy}
+                  onClick={() => void onAction({ type: 'cancel_dragon_ball_search' })}
+                >
+                  Parar busca
+                </GameButton>
               </div>
             )}
             {!search && (

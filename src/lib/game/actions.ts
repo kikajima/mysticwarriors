@@ -227,6 +227,9 @@ export async function executeGameAction(
       case 'search_dragon_ball':
         result = await actionSearchDragonBall(tx, player, args.hours ?? 1);
         break;
+      case 'cancel_dragon_ball_search':
+        result = await actionCancelDragonBallSearch(tx, player);
+        break;
       case 'craft_start': {
         const craft = await startCraft(
           tx,
@@ -448,6 +451,25 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
     message: payload.display.message,
     levelsGained: 0,
     activity: activityToView(activity),
+  };
+}
+
+async function actionCancelDragonBallSearch(tx: Tx, player: Player): Promise<ActionResult> {
+  const search = await tx.activity.findFirst({
+    where: { playerId: player.id, kind: 'dragon_ball_search', completedAt: null },
+    orderBy: { endsAt: 'desc' },
+  });
+  if (!search) throw new ApiError('CONFLICT', 'Você não tem uma busca de Esferas em andamento.');
+
+  const canceled = await tx.activity.updateMany({
+    where: { id: search.id, completedAt: null },
+    data: { completedAt: new Date() },
+  });
+  if (canceled.count === 0) throw new ApiError('CONFLICT', 'A busca já foi encerrada.');
+
+  return {
+    message: 'Busca pelas Esferas interrompida. A energia gasta não é devolvida e nenhuma esfera foi encontrada.',
+    levelsGained: 0,
   };
 }
 

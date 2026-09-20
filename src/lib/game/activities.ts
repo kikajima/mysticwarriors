@@ -150,7 +150,9 @@ export async function assertNoRunningActivityTx(tx: Tx, playerId: string, action
       'ACTIVITY_IN_PROGRESS',
       running.kind === 'train'
         ? `Seu guerreiro ainda está treinando (${remain}s). Aguarde o fim da sessão.`
-        : `Seu guerreiro ainda está lutando (${remain}s). Aguarde o desfecho da batalha.`
+        : running.kind === 'dragon_ball_search'
+          ? `Seu guerreiro ainda está procurando Esferas do Dragão (${remain}s). Pare a busca antes de iniciar outra atividade.`
+          : `Seu guerreiro ainda está lutando (${remain}s). Aguarde o desfecho da batalha.`
     );
   }
 }

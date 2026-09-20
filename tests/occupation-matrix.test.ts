@@ -181,8 +181,8 @@ describe('v0.16 anti-drift — TRABALHANDO: tudo liberado EXCETO os 2 negados', 
     await expectApiError('PLAYER_BUSY_ON_MISSION', () => assertPlayerAvailableForAction(working, 'tournament_fight'));
   });
 
-  test('matriz FECHADA: blocklist tem EXATAMENTE battle/tournament_fight', () => {
-    expect([...MISSION_BLOCKED_ACTIONS].sort()).toEqual(['battle', 'tournament_fight']);
+  test('matriz: trabalho bloqueia PvE, torneio e busca pelas esferas', () => {
+    expect([...MISSION_BLOCKED_ACTIONS].sort()).toEqual(['battle', 'search_dragon_ball', 'tournament_fight']);
   });
 
   test('LIVRE: as ações passam quando não há trabalho ativo', () => {
