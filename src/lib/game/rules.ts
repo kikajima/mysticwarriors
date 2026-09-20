@@ -34,7 +34,7 @@ export const BALANCE_VERSION = 6;
  * TRABALHANDO bloqueia APENAS as 2 ações abaixo. TUDO mais é LIBERADO:
  * Treino, PvP, Ameaça Universal, Oficina/Crafting, loja (comprar/vender/usar), gestão completa de
  * guilda, coleta de recompensas (conquista/diária/missão/torneio),
- * hospital, equipamento/inventário, Oficina/Crafting, perfil e visualizações, Shenron,
+ * equipamento/inventário, Oficina/Crafting, perfil e visualizações, Shenron,
  * cosméticos, talentos, técnicas, transformações, estratégia.
  *
  * REGRA DE COLETA (parte 2 da 3ª ordem): coleta de recompensa de
@@ -44,7 +44,7 @@ export const BALANCE_VERSION = 6;
  * permanente (tests/occupation-matrix.test.ts) vigia a matriz inteira.
  *
  * Substitui a antiga ALLOWLIST de missão da v0.9.3 (negava por padrão —
- * bloqueava loja/guilda/hospital/coleta durante o trabalho): exatamente
+ * bloqueava loja/guilda/coleta durante o trabalho): exatamente
  * o erro corrigido agora. O teste de contrato vigia que a allowlist
  * morreu e que a blocklist continua fechada em 3 (PvE, torneio e Busca).
  */
@@ -59,7 +59,7 @@ export const MISSION_BLOCKED_ACTIONS: ReadonlySet<string> = new Set([
  * (batalha com duração server-side ainda não concluída — PvE/PvP/torneio;
  * o treino é instantâneo desde a v0.9, mas segue listado por segurança).
  * Este é o estado "EM LUTA": uma atividade POR VEZ (invariante do sistema,
- * não a matriz de trabalho). Loja, guilda, hospital, equipamento, perfil
+ * não a matriz de trabalho). Loja, guilda, equipamento, perfil
  * e TODAS as coletas (claim_*) seguem LIBERADAS — regra da 3ª ordem:
  * coleta de recompensa NUNCA é bloqueada por ocupação (anti-drift em
  * tests/occupation-matrix.test.ts).
@@ -138,10 +138,10 @@ export function isOnActiveMission(
 /**
  * Garante que o personagem pode executar a ação (regra central do
  * servidor — o frontend apenas DESABILITA botões, quem decide é aqui).
- * v0.16 — MATRIZ DEFINITIVA: durante trabalho ativo, SÓ as 2 ações da
+ * v0.16 — MATRIZ DEFINITIVA: durante trabalho ativo, SÓ as 3 ações da
  * MISSION_BLOCKED_ACTIONS são negadas; tudo mais passa (loja, guilda,
- * hospital, coletas, PvP, Ameaça Universal, equipamento, perfil…).
- * Mensagem clara EXISTENTE apenas nos 2 casos negados.
+ * coletas, PvP, Ameaça Universal, equipamento, perfil…).
+ * Mensagem clara EXISTENTE apenas nos 3 casos negados.
  */
 export function assertPlayerAvailableForAction(
   player: Pick<Player, 'name' | 'missionId' | 'missionEndsAt'>,
@@ -151,7 +151,7 @@ export function assertPlayerAvailableForAction(
   if (isOnActiveMission(player, now) && MISSION_BLOCKED_ACTIONS.has(action)) {
     throw new ApiError(
       'PLAYER_BUSY_ON_MISSION',
-      'Seu guerreiro está trabalhando — batalhas contra inimigos e o torneio ficam liberados só quando ele voltar. (Treinar, atacar jogadores e o Ameaça Universal, loja, guilda, hospital e coletas seguem funcionando normalmente!)'
+      'Seu guerreiro está trabalhando — batalhas contra inimigos e o torneio ficam liberados só quando ele voltar. (Treinar, atacar jogadores e o Ameaça Universal, loja, guilda e coletas seguem funcionando normalmente!)'
     );
   }
 }
@@ -226,9 +226,9 @@ export function trainingCost(statValue: number, race: string): number {
  *  2. não repete contra o mesmo adversário em 12h (variedade forçada);
  *  3. é preciso ENTRAR na luta com vida >= 50% do máximo (luta de verdade,
  *     não suicídio — ver zenkaiRequiresHpPct);
- *  4. cada derrota deixa o guerreiro com 1 de vida: o custo do hospital
- *     (3 Zeni/HP) cresce com o nível — o preço do Zenkai escala com a
- *     progressão, exatamente como o custo de treino.
+ *  4. cada derrota por nocaute deixa o guerreiro com 1 de vida; sem cura
+ *     hospitalar instantânea, a recuperação natural ou por itens cria o
+ *     intervalo real entre tentativas de combate.
  */
 export const ZENKAI = {
   /** adversário precisa ter nível >= player.level * factor */
