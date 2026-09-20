@@ -970,7 +970,7 @@ async function actionStartTournamentFight(tx: Tx, player: Player): Promise<Actio
   const derived = computeDerived(player);
   const minHp = Math.max(20, Math.floor(derived.maxHp * 0.2));
   if (player.hp < minHp) {
-    throw new ApiError('INSUFFICIENT_HP', 'Você está ferido demais para o ringue! Use um Senzu ou descanse no hospital.');
+    throw new ApiError('INSUFFICIENT_HP', 'Você está ferido demais para o ringue! Use um item de cura ou aguarde a recuperação natural.');
   }
   const energyRes = await tx.player.updateMany({
     where: { id: player.id, energy: { gte: BATTLE_ENERGY_COST } },
