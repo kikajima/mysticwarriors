@@ -2,11 +2,10 @@
 import { describe, expect, test } from 'bun:test';
 import {
   addStat,
-  capStat,
+  normalizeStat,
   dayKey,
   weekKey,
   shouldGrantZenkai,
-  STAT_CAP,
   trainingCost,
   raceCombat,
   raceEconomy,
@@ -26,28 +25,26 @@ import { baseTrainingCost, elixirPrice, TRAINING_COST_CEILING, professionEnergyC
 //  * duração de atividades + allowlist de missão.
 // =====================================================================
 
-describe('STAT CAP (limite máximo de atributos)', () => {
-  test('capStat nunca ultrapassa 999', () => {
-    expect(capStat(998 + 5)).toBe(999);
-    expect(capStat(999)).toBe(999);
-    expect(capStat(1000000)).toBe(999);
+describe('ATRIBUTOS SEM TETO DE GAMEPLAY', () => {
+  test('normalizeStat preserva valores muito acima de 999', () => {
+    expect(normalizeStat(1003)).toBe(1003);
+    expect(normalizeStat(1_000_000)).toBe(1_000_000);
+    expect(normalizeStat(10.9)).toBe(10);
   });
 
-  test('capStat nunca fica negativo e arredonda para baixo', () => {
-    expect(capStat(-5)).toBe(0);
-    expect(capStat(10.9)).toBe(10);
-    expect(capStat(NaN)).toBe(0);
+  test('normalizeStat nunca fica negativo e rejeita lixo', () => {
+    expect(normalizeStat(-5)).toBe(0);
+    expect(normalizeStat(NaN)).toBe(0);
   });
 
-  test('addStat aplica o limite global (Elixir, desejo, treino, Zenkai...)', () => {
-    const player = { strength: 998, defense: 500, speed: 500, ki: 500 };
+  test('addStat continua crescendo indefinidamente no gameplay', () => {
+    const player = { strength: 999_999, defense: 500, speed: 500, ki: 500 };
     const r = addStat(player, 'strength', 10);
-    expect(r.after).toBe(STAT_CAP);
-    expect(player.strength).toBe(999);
-    expect(r.capped).toBe(true);
+    expect(r.after).toBe(1_000_009);
+    expect(player.strength).toBe(1_000_009);
   });
 
-  test('addStat normal funciona abaixo do cap', () => {
+  test('addStat normal funciona em valores baixos', () => {
     const player = { strength: 10, defense: 10, speed: 10, ki: 10 };
     addStat(player, 'ki', 5);
     expect(player.ki).toBe(15);
