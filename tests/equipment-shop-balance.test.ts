@@ -56,6 +56,13 @@ describe('Loja e Oficina — equipamentos claros e progressão coerente', () => 
     }
   });
 
+  test('catálogos de endgame publicam 28 itens únicos em cada origem', () => {
+    expect(ENDGAME_SHOP_ITEMS).toHaveLength(28);
+    expect(ENDGAME_CRAFTED_ITEMS).toHaveLength(28);
+    expect(new Set(ENDGAME_SHOP_ITEMS.map((item) => item.id)).size).toBe(28);
+    expect(new Set(ENDGAME_CRAFTED_ITEMS.map((item) => item.id)).size).toBe(28);
+  });
+
   test('endgame cobre níveis 30, 50, 75 e 100 em todos os slots e o craft vence a loja por faixa', () => {
     for (const level of [30, 50, 75, 100]) {
       for (const slot of EQUIPMENT_SLOTS) {
