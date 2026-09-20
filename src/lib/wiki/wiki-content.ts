@@ -1062,7 +1062,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           'O ganho de atributo é sempre um **número inteiro** e respeita o teto global de **999**; ao chegar no teto, Zeni, XP, horas e loot continuam normalmente.',
           'O XP de trabalho é **linear com o nível do personagem**: dobrar o nível dobra o XP base por hora na mesma carreira e duração.',
           'A chance de material raro é testada **uma vez por hora** e recebe o bônus da duração do turno. O material comum nunca deixa de vir: **1–2 unidades por hora**.',
-          'A Busca pelas Esferas é uma atividade separada das profissões, com duração de **1h a 12h**. A chance cresce com o tempo até **20%** e cada busca pode encontrar no máximo uma esfera.',
+          'A Busca pelas Esferas é uma atividade separada das profissões, com duração de **1h a 12h**. A chance base cresce até **20%**; bônus de equipamento podem elevar o total até o teto mundial de **50%**. Cada busca pode encontrar no máximo uma esfera.',
           'Cancelar um turno em andamento não concede recompensa parcial.',
           '**Androide:** o bônus racial de Zeni de trabalho continua valendo.',
         ],
@@ -1381,14 +1381,14 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Coleção e Social',
     summary: 'Como coletar as 7 esferas e os 4 desejos do dragão.',
     resumo: [
-      'A Busca pelas Esferas dura de **1h a 12h** e chega a **20%** de chance; cada busca encontra no máximo uma esfera.',
+      'A Busca pelas Esferas dura de **1h a 12h**: a chance base chega a **20%** e, com bônus de equipamento, o teto mundial é **50%**; cada busca encontra no máximo uma esfera.',
       'Com as **7**, invoque Shenlon e escolha UM desejo — elas se dispersam.',
       'Colete a conquista *Colecionador de Esferas* **antes** de pedir o desejo.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: 'A aba **Busca** em [[profissoes|Atividades]] permite procurar esferas ativamente por energia e tempo: 1h, 2h, 4h, 8h ou 12h, com chance máxima de 20%. O Foco de Combate Tático concede bônus de busca sem ultrapassar o teto. Uma vitória no PvP pode roubar 1 esfera do adversário. Junte as **7 esferas**, invoque Shenlon e escolha:',
+        text: 'A aba **Busca** em [[profissoes|Atividades]] permite procurar esferas ativamente por energia e tempo: 1h, 2h, 4h, 8h ou 12h. A chance base vai até 20%; o **Radar das Esferas** adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais** no mundo, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Junte as **7 esferas**, invoque Shenlon e escolha:',
       },
       {
         kind: 'table',
