@@ -4,13 +4,13 @@ import {
   CRAFT_STACK_ITEMS,
   CRAFTED_ITEMS,
   CRAFT_TIER_PROFESSION_LEVEL,
+  MAX_CRAFT_BATCH,
   getCraftRecipe,
 } from '../src/lib/game/content/crafting';
 import {
   academicCraftTimeMultiplier,
 } from '../src/lib/game/professionCareer';
 import { craftDurationMs, missingCraftProfessionRequirements } from '../src/lib/game/crafting';
-import { MAX_CRAFT_BATCH } from '../src/lib/game/content/crafting';
 import { PROFESSION_MATERIALS, equippedDragonBallChanceBonus } from '../src/lib/game/content/world';
 
 describe('Oficina — contratos de crafting', () => {
