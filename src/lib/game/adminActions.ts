@@ -106,6 +106,49 @@ async function setAdminDragonBallCount(
   return owned.length;
 }
 
+async function grantAdminDragonBallStar(
+  tx: Prisma.TransactionClient,
+  player: Player,
+  rawStar: number
+): Promise<string> {
+  const star = clampAdminInt(rawStar, 1, 7);
+  const possession = await tx.dragonBallPossession.findUnique({
+    where: { star },
+    include: { player: { select: { id: true, name: true } } },
+  });
+  if (!possession) {
+    throw new ApiError('VALIDATION_ERROR', `A Esfera de ${star} estrela${star === 1 ? '' : 's'} não existe no mundo.`);
+  }
+  if (possession.playerId === player.id) {
+    return `${player.name} já possui a Esfera de ${star} estrela${star === 1 ? '' : 's'}.`;
+  }
+  if (possession.playerId) {
+    throw new ApiError(
+      'CONFLICT',
+      `A Esfera de ${star} estrela${star === 1 ? '' : 's'} já pertence a ${possession.player?.name ?? 'outro guerreiro'}.`
+    );
+  }
+
+  const claimed = await tx.dragonBallPossession.updateMany({
+    where: { star, playerId: null },
+    data: { playerId: player.id, acquiredAt: new Date() },
+  });
+  if (claimed.count !== 1) {
+    throw new ApiError('CONFLICT', 'Essa Esfera acabou de mudar de dono. Atualize o painel e tente novamente.');
+  }
+
+  const count = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
+  await tx.player.update({ where: { id: player.id }, data: { dragonBalls: count } });
+  await createPlayerNotification(tx, {
+    playerId: player.id,
+    kind: 'admin',
+    title: '🐉 Esfera concedida!',
+    message: `A administração concedeu a você a Esfera de ${star} estrela${star === 1 ? '' : 's'}.`,
+    metadata: { star, source: 'admin' },
+  });
+  return `Esfera de ${star} estrela${star === 1 ? '' : 's'} concedida a ${player.name} (${count}/7).`;
+}
+
 // ===== Tipos compartilhados com a UI =====
 
 /** Um personagem na lista do painel (fonte local OU nuvem). */
