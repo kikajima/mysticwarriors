@@ -81,8 +81,8 @@ export const PROFESSION_SHIFTS: ProfessionShiftDef[] = [
   { hours: 4, efficiency: 1.15 },
   { hours: 8, efficiency: 1.30 },
 ];
-/** Busca ativa: uma tentativa curta e independente dos turnos profissionais. */
-export const DRAGON_BALL_SEARCH_ENERGY_COST = 5;
+/** @deprecated Busca pelas Esferas não consome energia; mantido como compatibilidade de import. */
+export const DRAGON_BALL_SEARCH_ENERGY_COST = 0;
 export const DRAGON_BALL_SEARCH_SHIFTS = [
   { hours: 1, chance: 0.04 },
   { hours: 2, chance: 0.08 },
