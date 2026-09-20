@@ -114,23 +114,17 @@ bun scripts/e2e-db.ts set-zeni "$PB" 100 >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"luvas\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "compra sem Zeni → INSUFFICIENT_ZENI" "INSUFFICIENT_ZENI" "$R"
 
-# 4.2 stat cap: dá 5.000.000 Zeni ao B direto no banco e usa 2000 elixires? — via wish não dá;
-# usa o método direto: treina até o cap é inviável. Teste funcional do cap: setar strength=999 no banco
+# 4.2 progressão aberta: atributos acima de 999 continuam evoluindo.
 BUN_SET=$(bun scripts/e2e-db.ts setup-stat-cap "$PB" 2>&1 | tail -1)
-check "setup banco (zeni alto + atributos no cap)" "ok" "$BUN_SET"
+check "setup banco (atributos acima do antigo cap)" "ok" "$BUN_SET"
 
-# usar Elixir com todos os atributos no cap → deve ser bloqueado (STAT_CAP_REACHED) e NÃO consumir o item
-R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"use_item\",\"itemId\":\"elixir_dragao\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
-check "Elixir com todos atributos no cap → STAT_CAP_REACHED" "STAT_CAP_REACHED" "$R"
-
-# reseta strength para 997 e usa elixir → deve ir a 999 e não passar
-bun scripts/e2e-db.ts set-strength "$PB" 997 >/dev/null
-# prepara para os próximos testes: defesa baixa (treino barato) e ki alto
-bun scripts/e2e-db.ts set-combat-stats "$PB" >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"use_item\",\"itemId\":\"elixir_dragao\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["strength"])' 2>/dev/null)
-check "Elixir respeita o cap (997+2 → 999)" "999" "$R"
+check "Elixir continua evoluindo atributo acima de 999 (1200+2)" "1202" "$R"
 R=$(curl -s -b $JAR_B "$BASE/api/game/state?playerId=$PB" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["items"]["consumables"].get("elixir_dragao",0))' 2>/dev/null)
 check "Elixir consumido exatamente 1 (2 restantes)" "2" "$R"
+
+# prepara para os próximos testes: defesa baixa (treino barato) e ki alto
+bun scripts/e2e-db.ts set-combat-stats "$PB" >/dev/null
 
 echo ""
 echo "=== 5. COMBATE: loadout, estratégia e PvP ==="
