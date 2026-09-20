@@ -32,7 +32,6 @@ import {
   PVP_LEVEL_RANGE,
   TRAIN_ENERGY_COST,
   getItem,
-  equippedDragonBallChanceBonus,
   trainingGain,
 } from './content/world';
 import { getTechnique, slotsForCategory, STRATEGIES } from './content/techniques';
@@ -605,21 +604,6 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
   const loot = rollProfessionLoot(def.id, turn.hourLevels, turn.efficiency, rng);
   await addProfessionLoot(tx, player.id, loot);
 
-  // Esfera: UM teste por turno. Acessórios utilitários podem somar bônus
-  // absoluto à chance base; o servidor continua sendo a fonte autoritativa.
-  const dragonBallChance = Math.min(
-    1,
-    turn.dragonBallChance + equippedDragonBallChanceBonus(parseItems(player.items))
-  );
-  let foundBall = false;
-  if (rng() < dragonBallChance) {
-    const ballRes = await tx.player.updateMany({
-      where: { id: player.id, dragonBalls: { lt: 7 } },
-      data: { dragonBalls: { increment: 1 } },
-    });
-    foundBall = ballRes.count > 0;
-  }
-
   // Atributo profissional: ganho sempre INTEIRO. O catálogo usa milésimos
   // apenas por compatibilidade estrutural, mas todos os valores são múltiplos de 1000.
   let statGain = 0;
@@ -696,18 +680,13 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
   if (cur.hours >= PROFESSION_MASTERY_HOURS) {
     message += ' 🏅 Carreira no limite de 4.450h — a Mestria/Prestígio chegará na etapa final.';
   }
-  if (foundBall) {
-    player.dragonBalls = Math.min(7, player.dragonBalls + 1);
-    message += ` Você encontrou uma Esfera do Dragão! (${player.dragonBalls}/7)`;
-  }
-
   return {
     message,
     levelsGained: granted.levelsGained,
     missionResult: {
       zeniGain: granted.zeniGranted,
       xpGain: granted.xpGranted,
-      foundDragonBall: foundBall,
+      foundDragonBall: false,
       hours,
       statGain,
       professionLevel: levelAfter,

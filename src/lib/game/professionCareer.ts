@@ -144,7 +144,6 @@ export interface ProfessionShiftRewards {
   zeni: number;
   xp: number;
   attributeMilli: number;
-  dragonBallChance: number;
   careerHoursAdded: number;
   lifetimeHoursAdded: number;
   hourLevels: number[];
@@ -185,7 +184,6 @@ export function professionShiftRewards(
     zeni,
     xp,
     attributeMilli,
-    dragonBallChance: professionLevelDef(hourLevels[0] ?? 1).dragonBallChance,
     careerHoursAdded: Math.max(0, Math.min(shift.hours, PROFESSION_MASTERY_HOURS - safeStart)),
     lifetimeHoursAdded: shift.hours,
     hourLevels,

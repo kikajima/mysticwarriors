@@ -17,7 +17,6 @@ describe('clareza de conteúdo — itens e técnicas', () => {
 
     expect(shop).toContain('{item.description}');
     expect(inventory).toContain('{item.description}');
-    expect(inventory).toContain('dragonBallChanceBonus');
     expect(training).toContain('{tech.description}');
     expect(training).toContain('{tech!.description}');
     expect(training).toContain('techniqueDetailLabels');

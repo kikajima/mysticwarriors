@@ -1437,7 +1437,7 @@ export function professionRewards(
   return {
     zeni: Math.max(1, Math.round(tier.zeniPerHour * econ.zeniMissionMult)),
     xp: professionXpPerHour(level, playerLevel, 1),
-    foundDragonBall: r() < tier.dragonBallChance,
+    foundDragonBall: false,
   };
 }
 

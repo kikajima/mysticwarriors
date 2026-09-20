@@ -10,7 +10,7 @@ import {
   academicCraftTimeMultiplier,
 } from '../src/lib/game/professionCareer';
 import { craftDurationMs, missingCraftProfessionRequirements } from '../src/lib/game/crafting';
-import { PROFESSION_MATERIALS, equippedDragonBallChanceBonus } from '../src/lib/game/content/world';
+import { PROFESSION_MATERIALS } from '../src/lib/game/content/world';
 
 describe('Oficina — contratos de crafting', () => {
   test('catálogo de crafting é fechado: ids, saídas e ingredientes válidos', () => {
@@ -52,10 +52,10 @@ describe('Oficina — contratos de crafting', () => {
   });
 
   test('receitas principais Tier 1–5 existem com os custos/durações aprovados', () => {
-    const ids = ['capsula_recuperacao_simples', 'radar_dragao_basico', 'armadura_combate_saiyajin', 'senzu_processado', 'sala_gravidade_pessoal_100x'];
+    const ids = ['capsula_recuperacao_simples', 'foco_combate_tatico', 'armadura_combate_saiyajin', 'senzu_processado', 'sala_gravidade_pessoal_100x'];
     expect(ids.every((id) => CRAFT_RECIPES.some((r) => r.id === id))).toBe(true);
     expect(CRAFT_RECIPES.find((r) => r.id === 'capsula_recuperacao_simples')).toMatchObject({ costZeni: 150, baseDurationMin: 10, tier: 1 });
-    expect(CRAFT_RECIPES.find((r) => r.id === 'radar_dragao_basico')).toMatchObject({ costZeni: 500, baseDurationMin: 30, tier: 2 });
+    expect(CRAFT_RECIPES.find((r) => r.id === 'foco_combate_tatico')).toMatchObject({ costZeni: 500, baseDurationMin: 30, tier: 2 });
     expect(CRAFT_RECIPES.find((r) => r.id === 'armadura_combate_saiyajin')).toMatchObject({ costZeni: 2500, baseDurationMin: 120, tier: 3 });
     expect(CRAFT_RECIPES.find((r) => r.id === 'senzu_processado')).toMatchObject({ costZeni: 5000, baseDurationMin: 240, tier: 4 });
     expect(CRAFT_RECIPES.find((r) => r.id === 'sala_gravidade_pessoal_100x')).toMatchObject({ costZeni: 20000, baseDurationMin: 720, tier: 5 });
@@ -87,7 +87,7 @@ describe('Oficina — contratos de crafting', () => {
       [5, [{ professionId: 'academico', level: 8 }]],
     ]);
 
-    expect(getCraftRecipe('radar_dragao_basico')?.professionRequirements).toEqual([
+    expect(getCraftRecipe('foco_combate_tatico')?.professionRequirements).toEqual([
       { professionId: 'cientista', level: 2 },
     ]);
     expect(getCraftRecipe('armadura_combate_saiyajin')?.professionRequirements).toEqual([
@@ -105,11 +105,11 @@ describe('Oficina — contratos de crafting', () => {
   });
 
   test('servidor detecta requisito profissional ausente antes do craft', () => {
-    const radar = getCraftRecipe('radar_dragao_basico');
-    expect(radar).toBeTruthy();
-    if (!radar) return;
+    const focus = getCraftRecipe('foco_combate_tatico');
+    expect(focus).toBeTruthy();
+    if (!focus) return;
 
-    expect(missingCraftProfessionRequirements({ professions: '{}' }, radar)).toEqual([
+    expect(missingCraftProfessionRequirements({ professions: '{}' }, focus)).toEqual([
       { professionId: 'cientista', requiredLevel: 2, currentLevel: 0 },
     ]);
 
@@ -122,7 +122,7 @@ describe('Oficina — contratos de crafting', () => {
         cycleStatGranted: 40,
       },
     });
-    expect(missingCraftProfessionRequirements({ professions }, radar)).toEqual([]);
+    expect(missingCraftProfessionRequirements({ professions }, focus)).toEqual([]);
   });
 
   test('todos os sete slots têm progressão craftável Tier 1–5', () => {
@@ -229,22 +229,10 @@ describe('Oficina — contratos de crafting', () => {
 
   test('efeitos dos itens fabricados correspondem ao desenho', () => {
     const capsule = CRAFTED_ITEMS.find((i) => i.id === 'capsula_recuperacao_simples');
-    const radar = CRAFTED_ITEMS.find((i) => i.id === 'radar_dragao_basico');
     const armor = CRAFTED_ITEMS.find((i) => i.id === 'armadura_combate_saiyajin_craft');
     const senzu = CRAFTED_ITEMS.find((i) => i.id === 'senzu_processado');
     const gravity = CRAFTED_ITEMS.find((i) => i.id === 'sala_gravidade_pessoal_100x');
     expect(capsule?.effect).toBe('heal_30pct');
-    expect(radar?.dragonBallChanceBonus).toBe(0.02);
-    expect(
-      equippedDragonBallChanceBonus({
-        weapon: null,
-        armor: null,
-        accessory: 'radar_dragao_basico',
-        owned: ['radar_dragao_basico'],
-        consumables: {},
-        stacks: {},
-      })
-    ).toBe(0.02);
     expect(armor?.def).toBe(35);
     expect(senzu?.effect).toBe('full_hp');
     expect(gravity?.trainBonus?.all).toBe(3);

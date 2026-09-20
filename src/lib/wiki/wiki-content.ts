@@ -1007,7 +1007,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `O trabalho continua contando com o jogo fechado. O **XP é proporcional ao nível do personagem**: cada nível da carreira define quantos pontos de XP você recebe por nível do personagem a cada hora. Ex.: no Nível 1 da profissão são 4 × seu nível por hora; um personagem nível 20 recebe 80 XP/h antes dos bônus. **Quanto maior o turno, maior o bônus de XP e de chance de material raro**; Zeni, atributo, horas de carreira, material comum e a chance de Esfera seguem a regra base. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
+        text: `O trabalho continua contando com o jogo fechado. O **XP é proporcional ao nível do personagem**: cada nível da carreira define quantos pontos de XP você recebe por nível do personagem a cada hora. Ex.: no Nível 1 da profissão são 4 × seu nível por hora; um personagem nível 20 recebe 80 XP/h antes dos bônus. **Quanto maior o turno, maior o bônus de XP e de chance de material raro**; Zeni, atributo, horas de carreira e material comum seguem a regra da profissão. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
       },
       {
         kind: 'table',
@@ -1025,7 +1025,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'table',
         table: {
           caption: 'Carreira Nível 1–10 (ORIGEM: content/world.ts — PROFESSION_LEVELS)',
-          headers: ['Nível', 'Horas no nível', 'Acumulado', 'Zeni/h', 'Atributo/h', 'XP/h', 'Raro/h', 'Esfera/turno'],
+            headers: ['Nível', 'Horas no nível', 'Acumulado', 'Zeni/h', 'Atributo/h', 'XP/h', 'Raro/h'],
           rows: PROFESSION_LEVELS.map((r) => [
             String(r.level),
             `${br(r.hoursInLevel)}h`,
@@ -1034,7 +1034,6 @@ export const WIKI_SECTIONS: WikiSection[] = [
             `+${Math.trunc(r.attributeMilliPerHour / 1000).toLocaleString('pt-BR')}`,
             `${r.xpPerPlayerLevel} × nível do personagem`,
             `${(r.rareChance * 100).toLocaleString('pt-BR')}%`,
-            `${(r.dragonBallChance * 100).toLocaleString('pt-BR')}%`,
           ]),
         },
       },
@@ -1140,7 +1139,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
               'Os itens principais de Tier 3+ exigem um **blueprint Acadêmico**, e cada blueprint tem seu próprio requisito de nível Acadêmico.',
               'O equipamento usa **7 slots reais**: Cabeça, Punhos, Torso, Acessório, Arma, Pernas e Botas. Os bônus de todos os slots equipados entram no cálculo de combate.',
               'Itens fabricados não são revendidos para a loja NPC; eles permanecem no inventário do jogador para uso.',
-              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Radar do Dragão Básico equipado adiciona **+2 p.p.** à chance de encontrar uma Esfera do Dragão ao concluir um turno de profissão; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+35 Defesa** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
+              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+35 Defesa** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
             ],
           },
         ],

@@ -344,9 +344,6 @@ export function ProfessionsPanel({
                       </div>
                       <p className="text-xs text-amber-200/50 mt-1 leading-relaxed">{prof.description}</p>
                     </div>
-                    <Chip className="bg-yellow-950/60 text-yellow-300 border-yellow-700/50 shrink-0">
-                      🔮 {(tier.dragonBallChance * 100).toLocaleString('pt-BR')}%
-                    </Chip>
                   </div>
 
                   <div className="mb-3">
@@ -397,7 +394,7 @@ export function ProfessionsPanel({
                   </div>
 
                   <p className="text-[11px] text-amber-200/45 mb-3">
-                    XP: {tier.xpPerPlayerLevel} × seu nível por hora, antes do bônus de duração. Materiais também evoluem com a carreira: T1/Nv.1, T2/Nv.2, T3/Nv.4, T4/Nv.6 e T5/Nv.8. Comum: 1–2 unidades por hora garantidas entre os Tiers já desbloqueados. Turnos mais longos aumentam a chance de raro por hora. Esfera: um teste por turno concluído.
+                    XP: {tier.xpPerPlayerLevel} × seu nível por hora, antes do bônus de duração. Materiais também evoluem com a carreira: T1/Nv.1, T2/Nv.2, T3/Nv.4, T4/Nv.6 e T5/Nv.8. Comum: 1–2 unidades por hora garantidas entre os Tiers já desbloqueados. Turnos mais longos aumentam a chance de raro por hora.
                   </p>
 
                   {isActive ? (

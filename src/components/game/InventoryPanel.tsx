@@ -79,9 +79,6 @@ function itemBonusText(item: ShopItem): string {
   if (item.trainBonus?.defense) parts.push(`+${item.trainBonus.defense} Defesa/treino`);
   if (item.trainBonus?.speed) parts.push(`+${item.trainBonus.speed} Velocidade/treino`);
   if (item.trainBonus?.ki) parts.push(`+${item.trainBonus.ki} Ki/treino`);
-  if (item.dragonBallChanceBonus) {
-    parts.push(`+${(item.dragonBallChanceBonus * 100).toLocaleString('pt-BR')} p.p. chance de Esfera/turno`);
-  }
   return parts.join(' • ');
 }
 

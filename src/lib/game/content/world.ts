@@ -60,16 +60,16 @@ export const PROFESSIONS: ProfessionDef[] = [
 ];
 
 export const PROFESSION_LEVELS: ProfessionLevelRewards[] = [
-  { level: 1, hoursInLevel: 40, cumulativeHours: 40, zeniPerHour: 300, attributeMilliPerHour: 1000, xpPerPlayerLevel: 4, dragonBallChance: 0.030, rareChance: 0.10 },
-  { level: 2, hoursInLevel: 60, cumulativeHours: 100, zeniPerHour: 450, attributeMilliPerHour: 1000, xpPerPlayerLevel: 4, dragonBallChance: 0.040, rareChance: 0.10 },
-  { level: 3, hoursInLevel: 90, cumulativeHours: 190, zeniPerHour: 675, attributeMilliPerHour: 2000, xpPerPlayerLevel: 6, dragonBallChance: 0.050, rareChance: 0.13 },
-  { level: 4, hoursInLevel: 135, cumulativeHours: 325, zeniPerHour: 1010, attributeMilliPerHour: 2000, xpPerPlayerLevel: 6, dragonBallChance: 0.060, rareChance: 0.13 },
-  { level: 5, hoursInLevel: 200, cumulativeHours: 525, zeniPerHour: 1500, attributeMilliPerHour: 3000, xpPerPlayerLevel: 8, dragonBallChance: 0.070, rareChance: 0.16 },
-  { level: 6, hoursInLevel: 300, cumulativeHours: 825, zeniPerHour: 2100, attributeMilliPerHour: 4000, xpPerPlayerLevel: 8, dragonBallChance: 0.080, rareChance: 0.16 },
-  { level: 7, hoursInLevel: 450, cumulativeHours: 1275, zeniPerHour: 2900, attributeMilliPerHour: 4000, xpPerPlayerLevel: 10, dragonBallChance: 0.085, rareChance: 0.20 },
-  { level: 8, hoursInLevel: 675, cumulativeHours: 1950, zeniPerHour: 4000, attributeMilliPerHour: 6000, xpPerPlayerLevel: 10, dragonBallChance: 0.090, rareChance: 0.20 },
-  { level: 9, hoursInLevel: 1000, cumulativeHours: 2950, zeniPerHour: 5500, attributeMilliPerHour: 7000, xpPerPlayerLevel: 12, dragonBallChance: 0.095, rareChance: 0.22 },
-  { level: 10, hoursInLevel: 1500, cumulativeHours: 4450, zeniPerHour: 7500, attributeMilliPerHour: 9000, xpPerPlayerLevel: 14, dragonBallChance: 0.100, rareChance: 0.25 },
+  { level: 1, hoursInLevel: 40, cumulativeHours: 40, zeniPerHour: 300, attributeMilliPerHour: 1000, xpPerPlayerLevel: 4, rareChance: 0.10 },
+  { level: 2, hoursInLevel: 60, cumulativeHours: 100, zeniPerHour: 450, attributeMilliPerHour: 1000, xpPerPlayerLevel: 4, rareChance: 0.10 },
+  { level: 3, hoursInLevel: 90, cumulativeHours: 190, zeniPerHour: 675, attributeMilliPerHour: 2000, xpPerPlayerLevel: 6, rareChance: 0.13 },
+  { level: 4, hoursInLevel: 135, cumulativeHours: 325, zeniPerHour: 1010, attributeMilliPerHour: 2000, xpPerPlayerLevel: 6, rareChance: 0.13 },
+  { level: 5, hoursInLevel: 200, cumulativeHours: 525, zeniPerHour: 1500, attributeMilliPerHour: 3000, xpPerPlayerLevel: 8, rareChance: 0.16 },
+  { level: 6, hoursInLevel: 300, cumulativeHours: 825, zeniPerHour: 2100, attributeMilliPerHour: 4000, xpPerPlayerLevel: 8, rareChance: 0.16 },
+  { level: 7, hoursInLevel: 450, cumulativeHours: 1275, zeniPerHour: 2900, attributeMilliPerHour: 4000, xpPerPlayerLevel: 10, rareChance: 0.20 },
+  { level: 8, hoursInLevel: 675, cumulativeHours: 1950, zeniPerHour: 4000, attributeMilliPerHour: 6000, xpPerPlayerLevel: 10, rareChance: 0.20 },
+  { level: 9, hoursInLevel: 1000, cumulativeHours: 2950, zeniPerHour: 5500, attributeMilliPerHour: 7000, xpPerPlayerLevel: 12, rareChance: 0.22 },
+  { level: 10, hoursInLevel: 1500, cumulativeHours: 4450, zeniPerHour: 7500, attributeMilliPerHour: 9000, xpPerPlayerLevel: 14, rareChance: 0.25 },
 ];
 
 export const PROFESSION_MAX_LEVEL = 10;
@@ -338,12 +338,6 @@ export const SHOP_ITEMS: ShopItem[] = [
 
 export function getItem(id: string): ShopItem | undefined {
   return SHOP_ITEMS.find((i) => i.id === id) ?? CRAFTED_ITEMS.find((i) => i.id === id);
-}
-
-/** Bônus absoluto de chance de Esfera concedido pelo acessório atualmente equipado. */
-export function equippedDragonBallChanceBonus(items: ItemsState): number {
-  if (!items.accessory) return 0;
-  return Math.max(0, getItem(items.accessory)?.dragonBallChanceBonus ?? 0);
 }
 
 /**

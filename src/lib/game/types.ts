@@ -84,8 +84,6 @@ export interface ProfessionLevelRewards {
   attributeMilliPerHour: number;
   /** XP/hora por nível do personagem (ex.: 4 = 4 × nível por hora). */
   xpPerPlayerLevel: number;
-  /** Chance de Esfera por TURNO concluído. */
-  dragonBallChance: number;
   /** Chance base de material raro por HORA, antes do multiplicador do turno. */
   rareChance: number;
 }
@@ -200,8 +198,6 @@ export interface ShopItem {
   ki?: number;    // poder de ataque de energia / resistência
   // equipamentos de treino: bônus aplicado ao treinar atributos
   trainBonus?: TrainBonus;
-  /** Bônus absoluto na chance de encontrar Esfera do Dragão ao concluir um turno de profissão (0.02 = +2 p.p.). */
-  dragonBallChanceBonus?: number;
   // consumíveis
   effect?: 'full_hp' | 'full_energy' | 'stat_boost' | 'heal_30pct';
   icon: string;
