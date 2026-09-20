@@ -83,7 +83,8 @@ import { bumpQuests, claimAchievement, claimQuest } from '@/lib/progression';
 import { attackWorldBoss } from '@/lib/worldboss';
 import { scoreSeasonVictory } from '@/lib/seasons';
 import { trackEvent } from '@/lib/analytics';
-import type { ActivityView, BattleResult, Loadout, ProfessionLootEntry, ShopItem } from './types';
+import { EQUIPMENT_SLOTS } from './types';
+import type { ActivityView, BattleResult, EquipmentSlot, Loadout, ProfessionLootEntry, ShopItem } from './types';
 
 // =====================================================================
 // EXECUTOR DE AÇÕES DO JOGO (100% server-side)
@@ -1265,8 +1266,7 @@ async function actionSell(tx: Tx, player: Player, itemId: string, quantity: numb
     if (total <= 0) {
       throw new ApiError('ITEM_NOT_OWNED', `Você não possui ${item.name}.`);
     }
-    const inUse =
-      items.weapon === item.id || items.armor === item.id || items.accessory === item.id;
+    const inUse = EQUIPMENT_SLOTS.some((slot) => (items[slot] ?? null) === item.id);
     const sellable = inUse ? total - 1 : total;
     if (sellable <= 0) {
       // aviso amigável exigido: nunca vender silenciosamente o item equipado
@@ -1375,24 +1375,24 @@ async function actionUseItem(tx: Tx, player: Player, itemId: string): Promise<Ac
 
 async function actionEquip(tx: Tx, player: Player, itemId: string): Promise<ActionResult> {
   const item = getItem(itemId);
-  if (!item || item.category === 'consumable' || item.category === 'training') {
+  if (!item || !EQUIPMENT_SLOTS.includes(item.category as EquipmentSlot)) {
     throw new ApiError('ITEM_NOT_EQUIPPABLE', 'Item não equipável.');
   }
   const items = parseItems(player.items);
   if (!items.owned.includes(item.id)) {
     throw new ApiError('ITEM_NOT_OWNED', 'Você não possui este item!');
   }
-  items[item.category as 'weapon' | 'armor' | 'accessory'] = item.id;
+  items[item.category as EquipmentSlot] = item.id;
   await updateJsonState(tx, player, { items: JSON.stringify(items) });
   return { message: `${item.name} equipado!`, levelsGained: 0 };
 }
 
 async function actionUnequip(tx: Tx, player: Player, slot: string): Promise<ActionResult> {
-  if (!['weapon', 'armor', 'accessory'].includes(slot)) {
+  if (!EQUIPMENT_SLOTS.includes(slot as EquipmentSlot)) {
     throw new ApiError('VALIDATION_ERROR', 'Slot inválido.');
   }
   const items = parseItems(player.items);
-  const slotKey = slot as 'weapon' | 'armor' | 'accessory';
+  const slotKey = slot as EquipmentSlot;
   if (!items[slotKey]) {
     throw new ApiError('VALIDATION_ERROR', 'Nada equipado neste slot.');
   }
