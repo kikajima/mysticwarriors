@@ -13,6 +13,44 @@ import { craftDurationMs, missingCraftProfessionRequirements } from '../src/lib/
 import { PROFESSION_MATERIALS, equippedDragonBallChanceBonus } from '../src/lib/game/content/world';
 
 describe('Oficina — contratos de crafting', () => {
+  test('catálogo de crafting é fechado: ids, saídas e ingredientes válidos', () => {
+    expect(new Set(CRAFT_RECIPES.map((recipe) => recipe.id)).size).toBe(CRAFT_RECIPES.length);
+    expect(new Set(CRAFTED_ITEMS.map((item) => item.id)).size).toBe(CRAFTED_ITEMS.length);
+    expect(new Set(CRAFT_STACK_ITEMS.map((item) => item.id)).size).toBe(CRAFT_STACK_ITEMS.length);
+
+    const materialIds = new Set(PROFESSION_MATERIALS.map((item) => item.id));
+    const stackIds = new Set(CRAFT_STACK_ITEMS.map((item) => item.id));
+    const craftedIds = new Set(CRAFTED_ITEMS.map((item) => item.id));
+
+    for (const recipe of CRAFT_RECIPES) {
+      const ingredientIds = recipe.ingredients.map((ingredient) => ingredient.itemId);
+      expect(new Set(ingredientIds).size).toBe(ingredientIds.length);
+      expect(recipe.ingredients.length).toBeGreaterThan(0);
+      expect(recipe.costZeni).toBeGreaterThanOrEqual(0);
+      expect(recipe.baseDurationMin).toBeGreaterThan(0);
+      expect(recipe.outputQuantity).toBeGreaterThan(0);
+
+      for (const ingredient of recipe.ingredients) {
+        expect(materialIds.has(ingredient.itemId) || stackIds.has(ingredient.itemId)).toBe(true);
+        expect(Number.isInteger(ingredient.quantity)).toBe(true);
+        expect(ingredient.quantity).toBeGreaterThan(0);
+      }
+
+      if (recipe.outputKind === 'player_item') {
+        expect(craftedIds.has(recipe.outputItemId)).toBe(true);
+      } else {
+        expect(stackIds.has(recipe.outputItemId)).toBe(true);
+      }
+    }
+
+    for (const item of CRAFTED_ITEMS) {
+      expect(CRAFT_RECIPES.filter((recipe) => recipe.outputItemId === item.id)).toHaveLength(1);
+    }
+    for (const item of CRAFT_STACK_ITEMS) {
+      expect(CRAFT_RECIPES.filter((recipe) => recipe.outputItemId === item.id)).toHaveLength(1);
+    }
+  });
+
   test('receitas principais Tier 1–5 existem com os custos/durações aprovados', () => {
     const ids = ['capsula_recuperacao_simples', 'radar_dragao_basico', 'armadura_combate_saiyajin', 'senzu_processado', 'sala_gravidade_pessoal_100x'];
     expect(ids.every((id) => CRAFT_RECIPES.some((r) => r.id === id))).toBe(true);
