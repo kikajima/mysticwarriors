@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { EQUIPMENT_SLOTS } from '@/lib/game/types';
-import type { PlayerView } from '@/lib/game/types';
+import { EQUIPMENT_SLOT_META, EQUIPMENT_SLOTS } from '@/lib/game/types';
+import type { EquipmentSlot, PlayerView } from '@/lib/game/types';
 import {
   CRAFT_RECIPES,
   CRAFT_TIER_PROFESSION_LEVEL,
@@ -184,7 +184,7 @@ export function WorkshopPanel({
     return (
       <GameCard key={recipe.id} className="p-4">
         <div className="flex items-start gap-3">
-          <div className="text-3xl" aria-hidden>{recipe.icon}</div>
+          <div className="text-3xl" aria-hidden>{output?.icon ?? recipe.icon}</div>
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-heading text-amber-100">{recipe.name}</h3>
@@ -210,7 +210,15 @@ export function WorkshopPanel({
                     : 'bloqueada'}
               </Chip>
             </div>
-            <p className="text-xs text-amber-200/55 mt-1">{recipe.description}</p>
+            <p className="text-xs text-amber-200/55 mt-1">
+              {playerItemOutput?.description ?? recipe.description}
+            </p>
+            {playerItemOutput && EQUIPMENT_SLOTS.includes(playerItemOutput.category as EquipmentSlot) && (
+              <Chip className="mt-2 bg-sky-950/40 text-sky-300 border-sky-800/50">
+                {EQUIPMENT_SLOT_META[playerItemOutput.category as EquipmentSlot].icon}{' '}
+                Slot: {playerItemOutput.category === 'accessory' ? 'Acessório I ou II' : EQUIPMENT_SLOT_META[playerItemOutput.category as EquipmentSlot].label}
+              </Chip>
+            )}
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               <Chip className="bg-yellow-950/40 text-yellow-300 border-yellow-800/40">
