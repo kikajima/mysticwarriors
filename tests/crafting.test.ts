@@ -87,8 +87,8 @@ describe('Oficina — contratos de crafting', () => {
     expect(missingCraftProfessionRequirements({ professions }, radar)).toEqual([]);
   });
 
-  test('Cabeça, Punhos, Pernas e Botas têm progressão craftável Tier 1–5', () => {
-    const slots = ['head', 'wrists', 'legs', 'boots'] as const;
+  test('todos os sete slots têm progressão craftável Tier 1–5', () => {
+    const slots = ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots'] as const;
     for (const slot of slots) {
       const items = CRAFTED_ITEMS.filter((item) => item.category === slot);
       expect(items).toHaveLength(5);
@@ -107,7 +107,7 @@ describe('Oficina — contratos de crafting', () => {
     for (const recipe of CRAFT_RECIPES.filter((r) => r.requiresAcademic)) {
       expect(recipe.maxBatch).toBe(5);
     }
-    for (const recipe of CRAFT_RECIPES.filter((r) => ['head', 'wrists', 'legs', 'boots'].includes(
+    for (const recipe of CRAFT_RECIPES.filter((r) => ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots'].includes(
       CRAFTED_ITEMS.find((item) => item.id === r.outputItemId)?.category ?? ''
     ))) {
       expect(recipe.maxBatch ?? 1).toBe(1);
