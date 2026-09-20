@@ -252,7 +252,23 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
   const job = await tx.craftJob.findUnique({ where: { playerId: player.id } });
   if (!job) throw new ApiError('VALIDATION_ERROR', 'Sua Oficina não tem fabricação para cancelar.');
 
-  const ingredients = craftRefundIngredients(job.ingredientsJson);
+  const recipe = getCraftRecipe(job.recipeId);
+  const inferredBatch = Math.max(
+    1,
+    Math.min(
+      MAX_CRAFT_BATCH,
+      job.batchQuantity || (recipe ? Math.max(1, Math.floor(job.outputQuantity / recipe.outputQuantity)) : 1)
+    )
+  );
+  const snapshotIngredients = craftRefundIngredients(job.ingredientsJson);
+  const ingredients = snapshotIngredients.length > 0
+    ? snapshotIngredients
+    : (recipe?.ingredients ?? []).map((ingredient) => ({
+        itemId: ingredient.itemId,
+        quantity: ingredient.quantity * inferredBatch,
+      }));
+  const refundedZeni = job.spentZeni > 0 ? job.spentZeni : (recipe?.costZeni ?? 0) * inferredBatch;
+
   const removed = await tx.craftJob.deleteMany({ where: { id: job.id, playerId: player.id } });
   if (removed.count !== 1) {
     throw new ApiError('CONFLICT', 'Esta fabricação já foi finalizada ou cancelada.');
@@ -261,14 +277,14 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
   for (const ingredient of ingredients) {
     await grantStack(tx, player.id, ingredient.itemId, ingredient.quantity);
   }
-  if (job.spentZeni > 0) {
-    await addCurrency(tx, player.id, 'zeni', job.spentZeni, {
+  if (refundedZeni > 0) {
+    await addCurrency(tx, player.id, 'zeni', refundedZeni, {
       type: 'refund',
       source: 'craft_cancel',
       accountId: player.accountId,
       metadata: {
         recipeId: job.recipeId,
-        batchQuantity: job.batchQuantity,
+        batchQuantity: inferredBatch,
       },
     });
   }
@@ -278,14 +294,14 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
     accountId: player.accountId,
     metadata: {
       recipeId: job.recipeId,
-      batchQuantity: job.batchQuantity,
-      refundedZeni: job.spentZeni,
+      batchQuantity: inferredBatch,
+      refundedZeni,
       ingredients,
     },
   }, tx);
 
   return {
-    message: `↩️ Fabricação cancelada. Reembolso integral: ${job.spentZeni.toLocaleString('pt-BR')} Zeni e todos os ingredientes.`,
+    message: `↩️ Fabricação cancelada. Reembolso integral: ${refundedZeni.toLocaleString('pt-BR')} Zeni e todos os ingredientes.`,
   };
 }
 
