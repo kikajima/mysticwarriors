@@ -223,7 +223,7 @@ export function ShopPanel({
                   {/* VENDA: unidade em uso nunca é vendida */}
                   {item.price <= 0 ? (
                     <span className="text-[11px] text-sky-300/60 italic">
-                      fabricado — reservado para o Mercado
+                      feito na Oficina
                     </span>
                   ) : sellable > 0 ? (
                     <span className="flex items-center gap-1.5 rounded-lg border border-amber-900/40 bg-black/20 px-2 py-1">
@@ -279,7 +279,7 @@ export function ShopPanel({
                       </GameButton>
                     </span>
                   ) : (
-                    <span className="text-[11px] text-sky-300/60 italic">fabricado — reservado para o Mercado</span>
+                    <span className="text-[11px] text-sky-300/60 italic">feito na Oficina</span>
                   )}
                 </div>
               );
