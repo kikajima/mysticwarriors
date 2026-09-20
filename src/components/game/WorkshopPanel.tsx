@@ -70,6 +70,7 @@ export function WorkshopPanel({
 }) {
   const [inventory, setInventory] = useState<InventoryRow[] | null>(null);
   const [job, setJob] = useState<CraftJobRow | null>(null);
+  const [batchQty, setBatchQty] = useState<Record<string, number>>({});
   const [failed, setFailed] = useState(false);
   const now = useServerNow(500);
 
@@ -127,6 +128,9 @@ export function WorkshopPanel({
   const renderRecipe = (recipe: (typeof CRAFT_RECIPES)[number]) => {
     const output = getCraftedItem(recipe.outputItemId) ?? getCraftStackItem(recipe.outputItemId);
     const academicOk = !recipe.requiresAcademic || academicLevel > 0;
+    const maxBatch = Math.max(1, recipe.maxBatch ?? 1);
+    const quantity = Math.max(1, Math.min(maxBatch, batchQty[recipe.id] ?? 1));
+    const totalCost = recipe.costZeni * quantity;
     const professionRequirements = (recipe.professionRequirements ?? []).map((requirement) => {
       const def = getProfession(requirement.professionId);
       const progress = player.professions?.[requirement.professionId];
@@ -143,15 +147,17 @@ export function WorkshopPanel({
       };
     });
     const professionRequirementsOk = professionRequirements.every((requirement) => requirement.ok);
-    const ingredientsOk = recipe.ingredients.every((i) => (counts.get(i.itemId) ?? 0) >= i.quantity);
+    const ingredientsOk = recipe.ingredients.every(
+      (i) => (counts.get(i.itemId) ?? 0) >= i.quantity * quantity
+    );
     const canStart =
       !job &&
       academicOk &&
       professionRequirementsOk &&
       ingredientsOk &&
-      player.zeni >= recipe.costZeni &&
+      player.zeni >= totalCost &&
       !busy;
-    const effectiveMin = Math.ceil(recipe.baseDurationMin * craftMult);
+    const effectiveMin = Math.ceil(recipe.baseDurationMin * craftMult * quantity);
 
     return (
       <GameCard key={recipe.id} className="p-4">
@@ -169,7 +175,7 @@ export function WorkshopPanel({
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               <Chip className="bg-yellow-950/40 text-yellow-300 border-yellow-800/40">
-                <Coins className="w-3.5 h-3.5" /> {recipe.costZeni.toLocaleString('pt-BR')} Zeni
+                <Coins className="w-3.5 h-3.5" /> {totalCost.toLocaleString('pt-BR')} Zeni
               </Chip>
               <Chip className="bg-black/30 text-amber-200/70 border-amber-900/40">
                 <Clock3 className="w-3.5 h-3.5" /> {durationLabel(effectiveMin)}
@@ -207,13 +213,14 @@ export function WorkshopPanel({
               {recipe.ingredients.map((ingredient) => {
                 const def = getProfessionMaterial(ingredient.itemId) ?? getCraftStackItem(ingredient.itemId);
                 const have = counts.get(ingredient.itemId) ?? 0;
-                const ok = have >= ingredient.quantity;
+                const needed = ingredient.quantity * quantity;
+                const ok = have >= needed;
                 return (
                   <div key={ingredient.itemId} className="flex items-center gap-2 text-xs">
                     <span aria-hidden>{def?.icon ?? '📦'}</span>
                     <span className="text-amber-100/80">{def?.name ?? ingredient.itemId}</span>
                     <span className={ok ? 'text-emerald-300 ml-auto' : 'text-red-300 ml-auto'}>
-                      {have}/{ingredient.quantity}
+                      {have}/{needed}
                     </span>
                   </div>
                 );
@@ -226,13 +233,43 @@ export function WorkshopPanel({
               </p>
             )}
 
+            {maxBatch > 1 && (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-900/40 bg-black/20 p-2.5">
+                <div>
+                  <p className="text-[11px] font-heading text-amber-100">Quantidade do lote</p>
+                  <p className="text-[10px] text-amber-200/45">Tempo, custo e materiais escalam com a quantidade.</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    aria-label="Diminuir lote"
+                    disabled={busy || quantity <= 1}
+                    onClick={() => setBatchQty((m) => ({ ...m, [recipe.id]: Math.max(1, quantity - 1) }))}
+                    className="w-7 h-7 rounded-md border border-amber-800/60 bg-black/40 text-amber-200 disabled:opacity-30"
+                  >
+                    −
+                  </button>
+                  <span className="w-8 text-center font-heading text-sm text-amber-100 tabular-nums">{quantity}</span>
+                  <button
+                    type="button"
+                    aria-label="Aumentar lote"
+                    disabled={busy || quantity >= maxBatch}
+                    onClick={() => setBatchQty((m) => ({ ...m, [recipe.id]: Math.min(maxBatch, quantity + 1) }))}
+                    className="w-7 h-7 rounded-md border border-amber-800/60 bg-black/40 text-amber-200 disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            )}
+
             <GameButton
               className="w-full mt-4"
               disabled={!canStart}
-              onClick={() => void runAction({ type: 'craft_start', recipeId: recipe.id })}
+              onClick={() => void runAction({ type: 'craft_start', recipeId: recipe.id, quantity })}
             >
               <Wrench className="w-4 h-4" />
-              Fabricar {output?.name ?? recipe.name}
+              Fabricar {quantity > 1 ? `${quantity}× ` : ''}{output?.name ?? recipe.name}
             </GameButton>
           </div>
         </div>
