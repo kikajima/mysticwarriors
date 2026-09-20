@@ -1468,6 +1468,12 @@ async function actionEquip(
   if (!item || !EQUIPMENT_SLOTS.includes(item.category as EquipmentSlot)) {
     throw new ApiError('ITEM_NOT_EQUIPPABLE', 'Item não equipável.');
   }
+  if (player.level < item.minLevel) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      `Nível ${item.minLevel} necessário para equipar ${item.name}.`
+    );
+  }
   const items = parseItems(player.items);
   if (!items.owned.includes(item.id)) {
     throw new ApiError('ITEM_NOT_OWNED', 'Você não possui este item!');
