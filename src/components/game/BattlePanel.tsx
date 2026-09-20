@@ -82,7 +82,15 @@ export function BattlePanel({
                   {enemy.emoji}
                 </div>
                 <h3 className="font-heading text-white text-lg leading-tight drop-shadow">{enemy.name}</h3>
-                <p className="text-white/70 text-xs italic mt-1">{enemy.taunt}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <Chip className="bg-black/45 text-white/90 border-white/20 text-[10px]">
+                    {getPowerScale(enemyPower(enemy)).scale.nome} {['I', 'II', 'III'][enemy.enemyTier - 1]}
+                  </Chip>
+                </div>
+                <p className="text-white/70 text-xs italic mt-1.5">{enemy.taunt}</p>
+                <p className="text-white/55 text-[11px] mt-2 leading-relaxed">
+                  <span className="font-heading text-white/75">Intenção:</span> {enemy.intent}
+                </p>
               </div>
               <div className="p-4">
                 <div className="grid grid-cols-4 gap-1 mb-3 text-center">
