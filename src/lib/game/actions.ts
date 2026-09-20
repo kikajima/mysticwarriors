@@ -19,6 +19,7 @@ import {
 } from './rules';
 import {
   BATTLE_ENERGY_COST,
+  DRAGON_BALL_SEARCH_ENERGY_COST,
   ENEMIES,
   HEAL_COST_PER_HP,
   PROFESSIONS,
@@ -222,6 +223,9 @@ export async function executeGameAction(
       case 'cancel_mission':
         result = await actionCancelProfession(tx, player);
         break;
+      case 'search_dragon_ball':
+        result = await actionSearchDragonBall(tx, player);
+        break;
       case 'craft_start': {
         const craft = await startCraft(
           tx,
@@ -401,6 +405,54 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
 }
 
 // ===== PROFISSÕES — carreira 1–10, turnos 1/2/4/8h e loot =====
+// Busca ativa separada dos turnos: o jogador decide quando gastar energia
+// para procurar, em vez de depender do encerramento de uma profissão.
+async function actionSearchDragonBall(tx: Tx, player: Player): Promise<ActionResult> {
+  if (player.dragonBalls >= 7) {
+    throw new ApiError('VALIDATION_ERROR', 'Você já reuniu as 7 Esferas do Dragão. Faça um desejo antes de procurar mais.');
+  }
+  const energyRes = await tx.player.updateMany({
+    where: { id: player.id, energy: { gte: DRAGON_BALL_SEARCH_ENERGY_COST } },
+    data: { energy: { decrement: DRAGON_BALL_SEARCH_ENERGY_COST } },
+  });
+  if (energyRes.count === 0) {
+    throw new ApiError('INSUFFICIENT_ENERGY', `Cada busca exige ${DRAGON_BALL_SEARCH_ENERGY_COST} de energia.`);
+  }
+  player.energy -= DRAGON_BALL_SEARCH_ENERGY_COST;
+  await bumpQuests(tx, player.id, 'energy_spent', DRAGON_BALL_SEARCH_ENERGY_COST);
+  const found = battleRng()() < 0.12;
+  if (!found) {
+    await trackEvent('dragon_ball_search', {
+      playerId: player.id,
+      accountId: player.accountId,
+      metadata: { found: false },
+    }, tx);
+    return {
+      message: `A busca terminou sem resultado. (-${DRAGON_BALL_SEARCH_ENERGY_COST} energia)`,
+      levelsGained: 0,
+    };
+  }
+  const ballRes = await tx.player.updateMany({
+    where: { id: player.id, dragonBalls: { lt: 7 } },
+    data: { dragonBalls: { increment: 1 } },
+  });
+  if (ballRes.count === 0) {
+    return {
+      message: `A busca encontrou uma assinatura, mas você já tem as 7 Esferas. (-${DRAGON_BALL_SEARCH_ENERGY_COST} energia)`,
+      levelsGained: 0,
+    };
+  }
+  player.dragonBalls = Math.min(7, player.dragonBalls + 1);
+  await trackEvent('dragon_ball_search', {
+    playerId: player.id,
+    accountId: player.accountId,
+    metadata: { found: true },
+  }, tx);
+  return {
+    message: `Você encontrou uma Esfera do Dragão! (${player.dragonBalls}/7) (-${DRAGON_BALL_SEARCH_ENERGY_COST} energia)`,
+    levelsGained: 0,
+  };
+}
 
 const PROFESSION_FLAVOR = [
   'Turno encerrado sem sustos!',
@@ -1119,6 +1171,7 @@ export async function actionStartPvp(tx: Tx, player: Player, targetId: string): 
         // v0.9.17 — conquistas narrativas (flags puras da engine)
         miracleWin: sim.miracleWin ?? false,
         davidReposition: sim.davidReposition ?? false,
+        dragonBallStealChance: 0.25,
       },
     },
   };

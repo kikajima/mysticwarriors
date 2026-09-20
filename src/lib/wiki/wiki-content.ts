@@ -1390,7 +1390,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: 'Cada turno de profissão concluído tem chance de revelar uma **Esfera do Dragão** — a chance sobe com o rank (3% a 10%). Junte as **7 esferas**, invoque Shenlon e escolha:',
+        text: 'A aba **Busca** em [[profissoes|Atividades]] permite procurar esferas ativamente por energia; turnos de profissão também podem revelar uma esfera. Uma vitória no PvP pode roubar 1 esfera do adversário. Junte as **7 esferas**, invoque Shenlon e escolha:',
       },
       {
         kind: 'table',

@@ -312,6 +312,7 @@ function BattleContent({
                 +{battle.zeniGain.toLocaleString('pt-BR')} Zeni • +{battle.xpGain.toLocaleString('pt-BR')} XP
                 {battle.crystalsGain ? ` • +${battle.crystalsGain} 💎` : ''}
                 {battle.zeniStolen ? ` • roubou ${battle.zeniStolen.toLocaleString('pt-BR')} Zeni` : ''}
+                {battle.dragonBallStolen ? ` • roubou ${battle.dragonBallStolen} Esfera do Dragão` : ''}
               </p>
             </div>
           ) : (

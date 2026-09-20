@@ -13,6 +13,7 @@ import {
   professionHoursIntoLevel,
   professionShiftRewards,
   academicXpBonusPct,
+  DRAGON_BALL_SEARCH_ENERGY_COST,
 } from '@/lib/game/constants';
 import { useServerNow } from '@/lib/game/clock';
 import type { PlayerView, QuestView } from '@/lib/game/types';
@@ -33,7 +34,7 @@ function formatCountdown(ms: number): string {
   return `${s}s`;
 }
 
-type Tab = 'professions' | 'quests';
+type Tab = 'search' | 'professions' | 'quests';
 
 interface MaterialView {
   itemId: string;
@@ -135,11 +136,12 @@ export function ProfessionsPanel({
 
   return (
     <div className="space-y-6">
-      <SectionTitle icon="💼">Profissões</SectionTitle>
+      <SectionTitle icon="🧭">Atividades</SectionTitle>
 
       <div className="flex gap-2" role="tablist">
         {(
           [
+            { key: 'search', label: '🔮 Busca' },
             { key: 'professions', label: '💼 Profissões' },
             { key: 'quests', label: '📅 Diárias & Semanais' },
           ] as const
@@ -160,7 +162,9 @@ export function ProfessionsPanel({
         ))}
       </div>
 
-      {tab === 'professions' ? (
+      {tab === 'search' ? (
+        <DragonBallSearchTab player={player} onAction={onAction} busy={busy} />
+      ) : tab === 'professions' ? (
         <>
           <GameCard className="p-4">
             <div className="flex flex-col gap-3">
@@ -462,6 +466,51 @@ export function ProfessionsPanel({
       ) : (
         <QuestsTab player={player} onAction={onAction} busy={busy} />
       )}
+    </div>
+  );
+}
+
+function DragonBallSearchTab({
+  player,
+  onAction,
+  busy,
+}: {
+  player: PlayerView;
+  onAction: (payload: Record<string, unknown>) => void | Promise<boolean>;
+  busy: boolean;
+}) {
+  const complete = player.dragonBalls >= 7;
+  return (
+    <div className="space-y-4">
+      <GameCard className="p-6 border-yellow-700/50" glow={complete}>
+        <div className="flex flex-col md:flex-row md:items-center gap-5">
+          <div className="text-6xl shrink-0 text-center" aria-hidden>🔮</div>
+          <div className="flex-1">
+            <h3 className="font-heading text-xl text-amber-100">Busca pelas Esferas</h3>
+            <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">
+              Dedique energia a uma varredura ativa de assinaturas de Ki. A busca é independente das profissões e pode ser repetida sempre que houver energia.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Chip className="bg-yellow-950/50 text-yellow-300 border-yellow-800/50">🔮 {player.dragonBalls}/7 coletadas</Chip>
+              <Chip className="bg-amber-950/50 text-amber-200 border-amber-800/50">⚡ -{DRAGON_BALL_SEARCH_ENERGY_COST} energia</Chip>
+              <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">🎯 12% de chance por busca</Chip>
+            </div>
+          </div>
+          <GameButton
+            variant="gold"
+            className="shrink-0"
+            disabled={busy || complete || player.energy < DRAGON_BALL_SEARCH_ENERGY_COST}
+            onClick={() => void onAction({ type: 'search_dragon_ball' })}
+          >
+            {complete ? 'Conjunto completo' : player.energy < DRAGON_BALL_SEARCH_ENERGY_COST ? 'Sem energia' : 'Procurar agora'}
+          </GameButton>
+        </div>
+      </GameCard>
+      <GameCard className="p-4">
+        <p className="text-xs text-amber-200/55 leading-relaxed">
+          ⚔️ Uma vitória no PvP também pode roubar 1 Esfera do Dragão do adversário. Proteja sua coleção escolhendo bem seus duelos.
+        </p>
+      </GameCard>
     </div>
   );
 }

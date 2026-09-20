@@ -79,6 +79,8 @@ export interface BattleActivityResult {
       miracleWin: boolean;
       /** v0.9.17 — Reposicionamento exitoso vs 2+ escalas (David vs Golias). */
       davidReposition: boolean;
+      /** Chance de roubo: uma esfera do defensor por vitória PvP. */
+      dragonBallStealChance: number;
     };
     /** v0.9.18 — luta do Torneio de Artes Marciais (chave de 8). */
     tournament?: {
@@ -347,6 +349,21 @@ async function applyPvpResult(
 
   let zeniStolen = 0;
   let zeniLost = 0;
+    let dragonBallStolen = 0;
+      if (target && data.dragonBallStealChance > 0 && Math.random() < data.dragonBallStealChance) {
+        const ballTransfer = await tx.player.updateMany({
+          where: { id: target.id, dragonBalls: { gte: 1 } },
+          data: { dragonBalls: { decrement: 1 } },
+        });
+        if (ballTransfer.count > 0) {
+          const winnerTransfer = await tx.player.updateMany({
+            where: { id: player.id, dragonBalls: { lt: 7 } },
+            data: { dragonBalls: { increment: 1 } },
+          });
+          if (winnerTransfer.count > 0) dragonBallStolen = 1;
+          else await tx.player.update({ where: { id: target.id }, data: { dragonBalls: { increment: 1 } } });
+        }
+      }
   let levelsGained = 0;
 
   // reabastece bot drenado (injeção de moeda REGISTRADA no ledger)
@@ -477,11 +494,12 @@ async function applyPvpResult(
     xpGain: data.won ? data.xp : Math.max(5, Math.round(25 * (payload.display.battle.opponentLevel ?? 1) * 0.4)),
     zeniGain: 0,
     zeniStolen,
+    dragonBallStolen,
     zenkaiGranted: data.zenkai,
   };
 
   const message = data.won
-    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Zeni!`
+    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Zeni${dragonBallStolen ? ' e 1 Esfera do Dragão' : ''}!`
     : `${payload.display.battle.enemyName} te derrotou... ${zeniLost > 0 ? `Você perdeu ${zeniLost.toLocaleString('pt-BR')} Zeni ` : ''}mas ganhou experiência.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`;
 
   return { message, levelsGained, battle: finalBattle };

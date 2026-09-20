@@ -532,6 +532,7 @@ export interface BattleResult extends BattleSimulation {
   /** v0.9.18 — cristais ganhos (torneio; ausente = 0) */
   crystalsGain?: number;
   zeniStolen?: number;
+  dragonBallStolen?: number;
   enemyName: string;
   enemyEmoji: string;
   opponentLevel: number;
