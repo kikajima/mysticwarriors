@@ -1174,7 +1174,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `A sequência começa no **${ENEMIES[0].name}** (${POWER_SCALES[0].nome} I) e termina no **${ENEMIES[ENEMIES.length - 1].name}** (${POWER_SCALES[POWER_SCALES.length - 1].nome} III). São ${ENEMIES.length} capangas ao todo: cada uma das 10 escalas possui os graus **I, II e III**, com poder crescente dentro do mesmo patamar. Essa subdivisão existe **somente para os inimigos**; guerreiros continuam usando as 10 Escalas de Poder normais. Cada card também explica a intenção do capanga no confronto.`,
+        text: `A sequência começa no **${ENEMIES[0].name}** (${POWER_SCALES[0].nome} I; ~${br(ENEMIES[0].zeniReward)} Zeni / ~${br(ENEMIES[0].xpReward)} XP) e termina no **${ENEMIES[ENEMIES.length - 1].name}** (${POWER_SCALES[POWER_SCALES.length - 1].nome} III; ~${br(ENEMIES[ENEMIES.length - 1].zeniReward)} Zeni / ~${br(ENEMIES[ENEMIES.length - 1].xpReward)} XP). São ${ENEMIES.length} capangas ao todo: cada uma das 10 escalas possui os graus **I, II e III**, com poder crescente dentro do mesmo patamar. Essa subdivisão existe **somente para os inimigos**; guerreiros continuam usando as 10 Escalas de Poder normais. Cada card também explica a intenção do capanga no confronto.`,
       },
       {
         kind: 'list',
