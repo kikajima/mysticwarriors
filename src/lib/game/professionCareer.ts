@@ -58,7 +58,8 @@ export function normalizeProfessionProgress(raw: unknown): ProfessionProgress {
     hours,
     lifetimeHours,
     prestige: clamp(int(src.prestige, 0), 0, 10_000),
-    statMilliRemainder: clamp(int(src.statMilliRemainder, 0), 0, 999),
+    // Ganho de atributo passou a ser estritamente inteiro; qualquer saldo fracionário legado é descartado.
+    statMilliRemainder: 0,
     cycleStatGranted: clamp(int(src.cycleStatGranted, 0), 0, 999_999),
   };
 }
