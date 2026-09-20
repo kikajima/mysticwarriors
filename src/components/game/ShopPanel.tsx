@@ -152,7 +152,12 @@ export function ShopPanel({
     if (category === 'cosmetics') loadCosmetics();
   }, [category, loadCosmetics]);
 
-  const items = category === 'cosmetics' || category === 'talents' ? [] : SHOP_ITEMS.filter((i) => i.category === category);
+  const items =
+    category === 'cosmetics' || category === 'talents'
+      ? []
+      : SHOP_ITEMS
+          .filter((i) => i.category === category)
+          .sort((a, b) => a.minLevel - b.minLevel || a.price - b.price);
   const buy = (itemId: string) => onAction({ type: 'buy', itemId, quantity: buyQty[itemId] ?? 1 });
 
   return (
