@@ -60,16 +60,16 @@ export const PROFESSIONS: ProfessionDef[] = [
 ];
 
 export const PROFESSION_LEVELS: ProfessionLevelRewards[] = [
-  { level: 1, hoursInLevel: 40, cumulativeHours: 40, zeniPerHour: 300, attributeMilliPerHour: 1000, xpPctPerHour: 0.010, dragonBallChance: 0.030, rareChance: 0.10 },
-  { level: 2, hoursInLevel: 60, cumulativeHours: 100, zeniPerHour: 450, attributeMilliPerHour: 1300, xpPctPerHour: 0.010, dragonBallChance: 0.040, rareChance: 0.10 },
-  { level: 3, hoursInLevel: 90, cumulativeHours: 190, zeniPerHour: 675, attributeMilliPerHour: 1700, xpPctPerHour: 0.015, dragonBallChance: 0.050, rareChance: 0.13 },
-  { level: 4, hoursInLevel: 135, cumulativeHours: 325, zeniPerHour: 1010, attributeMilliPerHour: 2200, xpPctPerHour: 0.015, dragonBallChance: 0.060, rareChance: 0.13 },
-  { level: 5, hoursInLevel: 200, cumulativeHours: 525, zeniPerHour: 1500, attributeMilliPerHour: 2800, xpPctPerHour: 0.020, dragonBallChance: 0.070, rareChance: 0.16 },
-  { level: 6, hoursInLevel: 300, cumulativeHours: 825, zeniPerHour: 2100, attributeMilliPerHour: 3500, xpPctPerHour: 0.020, dragonBallChance: 0.080, rareChance: 0.16 },
-  { level: 7, hoursInLevel: 450, cumulativeHours: 1275, zeniPerHour: 2900, attributeMilliPerHour: 4400, xpPctPerHour: 0.025, dragonBallChance: 0.085, rareChance: 0.20 },
-  { level: 8, hoursInLevel: 675, cumulativeHours: 1950, zeniPerHour: 4000, attributeMilliPerHour: 5500, xpPctPerHour: 0.025, dragonBallChance: 0.090, rareChance: 0.20 },
-  { level: 9, hoursInLevel: 1000, cumulativeHours: 2950, zeniPerHour: 5500, attributeMilliPerHour: 6800, xpPctPerHour: 0.030, dragonBallChance: 0.095, rareChance: 0.22 },
-  { level: 10, hoursInLevel: 1500, cumulativeHours: 4450, zeniPerHour: 7500, attributeMilliPerHour: 8500, xpPctPerHour: 0.035, dragonBallChance: 0.100, rareChance: 0.25 },
+  { level: 1, hoursInLevel: 40, cumulativeHours: 40, zeniPerHour: 300, attributeMilliPerHour: 1000, xpPerPlayerLevel: 4, dragonBallChance: 0.030, rareChance: 0.10 },
+  { level: 2, hoursInLevel: 60, cumulativeHours: 100, zeniPerHour: 450, attributeMilliPerHour: 1300, xpPerPlayerLevel: 4, dragonBallChance: 0.040, rareChance: 0.10 },
+  { level: 3, hoursInLevel: 90, cumulativeHours: 190, zeniPerHour: 675, attributeMilliPerHour: 1700, xpPerPlayerLevel: 6, dragonBallChance: 0.050, rareChance: 0.13 },
+  { level: 4, hoursInLevel: 135, cumulativeHours: 325, zeniPerHour: 1010, attributeMilliPerHour: 2200, xpPerPlayerLevel: 6, dragonBallChance: 0.060, rareChance: 0.13 },
+  { level: 5, hoursInLevel: 200, cumulativeHours: 525, zeniPerHour: 1500, attributeMilliPerHour: 2800, xpPerPlayerLevel: 8, dragonBallChance: 0.070, rareChance: 0.16 },
+  { level: 6, hoursInLevel: 300, cumulativeHours: 825, zeniPerHour: 2100, attributeMilliPerHour: 3500, xpPerPlayerLevel: 8, dragonBallChance: 0.080, rareChance: 0.16 },
+  { level: 7, hoursInLevel: 450, cumulativeHours: 1275, zeniPerHour: 2900, attributeMilliPerHour: 4400, xpPerPlayerLevel: 10, dragonBallChance: 0.085, rareChance: 0.20 },
+  { level: 8, hoursInLevel: 675, cumulativeHours: 1950, zeniPerHour: 4000, attributeMilliPerHour: 5500, xpPerPlayerLevel: 10, dragonBallChance: 0.090, rareChance: 0.20 },
+  { level: 9, hoursInLevel: 1000, cumulativeHours: 2950, zeniPerHour: 5500, attributeMilliPerHour: 6800, xpPerPlayerLevel: 12, dragonBallChance: 0.095, rareChance: 0.22 },
+  { level: 10, hoursInLevel: 1500, cumulativeHours: 4450, zeniPerHour: 7500, attributeMilliPerHour: 8500, xpPerPlayerLevel: 14, dragonBallChance: 0.100, rareChance: 0.25 },
 ];
 
 export const PROFESSION_MAX_LEVEL = 10;

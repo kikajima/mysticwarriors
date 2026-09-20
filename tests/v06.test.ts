@@ -10,7 +10,6 @@ import {
   getProfession,
   REGEN,
   BATTLE_ENERGY_COST,
-  xpToNextLevel,
 } from '@/lib/game/content/world';
 import {
   academicXpMultiplier,
@@ -83,12 +82,15 @@ describe('PROFISSÕES — carreira 1–10', () => {
     expect(rarePerHour[3]).toBeGreaterThan(rarePerHour[2]);
   });
 
-  test('XP/h aprovado: 1% → 3,5% do próximo nível', () => {
-    expect(PROFESSION_LEVELS.map((r) => r.xpPctPerHour)).toEqual([
-      0.01, 0.01, 0.015, 0.015, 0.02, 0.02, 0.025, 0.025, 0.03, 0.035,
+  test('XP/h é diretamente proporcional ao nível do personagem', () => {
+    expect(PROFESSION_LEVELS.map((r) => r.xpPerPlayerLevel)).toEqual([
+      4, 4, 6, 6, 8, 8, 10, 10, 12, 14,
     ]);
-    expect(professionXpPerHour(1, 1)).toBe(Math.ceil(xpToNextLevel(1) * 0.01));
-    expect(professionXpPerHour(10, 20)).toBe(Math.ceil(xpToNextLevel(20) * 0.035));
+    expect(professionXpPerHour(1, 1)).toBe(4);
+    expect(professionXpPerHour(1, 20)).toBe(80);
+    expect(professionXpPerHour(1, 40)).toBe(160);
+    expect(professionXpPerHour(10, 20)).toBe(280);
+    expect(professionXpPerHour(10, 40)).toBe(560);
   });
 
   test('chance rara aprovada: 10/13/16/20/22/25%', () => {

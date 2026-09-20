@@ -10,7 +10,6 @@ import {
   PROFESSION_MATERIALS,
   PROFESSION_SHIFTS,
   getProfession,
-  xpToNextLevel,
 } from './content/world';
 
 // =====================================================================
@@ -131,7 +130,8 @@ export function professionShift(hoursRaw: number) {
 
 export function professionXpPerHour(level: number, playerLevel: number, efficiency = 1): number {
   const tier = professionLevelDef(level);
-  return Math.max(1, Math.ceil(xpToNextLevel(playerLevel) * tier.xpPctPerHour * efficiency));
+  const safePlayerLevel = Math.max(1, Math.trunc(playerLevel || 1));
+  return Math.max(1, Math.ceil(safePlayerLevel * tier.xpPerPlayerLevel * efficiency));
 }
 
 export interface ProfessionShiftRewards {
