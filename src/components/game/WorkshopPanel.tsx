@@ -131,7 +131,12 @@ export function WorkshopPanel({
   const mainRecipes = CRAFT_RECIPES.filter((r) => !r.requiresAcademic && matchesTier(r)).sort(byTierThenName);
 
   const renderRecipe = (recipe: (typeof CRAFT_RECIPES)[number]) => {
-    const output = getCraftedItem(recipe.outputItemId) ?? getCraftStackItem(recipe.outputItemId);
+    const playerItemOutput = getCraftedItem(recipe.outputItemId);
+    const output = playerItemOutput ?? getCraftStackItem(recipe.outputItemId);
+    const uniqueAlreadyOwned =
+      !!playerItemOutput &&
+      playerItemOutput.category !== 'consumable' &&
+      player.items.owned.includes(playerItemOutput.id);
     const academicOk = !recipe.requiresAcademic || academicLevel > 0;
     const maxBatch = Math.max(1, recipe.maxBatch ?? 1);
     const quantity = Math.max(1, Math.min(maxBatch, batchQty[recipe.id] ?? 1));
@@ -161,6 +166,7 @@ export function WorkshopPanel({
       professionRequirementsOk &&
       ingredientsOk &&
       player.zeni >= totalCost &&
+      !uniqueAlreadyOwned &&
       !busy;
     const effectiveMin = Math.ceil(recipe.baseDurationMin * craftMult * quantity);
 
@@ -184,11 +190,13 @@ export function WorkshopPanel({
                     : 'bg-red-950/50 text-red-300 border-red-800/50'
                 }
               >
-                {academicOk && professionRequirementsOk
-                  ? ingredientsOk && player.zeni >= totalCost
-                    ? 'pronta'
-                    : 'faltam recursos'
-                  : 'bloqueada'}
+                {uniqueAlreadyOwned
+                  ? 'já fabricado'
+                  : academicOk && professionRequirementsOk
+                    ? ingredientsOk && player.zeni >= totalCost
+                      ? 'pronta'
+                      : 'faltam recursos'
+                    : 'bloqueada'}
               </Chip>
             </div>
             <p className="text-xs text-amber-200/55 mt-1">{recipe.description}</p>
@@ -250,6 +258,11 @@ export function WorkshopPanel({
             {!academicOk && professionRequirements.length === 0 && (
               <p className="text-xs text-sky-300/80 mt-3">
                 Esta receita exige experiência como Acadêmico.
+              </p>
+            )}
+            {uniqueAlreadyOwned && (
+              <p className="text-xs text-emerald-300/70 mt-3">
+                Você já possui este item permanente. A Oficina não fabrica duplicatas sem utilidade.
               </p>
             )}
 
