@@ -21,6 +21,8 @@ export {
   PROFESSION_MASTERY_HOURS,
   PROFESSION_SHIFTS,
   PROFESSION_MATERIALS,
+  PROFESSION_MATERIAL_TIER_LEVEL,
+  professionMaterialRequiredLevel,
   getProfession,
   getProfessionMaterial,
   ENEMIES,
