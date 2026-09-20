@@ -1095,7 +1095,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         blocks: [
           {
             kind: 'text',
-            text: 'A Oficina fabrica um item por vez e continua contando offline. Os ingredientes e o Zeni são consumidos **ao iniciar** a fabricação; o resultado entra no inventário somente na coleta. Trabalhar não bloqueia a Oficina. O Acadêmico reduz o tempo em **1% por nível** (até **10%** no Nível 10). Os Tiers agora são progressão real: Tier 2 exige carreira Nível 2, Tier 3 Nível 4, Tier 4 Nível 6 e Tier 5 Nível 8 nas profissões indicadas pela receita.',
+            text: `A Oficina fabrica um item por vez e continua contando offline. Os ingredientes e o Zeni são consumidos **ao iniciar** a fabricação; o resultado entra no inventário somente na coleta. Trabalhar não bloqueia a Oficina. O Acadêmico reduz o tempo em **1% por nível** (até **10%** no Nível 10). Os Tiers agora são progressão real: Tier 2 exige carreira Nível ${CRAFT_TIER_PROFESSION_LEVEL[2]}, Tier 3 Nível ${CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4 Nível ${CRAFT_TIER_PROFESSION_LEVEL[4]} e Tier 5 Nível ${CRAFT_TIER_PROFESSION_LEVEL[5]} nas profissões indicadas pela receita.`,
           },
           {
             kind: 'table',
