@@ -18,7 +18,7 @@
 // conhece continuam apenas com a reconciliação (nada de inventar número).
 // =====================================================================
 
-import { xpToNextLevel, SHOP_ITEMS, SELL_PRICE_RATIO, HEAL_COST_PER_HP, GUILD_CREATION_COST } from './content/world';
+import { xpToNextLevel, SHOP_ITEMS, SELL_PRICE_RATIO, GUILD_CREATION_COST } from './content/world';
 import { TECHNIQUES } from './content/techniques';
 import { TALENTS } from './content/talents';
 import { COSMETICS } from './content/cosmetics';
@@ -34,7 +34,7 @@ export interface OptimisticDelta {
   xp?: number;
   /** Gasto de energia. */
   energy?: number;
-  /** Vida definida diretamente (ex.: hospital cheio). */
+  /** Vida definida diretamente por alguma ação autoritativa. */
   hp?: number;
   /** Atributo somado (ex.: treino +1). */
   stat?: { key: 'strength' | 'defense' | 'speed' | 'ki'; amount: number };
@@ -156,16 +156,6 @@ export function builtinOptimisticDelta(
         zeni: -trainingCost(current, player.race),
         // ganho de stat: base 1 + bônus de equipamento (incerto — o
         // servidor reconcilia; aqui só o custo, que é certo)
-      };
-    }
-
-    // ===== Hospital: cura total =====
-    case 'heal': {
-      const missing = player.derived.maxHp - player.hp;
-      if (missing <= 0) return null;
-      return {
-        hp: player.derived.maxHp,
-        zeni: -missing * HEAL_COST_PER_HP,
       };
     }
 
