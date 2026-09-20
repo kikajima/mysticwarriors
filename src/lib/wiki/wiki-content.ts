@@ -64,8 +64,9 @@ import {
   SELL_PRICE_RATIO,
   xpToNextLevel,
   baseTrainingCost,
+  npcCombatPower,
 } from '@/lib/game/content/world';
-import { POWER_SCALES, SCALE_COMBAT } from '@/lib/game/powerScale';
+import { POWER_SCALES, SCALE_COMBAT, getPowerScale } from '@/lib/game/powerScale';
 import { IMPETO, IMPETO_COMBO_THRESHOLD } from '@/lib/game/impeto';
 import { EQUIPMENT_SLOT_META, EQUIPMENT_SLOTS } from '@/lib/game/types';
 import type { EquipmentSlot } from '@/lib/game/types';
