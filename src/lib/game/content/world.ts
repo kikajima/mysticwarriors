@@ -14,8 +14,8 @@ import type {
 // ---------------------------------------------------------------------
 //  * progressão por HORAS (nível derivado; 4.450h fecham o ciclo);
 //  * turnos válidos: 1h / 2h / 4h / 8h;
-//  * eficiência reduz somente XP e chance de material raro;
-//  * Zeni, atributo, horas, comum garantido e Esfera não perdem eficiência;
+//  * turnos longos concedem bônus progressivo de XP e chance de material raro;
+//  * Zeni, atributo, horas, comum garantido e Esfera mantêm a regra base;
 //  * atributo respeita STAT_CAP=999 no servidor;
 //  * Acadêmico não dá atributo: fornece bônus global de XP e, na PR de
 //    crafting, redução do tempo de fabricação.
@@ -77,9 +77,9 @@ export const PROFESSION_MASTERY_HOURS = 4_450;
 
 export const PROFESSION_SHIFTS: ProfessionShiftDef[] = [
   { hours: 1, efficiency: 1.00 },
-  { hours: 2, efficiency: 0.95 },
-  { hours: 4, efficiency: 0.85 },
-  { hours: 8, efficiency: 0.70 },
+  { hours: 2, efficiency: 1.05 },
+  { hours: 4, efficiency: 1.15 },
+  { hours: 8, efficiency: 1.30 },
 ];
 
 export const PROFESSION_MATERIALS: ProfessionMaterialDef[] = [
