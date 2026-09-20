@@ -6,6 +6,7 @@ import {
   PROFESSION_LEVELS,
   PROFESSION_MASTERY_HOURS,
   PROFESSION_SHIFTS,
+  professionMaterialRequiredLevel,
   getProfession,
   professionLevel,
   professionLevelTitle,
@@ -392,7 +393,7 @@ export function ProfessionsPanel({
                   </div>
 
                   <p className="text-[11px] text-amber-200/45 mb-3">
-                    XP: {tier.xpPerPlayerLevel} × seu nível por hora, antes do bônus de duração. Comum: 1–2 unidades por hora garantidas. Turnos mais longos aumentam a chance de raro por hora. Esfera: um teste por turno concluído.
+                    XP: {tier.xpPerPlayerLevel} × seu nível por hora, antes do bônus de duração. Materiais também evoluem com a carreira: T1/Nv.1, T2/Nv.2, T3/Nv.4, T4/Nv.6 e T5/Nv.8. Comum: 1–2 unidades por hora garantidas entre os Tiers já desbloqueados. Turnos mais longos aumentam a chance de raro por hora. Esfera: um teste por turno concluído.
                   </p>
 
                   {isActive ? (
@@ -448,6 +449,7 @@ export function ProfessionsPanel({
                       <div className="text-sm text-amber-100 truncate">{m.name}</div>
                       <div className="text-[10px] text-amber-200/45">
                         Tier {m.tier ?? '?'} · {m.rarity === 'rare' ? 'raro' : 'comum'}
+                        {m.tier ? ` · libera no Nv. ${professionMaterialRequiredLevel(m.tier as 1 | 2 | 3 | 4 | 5)}` : ''}
                       </div>
                     </div>
                     <span className="font-heading text-amber-200 tabular-nums">×{m.quantity}</span>
