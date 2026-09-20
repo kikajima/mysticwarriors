@@ -43,6 +43,8 @@ export async function GET(request: Request) {
             recipeId: job.recipeId,
             outputItemId: job.outputItemId,
             outputQuantity: job.outputQuantity,
+            batchQuantity: job.batchQuantity,
+            spentZeni: job.spentZeni,
             outputName: output?.name ?? job.outputItemId,
             outputIcon: output?.icon ?? '📦',
             academicLevelStart: job.academicLevelStart,
