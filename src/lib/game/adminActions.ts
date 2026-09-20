@@ -199,7 +199,11 @@ export type AdminActionKind =
   | 'set_stats'
   | 'set_progress'
   | 'restore_energy'
-  | 'finish'
+  | 'restore_health'
+  | 'accelerate_activity'
+  | 'grant_dragon_ball'
+  | 'grant_craft_material'
+  | 'grant_crafted_item'
   | 'reset'
   | 'grant_item'
   | 'grant_cosmetic'
@@ -224,6 +228,10 @@ export interface AdminActionInput {
   itemId?: string;
   cosmeticId?: string;
   transformationId?: string;
+  dragonBallStar?: number;
+  materialId?: string;
+  craftedItemId?: string;
+  quantity?: number;
 }
 
 export interface AdminActionResultLocal {
