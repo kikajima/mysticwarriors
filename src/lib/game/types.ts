@@ -157,6 +157,12 @@ export interface Enemy {
   id: string;
   name: string;
   taunt: string;
+  /** O que este capanga quer/está fazendo no mundo. */
+  intent: string;
+  /** Subdivisão exclusiva do PvE dentro da escala base do scouter. */
+  enemyTier: 1 | 2 | 3;
+  /** Escala base esperada (0–9); não altera a escala dos jogadores. */
+  enemyScaleIndex: number;
   level: number;
   strength: number;
   defense: number;
