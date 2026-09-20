@@ -31,9 +31,9 @@ describe('Inventário — reorganização de navegação e responsabilidades', (
       expect(inventory).toContain(`label: '${label}'`);
     }
 
-    expect(inventory).toContain("backing: 'weapon'");
-    expect(inventory).toContain("backing: 'armor'");
-    expect(inventory).toContain("backing: 'accessory'");
+    for (const slot of ['weapon', 'head', 'wrists', 'armor', 'legs', 'boots', 'accessory']) {
+      expect(inventory).toContain(`backing: '${slot}'`);
+    }
     expect(inventory).toContain("type: 'equip'");
     expect(inventory).toContain("type: 'unequip'");
   });
