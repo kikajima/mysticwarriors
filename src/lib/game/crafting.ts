@@ -80,10 +80,6 @@ async function assertStackCapacity(tx: Tx, playerId: string, itemId: string, qua
 
 async function grantStack(tx: Tx, playerId: string, itemId: string, quantity: number) {
   await assertStackCapacity(tx, playerId, itemId, quantity);
-  const current = await tx.inventoryStack.findUnique({
-    where: { playerId_itemId: { playerId, itemId } },
-    select: { quantity: true },
-  });
   await tx.inventoryStack.upsert({
     where: { playerId_itemId: { playerId, itemId } },
     update: { quantity: { increment: quantity } },
