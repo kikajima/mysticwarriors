@@ -1,6 +1,6 @@
 import type { Player, Prisma } from '@prisma/client';
 import { ApiError } from '@/lib/api';
-import { spendCurrency } from '@/lib/economy';
+import { addCurrency, spendCurrency } from '@/lib/economy';
 import { trackEvent } from '@/lib/analytics';
 import { getProfession, getProfessionMaterial } from './content/world';
 import type { CraftRecipeDef } from './types';
@@ -288,5 +288,60 @@ export async function claimCraft(tx: Tx, player: Player): Promise<{ message: str
 
   return {
     message: `✅ Fabricação concluída: +${job.outputQuantity}× ${outputName}.`,
+  };
+}
+
+
+export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: string }> {
+  const job = await tx.craftJob.findUnique({ where: { playerId: player.id } });
+  if (!job) throw new ApiError('VALIDATION_ERROR', 'Sua Oficina não tem fabricação para cancelar.');
+  if (job.endsAt.getTime() <= Date.now()) {
+    throw new ApiError('VALIDATION_ERROR', 'A fabricação já terminou. Colete o item em vez de cancelar.');
+  }
+
+  const recipe = getCraftRecipe(job.recipeId);
+  if (!recipe || recipe.outputItemId !== job.outputItemId || recipe.outputKind !== job.outputKind) {
+    throw new ApiError('VALIDATION_ERROR', 'Receita da fabricação não existe mais. Contate a administração.');
+  }
+  const maxOutput = recipe.outputQuantity * Math.max(1, recipe.maxBatch ?? 1);
+  if (
+    job.outputQuantity < recipe.outputQuantity ||
+    job.outputQuantity > maxOutput ||
+    job.outputQuantity % recipe.outputQuantity !== 0
+  ) {
+    throw new ApiError('VALIDATION_ERROR', 'Quantidade da fabricação inválida. Contate a administração.');
+  }
+
+  const batch = job.outputQuantity / recipe.outputQuantity;
+  for (const ingredient of recipe.ingredients) {
+    await assertStackCapacity(tx, player.id, ingredient.itemId, ingredient.quantity * batch);
+  }
+
+  const deleted = await tx.craftJob.deleteMany({ where: { id: job.id, playerId: player.id } });
+  if (deleted.count !== 1) {
+    throw new ApiError('VALIDATION_ERROR', 'Esta fabricação já foi alterada. Recarregue a Oficina.');
+  }
+
+  for (const ingredient of recipe.ingredients) {
+    await grantStack(tx, player.id, ingredient.itemId, ingredient.quantity * batch);
+  }
+  const refundZeni = recipe.costZeni * batch;
+  if (refundZeni > 0) {
+    await addCurrency(tx, player.id, 'zeni', refundZeni, {
+      type: 'refund',
+      source: 'craft_cancel',
+      accountId: player.accountId,
+      metadata: { recipeId: recipe.id, batch, refundZeni },
+    });
+  }
+
+  await trackEvent('craft_cancel', {
+    playerId: player.id,
+    accountId: player.accountId,
+    metadata: { recipeId: recipe.id, batch, refundZeni },
+  }, tx);
+
+  return {
+    message: `↩️ Fabricação cancelada: materiais e ${refundZeni.toLocaleString('pt-BR')} Zeni devolvidos.`,
   };
 }
