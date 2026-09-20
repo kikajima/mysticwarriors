@@ -126,6 +126,8 @@ function makePlayer(race: RaceId, cfg: ConfigDef, tag: string): Player {
     guildDonated: 0,
     missionsDone: 0,
     dragonBalls: 0,
+    craftingXp: 0,
+    craftsCompleted: 0,
     miracleWins: 0,
     davidWins: 0,
     isBot: false,
