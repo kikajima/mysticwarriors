@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PlayerView } from '@/lib/game/types';
 import {
   CRAFT_RECIPES,
+  CRAFT_TIER_PROFESSION_LEVEL,
   getCraftStackItem,
   getCraftedItem,
 } from '@/lib/game/content/crafting';
@@ -250,8 +251,9 @@ export function WorkshopPanel({
         </p>
         <p className="text-xs text-amber-200/50 mt-2">
           🎓 Mestria Acadêmica reduz o tempo de fabricação em 1% por nível, até 10%.
-          Os Tiers agora têm progressão real: Tier 2 exige carreira Nv. 2, Tier 3 Nv. 4,
-          Tier 4 Nv. 6 e Tier 5 Nv. 8 nas profissões indicadas pela receita.
+          Os Tiers agora têm progressão real: Tier 2 exige carreira Nv. {CRAFT_TIER_PROFESSION_LEVEL[2]},
+          Tier 3 Nv. {CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4 Nv. {CRAFT_TIER_PROFESSION_LEVEL[4]} e
+          Tier 5 Nv. {CRAFT_TIER_PROFESSION_LEVEL[5]} nas profissões indicadas pela receita.
         </p>
       </GameCard>
 
