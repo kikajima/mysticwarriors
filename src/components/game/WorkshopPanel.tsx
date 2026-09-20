@@ -33,6 +33,8 @@ interface CraftJobRow {
   recipeId: string;
   outputItemId: string;
   outputQuantity: number;
+  batchQuantity: number;
+  spentZeni: number;
   outputName: string;
   outputIcon: string;
   academicLevelStart: number;
@@ -298,15 +300,31 @@ export function WorkshopPanel({
                 <span>{countdown(remaining)}</span>
                 <span>{Math.round(progress)}%</span>
               </div>
-              {remaining <= 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {remaining <= 0 && (
+                  <GameButton
+                    disabled={busy}
+                    onClick={() => void runAction({ type: 'craft_claim' })}
+                  >
+                    🎁 Coletar item fabricado
+                  </GameButton>
+                )}
                 <GameButton
-                  className="mt-4"
+                  variant="ghost"
                   disabled={busy}
-                  onClick={() => void runAction({ type: 'craft_claim' })}
+                  onClick={() => {
+                    const ok = window.confirm(
+                      `Cancelar esta fabricação? Você receberá de volta ${job.spentZeni.toLocaleString('pt-BR')} Zeni e todos os ingredientes.`
+                    );
+                    if (ok) void runAction({ type: 'craft_cancel' });
+                  }}
                 >
-                  🎁 Coletar item fabricado
+                  ↩️ Cancelar e reembolsar
                 </GameButton>
-              )}
+              </div>
+              <p className="text-[10px] text-amber-200/35 mt-2">
+                Cancelamentos devolvem integralmente o Zeni e os ingredientes consumidos.
+              </p>
             </div>
           </div>
         </GameCard>
