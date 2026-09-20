@@ -16,7 +16,7 @@ import type {
 //  * turnos válidos: 1h / 2h / 4h / 8h;
 //  * turnos longos concedem bônus progressivo de XP e chance de material raro;
 //  * Zeni, atributo, horas, comum garantido e Esfera mantêm a regra base;
-//  * atributo respeita STAT_CAP=999 no servidor;
+//  * atributo é sempre inteiro e respeita STAT_CAP=999 no servidor;
 //  * Acadêmico não dá atributo: fornece bônus global de XP e, na PR de
 //    crafting, redução do tempo de fabricação.
 // =====================================================================
