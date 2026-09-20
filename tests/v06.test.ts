@@ -61,13 +61,26 @@ describe('PROFISSÕES — carreira 1–10', () => {
     expect(professionLevelForHours(4450)).toBe(10);
   });
 
-  test('turnos aceitos e eficiência são 1/2/4/8h = 100/95/85/70%', () => {
+  test('turnos longos dão bônus crescente de XP e raros: 1/2/4/8h = 100/105/115/130%', () => {
     expect(PROFESSION_SHIFTS.map((s) => [s.hours, s.efficiency])).toEqual([
       [1, 1],
-      [2, 0.95],
-      [4, 0.85],
-      [8, 0.70],
+      [2, 1.05],
+      [4, 1.15],
+      [8, 1.30],
     ]);
+
+    const xpPerHour = PROFESSION_SHIFTS.map((shift) => {
+      const rewards = professionShiftRewards(0, shift.hours, 20);
+      return rewards.xp / shift.hours;
+    });
+    expect(xpPerHour[1]).toBeGreaterThan(xpPerHour[0]);
+    expect(xpPerHour[2]).toBeGreaterThan(xpPerHour[1]);
+    expect(xpPerHour[3]).toBeGreaterThan(xpPerHour[2]);
+
+    const rarePerHour = PROFESSION_SHIFTS.map((shift) => PROFESSION_LEVELS[0].rareChance * shift.efficiency);
+    expect(rarePerHour[1]).toBeGreaterThan(rarePerHour[0]);
+    expect(rarePerHour[2]).toBeGreaterThan(rarePerHour[1]);
+    expect(rarePerHour[3]).toBeGreaterThan(rarePerHour[2]);
   });
 
   test('XP/h aprovado: 1% → 3,5% do próximo nível', () => {
