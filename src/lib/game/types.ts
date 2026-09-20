@@ -169,7 +169,10 @@ export interface Enemy {
 // ===== Itens =====
 
 export type EquipmentSlot = 'head' | 'wrists' | 'armor' | 'accessory' | 'weapon' | 'legs' | 'boots';
+/** Categorias reais de equipamento. Acessórios usam dois espaços equipáveis. */
+export type EquippedSlot = EquipmentSlot | 'accessory2';
 export const EQUIPMENT_SLOTS: EquipmentSlot[] = ['head', 'wrists', 'armor', 'accessory', 'weapon', 'legs', 'boots'];
+export const EQUIPPED_SLOTS: EquippedSlot[] = ['head', 'wrists', 'armor', 'accessory', 'accessory2', 'weapon', 'legs', 'boots'];
 export type ItemCategory = EquipmentSlot | 'consumable' | 'training';
 
 export interface TrainBonus {
@@ -209,6 +212,8 @@ export interface ItemsState {
   weapon: string | null;
   armor: string | null;
   accessory: string | null;
+  /** Segundo acessório; opcional para tolerar saves anteriores à expansão. */
+  accessory2?: string | null;
   /** Slots adicionais introduzidos pela Oficina; opcionais para tolerar saves legados. */
   head?: string | null;
   wrists?: string | null;
@@ -545,6 +550,20 @@ export interface DerivedStats {
   kiPower: number;
   defPower: number;
   resPower: number;
+  /** Bônus crus somados pelos equipamentos equipados. */
+  equipmentBonuses: {
+    strength: number;
+    defense: number;
+    speed: number;
+    ki: number;
+  };
+  /** Atributo base + bônus dos equipamentos, para exibição clara ao jogador. */
+  totalStats: {
+    strength: number;
+    defense: number;
+    speed: number;
+    ki: number;
+  };
   power: number; // poder de luta total (scouter)
 }
 
@@ -648,6 +667,8 @@ export interface PlayerView {
   battlesLost: number;
   missionsDone: number;
   dragonBalls: number;
+  /** Quantas das sete estrelas globais estão atualmente sem dono. */
+  dragonBallsAvailable?: number;
   items: ItemsState;
   techniques: string[];
   loadout: Loadout;
