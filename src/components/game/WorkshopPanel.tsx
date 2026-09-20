@@ -396,6 +396,15 @@ export function WorkshopPanel({
                 <div key={row.itemId} className="rounded-lg border border-amber-900/40 bg-black/20 px-3 py-2 flex items-center gap-2">
                   <span aria-hidden>{row.icon}</span>
                   <span className="text-xs text-amber-100/80 truncate">{row.name}</span>
+                  {row.tier && (
+                    <Chip className="bg-black/30 text-amber-200/55 border-amber-900/40">T{row.tier}</Chip>
+                  )}
+                  {row.rarity === 'rare' && (
+                    <Chip className="bg-violet-950/40 text-violet-300 border-violet-800/40">raro</Chip>
+                  )}
+                  {row.rarity === null && (
+                    <Chip className="bg-sky-950/40 text-sky-300 border-sky-800/40">projeto</Chip>
+                  )}
                   <span className="ml-auto font-heading text-amber-300">×{row.quantity}</span>
                 </div>
               ))}
