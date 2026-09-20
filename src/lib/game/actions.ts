@@ -233,7 +233,7 @@ export async function executeGameAction(
         break;
       }
       case 'craft_cancel': {
-        const craft = await cancelCraft(tx, player);
+        const craft = await cancelCraft(tx, player, typeof args.jobId === 'string' ? args.jobId : undefined);
         result = { message: craft.message, levelsGained: 0 };
         break;
       }
