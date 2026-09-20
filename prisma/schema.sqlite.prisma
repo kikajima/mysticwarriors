@@ -264,6 +264,9 @@ model CraftJob {
   outputItemId       String
   outputQuantity     Int      @default(1)
   outputKind         String
+  batchQuantity      Int      @default(1)
+  spentZeni          Int      @default(0)
+  ingredientsJson    String   @default("[]")
   academicLevelStart Int      @default(0)
   startedAt          DateTime @default(now())
   endsAt             DateTime
