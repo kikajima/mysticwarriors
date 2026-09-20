@@ -147,148 +147,111 @@ export function getProfessionMaterial(id: string): ProfessionMaterialDef | undef
 // INIMIGOS (PvE)
 // =====================================================================
 
+type EnemyCombatStyle = 'balanced' | 'bruiser' | 'tank' | 'speed' | 'ki';
+
+const ENEMY_STYLE_WEIGHTS: Record<EnemyCombatStyle, { strength: number; defense: number; speed: number; ki: number }> = {
+  balanced: { strength: 1, defense: 1, speed: 1, ki: 1 },
+  bruiser: { strength: 1.35, defense: 1.05, speed: 0.85, ki: 0.75 },
+  tank: { strength: 0.9, defense: 1.45, speed: 0.75, ki: 0.9 },
+  speed: { strength: 0.9, defense: 0.8, speed: 1.5, ki: 0.9 },
+  ki: { strength: 0.75, defense: 0.9, speed: 0.9, ki: 1.45 },
+};
+
+function enemyFromPower(seed: {
+  id: string;
+  name: string;
+  taunt: string;
+  intent: string;
+  enemyScaleIndex: number;
+  enemyTier: 1 | 2 | 3;
+  level: number;
+  targetPower: number;
+  style: EnemyCombatStyle;
+  color: string;
+  emoji: string;
+}): Enemy {
+  const w = ENEMY_STYLE_WEIGHTS[seed.style];
+  // Mesmos coeficientes do npcCombatPower. Distribuímos o orçamento entre
+  // os quatro atributos conforme o arquétipo e mantemos o alvo longe das
+  // bordas da escala para arredondamentos nunca mudarem sua categoria.
+  const statBudget = Math.max(1, seed.targetPower - seed.level * 15);
+  const weightedCoef = 2.2 * w.strength + 2.46 * w.defense + 2 * w.speed + 2.7 * w.ki;
+  const unit = statBudget / weightedCoef;
+  const strength = Math.max(1, Math.round(unit * w.strength));
+  const defense = Math.max(1, Math.round(unit * w.defense));
+  const speed = Math.max(1, Math.round(unit * w.speed));
+  const ki = Math.max(1, Math.round(unit * w.ki));
+  const rewardBase = Math.max(50, Math.round(seed.targetPower * (0.6 + Math.log10(Math.max(10, seed.targetPower)) / 2)));
+  return {
+    id: seed.id,
+    name: seed.name,
+    taunt: seed.taunt,
+    intent: seed.intent,
+    enemyTier: seed.enemyTier,
+    enemyScaleIndex: seed.enemyScaleIndex,
+    level: seed.level,
+    strength,
+    defense,
+    speed,
+    ki,
+    zeniReward: rewardBase,
+    xpReward: Math.max(35, Math.round(rewardBase * 0.72)),
+    color: seed.color,
+    emoji: seed.emoji,
+  };
+}
+
 export const ENEMIES: Enemy[] = [
-  {
-    id: 'arruaceiro_ermo',
-    name: 'Arruaceiro do Ermo',
-    taunt: '"Você escolheu o caminho errado, forasteiro."',
-    level: 1,
-    strength: 8,
-    defense: 7,
-    speed: 9,
-    ki: 6,
-    zeniReward: 60,
-    xpReward: 40,
-    color: 'from-stone-700 to-stone-950',
-    emoji: '🥊',
-  },
-  {
-    id: 'capanga_dojo_negro',
-    name: 'Capanga do Dojo Negro',
-    taunt: '"O mestre não precisa sujar as mãos com você."',
-    level: 3,
-    strength: 11,
-    defense: 10,
-    speed: 12,
-    ki: 9,
-    zeniReward: 180,
-    xpReward: 120,
-    color: 'from-lime-800 to-stone-950',
-    emoji: '🥋',
-  },
-  {
-    id: 'mercenario_bioaprimorado',
-    name: 'Mercenário Bioaprimorado',
-    taunt: '"Meu contrato termina quando você cair."',
-    level: 6,
-    strength: 32,
-    defense: 27,
-    speed: 30,
-    ki: 24,
-    zeniReward: 500,
-    xpReward: 340,
-    color: 'from-emerald-700 to-slate-950',
-    emoji: '🦾',
-  },
-  {
-    id: 'soldado_choque_planetario',
-    name: 'Soldado de Choque Planetário',
-    taunt: '"Já derrubei cidades inteiras por ordens menores."',
-    level: 12,
-    strength: 82,
-    defense: 70,
-    speed: 78,
-    ki: 65,
-    zeniReward: 1200,
-    xpReward: 850,
-    color: 'from-teal-700 to-cyan-950',
-    emoji: '🪖',
-  },
-  {
-    id: 'executor_estelar',
-    name: 'Executor Estelar',
-    taunt: '"Seu planeta é apenas mais um ponto no meu relatório."',
-    level: 20,
-    strength: 180,
-    defense: 158,
-    speed: 170,
-    ki: 152,
-    zeniReward: 3000,
-    xpReward: 2100,
-    color: 'from-cyan-700 to-sky-950',
-    emoji: '⭐',
-  },
-  {
-    id: 'capitao_saque_galactico',
-    name: 'Capitão de Saque Galáctico',
-    taunt: '"Uma galáxia inteira já pagou para não me enfrentar."',
-    level: 35,
-    strength: 410,
-    defense: 365,
-    speed: 390,
-    ki: 345,
-    zeniReward: 8000,
-    xpReward: 5500,
-    color: 'from-sky-700 to-indigo-950',
-    emoji: '🌌',
-  },
-  {
-    id: 'sentinela_cosmica',
-    name: 'Sentinela Cósmica',
-    taunt: '"A ordem do cosmos exige sua rendição."',
-    level: 50,
-    strength: 960,
-    defense: 860,
-    speed: 910,
-    ki: 830,
-    zeniReward: 22000,
-    xpReward: 15000,
-    color: 'from-violet-700 to-purple-950',
-    emoji: '🌠',
-  },
-  {
-    id: 'acolito_celestial',
-    name: 'Acólito Celestial',
-    taunt: '"Mortais também podem aprender reverência pela força."',
-    level: 75,
-    strength: 2200,
-    defense: 1980,
-    speed: 2120,
-    ki: 1920,
-    zeniReward: 60000,
-    xpReward: 42000,
-    color: 'from-fuchsia-700 to-violet-950',
-    emoji: '✨',
-  },
-  {
-    id: 'arauto_ordem_superior',
-    name: 'Arauto da Ordem Superior',
-    taunt: '"Eu sou apenas o mensageiro. Isso deveria preocupar você."',
-    level: 100,
-    strength: 5200,
-    defense: 4450,
-    speed: 4800,
-    ki: 4300,
-    zeniReward: 170000,
-    xpReward: 120000,
-    color: 'from-amber-600 to-orange-950',
-    emoji: '⚡',
-  },
-  {
-    id: 'guardiao_vazio_transcendente',
-    name: 'Guardião do Vazio Transcendente',
-    taunt: '"Além daqui, até os deuses enviam servos."',
-    level: 150,
-    strength: 11500,
-    defense: 10200,
-    speed: 11000,
-    ki: 9900,
-    zeniReward: 500000,
-    xpReward: 350000,
-    color: 'from-orange-600 to-red-950',
-    emoji: '👁️',
-  },
-];
+  // Mortal Comum I–III
+  enemyFromPower({ id: 'arruaceiro_ermo', name: 'Arruaceiro do Ermo', taunt: '"Você escolheu o caminho errado, forasteiro."', intent: 'Cobra pedágio ilegal nas rotas entre vilarejos.', enemyScaleIndex: 0, enemyTier: 1, level: 1, targetPower: 62, style: 'bruiser', color: 'from-stone-700 to-stone-950', emoji: '🥊' }),
+  enemyFromPower({ id: 'cacador_recompensa_local', name: 'Caçador de Recompensa Local', taunt: '"Seu rosto vale mais do que sua conversa."', intent: 'Procura guerreiros iniciantes para aumentar sua reputação.', enemyScaleIndex: 0, enemyTier: 2, level: 1, targetPower: 92, style: 'speed', color: 'from-stone-600 to-zinc-950', emoji: '🎯' }),
+  enemyFromPower({ id: 'guarda_arena_clandestina', name: 'Guarda da Arena Clandestina', taunt: '"Sem convite? Então entra como atração."', intent: 'Protege um circuito ilegal de lutas e recruta pela força.', enemyScaleIndex: 0, enemyTier: 3, level: 2, targetPower: 112, style: 'tank', color: 'from-zinc-600 to-stone-950', emoji: '🛡️' }),
+
+  // Marcial I–III
+  enemyFromPower({ id: 'capanga_dojo_negro', name: 'Capanga do Dojo Negro', taunt: '"O mestre não precisa sujar as mãos com você."', intent: 'Expulsa rivais dos territórios controlados pelo dojo.', enemyScaleIndex: 1, enemyTier: 1, level: 3, targetPower: 150, style: 'balanced', color: 'from-lime-800 to-stone-950', emoji: '🥋' }),
+  enemyFromPower({ id: 'cobrador_dojo_negro', name: 'Cobrador do Dojo Negro', taunt: '"Toda escola paga tributo. A sua também."', intent: 'Extorque academias menores em nome de uma organização marcial.', enemyScaleIndex: 1, enemyTier: 2, level: 4, targetPower: 205, style: 'bruiser', color: 'from-lime-700 to-emerald-950', emoji: '👊' }),
+  enemyFromPower({ id: 'instrutor_renegado', name: 'Instrutor Renegado', taunt: '"Disciplina sem crueldade é só brincadeira."', intent: 'Caça talentos para formar uma tropa de lutadores mercenários.', enemyScaleIndex: 1, enemyTier: 3, level: 5, targetPower: 258, style: 'speed', color: 'from-green-700 to-lime-950', emoji: '🥋' }),
+
+  // Super-Humana I–III
+  enemyFromPower({ id: 'mercenario_bioaprimorado', name: 'Mercenário Bioaprimorado', taunt: '"Meu contrato termina quando você cair."', intent: 'Testa implantes de combate em alvos considerados perigosos.', enemyScaleIndex: 2, enemyTier: 1, level: 6, targetPower: 340, style: 'balanced', color: 'from-emerald-700 to-slate-950', emoji: '🦾' }),
+  enemyFromPower({ id: 'agente_mutageno', name: 'Agente Mutagênico', taunt: '"A dose funcionou. Vamos descobrir até onde."', intent: 'Rouba amostras de Ki para aperfeiçoar um soro clandestino.', enemyScaleIndex: 2, enemyTier: 2, level: 8, targetPower: 520, style: 'speed', color: 'from-emerald-600 to-teal-950', emoji: '🧪' }),
+  enemyFromPower({ id: 'executor_laboratorio', name: 'Executor de Laboratório', taunt: '"Você é o último dado que falta no experimento."', intent: 'Elimina testemunhas de um programa de aprimoramento biológico.', enemyScaleIndex: 2, enemyTier: 3, level: 10, targetPower: 760, style: 'tank', color: 'from-teal-600 to-slate-950', emoji: '🧬' }),
+
+  // Guerreiro Planetário I–III
+  enemyFromPower({ id: 'soldado_choque_planetario', name: 'Soldado de Choque Planetário', taunt: '"Já derrubei cidades inteiras por ordens menores."', intent: 'Prepara o terreno para uma força de ocupação fora do planeta.', enemyScaleIndex: 3, enemyTier: 1, level: 12, targetPower: 1000, style: 'balanced', color: 'from-teal-700 to-cyan-950', emoji: '🪖' }),
+  enemyFromPower({ id: 'saqueador_orbital', name: 'Saqueador Orbital', taunt: '"Seu mundo tem recursos. Isso é azar seu."', intent: 'Marca cidades ricas para pilhagem por uma frota de saqueadores.', enemyScaleIndex: 3, enemyTier: 2, level: 15, targetPower: 1320, style: 'ki', color: 'from-cyan-700 to-teal-950', emoji: '🛸' }),
+  enemyFromPower({ id: 'comandante_invasao', name: 'Comandante de Invasão', taunt: '"A resistência termina quando o comandante cai."', intent: 'Coordena células de invasão e procura quebrar defensores locais.', enemyScaleIndex: 3, enemyTier: 3, level: 18, targetPower: 1660, style: 'bruiser', color: 'from-cyan-600 to-sky-950', emoji: '🎖️' }),
+
+  // Guerreiro Estelar I–III
+  enemyFromPower({ id: 'executor_estelar', name: 'Executor Estelar', taunt: '"Seu planeta é apenas mais um ponto no meu relatório."', intent: 'Executa sentenças contra mundos que desafiam sua corporação.', enemyScaleIndex: 4, enemyTier: 1, level: 22, targetPower: 2150, style: 'balanced', color: 'from-cyan-700 to-sky-950', emoji: '⭐' }),
+  enemyFromPower({ id: 'corsario_nebulosa', name: 'Corsário da Nebulosa', taunt: '"Eu vendo rotas. Você acabou de virar uma."', intent: 'Toma portais e rotas estelares para revendê-los ao maior lance.', enemyScaleIndex: 4, enemyTier: 2, level: 26, targetPower: 2850, style: 'speed', color: 'from-sky-700 to-cyan-950', emoji: '☄️' }),
+  enemyFromPower({ id: 'carcereiro_estelar', name: 'Carcereiro Estelar', taunt: '"Há uma cela com seu nome esperando."', intent: 'Captura guerreiros raros para prisões e arenas fora do sistema.', enemyScaleIndex: 4, enemyTier: 3, level: 30, targetPower: 3650, style: 'tank', color: 'from-sky-700 to-indigo-950', emoji: '⛓️' }),
+
+  // Guerreiro Galáctico I–III
+  enemyFromPower({ id: 'capitao_saque_galactico', name: 'Capitão de Saque Galáctico', taunt: '"Uma galáxia inteira já pagou para não me enfrentar."', intent: 'Cobra tributos de sistemas inteiros para financiar sua armada.', enemyScaleIndex: 5, enemyTier: 1, level: 35, targetPower: 4700, style: 'bruiser', color: 'from-sky-700 to-indigo-950', emoji: '🌌' }),
+  enemyFromPower({ id: 'almirante_sem_bandeira', name: 'Almirante sem Bandeira', taunt: '"Não sirvo impérios. Impérios me contratam."', intent: 'Vende campanhas militares completas para governos rivais.', enemyScaleIndex: 5, enemyTier: 2, level: 40, targetPower: 6300, style: 'balanced', color: 'from-indigo-700 to-blue-950', emoji: '🚀' }),
+  enemyFromPower({ id: 'ceifador_sistemas', name: 'Ceifador de Sistemas', taunt: '"Três sóis apagados. O quarto pode ser o seu."', intent: 'Destrói centros de defesa para deixar sistemas prontos para conquista.', enemyScaleIndex: 5, enemyTier: 3, level: 45, targetPower: 8200, style: 'ki', color: 'from-indigo-700 to-violet-950', emoji: '💫' }),
+
+  // Guerreiro Cósmico I–III
+  enemyFromPower({ id: 'sentinela_cosmica', name: 'Sentinela Cósmica', taunt: '"A ordem do cosmos exige sua rendição."', intent: 'Impõe uma ordem antiga sobre civilizações que considera instáveis.', enemyScaleIndex: 6, enemyTier: 1, level: 50, targetPower: 10600, style: 'tank', color: 'from-violet-700 to-purple-950', emoji: '🌠' }),
+  enemyFromPower({ id: 'inquisidor_constelacoes', name: 'Inquisidor das Constelações', taunt: '"Seu Ki deixou uma assinatura que não deveria existir."', intent: 'Investiga anomalias de poder e elimina quem ameaça o equilíbrio cósmico.', enemyScaleIndex: 6, enemyTier: 2, level: 58, targetPower: 14600, style: 'speed', color: 'from-violet-600 to-fuchsia-950', emoji: '🔭' }),
+  enemyFromPower({ id: 'arbitro_vazio', name: 'Árbitro do Vazio', taunt: '"Seu veredito já foi escrito entre as estrelas."', intent: 'Apaga facções inteiras que violam pactos cósmicos proibidos.', enemyScaleIndex: 6, enemyTier: 3, level: 66, targetPower: 18600, style: 'ki', color: 'from-purple-700 to-fuchsia-950', emoji: '⚖️' }),
+
+  // Divino I–III
+  enemyFromPower({ id: 'acolito_celestial', name: 'Acólito Celestial', taunt: '"Mortais também podem aprender reverência pela força."', intent: 'Prova mortais em nome de uma ordem divina sem revelar seu mestre.', enemyScaleIndex: 7, enemyTier: 1, level: 75, targetPower: 24000, style: 'balanced', color: 'from-fuchsia-700 to-violet-950', emoji: '✨' }),
+  enemyFromPower({ id: 'guardiao_santuario_astral', name: 'Guardião do Santuário Astral', taunt: '"Nenhum passo adiante sem mostrar seu valor."', intent: 'Impede que guerreiros indignos alcancem artefatos de origem divina.', enemyScaleIndex: 7, enemyTier: 2, level: 85, targetPower: 32200, style: 'tank', color: 'from-fuchsia-600 to-purple-950', emoji: '🪬' }),
+  enemyFromPower({ id: 'carrasco_celestial', name: 'Carrasco Celestial', taunt: '"Não é punição. É correção."', intent: 'Executa ordens de entidades superiores contra ameaças consideradas irreversíveis.', enemyScaleIndex: 7, enemyTier: 3, level: 95, targetPower: 41200, style: 'bruiser', color: 'from-pink-600 to-violet-950', emoji: '🗡️' }),
+
+  // Deus Maior I–III
+  enemyFromPower({ id: 'arauto_ordem_superior', name: 'Arauto da Ordem Superior', taunt: '"Eu sou apenas o mensageiro. Isso deveria preocupar você."', intent: 'Anuncia ultimatos de potências que governam regiões inteiras do multiverso.', enemyScaleIndex: 8, enemyTier: 1, level: 105, targetPower: 53500, style: 'balanced', color: 'from-amber-600 to-orange-950', emoji: '⚡' }),
+  enemyFromPower({ id: 'executor_mandato_divino', name: 'Executor do Mandato Divino', taunt: '"Uma ordem superior não precisa ser compreendida."', intent: 'Força mundos e divindades menores a obedecer um mandato desconhecido.', enemyScaleIndex: 8, enemyTier: 2, level: 120, targetPower: 71000, style: 'ki', color: 'from-amber-500 to-red-950', emoji: '🌩️' }),
+  enemyFromPower({ id: 'vigia_trono_vazio', name: 'Vigia do Trono Vazio', taunt: '"O trono não tem dono. Ainda."', intent: 'Elimina candidatos capazes de reivindicar uma autoridade cósmica abandonada.', enemyScaleIndex: 8, enemyTier: 3, level: 140, targetPower: 91000, style: 'speed', color: 'from-orange-600 to-red-950', emoji: '👁️' }),
+
+  // Transcendente I–III
+  enemyFromPower({ id: 'guardiao_vazio_transcendente', name: 'Guardião do Vazio Transcendente', taunt: '"Além daqui, até os deuses enviam servos."', intent: 'Mantém selada uma fronteira que separa realidades incompatíveis.', enemyScaleIndex: 9, enemyTier: 1, level: 150, targetPower: 120000, style: 'tank', color: 'from-orange-600 to-red-950', emoji: '👁️' }),
+  enemyFromPower({ id: 'emissario_fim_ciclos', name: 'Emissário do Fim dos Ciclos', taunt: '"Todo universo termina. Eu só antecipo o calendário."', intent: 'Avalia quais linhas de realidade devem ser encerradas antes do tempo.', enemyScaleIndex: 9, enemyTier: 2, level: 180, targetPower: 205000, style: 'ki', color: 'from-red-600 to-rose-950', emoji: '🕳️' }),
+  enemyFromPower({ id: 'custodio_alem_escala', name: 'Custódio Além da Escala', taunt: '"Você mede poder. Eu meço consequências."', intent: 'Impede que forças crescentes rompam as leis que sustentam múltiplos universos.', enemyScaleIndex: 9, enemyTier: 3, level: 220, targetPower: 360000, style: 'balanced', color: 'from-red-500 to-black', emoji: '♾️' }),
+]
 
 export function getEnemy(id: string): { enemy: Enemy; index: number } | null {
   const index = ENEMIES.findIndex((e) => e.id === id);
