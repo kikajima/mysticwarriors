@@ -15,6 +15,64 @@ import type { CraftRecipeDef, CraftStackItemDef, ShopItem } from '../types';
 
 export const MAX_CRAFT_BATCH = 20;
 
+/** XP total exigido para cada nível de Maestria da Oficina (1–10). */
+export const CRAFTING_LEVEL_XP = [0, 100, 250, 500, 900, 1500, 2400, 3600, 5200, 7500] as const;
+
+/** XP concedido por unidade concluída, de acordo com o Tier da receita. */
+export const CRAFTING_XP_PER_TIER = {
+  1: 25,
+  2: 50,
+  3: 100,
+  4: 180,
+  5: 300,
+} as const;
+
+export function craftingLevelFromXp(xp: number): number {
+  const safeXp = Math.max(0, Math.trunc(Number.isFinite(xp) ? xp : 0));
+  let level = 1;
+  for (let i = 1; i < CRAFTING_LEVEL_XP.length; i += 1) {
+    if (safeXp < CRAFTING_LEVEL_XP[i]) break;
+    level = i + 1;
+  }
+  return level;
+}
+
+export function craftingQueueCapacity(level: number): number {
+  const safeLevel = Math.max(1, Math.min(10, Math.trunc(level || 1)));
+  if (safeLevel >= 8) return 3;
+  if (safeLevel >= 4) return 2;
+  return 1;
+}
+
+export function craftingXpReward(tier: 1 | 2 | 3 | 4 | 5, batchQuantity = 1): number {
+  const batch = Math.max(1, Math.trunc(batchQuantity || 1));
+  return CRAFTING_XP_PER_TIER[tier] * batch;
+}
+
+export function craftingProgress(xp: number): {
+  level: number;
+  currentLevelXp: number;
+  nextLevelXp: number | null;
+  progressPct: number;
+  queueCapacity: number;
+} {
+  const safeXp = Math.max(0, Math.trunc(Number.isFinite(xp) ? xp : 0));
+  const level = craftingLevelFromXp(safeXp);
+  const currentLevelXp = CRAFTING_LEVEL_XP[level - 1];
+  const nextLevelXp = level < 10 ? CRAFTING_LEVEL_XP[level] : null;
+  const progressPct =
+    nextLevelXp === null
+      ? 100
+      : Math.max(0, Math.min(100, ((safeXp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100));
+  return {
+    level,
+    currentLevelXp,
+    nextLevelXp,
+    progressPct,
+    queueCapacity: craftingQueueCapacity(level),
+  };
+}
+
 export const CRAFT_TIER_PROFESSION_LEVEL = {
   1: 0,
   2: 2,
