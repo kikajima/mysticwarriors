@@ -32,6 +32,40 @@ const muteSchema = z.object({
   targetId: z.string().min(1).max(80),
 });
 
+const socialSchema = z.object({
+  action: z.enum(['friend_add', 'friend_accept', 'friend_remove', 'block', 'unblock']),
+  playerId: z.string().min(1).max(80).optional(),
+  targetId: z.string().min(1).max(80),
+});
+
+function friendshipPair(a: string, b: string): [string, string] {
+  return a < b ? [a, b] : [b, a];
+}
+
+async function blockedPeerIds(playerId: string): Promise<string[]> {
+  const [made, received] = await Promise.all([
+    db.playerBlock.findMany({ where: { playerId }, select: { blockedPlayerId: true } }),
+    db.playerBlock.findMany({ where: { blockedPlayerId: playerId }, select: { playerId: true } }),
+  ]);
+  return Array.from(new Set([
+    ...made.map((row) => row.blockedPlayerId),
+    ...received.map((row) => row.playerId),
+  ]));
+}
+
+async function assertNotBlocked(a: string, b: string): Promise<void> {
+  const blocked = await db.playerBlock.findFirst({
+    where: {
+      OR: [
+        { playerId: a, blockedPlayerId: b },
+        { playerId: b, blockedPlayerId: a },
+      ],
+    },
+    select: { id: true },
+  });
+  if (blocked) throw new ApiError('FORBIDDEN', 'Esta interação está bloqueada.');
+}
+
 function parseBefore(value: string | null): Date | null {
   if (!value) return null;
   const date = new Date(value);
@@ -60,9 +94,10 @@ async function listMessages(request: Request) {
   }
 
   const before = parseBefore(url.searchParams.get('before'));
-  const muted = await mutedIds(player.id);
-  const visibleSender: Prisma.ChatMessageWhereInput | undefined = muted.length
-    ? { OR: [{ senderPlayerId: player.id }, { senderPlayerId: { notIn: muted } }] }
+  const [muted, blockedPeers] = await Promise.all([mutedIds(player.id), blockedPeerIds(player.id)]);
+  const hiddenSenders = Array.from(new Set([...muted, ...blockedPeers]));
+  const visibleSender: Prisma.ChatMessageWhereInput | undefined = hiddenSenders.length
+    ? { OR: [{ senderPlayerId: player.id }, { senderPlayerId: { notIn: hiddenSenders } }] }
     : undefined;
 
   let channelWhere: Prisma.ChatMessageWhereInput;
@@ -74,6 +109,7 @@ async function listMessages(request: Request) {
   } else {
     const targetId = url.searchParams.get('targetId');
     if (!targetId) throw new ApiError('VALIDATION_ERROR', 'Escolha um guerreiro para a conversa privada.');
+    await assertNotBlocked(player.id, targetId);
     channelWhere = {
       channel: 'private',
       OR: [
@@ -105,7 +141,8 @@ async function listMessages(request: Request) {
 async function listConversations(request: Request) {
   const auth = await requireAuth();
   const player = await requireChatPlayer(auth, requestPlayerId(request));
-  const muted = new Set(await mutedIds(player.id));
+  const [mutedList, blockedList] = await Promise.all([mutedIds(player.id), blockedPeerIds(player.id)]);
+  const hidden = new Set([...mutedList, ...blockedList]);
   const rows = await db.chatMessage.findMany({
     where: {
       channel: 'private',
@@ -128,7 +165,7 @@ async function listConversations(request: Request) {
     const mine = row.senderPlayerId === player.id;
     const otherId = mine ? row.recipientPlayerId : row.senderPlayerId;
     const otherName = mine ? row.recipientName : row.senderName;
-    if (!otherId || !otherName || seen.has(otherId) || muted.has(otherId)) continue;
+    if (!otherId || !otherName || seen.has(otherId) || hidden.has(otherId)) continue;
     seen.add(otherId);
     conversations.push({
       playerId: otherId,
@@ -147,11 +184,12 @@ async function searchPlayers(request: Request) {
   const player = await requireChatPlayer(auth, requestPlayerId(request));
   const q = new URL(request.url).searchParams.get('q')?.trim() ?? '';
   if (q.length > 30) throw new ApiError('VALIDATION_ERROR', 'Busca muito longa.');
+  const blocked = await blockedPeerIds(player.id);
 
   const rows = await db.player.findMany({
     where: {
       isBot: false,
-      id: { not: player.id },
+      id: { not: player.id, ...(blocked.length ? { notIn: blocked } : {}) },
       ...(q ? { name: { contains: q } } : {}),
     },
     select: { id: true, name: true, level: true, race: true, guildId: true },
@@ -163,20 +201,40 @@ async function searchPlayers(request: Request) {
 
 async function context(request: Request) {
   const auth = await getAuth();
-  if (!auth) return ok({ authenticated: false, player: null, muted: [] });
+  if (!auth) return ok({ authenticated: false, player: null, muted: [], friends: [], friendRequests: [], sentRequests: [], blocked: [] });
 
   const explicitPlayerId = requestPlayerId(request);
   const player = explicitPlayerId
     ? await requireChatPlayer(auth, explicitPlayerId)
     : await getChatPlayer(auth);
 
-  if (!player) return ok({ authenticated: true, player: null, muted: [] });
+  if (!player) return ok({ authenticated: true, player: null, muted: [], friends: [], friendRequests: [], sentRequests: [], blocked: [] });
 
-  const muted = await db.chatMute.findMany({
+  const [muted, friendships, blocks] = await Promise.all([
+    db.chatMute.findMany({
     where: { playerId: player.id },
     select: { mutedPlayerId: true, mutedPlayerName: true, createdAt: true },
     orderBy: { createdAt: 'desc' },
-  });
+    }),
+    db.friendship.findMany({
+      where: { OR: [{ playerAId: player.id }, { playerBId: player.id }] },
+      include: {
+        playerA: { select: { id: true, name: true, level: true, race: true } },
+        playerB: { select: { id: true, name: true, level: true, race: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    }),
+    db.playerBlock.findMany({
+      where: { playerId: player.id },
+      include: { blockedPlayer: { select: { id: true, name: true, level: true, race: true } } },
+      orderBy: { createdAt: 'desc' },
+    }),
+  ]);
+
+  const relation = friendships.map((row) => ({
+    row,
+    other: row.playerAId === player.id ? row.playerB : row.playerA,
+  }));
   return ok({
     authenticated: true,
     player: {
@@ -190,6 +248,22 @@ async function context(request: Request) {
       playerId: row.mutedPlayerId,
       name: row.mutedPlayerName,
       createdAt: row.createdAt.toISOString(),
+    })),
+    friends: relation.filter(({ row }) => row.status === 'accepted').map(({ other, row }) => ({
+      ...other,
+      since: (row.acceptedAt ?? row.updatedAt).toISOString(),
+    })),
+    friendRequests: relation.filter(({ row }) => row.status === 'pending' && row.requestedById !== player.id).map(({ other, row }) => ({
+      ...other,
+      requestedAt: row.createdAt.toISOString(),
+    })),
+    sentRequests: relation.filter(({ row }) => row.status === 'pending' && row.requestedById === player.id).map(({ other, row }) => ({
+      ...other,
+      requestedAt: row.createdAt.toISOString(),
+    })),
+    blocked: blocks.map((row) => ({
+      ...row.blockedPlayer,
+      blockedAt: row.createdAt.toISOString(),
     })),
   });
 }
@@ -221,6 +295,7 @@ async function sendMessage(data: z.infer<typeof sendSchema>) {
       select: { id: true, name: true },
     });
     if (!target) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado.');
+    await assertNotBlocked(player.id, target.id);
     const mutedByMe = await db.chatMute.findUnique({
       where: { playerId_mutedPlayerId: { playerId: player.id, mutedPlayerId: target.id } },
       select: { id: true },
@@ -286,6 +361,75 @@ async function changeMute(data: z.infer<typeof muteSchema>) {
   return ok({ muted: true, target: { playerId: target.id, name: target.name } });
 }
 
+async function changeSocial(data: z.infer<typeof socialSchema>) {
+  const auth = await requireAuth();
+  const player = await requireChatPlayer(auth, data.playerId);
+  if (data.targetId === player.id) throw new ApiError('VALIDATION_ERROR', 'Escolha outro guerreiro.');
+
+  const target = await db.player.findFirst({
+    where: { id: data.targetId, isBot: false },
+    select: { id: true, name: true, level: true, race: true },
+  });
+  if (!target) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado.');
+
+  const [playerAId, playerBId] = friendshipPair(player.id, target.id);
+
+  if (data.action === 'block') {
+    await db.$transaction(async (tx) => {
+      await tx.friendship.deleteMany({ where: { playerAId, playerBId } });
+      await tx.playerBlock.upsert({
+        where: { playerId_blockedPlayerId: { playerId: player.id, blockedPlayerId: target.id } },
+        update: {},
+        create: { playerId: player.id, blockedPlayerId: target.id },
+      });
+    });
+    return ok({ blocked: true, target });
+  }
+
+  if (data.action === 'unblock') {
+    await db.playerBlock.deleteMany({ where: { playerId: player.id, blockedPlayerId: target.id } });
+    return ok({ blocked: false, target });
+  }
+
+  await assertNotBlocked(player.id, target.id);
+
+  if (data.action === 'friend_remove') {
+    await db.friendship.deleteMany({ where: { playerAId, playerBId } });
+    return ok({ friendship: null, target });
+  }
+
+  const existing = await db.friendship.findUnique({
+    where: { playerAId_playerBId: { playerAId, playerBId } },
+  });
+
+  if (data.action === 'friend_accept') {
+    if (!existing || existing.status !== 'pending' || existing.requestedById === player.id) {
+      throw new ApiError('VALIDATION_ERROR', 'Não há solicitação de amizade deste guerreiro para aceitar.');
+    }
+    const friendship = await db.friendship.update({
+      where: { id: existing.id },
+      data: { status: 'accepted', acceptedAt: new Date() },
+    });
+    return ok({ friendship, target });
+  }
+
+  // friend_add: pedido recíproco aceita automaticamente.
+  if (existing?.status === 'accepted') return ok({ friendship: existing, target });
+  if (existing?.status === 'pending') {
+    if (existing.requestedById === player.id) return ok({ friendship: existing, target });
+    const friendship = await db.friendship.update({
+      where: { id: existing.id },
+      data: { status: 'accepted', acceptedAt: new Date() },
+    });
+    return ok({ friendship, target });
+  }
+
+  const friendship = await db.friendship.create({
+    data: { playerAId, playerBId, requestedById: player.id, status: 'pending' },
+  });
+  return ok({ friendship, target }, 201);
+}
+
 export async function GET(request: Request) {
   try {
     const view = new URL(request.url).searchParams.get('view') ?? 'context';
@@ -307,9 +451,14 @@ export async function POST(request: Request) {
       if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message);
       return await sendMessage(parsed.data);
     }
-    const parsed = muteSchema.safeParse(raw);
-    if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Ação inválida.');
-    return await changeMute(parsed.data);
+    if (['mute', 'unmute'].includes(raw?.action)) {
+      const parsed = muteSchema.safeParse(raw);
+      if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Ação inválida.');
+      return await changeMute(parsed.data);
+    }
+    const parsed = socialSchema.safeParse(raw);
+    if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Ação social inválida.');
+    return await changeSocial(parsed.data);
   } catch (error) {
     return toErrorResponse(error);
   }
