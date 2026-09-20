@@ -149,6 +149,7 @@ export function WorkshopPanel({
       playerItemOutput.category !== 'consumable' &&
       player.items.owned.includes(playerItemOutput.id);
     const academicOk = !recipe.requiresAcademic || academicLevel > 0;
+    const playerLevelOk = player.level >= (recipe.minPlayerLevel ?? 1);
     const maxBatch = Math.max(1, recipe.maxBatch ?? 1);
     const quantity = Math.max(1, Math.min(maxBatch, batchQty[recipe.id] ?? 1));
     const totalCost = recipe.costZeni * quantity;
@@ -174,6 +175,7 @@ export function WorkshopPanel({
     const canStart =
       !job &&
       academicOk &&
+      playerLevelOk &&
       professionRequirementsOk &&
       ingredientsOk &&
       player.zeni >= totalCost &&
@@ -192,9 +194,17 @@ export function WorkshopPanel({
               {recipe.requiresAcademic && (
                 <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">Acadêmico</Chip>
               )}
+              {recipe.minPlayerLevel && recipe.minPlayerLevel > 1 && (
+                <Chip className={playerLevelOk
+                  ? "bg-violet-950/40 text-violet-300 border-violet-800/50"
+                  : "bg-red-950/50 text-red-300 border-red-800/50"
+                }>
+                  Guerreiro Nv. {recipe.minPlayerLevel}+
+                </Chip>
+              )}
               <Chip
                 className={
-                  academicOk && professionRequirementsOk
+                  academicOk && playerLevelOk && professionRequirementsOk
                     ? ingredientsOk && player.zeni >= totalCost
                       ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/50'
                       : 'bg-yellow-950/50 text-yellow-300 border-yellow-800/50'
@@ -203,7 +213,7 @@ export function WorkshopPanel({
               >
                 {uniqueAlreadyOwned
                   ? 'já fabricado'
-                  : academicOk && professionRequirementsOk
+                  : academicOk && playerLevelOk && professionRequirementsOk
                     ? ingredientsOk && player.zeni >= totalCost
                       ? 'pronta'
                       : 'faltam recursos'
@@ -277,6 +287,11 @@ export function WorkshopPanel({
             {!academicOk && professionRequirements.length === 0 && (
               <p className="text-xs text-sky-300/80 mt-3">
                 Esta receita exige experiência como Acadêmico.
+              </p>
+            )}
+            {!playerLevelOk && recipe.minPlayerLevel && (
+              <p className="text-xs text-red-300/80 mt-3">
+                Seu guerreiro precisa atingir o nível {recipe.minPlayerLevel} para fabricar esta obra-prima.
               </p>
             )}
             {uniqueAlreadyOwned && (
