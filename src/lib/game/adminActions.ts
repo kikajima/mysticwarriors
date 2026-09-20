@@ -201,6 +201,7 @@ export type AdminActionKind =
   | 'restore_energy'
   | 'restore_health'
   | 'accelerate_activity'
+  | 'finish' // alias legado para clientes admin em cache
   | 'grant_dragon_ball'
   | 'grant_craft_material'
   | 'grant_crafted_item'
@@ -505,22 +506,113 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
           await trackEvent('admin_restore_energy', { accountId, metadata: { character: fresh.name } }, tx);
           return `Energia de ${fresh.name} restaurada ao total (${d.maxEnergy}).`;
 
-        } else if (input.action === 'finish') {
-          const now = new Date();
+        } else if (input.action === 'restore_health') {
+          const d = computeDerived(fresh);
+          await tx.player.update({ where: { id: fresh.id }, data: { hp: d.maxHp } });
+          await trackEvent('admin_restore_health', { accountId, metadata: { character: fresh.name } }, tx);
+          return `Vida de ${fresh.name} restaurada ao total (${d.maxHp}).`;
+
+        } else if (input.action === 'accelerate_activity' || input.action === 'finish') {
+          const readyAt = new Date(Date.now() - 1000);
           const done: string[] = [];
-          if (fresh.missionId && fresh.missionEndsAt && fresh.missionEndsAt.getTime() > now.getTime()) {
-            await tx.player.update({ where: { id: fresh.id }, data: { missionEndsAt: now } });
-            done.push('turno de trabalho concluído (pagamento pronto para coletar)');
+
+          if (fresh.missionId && fresh.missionEndsAt && fresh.missionEndsAt.getTime() > readyAt.getTime()) {
+            await tx.player.update({ where: { id: fresh.id }, data: { missionEndsAt: readyAt } });
+            done.push('trabalho pronto para coletar');
           }
-          const acts = await tx.activity.updateMany({
-            where: { playerId: fresh.id, completedAt: null, endsAt: { gt: now } },
-            data: { endsAt: now },
+
+          const activities = await tx.activity.updateMany({
+            where: { playerId: fresh.id, completedAt: null, endsAt: { gt: readyAt } },
+            data: { endsAt: readyAt },
           });
-          if (acts.count > 0) done.push(`${acts.count} batalha(s)/atividade(s) concluída(s)`);
-          await trackEvent('admin_finish', { accountId, metadata: { character: fresh.name } }, tx);
+          if (activities.count > 0) {
+            done.push(`${activities.count} atividade(s) pronta(s) para resolver`);
+          }
+
+          const craft = await tx.craftJob.updateMany({
+            where: { playerId: fresh.id, endsAt: { gt: readyAt } },
+            data: { endsAt: readyAt },
+          });
+          if (craft.count > 0) {
+            done.push('fabricação pronta para coletar');
+          }
+
+          await trackEvent('admin_accelerate_activity', {
+            accountId,
+            metadata: {
+              character: fresh.name,
+              profession: !!fresh.missionId,
+              activities: activities.count,
+              craft: craft.count,
+            },
+          }, tx);
+
           return done.length > 0
-            ? `${fresh.name}: ${done.join(' · ')}. O jogador vê o resultado ao voltar ao jogo.`
-            : `${fresh.name} não tem nada em andamento neste servidor.`;
+            ? `${fresh.name}: ${done.join(' · ')}. Nenhuma recompensa foi antecipada; o fluxo normal de resolução/coleta continua valendo.`
+            : `${fresh.name} não tem atividade com timer em andamento neste servidor.`;
+
+        } else if (input.action === 'grant_dragon_ball') {
+          if (input.dragonBallStar === undefined) {
+            throw new ApiError('VALIDATION_ERROR', 'Escolha qual Esfera do Dragão deseja conceder.');
+          }
+          const message = await grantAdminDragonBallStar(tx, fresh, input.dragonBallStar);
+          await trackEvent('admin_grant_dragon_ball', {
+            accountId,
+            metadata: { character: fresh.name, star: input.dragonBallStar },
+          }, tx);
+          return message;
+
+        } else if (input.action === 'grant_craft_material') {
+          const materialId = String(input.materialId ?? '');
+          const material = getProfessionMaterial(materialId) ?? getCraftStackItem(materialId);
+          if (!material) throw new ApiError('VALIDATION_ERROR', 'Material/projeto de crafting desconhecido.');
+
+          const quantity = clampAdminInt(input.quantity ?? 1, 1, 999);
+          const current = await tx.inventoryStack.findUnique({
+            where: { playerId_itemId: { playerId: fresh.id, itemId: materialId } },
+            select: { quantity: true },
+          });
+          if ((current?.quantity ?? 0) + quantity > 1_000_000) {
+            throw new ApiError('VALIDATION_ERROR', 'Esse estoque atingiria o limite máximo permitido.');
+          }
+          await tx.inventoryStack.upsert({
+            where: { playerId_itemId: { playerId: fresh.id, itemId: materialId } },
+            update: { quantity: { increment: quantity } },
+            create: { playerId: fresh.id, itemId: materialId, quantity },
+          });
+          await trackEvent('admin_grant_craft_material', {
+            accountId,
+            metadata: { character: fresh.name, itemId: materialId, quantity },
+          }, tx);
+          return `${material.icon} +${quantity} ${material.name} para ${fresh.name}.`;
+
+        } else if (input.action === 'grant_crafted_item') {
+          const craftedId = String(input.craftedItemId ?? '');
+          const item = getCraftedItem(craftedId);
+          if (!item) throw new ApiError('VALIDATION_ERROR', 'Item exclusivo da Oficina desconhecido.');
+
+          const items = parseItems(fresh.items);
+          const requested = clampAdminInt(input.quantity ?? 1, 1, 999);
+          if (item.category === 'consumable') {
+            const current = items.consumables[item.id] ?? 0;
+            if (current + requested > 999) {
+              throw new ApiError('VALIDATION_ERROR', `Limite de 999 unidades de ${item.name} excedido.`);
+            }
+            items.consumables[item.id] = current + requested;
+          } else {
+            if (requested !== 1) {
+              throw new ApiError('VALIDATION_ERROR', 'Equipamentos e itens permanentes de crafting só podem ser concedidos uma unidade por vez.');
+            }
+            if (items.owned.includes(item.id)) return `${fresh.name} já possui ${item.name}.`;
+            if (items.owned.length >= 200) throw new ApiError('VALIDATION_ERROR', 'Inventário cheio (limite 200).');
+            items.owned.push(item.id);
+          }
+          await tx.player.update({ where: { id: fresh.id }, data: { items: JSON.stringify(items) } });
+          await trackEvent('admin_grant_crafted_item', {
+            accountId,
+            metadata: { character: fresh.name, itemId: item.id, quantity: requested },
+          }, tx);
+          return `${item.icon} ${item.name} concedido a ${fresh.name}${requested > 1 ? ` (×${requested})` : ''}.`;
 
         } else if (input.action === 'grant_item') {
           // v0.9.6: dar ITEM de loja ao personagem (catálogo validado).
