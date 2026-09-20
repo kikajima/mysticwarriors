@@ -166,7 +166,7 @@ export function ProfessionsPanel({
               <div>
                 <h3 className="font-heading text-amber-100">Duração do próximo turno</h3>
                 <p className="text-xs text-amber-200/50 mt-1">
-                  Quanto maior o turno, maior o bônus de XP e de chance de material raro. Zeni, atributo, horas e materiais comuns continuam integrais.
+                  O XP do trabalho escala diretamente com o nível do personagem. Quanto maior o turno, maior também o bônus de XP e de chance de material raro.
                 </p>
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -392,7 +392,7 @@ export function ProfessionsPanel({
                   </div>
 
                   <p className="text-[11px] text-amber-200/45 mb-3">
-                    Comum: 1–2 unidades por hora garantidas. Turnos mais longos aumentam a chance de raro por hora. Esfera: um teste por turno concluído.
+                    XP: {tier.xpPerPlayerLevel} × seu nível por hora, antes do bônus de duração. Comum: 1–2 unidades por hora garantidas. Turnos mais longos aumentam a chance de raro por hora. Esfera: um teste por turno concluído.
                   </p>
 
                   {isActive ? (
