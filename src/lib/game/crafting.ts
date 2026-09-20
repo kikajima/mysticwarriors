@@ -24,6 +24,7 @@ import {
 type Tx = Prisma.TransactionClient;
 
 const MAX_STACK = 999;
+export const MAX_CRAFT_BATCH = 20;
 
 export function craftAcademicLevel(player: Pick<Player, 'professions'>): number {
   const professions = parseProfessions(player.professions);
@@ -109,9 +110,12 @@ async function grantPlayerItem(tx: Tx, player: Player, itemId: string, quantity:
   await updateJsonState(tx, player, { items: JSON.stringify(items) });
 }
 
-export async function startCraft(tx: Tx, player: Player, recipeId: string): Promise<{ message: string }> {
+export async function startCraft(tx: Tx, player: Player, recipeId: string, batchQuantity = 1): Promise<{ message: string }> {
   const recipe = getCraftRecipe(recipeId);
   if (!recipe) throw new ApiError('VALIDATION_ERROR', 'Receita de fabricação inválida.');
+  if (!Number.isInteger(batchQuantity) || batchQuantity < 1 || batchQuantity > MAX_CRAFT_BATCH) {
+    throw new ApiError('VALIDATION_ERROR', `Quantidade de fabricação deve ficar entre 1 e ${MAX_CRAFT_BATCH}.`);
+  }
 
   const existing = await tx.craftJob.findUnique({ where: { playerId: player.id } });
   if (existing) {
@@ -146,20 +150,22 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string): Prom
   const have = new Map(rows.map((row) => [row.itemId, row.quantity]));
 
   for (const ingredient of recipe.ingredients) {
+    const requiredQuantity = ingredient.quantity * batchQuantity;
     const qty = have.get(ingredient.itemId) ?? 0;
-    if (qty < ingredient.quantity) {
+    if (qty < requiredQuantity) {
       throw new ApiError(
         'VALIDATION_ERROR',
-        `Faltam ${ingredient.quantity - qty}× ${ingredientName(ingredient.itemId)} para fabricar ${recipe.name}.`
+        `Faltam ${requiredQuantity - qty}× ${ingredientName(ingredient.itemId)} para fabricar ${batchQuantity}× ${recipe.name}.`
       );
     }
   }
 
-  await spendCurrency(tx, player.id, 'zeni', recipe.costZeni, {
+  const totalCostZeni = recipe.costZeni * batchQuantity;
+  await spendCurrency(tx, player.id, 'zeni', totalCostZeni, {
     type: 'spend',
     source: 'craft',
     accountId: player.accountId,
-    metadata: { recipeId: recipe.id, tier: recipe.tier },
+    metadata: { recipeId: recipe.id, tier: recipe.tier, batchQuantity },
   });
 
   for (const ingredient of recipe.ingredients) {
@@ -167,9 +173,9 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string): Prom
       where: {
         playerId: player.id,
         itemId: ingredient.itemId,
-        quantity: { gte: ingredient.quantity },
+        quantity: { gte: ingredient.quantity * batchQuantity },
       },
-      data: { quantity: { decrement: ingredient.quantity } },
+      data: { quantity: { decrement: ingredient.quantity * batchQuantity } },
     });
     if (res.count !== 1) {
       throw new ApiError('VALIDATION_ERROR', 'Seu estoque mudou durante a fabricação. Tente novamente.');
@@ -178,14 +184,14 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string): Prom
   await tx.inventoryStack.deleteMany({ where: { playerId: player.id, quantity: { lte: 0 } } });
 
   const startedAt = new Date();
-  const durationMs = craftDurationMs(recipe.baseDurationMin, academicLevel);
+  const durationMs = craftDurationMs(recipe.baseDurationMin * batchQuantity, academicLevel);
   const endsAt = new Date(startedAt.getTime() + durationMs);
   await tx.craftJob.create({
     data: {
       playerId: player.id,
       recipeId: recipe.id,
       outputItemId: recipe.outputItemId,
-      outputQuantity: recipe.outputQuantity,
+      outputQuantity: recipe.outputQuantity * batchQuantity,
       outputKind: recipe.outputKind,
       academicLevelStart: academicLevel,
       startedAt,
@@ -201,13 +207,14 @@ export async function startCraft(tx: Tx, player: Player, recipeId: string): Prom
       tier: recipe.tier,
       academicLevel,
       durationMs,
+      batchQuantity,
     },
   }, tx);
 
   const reduction = academicLevel > 0 ? academicLevel : 0;
   return {
     message:
-      `🔧 Fabricação iniciada: ${recipe.name}. ` +
+      `🔧 Fabricação iniciada: ${batchQuantity}× ${recipe.name}. ` +
       `Tempo: ${Math.ceil(durationMs / 60_000)} min` +
       (reduction > 0 ? ` (Acadêmico -${reduction}%).` : '.'),
   };
