@@ -161,6 +161,12 @@ async function grantPlayerItem(tx: Tx, player: Player, itemId: string, quantity:
 export async function startCraft(tx: Tx, player: Player, recipeId: string, quantity = 1): Promise<{ message: string }> {
   const recipe = getCraftRecipe(recipeId);
   if (!recipe) throw new ApiError('VALIDATION_ERROR', 'Receita de fabricação inválida.');
+  if (recipe.minPlayerLevel && player.level < recipe.minPlayerLevel) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      `Nível ${recipe.minPlayerLevel} necessário para fabricar ${recipe.name} (você está no nível ${player.level}).`
+    );
+  }
   const batch = Math.trunc(Number(quantity));
   const maxBatch = Math.max(1, recipe.maxBatch ?? 1);
   if (!Number.isFinite(batch) || batch < 1 || batch > maxBatch) {
