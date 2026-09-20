@@ -879,36 +879,46 @@ export default function PlayPage() {
   // Quando a atividade local esgota a duração, busca o estado — o servidor
   // aplica o resultado (exactly-once) e devolve pendingResults para exibir.
   //
-  // v0.9.24 (A1) — TIMEOUT DE SEGURANÇA + RETRY: o resultado JÁ ESTÁ salvo
-  // no servidor (a atividade venceu); a busca agora tenta 3× (imediata +
-  // 2 retries com backoff). Em falha total: o personagem é LIBERADO na UI
-  // (o painel não fica preso em "Luta em andamento (0s)" — a atividade
-  // vencida não bloqueia nada no servidor) e um banner fixo oferece
-  // "Tentar novamente". A fonte da verdade segue sendo o servidor: a
-  // poll de 15s também reconecta sozinha quando a rede volta.
+  // A conclusão usa uma action LEVE dedicada: resolve a atividade e devolve
+  // o Player atualizado sem carregar ranking/quests/invites do /state.
+  // Há timeout real de 12s; falha total libera a UI e mostra retry.
   const [resultSyncPending, setResultSyncPending] = useState(false);
   const fetchActivityResult = useCallback(
     async (attempt = 0): Promise<boolean> => {
       if (!playerId) return true;
+      const controller = new AbortController();
+      // Antes este fluxo usava /api/game/state sem timeout real. Quando a
+      // resolução do torneio pegava uma conexão lenta, a UI podia ficar
+      // presa em "Luta em andamento (0s)" por dezenas de segundos.
+      const timeout = window.setTimeout(() => controller.abort(), 12_000);
       try {
         const requestStart = Date.now();
-        const res = await fetch(`/api/game/state?playerId=${playerId}`, { cache: 'no-store' });
+        const res = await fetch('/api/game/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({ playerId, type: 'sync_activity' }),
+        });
         if (!res.ok) throw new Error(String(res.status));
         const data = await res.json();
         if (data.serverNow) noteServerTime(data.serverNow, requestStart);
         if (data.player) { stageIncomingBattle(data); applyPlayerState(data.player); }
-        if (Array.isArray(data.pendingResults) && data.pendingResults.length > 0) {
-          showAppliedResults(data.pendingResults);
+        if (Array.isArray(data.appliedResults) && data.appliedResults.length > 0) {
+          showAppliedResults(data.appliedResults);
         }
         setResultSyncPending(false);
         return true;
-      } catch {
-        if (attempt < 2) {
-          // retry automático com backoff (1,5s → 3s)
-          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      } catch (error) {
+        // Timeout não dispara uma segunda mutação concorrente: o servidor
+        // pode terminar o primeiro pedido mesmo após o abort do navegador.
+        const timedOut = error instanceof DOMException && error.name === 'AbortError';
+        if (!timedOut && attempt < 1) {
+          await new Promise((r) => setTimeout(r, 1200));
           return fetchActivityResult(attempt + 1);
         }
         return false;
+      } finally {
+        window.clearTimeout(timeout);
       }
     },
     [playerId, applyPlayerState, showAppliedResults, stageIncomingBattle]

@@ -100,6 +100,8 @@ export function TournamentPanel({
   const inRun = t.round > 0;
   const round = Math.max(1, t.round);
   const running = player.runningActivity;
+  const runningMs = running ? new Date(running.endsAt).getTime() - now : 0;
+  const runningExpired = !!running && runningMs <= 0;
 
   // cooldown do comitê (só existe fora de campanha)
   const cooldownMs = !inRun && t.cooldownEndsAt
@@ -127,7 +129,12 @@ export function TournamentPanel({
 
   // fila de bloqueios — o PRIMEIRO verdadeiro vira o motivo do botão
   const block = running
-    ? { why: `Luta em andamento (${formatCountdown(Math.max(0, new Date(running.endsAt).getTime() - now))})`, icon: <Loader2 className="w-4 h-4 animate-spin" /> }
+    ? {
+        why: runningExpired
+          ? 'Confirmando resultado da luta…'
+          : `Luta em andamento (${formatCountdown(Math.max(0, runningMs))})`,
+        icon: <Loader2 className="w-4 h-4 animate-spin" />,
+      }
     : onMission
       ? { why: 'Torneio liberado só após o fim do turno de trabalho', icon: <Hourglass className="w-4 h-4" /> }
       : cooldownMs > 0
