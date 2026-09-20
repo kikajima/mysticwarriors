@@ -5,6 +5,7 @@ import { requireAuth } from '@/lib/auth';
 import { playerToView, computeDerived } from '@/lib/game/engine';
 import { MAX_CHARACTERS_PER_ACCOUNT } from '@/lib/game/content/world';
 import { DAILY_QUESTS, WEEKLY_QUESTS } from '@/lib/game/content/quests';
+import { getCraftRecipe } from '@/lib/game/content/crafting';
 import { dailyPeriod, weeklyPeriod } from '@/lib/progression';
 import { filterStaleRows } from '@/lib/game/resetGuard';
 import {
@@ -239,6 +240,8 @@ export async function POST(request: Request) {
         // Ingredientes foram consumidos ANTES do snapshot; restauramos apenas
         // a fila, com saída/timestamps já sanitizados contra o catálogo.
         if (char.craftJob) {
+          const restoredRecipe = getCraftRecipe(char.craftJob.recipeId);
+          const restoredBatch = char.craftJob.batchQuantity;
           await tx.craftJob.create({
             data: {
               playerId: created.id,
@@ -246,6 +249,14 @@ export async function POST(request: Request) {
               outputItemId: char.craftJob.outputItemId,
               outputQuantity: char.craftJob.outputQuantity,
               outputKind: char.craftJob.outputKind,
+              batchQuantity: restoredBatch,
+              spentZeni: restoredRecipe ? restoredRecipe.costZeni * restoredBatch : 0,
+              ingredientsJson: restoredRecipe
+                ? JSON.stringify(restoredRecipe.ingredients.map((ingredient) => ({
+                    itemId: ingredient.itemId,
+                    quantity: ingredient.quantity * restoredBatch,
+                  })))
+                : '[]',
               academicLevelStart: char.craftJob.academicLevelStart,
               startedAt: new Date(char.craftJob.startedAt),
               endsAt: new Date(char.craftJob.endsAt),
