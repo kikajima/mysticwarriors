@@ -91,8 +91,6 @@ const COMBAT = {
 const BASIC_ENERGY_KI_COST = 10;
 /** ORIGEM: src/lib/game/engine.ts — batalhas: replay base 1,1 s + 0,48 s/rodada (teto 32 s). */
 const BATTLE_REPLAY = { baseMs: 1100, perRoundMs: 480, maxMs: 32_000 } as const;
-/** ORIGEM: src/lib/game/rules.ts — STAT_CAP. */
-const STAT_CAP = 999;
 /** ORIGEM: src/lib/game/rules.ts — ZENKAI. */
 const ZENKAI = { relevanceFactor: 0.6, sameOpponentCooldownHours: 12, zenkaiRequiresHpPct: 0.5 } as const;
 /** ORIGEM: src/lib/worldboss.ts — exportado e validado pelo teste de contrato. */
@@ -665,11 +663,11 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Atributos',
     icon: '💪',
     group: 'Progressão',
-    summary: 'Força, Ki, Defesa e Velocidade: efeitos, treino instantâneo, custos e o teto de 999.',
+    summary: 'Força, Ki, Defesa e Velocidade: efeitos, treino instantâneo, custos e progressão sem teto de gameplay.',
     resumo: [
       '**Força** = golpes físicos · **Ki** = ondas de energia (sem aumentar a energia de ações).',
       '**Defesa** = vida máxima e resistência · **Velocidade** = iniciativa e esquiva.',
-      'Treino custa **3 ⚡ + Zeni** e é **instantâneo** (teto 999 por atributo); a ficha mostra **base + equipamento = total**.',
+      'Treino custa **3 ⚡ + Zeni** e é **instantâneo**; os atributos não possuem teto de gameplay e podem continuar crescendo ao longo dos anos.',
     ],
     blocks: [
       {
@@ -712,7 +710,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           {
             kind: 'table',
             table: {
-              caption: `Curva de custo de treino (ORIGEM: content/world.ts — baseTrainingCost; ×1,05 por ponto até 150, ×1,035 depois; teto de qualquer atributo: ${STAT_CAP})`,
+              caption: 'Curva de custo de treino (ORIGEM: content/world.ts — baseTrainingCost; ×1,05 por ponto até 150, ×1,035 depois; atributos sem teto de gameplay)',
               headers: ['Atributo em', 'Custo por ponto (Zeni)'],
               rows: [10, 25, 50, 100, 150, 200, 300].map((v) => [String(v), br(baseTrainingCost(v))]),
             },
@@ -747,7 +745,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             [
               '🪙 Zeni',
               'Profissões, vitórias PvE/PvP, [[torneio|torneio]], [[world-boss|Ameaça Universal]], quests, conquistas, [[esferas-dragao|desejo de riqueza]]',
-              'Equipamentos, técnicas, [[transformacoes|transformações]], [[talentos|talentos]], guilda, cura, treino',
+              'Equipamentos, técnicas, [[transformacoes|transformações]], [[talentos|talentos]], guilda e treino',
             ],
             [
               '💎 Cristais',
@@ -771,7 +769,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'details',
-        summary: '🔍 Detalhes para curiosos — curva de XP, modificadores raciais e tetos',
+        summary: '🔍 Detalhes para curiosos — curva de XP e modificadores raciais',
         blocks: [
           {
             kind: 'text',
@@ -1063,7 +1061,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           'O ganho de atributo é sempre um **número inteiro** e respeita o teto global de **999**; ao chegar no teto, Zeni, XP, horas e loot continuam normalmente.',
           'O XP de trabalho é **linear com o nível do personagem**: dobrar o nível dobra o XP base por hora na mesma carreira e duração.',
           'A chance de material raro é testada **uma vez por hora** e recebe o bônus da duração do turno. O material comum nunca deixa de vir: **1–2 unidades por hora**.',
-          'A Busca pelas Esferas é uma atividade separada das profissões, com duração de **1h a 12h**. A chance base cresce até **20%**; bônus de equipamento podem elevar o total até o teto mundial de **50%**. Cada busca pode encontrar no máximo uma esfera.',
+          'A Busca pelas Esferas é uma atividade separada das profissões, com duração de **1h a 12h e custo de 0 energia**. A chance base cresce até **20%**; bônus de equipamento podem elevar o total até o teto mundial de **50%**. Cada busca pode encontrar no máximo uma esfera.',
           'Cancelar um turno em andamento não concede recompensa parcial.',
           '**Androide:** o bônus racial de Zeni de trabalho continua valendo.',
         ],
@@ -1166,16 +1164,16 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Batalhas PvE (Capangas)',
     icon: '👹',
     group: 'Progressão',
-    summary: 'Um capanga genérico para cada uma das 10 Escalas de Poder, com dificuldade e recompensas crescentes.',
+    summary: 'Três capangas genéricos por Escala de Poder — graus I, II e III exclusivos dos inimigos.',
     resumo: [
-      '**10 capangas genéricos**, exatamente um em cada Escala de Poder — de Mortal Comum a Transcendente.',
+      '**30 capangas genéricos**: três em cada Escala de Poder, identificados como I, II e III apenas no PvE.',
       'O painel mostra stats e recompensas de cada um antes de você aceitar.',
       'Vencer paga Zeni + XP; perder rende uma fração do XP e um KO exige recuperação antes da próxima luta.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: `A sequência começa no **${ENEMIES[0].name}** (nível ${ENEMIES[0].level}, escala ${POWER_SCALES[0].nome}), que paga ~${br(ENEMIES[0].zeniReward)} Zeni e ~${br(ENEMIES[0].xpReward)} XP, e termina no **${ENEMIES[ENEMIES.length - 1].name}** (nível ${ENEMIES[ENEMIES.length - 1].level}, escala ${POWER_SCALES[POWER_SCALES.length - 1].nome}), com ~${br(ENEMIES[ENEMIES.length - 1].zeniReward)} Zeni e ~${br(ENEMIES[ENEMIES.length - 1].xpReward)} XP por vitória. São ${ENEMIES.length} capangas ao todo — exatamente um por escala. O painel de Batalha mostra os atributos, recompensas e a comparação de [[escala-poder|escala]] com o seu poder atual.`,
+        text: `A sequência começa no **${ENEMIES[0].name}** (${POWER_SCALES[0].nome} I) e termina no **${ENEMIES[ENEMIES.length - 1].name}** (${POWER_SCALES[POWER_SCALES.length - 1].nome} III). São ${ENEMIES.length} capangas ao todo: cada uma das 10 escalas possui os graus **I, II e III**, com poder crescente dentro do mesmo patamar. Essa subdivisão existe **somente para os inimigos**; guerreiros continuam usando as 10 Escalas de Poder normais. Cada card também explica a intenção do capanga no confronto.`,
       },
       {
         kind: 'list',
@@ -1187,14 +1185,14 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'details',
-        summary: '🔍 Detalhes para curiosos — tabela completa dos 9 vilões',
+        summary: '🔍 Detalhes para curiosos — tabela completa dos 30 capangas',
         blocks: [
           {
             kind: 'table',
             table: {
-              caption: 'Vilões (ORIGEM: content/world.ts — ENEMIES; HP = 80 + 15×nível + 5×defesa)',
-              headers: ['Vilão', 'Nível', 'HP', 'Zeni (vitória)', 'XP (vitória)'],
-              rows: ENEMIES.map((e) => [`${e.emoji} ${e.name}`, String(e.level), br(enemyMaxHp(e)), `~${br(e.zeniReward)}`, `~${br(e.xpReward)}`]),
+              caption: 'Capangas PvE (ORIGEM: content/world.ts — ENEMIES; HP = 80 + 15×nível + 5×defesa)',
+              headers: ['Capanga / Grau', 'Nível', 'HP', 'Zeni (vitória)', 'XP (vitória)'],
+              rows: ENEMIES.map((e) => [`${e.emoji} ${e.name} — ${getPowerScale(npcCombatPower(e)).scale.nome} ${['I', 'II', 'III'][e.enemyTier - 1]}`, String(e.level), br(enemyMaxHp(e)), `~${br(e.zeniReward)}`, `~${br(e.xpReward)}`]),
             },
           },
         ],
@@ -1273,7 +1271,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `O Torneio é uma campanha de eliminação direta. Cada luta custa energia como qualquer batalha e a **vida carrega entre as lutas** — chegar machucado na final é o preço do caminho (cure com Zeni no meio). O adversário é **elástico**: construído a partir do SEU combatente atual (equipamentos e [[transformacoes|transformação]] contam) — quartas contra ~82% do seu poder, semifinal contra ~95%, final contra um par. A inscrição da campanha custa **${br(TOURNAMENT_ENTRY_FEE)} Zeni** (taxa do comitê, cobrada na luta de abertura).`,
+        text: `O Torneio é uma campanha de eliminação direta. Cada luta custa energia como qualquer batalha e a **vida carrega entre as lutas** — chegar machucado na final é o preço do caminho (recupere-se naturalmente ou use itens). O adversário é **elástico**: construído a partir do SEU combatente atual (equipamentos e [[transformacoes|transformação]] contam) — quartas contra ~82% do seu poder, semifinal contra ~95%, final contra um par. A inscrição da campanha custa **${br(TOURNAMENT_ENTRY_FEE)} Zeni** (taxa do comitê, cobrada na luta de abertura).`,
       },
       {
         kind: 'table',
