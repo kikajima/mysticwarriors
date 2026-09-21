@@ -67,11 +67,11 @@ const CLAMP = {
   xp: [0, 1_000_000_000],
   zeni: [0, 100_000_000],
   crystals: [0, 100_000],
-  // v0.9: atributos altos concedidos pelo painel de admin devem
-  // sobreviver a uma restauração futura da nuvem (limite defensivo alto)
-  hp: [1, 10_000_000],
-  energy: [0, 10_000_000],
-  stat: [1, 999_999],
+  // Sem teto de gameplay: snapshots aceitam toda a faixa de inteiros
+  // exatos representável pelo runtime JavaScript.
+  hp: [1, Number.MAX_SAFE_INTEGER],
+  energy: [0, Number.MAX_SAFE_INTEGER],
+  stat: [1, Number.MAX_SAFE_INTEGER],
   counter: [0, 1_000_000],
   dragonBalls: [0, 7],
   consumableCount: [0, 999],
