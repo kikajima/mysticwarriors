@@ -191,7 +191,7 @@ export function roundDef(round: number): TournamentRoundDef {
  * Zeni exato da rodada no nível atual.
  *
  * O patamar Nv. 10 preserva o balanceamento anterior (150/400/800).
- * Acima dele, a renda cresce de forma sublinear-superior (expoente 1,25):
+ * Acima dele, a renda cresce de forma moderada (expoente 1,25):
  * acompanha o encarecimento do jogo sem explodir tão rápido quanto a curva
  * de treino. Abaixo do Nv. 10, o piso 1× protege o iniciante da taxa de
  * inscrição e mantém o torneio relevante desde o começo.
@@ -217,7 +217,6 @@ export interface TournamentRewards {
 
 /** Premiação por vencer a rodada N no nível dado. */
 export function tournamentRewards(round: number, playerLevel: number): TournamentRewards {
-  const def = roundDef(round);
   return {
     zeni: tournamentZeniReward(round, playerLevel),
     xp: tournamentXpReward(round, playerLevel),
