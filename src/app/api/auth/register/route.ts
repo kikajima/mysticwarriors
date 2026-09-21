@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { ApiError, toErrorResponse } from '@/lib/api';
 import { LIMITS, clientIp, rateLimit } from '@/lib/rate-limit';
-import { accountToView, createSession, hashPassword, setSessionCookie } from '@/lib/auth';
+import { accountToView, createSession, hashPassword, setSessionCookie, requireLegacyLocalAuthEnvironment } from '@/lib/auth';
 import { trackEvent } from '@/lib/analytics';
 
 const registerSchema = z.object({
@@ -21,6 +21,7 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    requireLegacyLocalAuthEnvironment();
     const ip = clientIp(request);
     const rl = rateLimit(`register:${ip}`, LIMITS.register.limit, LIMITS.register.windowMs);
     if (!rl.allowed) {
