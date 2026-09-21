@@ -32,7 +32,7 @@ create table if not exists public.admins (
 );
 
 insert into public.admins (email)
-values ('alicomprasbbbb@gmail.com')
+values ('SEU_EMAIL_ADMIN_AQUI')
 on conflict (email) do nothing;
 
 alter table public.admins enable row level security;
@@ -164,4 +164,4 @@ grant execute on function public.admin_list_players() to authenticated;
 grant execute on function public.admin_get_progress(uuid) to authenticated;
 grant execute on function public.admin_update_progress(uuid, jsonb) to authenticated;
 
--- ===== FIM — painel liberado para alicomprasbbbb@gmail.com =====
+-- ===== FIM — painel liberado para SEU_EMAIL_ADMIN_AQUI =====
