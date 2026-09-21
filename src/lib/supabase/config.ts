@@ -1,25 +1,29 @@
 // =====================================================================
-// Supabase — configuração (CONTAS NA NUVEM, v0.8)
+// Supabase — configuração pública de Auth/Storage
 // ---------------------------------------------------------------------
-// SEGURANÇA: usa APENAS a chave PUBLICÁVEL (publishable/anon). A chave
-// secreta (service_role) NÃO existe neste projeto por decisão de
-// arquitetura — o servidor valida tokens de usuário chamando o endpoint
-// público /auth/v1/user do Supabase, sem precisar de segredo algum.
+// SOMENTE URL e chave PUBLICÁVEL (anon/publishable) podem chegar ao bundle.
+// Nunca use service_role, secret keys ou credenciais de banco em NEXT_PUBLIC_*.
 //
-// As variáveis NEXT_PUBLIC_* são inlined no bundle em build time. Os
-// fallbacks garantem que o jogo funcione mesmo que o .env não acompanhe
-// o ambiente de build (chave publicável é, por design, pública).
-//
-// 2026 — NOVA BASE (a pedido do dono, para não misturar com o projeto
-// antigo): zkocvbovcwhwdmhwruja. O schema desta base nasce do script
-// supabase-instalacao-nova-base.sql (instalação única no SQL Editor).
+// Em produção as variáveis são OBRIGATÓRIAS. Não existe fallback para um
+// projeto real: um deploy mal configurado falha alto em vez de apontar
+// silenciosamente para outra base.
 // =====================================================================
 
-export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://zkocvbovcwhwdmhwruja.supabase.co';
+function publicEnv(name: 'NEXT_PUBLIC_SUPABASE_URL' | 'NEXT_PUBLIC_SUPABASE_ANON_KEY'): string {
+  const value = process.env[name]?.trim();
+  if (value) return value;
 
-export const SUPABASE_PUBLISHABLE_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_SqnRASBW52AGDQsQgjSa2A_cztQn02n';
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`[config] ${name} é obrigatório em produção.`);
+  }
+
+  return name === 'NEXT_PUBLIC_SUPABASE_URL'
+    ? 'http://127.0.0.1:54321'
+    : 'local-dev-publishable-key';
+}
+
+export const SUPABASE_URL = publicEnv('NEXT_PUBLIC_SUPABASE_URL');
+export const SUPABASE_PUBLISHABLE_KEY = publicEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
 /**
  * Versão do contrato de progresso na nuvem.
