@@ -1,25 +1,25 @@
 // =====================================================================
-// Supabase — configuração (CONTAS NA NUVEM, v0.8)
+// Supabase — configuração pública
 // ---------------------------------------------------------------------
-// SEGURANÇA: usa APENAS a chave PUBLICÁVEL (publishable/anon). A chave
-// secreta (service_role) NÃO existe neste projeto por decisão de
-// arquitetura — o servidor valida tokens de usuário chamando o endpoint
-// público /auth/v1/user do Supabase, sem precisar de segredo algum.
+// Usa SOMENTE as credenciais PUBLICÁVEIS do cliente Supabase.
+// Nunca mantenha service_role, chaves privadas ou segredos aqui.
 //
-// As variáveis NEXT_PUBLIC_* são inlined no bundle em build time. Os
-// fallbacks garantem que o jogo funcione mesmo que o .env não acompanhe
-// o ambiente de build (chave publicável é, por design, pública).
-//
-// 2026 — NOVA BASE (a pedido do dono, para não misturar com o projeto
-// antigo): zkocvbovcwhwdmhwruja. O schema desta base nasce do script
-// supabase-instalacao-nova-base.sql (instalação única no SQL Editor).
+// As variáveis NEXT_PUBLIC_* são inlined no bundle em build time.
+// Em produção/dev elas são obrigatórias: não existe fallback para um
+// projeto real, evitando acoplamento e exposição acidental.
 // =====================================================================
 
-export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://zkocvbovcwhwdmhwruja.supabase.co';
+function requiredPublicEnv(name: 'NEXT_PUBLIC_SUPABASE_URL' | 'NEXT_PUBLIC_SUPABASE_ANON_KEY'): string {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    throw new Error(`Variável obrigatória ausente: ${name}`);
+  }
+  return value;
+}
 
-export const SUPABASE_PUBLISHABLE_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_SqnRASBW52AGDQsQgjSa2A_cztQn02n';
+export const SUPABASE_URL = requiredPublicEnv('NEXT_PUBLIC_SUPABASE_URL');
+
+export const SUPABASE_PUBLISHABLE_KEY = requiredPublicEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
 /**
  * Versão do contrato de progresso na nuvem.
