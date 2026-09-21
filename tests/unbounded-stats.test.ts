@@ -1,20 +1,21 @@
 import { describe, expect, test } from 'bun:test';
 
 describe('progressão de atributos sem teto artificial', () => {
-  test('schemas Prisma armazenam atributos e vitais como Float', async () => {
+  test('schemas Prisma armazenam atributos e HP como Float', async () => {
     for (const schema of ['schema.prisma', 'schema.sqlite.prisma']) {
       const src = await Bun.file(`${import.meta.dir}/../prisma/${schema}`).text();
-      for (const field of ['hp', 'strength', 'defense', 'speed', 'ki', 'energy']) {
+      for (const field of ['hp', 'strength', 'defense', 'speed', 'ki']) {
         expect(src).toMatch(new RegExp(`^\\s*${field}\\s+Float\\s+@default\\(`, 'm'));
       }
+      expect(src).toMatch(/^\s*energy\s+Int\s+@default\(100\)/m);
     }
   });
 
-  test('migração PostgreSQL amplia as seis colunas para DOUBLE PRECISION', async () => {
+  test('migração PostgreSQL amplia atributos e HP para DOUBLE PRECISION', async () => {
     const src = await Bun.file(
       `${import.meta.dir}/../supabase/migrations/20260920211500_unbounded_player_stats.sql`
     ).text();
-    for (const field of ['hp', 'strength', 'defense', 'speed', 'ki', 'energy']) {
+    for (const field of ['hp', 'strength', 'defense', 'speed', 'ki']) {
       expect(src).toContain(`ALTER COLUMN "${field}" TYPE DOUBLE PRECISION`);
     }
   });
