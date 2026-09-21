@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { SHOP_ITEMS, COSMETICS, PRODUCTS, SHOP_MAX_QUANTITY, TALENTS } from '@/lib/game/constants';
+import { cosmeticPublicSurfaces } from '@/lib/game/content/cosmetics';
 import type { CosmeticDef } from '@/lib/game/content/cosmetics';
 import type { TalentDef } from '@/lib/game/content/talents';
 import { EQUIPMENT_SLOT_META, EQUIPMENT_SLOTS } from '@/lib/game/types';
 import type { EquipmentSlot, PlayerView, ShopItem } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
-import { Coins, Lock, Swords, TrendingUp, Gem, Flame, CheckCircle2 } from 'lucide-react';
+import { PublicPlayerIdentity } from './PublicPlayerIdentity';
+import { Coins, Lock, Swords, TrendingUp, Gem, Flame, CheckCircle2, Eye, X } from 'lucide-react';
 
 const CATEGORIES = [
   { key: 'weapon', label: 'Armas', icon: '⚔️' },
@@ -463,8 +465,13 @@ function CosmeticsSection({
   onUnequip: (cosmeticId: string) => void;
 }) {
   const owned = new Set(ownedCosmetics);
-  // equipados DESTE personagem (posse é por conta — ver CosmeticsView)
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  // Equipados deste personagem. A prévia substitui apenas o slot do item testado.
   const equipped = player.cosmetics?.equipped ?? {};
+  const preview = COSMETICS.find((item) => item.id === previewId);
+  const previewEquipped = preview
+    ? { ...equipped, [preview.slot]: preview.id }
+    : equipped;
   const rarityClass: Record<CosmeticDef['rarity'], string> = {
     comum: 'bg-amber-950/50 text-amber-300 border-amber-800/50',
     raro: 'bg-sky-950/50 text-sky-300 border-sky-800/50',
@@ -481,10 +488,60 @@ function CosmeticsSection({
     effect: 'Efeito',
     background: 'Fundo',
     card: 'Card',
+    nameplate: 'Nameplate',
+    chat: 'Balão de chat',
   };
 
   return (
     <>
+      <GameCard className={`relative overflow-hidden p-4 ${preview?.cardGlowCss ?? ''}`}>
+        {preview?.profileBgCss ? (
+          <div className={`absolute inset-0 opacity-70 ${preview.profileBgCss}`} aria-hidden />
+        ) : null}
+        <div className="relative space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="font-heading text-amber-100">Provador de cosméticos</h3>
+              <p className="text-[11px] text-amber-200/45">
+                Veja como o item aparece antes de gastar diamantes.
+              </p>
+            </div>
+            {preview ? (
+              <GameButton size="sm" variant="ghost" onClick={() => setPreviewId(null)}>
+                <X className="w-3.5 h-3.5" /> Limpar
+              </GameButton>
+            ) : null}
+          </div>
+          <PublicPlayerIdentity
+            name={player.name}
+            race={player.race}
+            avatarUrl={player.avatarUrl}
+            cosmetics={{ equipped: previewEquipped }}
+            level={player.level}
+          />
+          {preview?.chatBubbleCss ? (
+            <div className={`max-w-md rounded-xl border px-3 py-2 text-xs text-amber-50/90 ${preview.chatBubbleCss}`}>
+              💬 Assim sua mensagem aparece para os outros guerreiros.
+            </div>
+          ) : null}
+          {preview?.victoryPresentation ? (
+            <div className={`rounded-xl border p-3 text-center font-heading ${preview.victoryPresentation.css}`}>
+              <span className="mr-2 text-xl">{preview.victoryPresentation.icon}</span>
+              {preview.victoryPresentation.label}
+            </div>
+          ) : null}
+          {preview?.screenEffect ? (
+            <p className="text-xs text-cyan-300/75">✨ Efeito animado: {preview.name}</p>
+          ) : null}
+          {preview ? (
+            <p className="text-[10px] text-emerald-300/70">
+              Visível em: {cosmeticPublicSurfaces(preview).join(' · ')}
+            </p>
+          ) : (
+            <p className="text-[10px] text-amber-200/35">Escolha “Experimentar” em qualquer item abaixo.</p>
+          )}
+        </div>
+      </GameCard>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {COSMETICS.map((c) => {
@@ -512,12 +569,25 @@ function CosmeticsSection({
                   </div>
                   <p className="text-[11px] text-amber-200/50 mt-1 leading-snug">{c.description}</p>
                   <p className="text-[10px] text-amber-200/30 mt-1 uppercase tracking-wide">{SLOT_LABEL[c.slot] ?? c.slot}</p>
+                  <p className="text-[10px] text-emerald-300/60 mt-1">
+                    Aparece em: {cosmeticPublicSurfaces(c).join(' · ')}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span className="font-heading text-sky-300 text-sm flex items-center gap-1">
                   <Gem className="w-4 h-4" /> {c.price} cristais
                 </span>
+                <div className="flex items-center gap-2">
+                  <GameButton
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => setPreviewId(c.id)}
+                    title="Visualizar no seu guerreiro antes de comprar"
+                  >
+                    <Eye className="w-3.5 h-3.5" /> Experimentar
+                  </GameButton>
                 {isOwned ? (
                   isEquipped ? (
                     <div className="flex flex-col items-end gap-1">
@@ -548,6 +618,7 @@ function CosmeticsSection({
                     Comprar
                   </GameButton>
                 )}
+                </div>
               </div>
             </GameCard>
           );

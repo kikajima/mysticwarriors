@@ -16,7 +16,9 @@ export type CosmeticSlot =
   | 'pose'
   | 'effect'
   | 'background'
-  | 'card';
+  | 'card'
+  | 'nameplate'
+  | 'chat';
 
 export const COSMETIC_SLOTS: ReadonlySet<string> = new Set<CosmeticSlot>([
   'aura',
@@ -28,6 +30,8 @@ export const COSMETIC_SLOTS: ReadonlySet<string> = new Set<CosmeticSlot>([
   'effect',
   'background',
   'card',
+  'nameplate',
+  'chat',
 ]);
 
 export interface CosmeticDef {
@@ -58,6 +62,16 @@ export interface CosmeticDef {
   avatarPulseCss?: string;
   /** slot 'card': classe CSS do brilho envolvente do card da ficha (v0.6 — era grátis) */
   cardGlowCss?: string;
+  /** slot 'nameplate': acabamento público aplicado ao nome do guerreiro. */
+  nameplateCss?: string;
+  /** slot 'chat': acabamento do balão de mensagem no chat. */
+  chatBubbleCss?: string;
+  /** slot 'outfit': acabamento visível no bloco de identidade pública. */
+  identityAccentCss?: string;
+  /** slot 'pose': apresentação curta usada após vitória e na ficha pública. */
+  victoryPresentation?: { icon: string; label: string; css: string };
+  /** Onde o item é percebido por outros jogadores (texto da loja). */
+  publicSurfaces?: string[];
 }
 
 export const COSMETICS: CosmeticDef[] = [
@@ -72,6 +86,7 @@ export const COSMETICS: CosmeticDef[] = [
     icon: '🔥',
     previewCss: 'shadow-[0_0_18px_rgba(249,115,22,0.7)]',
     avatarGlowCss: 'shadow-[0_0_24px_rgba(249,115,22,0.8)]',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
   },
   {
     id: 'aura_trovao',
@@ -83,6 +98,7 @@ export const COSMETICS: CosmeticDef[] = [
     icon: '⚡',
     previewCss: 'shadow-[0_0_18px_rgba(56,189,248,0.75)]',
     avatarGlowCss: 'shadow-[0_0_24px_rgba(56,189,248,0.85)]',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
   },
   {
     id: 'aura_divina',
@@ -94,6 +110,7 @@ export const COSMETICS: CosmeticDef[] = [
     icon: '✨',
     previewCss: 'shadow-[0_0_22px_rgba(250,204,21,0.85)]',
     avatarGlowCss: 'shadow-[0_0_30px_rgba(250,204,21,0.95)] animate-pulse',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
   },
   {
     // v0.6 — o brilho dourado pulsante que era GRÁTIS ao redor do retrato
@@ -108,6 +125,7 @@ export const COSMETICS: CosmeticDef[] = [
     icon: '🌟',
     previewCss: 'shadow-[0_0_20px_rgba(251,146,60,0.65)] animate-pulse',
     avatarPulseCss: 'bg-gradient-to-br from-orange-500/30 to-amber-600/20 blur-lg animate-pulse',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
   },
   // Títulos — exibidos junto ao nome do guerreiro
   {
@@ -119,6 +137,7 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'raro',
     icon: '📜',
     titleText: 'o Lendário',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
   },
   {
     id: 'title_destruidor',
@@ -129,6 +148,7 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'épico',
     icon: '💀',
     titleText: 'o Destruidor',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
   },
   {
     id: 'title_campeao',
@@ -139,6 +159,7 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'lendário',
     icon: '👑',
     titleText: 'Campeão Universal',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
   },
   // Molduras de perfil — anel ao redor do avatar
   {
@@ -150,6 +171,7 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'raro',
     icon: '🖼️',
     avatarFrameCss: 'ring-4 ring-yellow-400/90 shadow-[0_0_16px_rgba(250,204,21,0.45)]',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
   },
   {
     id: 'frame_dragao',
@@ -160,6 +182,7 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'épico',
     icon: '🐲',
     avatarFrameCss: 'ring-4 ring-emerald-400/90 shadow-[0_0_16px_rgba(52,211,153,0.45)]',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
   },
   // Fundos de perfil — atrás da ficha de personagem
   {
@@ -223,6 +246,12 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'épico',
     icon: '🦸',
     profileBadge: { icon: '🦸', label: 'Pose Suprema' },
+    victoryPresentation: {
+      icon: '🦸',
+      label: 'POSE SUPREMA',
+      css: 'border-yellow-500/70 bg-gradient-to-r from-yellow-950/80 via-orange-950/70 to-yellow-950/80 text-yellow-200 shadow-[0_0_28px_rgba(234,179,8,0.22)]',
+    },
+    publicSurfaces: ['Vitória', 'Perfil', 'Ranking', 'Guilda'],
   },
   {
     id: 'roupa_gi_branco',
@@ -233,6 +262,69 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'raro',
     icon: '🥋',
     profileBadge: { icon: '🥋', label: 'Gi Branco Mestre' },
+    identityAccentCss: 'border-white/30 bg-gradient-to-r from-slate-100/10 via-amber-100/10 to-white/5 shadow-[0_0_18px_rgba(255,255,255,0.08)]',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
+  },
+  // Identidade social — itens feitos para serem vistos por outros jogadores.
+  {
+    id: 'nameplate_dragao_eterno',
+    slot: 'nameplate',
+    name: 'Nameplate do Dragão Eterno',
+    description: 'Seu nome aparece em uma placa esmeralda com brilho de escamas.',
+    price: 42,
+    rarity: 'épico',
+    icon: '🐉',
+    nameplateCss: 'border-emerald-500/50 bg-gradient-to-r from-emerald-950/75 via-teal-950/55 to-emerald-950/75 text-emerald-100 shadow-[0_0_14px_rgba(16,185,129,0.18)]',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
+  },
+  {
+    id: 'nameplate_cosmico',
+    slot: 'nameplate',
+    name: 'Nameplate Cósmico',
+    description: 'Uma placa violeta estrelada para destacar seu nome no universo.',
+    price: 58,
+    rarity: 'lendário',
+    icon: '🌌',
+    nameplateCss: 'border-violet-500/50 bg-gradient-to-r from-violet-950/80 via-fuchsia-950/55 to-indigo-950/75 text-violet-100 shadow-[0_0_16px_rgba(139,92,246,0.22)]',
+    publicSurfaces: ['Perfil', 'Ranking', 'Chat', 'Guilda', 'Ameaça Global'],
+  },
+  {
+    id: 'chat_ki_dourado',
+    slot: 'chat',
+    name: 'Balão de Ki Dourado',
+    description: 'Suas mensagens recebem uma borda dourada e brilho discreto.',
+    price: 24,
+    rarity: 'raro',
+    icon: '💬',
+    chatBubbleCss: 'border-yellow-700/55 bg-gradient-to-r from-yellow-950/35 to-amber-950/20 shadow-[0_0_12px_rgba(234,179,8,0.10)]',
+    publicSurfaces: ['Chat'],
+  },
+  {
+    id: 'chat_abissal',
+    slot: 'chat',
+    name: 'Balão Abissal',
+    description: 'Um acabamento violeta profundo para mensagens de presença marcante.',
+    price: 38,
+    rarity: 'épico',
+    icon: '🟣',
+    chatBubbleCss: 'border-violet-700/55 bg-gradient-to-r from-violet-950/40 to-fuchsia-950/20 shadow-[0_0_12px_rgba(139,92,246,0.12)]',
+    publicSurfaces: ['Chat'],
+  },
+  {
+    id: 'pose_mestre_sereno',
+    slot: 'pose',
+    name: 'Pose do Mestre Sereno',
+    description: 'Uma saudação calma após a vitória — confiança sem provocação.',
+    price: 30,
+    rarity: 'épico',
+    icon: '🧘',
+    profileBadge: { icon: '🧘', label: 'Mestre Sereno' },
+    victoryPresentation: {
+      icon: '🧘',
+      label: 'MESTRE SERENO',
+      css: 'border-sky-600/55 bg-gradient-to-r from-sky-950/65 via-slate-950/65 to-cyan-950/55 text-sky-100 shadow-[0_0_24px_rgba(14,165,233,0.14)]',
+    },
+    publicSurfaces: ['Vitória', 'Perfil', 'Ranking', 'Guilda'],
   },
   {
     // v0.6 — a aura que envolvia o CARD da ficha de graça virou cosmético
@@ -284,6 +376,16 @@ export function parseCosmeticsEquipped(raw: string | null | undefined): Partial<
 
 export function serializeCosmeticsEquipped(equipped: Partial<Record<CosmeticSlot, string>>): string {
   return JSON.stringify(equipped);
+}
+
+/** Recorte público: só revela o que está equipado, nunca a coleção possuída. */
+export function publicCosmeticsFromRaw(raw: string | null | undefined) {
+  return { equipped: parseCosmeticsEquipped(raw) };
+}
+
+/** Texto curto para a loja deixar claro onde o cosmético é visto. */
+export function cosmeticPublicSurfaces(cosmetic: CosmeticDef): string[] {
+  return cosmetic.publicSurfaces ?? ['Perfil'];
 }
 
 // ===== Produtos (estrutura para monetização futura — NÃO à venda ainda) =====

@@ -8,6 +8,8 @@ import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { BossSkeleton, fetchPanelJson, LoadFail } from './PanelLoad';
 import { getPowerScale, scaleDiffLabel } from '@/lib/game/powerScale';
 import { HpRecovery } from './HpRecovery';
+import { PublicPlayerIdentity } from './PublicPlayerIdentity';
+import { PublicPlayerProfileDialog } from './PublicPlayerProfileDialog';
 import { BOSS_ATTACK_ENERGY_COST } from '@/lib/game/rules';
 import { Crosshair, Heart, Shield, Swords, Skull, Timer, Zap } from 'lucide-react';
 
@@ -205,6 +207,7 @@ function WorldBossSection({
   // v0.9.24 (B1): falha → estado amigável + retry (timeout 8s) — antes o
   // card da ameaça simplesmente DESAPARECIA em caso de erro
   const [failed, setFailed] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
   // v0.9.11 — relógio do SERVIDOR (offset sincronizado a cada resposta de
   // ação/estado): a contagem do cooldown nunca ganha "segundos fantasmas"
   // (ex.: 62s num cooldown de 60s) por relógio local atrasado, e nunca diz
@@ -350,18 +353,31 @@ function WorldBossSection({
             <p className="text-[10px] uppercase tracking-widest text-amber-200/40 font-heading mb-1.5">
               Maiores danos
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {boss.topDamage.slice(0, 5).map((d, i) => (
-                <Chip
-                  key={i}
-                  className={
+            <div className="grid gap-2 sm:grid-cols-2">
+              {boss.topDamage.slice(0, 6).map((d, i) => (
+                <div
+                  key={d.id ?? `${d.name}:${i}`}
+                  className={`flex items-center gap-2 rounded-xl border p-2 ${
                     d.isMe
-                      ? 'bg-orange-900/60 text-orange-300 border-orange-600/60'
-                      : 'bg-black/40 text-amber-200/70 border-amber-900/50'
-                  }
+                      ? 'border-orange-600/60 bg-orange-950/35'
+                      : 'border-amber-900/40 bg-black/25'
+                  }`}
                 >
-                  {i + 1}º {d.name}: {d.damage.toLocaleString('pt-BR')}
-                </Chip>
+                  <span className="w-7 shrink-0 text-center font-heading text-amber-300">{i + 1}º</span>
+                  <div className="min-w-0 flex-1">
+                    <PublicPlayerIdentity
+                      name={d.name}
+                      race={d.race ?? 'humano'}
+                      avatarUrl={d.avatarUrl}
+                      cosmetics={d.cosmetics}
+                      compact
+                      onClick={d.id ? () => setProfileId(d.id!) : undefined}
+                    />
+                  </div>
+                  <span className="shrink-0 font-heading text-xs text-red-300">
+                    {d.damage.toLocaleString('pt-BR')}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
@@ -388,6 +404,7 @@ function WorldBossSection({
           </GameButton>
         </div>
       </div>
+      <PublicPlayerProfileDialog playerId={profileId} onOpenChange={(open) => !open && setProfileId(null)} />
     </GameCard>
   );
 }

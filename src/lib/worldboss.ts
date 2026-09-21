@@ -13,6 +13,7 @@ import {
   type StaticDefender,
 } from './game/engine';
 import { getStrategy } from './game/content/techniques';
+import { publicCosmeticsFromRaw } from './game/content/cosmetics';
 import { scaleCombatRules, aberturaChance, SCALE_COMBAT } from './game/powerScale';
 import { IMPETO, IMPETO_COMBO_THRESHOLD, clampImpeto } from './game/impeto';
 import { grantRewards } from '@/lib/economy';
@@ -211,7 +212,17 @@ export async function getBossView(playerId: string | null): Promise<WorldBossVie
         damages: {
           orderBy: { damage: 'desc' },
           take: 10,
-          include: { player: { select: { name: true } } },
+          include: {
+            player: {
+              select: {
+                id: true,
+                name: true,
+                race: true,
+                avatarUrl: true,
+                cosmeticsEquipped: true,
+              },
+            },
+          },
         },
         _count: { select: { damages: true } },
       },
@@ -258,7 +269,11 @@ export async function getBossView(playerId: string | null): Promise<WorldBossVie
     myDamage: mine?.damage ?? 0,
     myPosition,
     topDamage: boss.damages.map((d) => ({
+      id: d.player.id,
       name: d.player.name,
+      race: d.player.race as import('./game/types').RaceId,
+      avatarUrl: d.player.avatarUrl,
+      cosmetics: publicCosmeticsFromRaw(d.player.cosmeticsEquipped),
       damage: d.damage,
       isMe: d.playerId === playerId,
     })),

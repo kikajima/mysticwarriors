@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { getAuth, requireAuth } from '@/lib/auth';
 import { ApiError, ok, toErrorResponse } from '@/lib/api';
 import { db } from '@/lib/db';
+import { publicCosmeticsFromRaw } from '@/lib/game/content/cosmetics';
 import { rateLimit } from '@/lib/rate-limit';
 import {
   CHAT_CHANNELS,
@@ -134,8 +135,39 @@ async function listMessages(request: Request) {
   });
 
   rows.reverse();
+  const senderIds = [...new Set(rows.map((row) => row.senderPlayerId))];
+  const senders = senderIds.length
+    ? await db.player.findMany({
+        where: { id: { in: senderIds }, isBot: false },
+        select: {
+          id: true,
+          name: true,
+          race: true,
+          level: true,
+          avatarUrl: true,
+          cosmeticsEquipped: true,
+        },
+      })
+    : [];
+  const senderById = new Map(senders.map((sender) => [sender.id, sender]));
+
   return ok({
-    messages: rows.map(chatMessageView),
+    messages: rows.map((row) => {
+      const sender = senderById.get(row.senderPlayerId);
+      return {
+        ...chatMessageView(row),
+        sender: sender
+          ? {
+              id: sender.id,
+              name: sender.name,
+              race: sender.race,
+              level: sender.level,
+              avatarUrl: sender.avatarUrl,
+              cosmetics: publicCosmeticsFromRaw(sender.cosmeticsEquipped),
+            }
+          : null,
+      };
+    }),
     hasMore: rows.length === CHAT_PAGE_SIZE,
   });
 }
@@ -192,11 +224,29 @@ async function searchPlayers(request: Request) {
       id: { not: player.id },
       ...(q ? { name: { contains: q } } : {}),
     },
-    select: { id: true, name: true, level: true, race: true, guildId: true },
+    select: {
+      id: true,
+      name: true,
+      level: true,
+      race: true,
+      guildId: true,
+      avatarUrl: true,
+      cosmeticsEquipped: true,
+    },
     orderBy: { name: 'asc' },
     take: q ? 50 : 200,
   });
-  return ok({ players: rows });
+  return ok({
+    players: rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      level: row.level,
+      race: row.race,
+      guildId: row.guildId,
+      avatarUrl: row.avatarUrl,
+      cosmetics: publicCosmeticsFromRaw(row.cosmeticsEquipped),
+    })),
+  });
 }
 
 async function context(request: Request) {

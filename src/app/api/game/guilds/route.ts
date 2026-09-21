@@ -4,6 +4,7 @@ import { getAuth, requirePlayer } from '@/lib/auth';
 import { guildCapacity, guildThreshold, GUILD_PERMISSIONS, type GuildPermission } from '@/lib/game/guildRules';
 import { isOnline } from '@/lib/game/presence';
 import { computeDerived } from '@/lib/game/engine';
+import { publicCosmeticsFromRaw } from '@/lib/game/content/cosmetics';
 import type { GuildDetail, GuildSummary, RaceId } from '@/lib/game/types';
 
 const PAGE_SIZE = 50;
@@ -149,6 +150,8 @@ export async function GET(request: Request) {
               race: member.race as RaceId,
               level: member.level,
               power: computeDerived(member).power,
+              avatarUrl: member.avatarUrl,
+              cosmetics: publicCosmeticsFromRaw(member.cosmeticsEquipped),
               isLeader: guild.leaderId === member.id,
               isMe: member.id === player?.id,
               online: isOnline(member.id),
