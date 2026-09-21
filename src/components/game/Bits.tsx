@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { RACES } from '@/lib/game/constants';
-import { equippedCosmetic } from '@/lib/game/content/cosmetics';
+import { dominantCosmeticSet, equippedCosmetic } from '@/lib/game/content/cosmetics';
 import type { CosmeticsView } from '@/lib/game/types';
 import type { RaceId } from '@/lib/game/types';
 
@@ -97,9 +97,11 @@ function CosmeticsWrapper({
   const pulse = aura?.avatarPulseCss;
   const frame = equippedCosmetic(equipped, 'frame')?.avatarFrameCss;
   const overlay = equippedCosmetic(equipped, 'avatar')?.avatarOverlayCss;
-  if (!glow && !frame && !overlay && !pulse) return <>{children}</>;
+  const setEffect = dominantCosmeticSet(equipped)?.activeMilestone;
+  const setAvatar = setEffect?.avatarCss;
+  if (!glow && !frame && !overlay && !pulse && !setAvatar) return <>{children}</>;
   return (
-    <span className={`relative inline-flex rounded-full ${glow ?? ''} ${frame ?? ''}`}>
+    <span className={`relative inline-flex rounded-full ${glow ?? ''} ${frame ?? ''} ${setAvatar ?? ''}`}>
       {pulse && (
         <span
           className={`absolute -inset-2 rounded-full pointer-events-none ${pulse}`}
