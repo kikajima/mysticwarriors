@@ -232,8 +232,8 @@
 - **Canais permanentes:** Global, Guilda e Privado. Mensagens privadas são
   assíncronas: o destinatário pode estar offline e lê o histórico quando
   voltar.
-- **Fonte de verdade:** tabelas `game."ChatMessage"` e `game."ChatMute"`
-  no PostgreSQL autoritativo. O Render não guarda histórico em memória ou
+- **Fonte de verdade:** tabelas `game."ChatMessage"`, `game."ChatMute"`,
+  `game."ChatFriend"` e `game."ChatBlock"` no PostgreSQL autoritativo. O Render não guarda histórico em memória ou
   disco efêmero.
 - **Histórico deliberadamente SEM FK destrutiva para Player/Guild:** nomes e
   ids de remetente/destinatário/guilda são snapshots históricos. Excluir um
