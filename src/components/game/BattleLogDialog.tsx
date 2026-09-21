@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { BattleResult, PlayerView } from '@/lib/game/types';
-import { equippedCosmetic } from '@/lib/game/content/cosmetics';
+import { dominantCosmeticSet, equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { IMPETO } from '@/lib/game/impeto';
 import { BATTLE_REVEAL_INTERVAL_MS } from '@/lib/game/rules';
 import { serverNowMs } from '@/lib/game/clock';
@@ -91,7 +91,17 @@ export function BattleLogDialog({
   const finished = battle
     ? revealed >= battle.rounds.length && lockRemaining <= 0
     : false;
-  const victoryPose = equippedCosmetic(player?.cosmetics?.equipped ?? {}, 'pose')?.victoryPresentation;
+  const equipped = player?.cosmetics?.equipped ?? {};
+  const victoryPose = equippedCosmetic(equipped, 'pose')?.victoryPresentation;
+  const activeVictorySet = dominantCosmeticSet(equipped);
+  const victorySet = activeVictorySet?.activeMilestone.victoryCss
+    ? {
+        icon: activeVictorySet.set.icon,
+        setName: activeVictorySet.set.name,
+        label: activeVictorySet.activeMilestone.name,
+        css: activeVictorySet.activeMilestone.victoryCss,
+      }
+    : undefined;
 
   return (
     <Dialog
@@ -109,6 +119,7 @@ export function BattleLogDialog({
           revealed={revealed}
           lockRemaining={lockRemaining}
           victoryPose={victoryPose}
+          victorySet={victorySet}
           onClose={onClose}
         />
       )}
@@ -122,6 +133,7 @@ function BattleContent({
   revealed,
   lockRemaining,
   victoryPose,
+  victorySet,
   onClose,
 }: {
   battle: BattleResult;
@@ -129,6 +141,7 @@ function BattleContent({
   revealed: number;
   lockRemaining: number;
   victoryPose?: { icon: string; label: string; css: string };
+  victorySet?: { icon: string; setName: string; label: string; css: string };
   onClose: () => void;
 }) {
   const visibleRounds = battle.rounds.slice(0, revealed);
@@ -315,10 +328,19 @@ function BattleContent({
               <p className="font-display text-4xl text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-500 mb-1">
                 VITÓRIA!
               </p>
-              {victoryPose ? (
-                <div className={`mx-auto mb-3 max-w-sm rounded-xl border p-3 font-heading victory-pose-enter ${victoryPose.css}`}>
-                  <span className="mr-2 text-2xl" aria-hidden>{victoryPose.icon}</span>
-                  {victoryPose.label}
+              {victoryPose || victorySet ? (
+                <div
+                  className={`mx-auto mb-3 max-w-sm rounded-xl border p-3 font-heading victory-pose-enter ${
+                    victoryPose?.css ?? 'border-amber-700/50 bg-amber-950/35 text-amber-200'
+                  } ${victorySet?.css ?? ''}`}
+                >
+                  <span className="mr-2 text-2xl" aria-hidden>{victoryPose?.icon ?? victorySet?.icon}</span>
+                  {victoryPose?.label ?? victorySet?.label}
+                  {victorySet ? (
+                    <p className="mt-1 text-[10px] font-normal opacity-75">
+                      {victorySet.icon} {victorySet.setName} · {victorySet.label}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
               <p className="text-sm text-amber-200/80 mb-3">
