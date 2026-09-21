@@ -1,6 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { equippedCosmetic } from '@/lib/game/content/cosmetics';
+import type { PublicCosmeticsView } from '@/lib/game/types';
+import { PublicPlayerIdentity } from '@/components/game/PublicPlayerIdentity';
+import { PublicPlayerProfileDialog } from '@/components/game/PublicPlayerProfileDialog';
 import {
   ArrowLeft,
   Check,
@@ -41,8 +45,16 @@ type Message = {
   guildName: string | null;
   body: string;
   createdAt: string;
+  sender?: Person | null;
 };
-type Person = { id: string; name: string; level?: number; race?: string };
+type Person = {
+  id: string;
+  name: string;
+  level?: number;
+  race?: string;
+  avatarUrl?: string | null;
+  cosmetics?: PublicCosmeticsView;
+};
 type Conversation = {
   playerId: string;
   name: string;
@@ -86,6 +98,7 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
   const [directory, setDirectory] = useState<Person[]>([]);
   const [directoryLoading, setDirectoryLoading] = useState(false);
   const [directoryVisible, setDirectoryVisible] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<Message[]>([]);
   const directoryLoadedRef = useRef(false);
@@ -456,18 +469,31 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                           key={person.id}
                           className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-orange-950/30"
                         >
+                          <div className="min-w-0 flex-1">
+                            <PublicPlayerIdentity
+                              name={person.name}
+                              race={person.race ?? 'humano'}
+                              avatarUrl={person.avatarUrl}
+                              cosmetics={person.cosmetics}
+                              level={person.level}
+                              compact
+                              onClick={() => setProfileId(person.id)}
+                            />
+                            <div className="mt-1 flex flex-wrap gap-1 px-1">
+                              {isFriend && <span className="text-[9px] text-emerald-300">★ Amigo</span>}
+                              {hasIncomingRequest && <span className="text-[9px] text-cyan-300">Pedido recebido</span>}
+                              {hasOutgoingRequest && <span className="text-[9px] text-amber-300">Convite enviado</span>}
+                              {isBlocked && <span className="text-[9px] text-red-300">Bloqueado</span>}
+                            </div>
+                          </div>
                           <button
                             type="button"
                             onClick={() => openPrivate(person)}
-                            className="min-w-0 flex-1 text-left rounded-md px-1 py-1"
-                            title={isBlocked ? 'Abrir contato bloqueado' : 'Abrir conversa privada'}
+                            className="shrink-0 rounded-md border border-orange-900/40 bg-orange-950/15 p-1.5 text-orange-300 hover:border-orange-700/60"
+                            title="Abrir conversa privada"
+                            aria-label={`Conversar com ${person.name}`}
                           >
-                            <span className="text-sm text-amber-100">{person.name}</span>
-                            {person.level ? <span className="ml-2 text-[10px] text-amber-200/40">Nv {person.level}</span> : null}
-                            {isFriend && <span className="ml-2 text-[9px] text-emerald-300">★ Amigo</span>}
-                            {hasIncomingRequest && <span className="ml-2 text-[9px] text-cyan-300">Pedido recebido</span>}
-                            {hasOutgoingRequest && <span className="ml-2 text-[9px] text-amber-300">Convite enviado</span>}
-                            {isBlocked && <span className="ml-2 text-[9px] text-red-300">Bloqueado</span>}
+                            <MessageCircle className="h-3.5 w-3.5" />
                           </button>
 
                           {isBlocked ? (
@@ -834,26 +860,42 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                 {!loading && messages.length === 0 && <p className="text-xs text-amber-200/35 text-center py-6">Nenhuma mensagem ainda.</p>}
                 {messages.map((message) => {
                   const mine = message.senderPlayerId === player.id;
+                  const sender: Person = message.sender ?? {
+                    id: message.senderPlayerId,
+                    name: message.senderName,
+                    race: 'humano',
+                  };
+                  const bubble = equippedCosmetic(sender.cosmetics?.equipped ?? {}, 'chat');
                   return (
                     <article
                       key={message.id}
                       className={`rounded-xl border px-3 py-2 ${
-                        mine ? 'ml-8 border-orange-700/40 bg-orange-950/30' : 'mr-8 border-amber-900/30 bg-black/25'
-                      }`}
+                        bubble?.chatBubbleCss ??
+                        (mine ? 'ml-8 border-orange-700/40 bg-orange-950/30' : 'mr-8 border-amber-900/30 bg-black/25')
+                      } ${mine ? 'ml-8' : 'mr-8'}`}
                     >
                       <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          disabled={mine}
-                          onClick={() => !mine && openPrivate({ id: message.senderPlayerId, name: message.senderName })}
-                          className="text-[11px] font-heading text-amber-100 truncate disabled:cursor-default"
-                          title={mine ? undefined : 'Abrir conversa privada'}
-                        >
-                          {mine ? 'Você' : message.senderName}
-                        </button>
+                        <PublicPlayerIdentity
+                          name={mine ? 'Você' : sender.name}
+                          race={sender.race ?? 'humano'}
+                          avatarUrl={sender.avatarUrl}
+                          cosmetics={sender.cosmetics}
+                          level={sender.level}
+                          compact
+                          onClick={() => setProfileId(sender.id)}
+                        />
                         <span className="ml-auto text-[9px] text-amber-200/30 shrink-0">{shortTime(message.createdAt)}</span>
                         {!mine && (
                           <>
+                            <button
+                              type="button"
+                              onClick={() => openPrivate(sender)}
+                              className="text-amber-200/30 hover:text-orange-300"
+                              title="Abrir conversa privada"
+                              aria-label={`Conversar com ${sender.name}`}
+                            >
+                              <MessageCircle className="h-3 w-3" />
+                            </button>
                             <button
                               type="button"
                               disabled={socialBusy !== null}
@@ -943,6 +985,7 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
           )}
         </section>
       )}
+      <PublicPlayerProfileDialog playerId={profileId} onOpenChange={(open) => !open && setProfileId(null)} />
     </>
   );
 }
