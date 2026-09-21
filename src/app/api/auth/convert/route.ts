@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { ApiError, toErrorResponse } from '@/lib/api';
 import { LIMITS, clientIp, rateLimit } from '@/lib/rate-limit';
-import { accountToView, hashPassword, requireAuth } from '@/lib/auth';
+import { accountToView, hashPassword, requireAuth, requireLegacyLocalAuthEnvironment } from '@/lib/auth';
 import { playerToView } from '@/lib/game/engine';
 import { trackEvent } from '@/lib/analytics';
 
@@ -30,6 +30,7 @@ const convertSchema = z.object({
  */
 export async function POST(request: Request) {
   try {
+    requireLegacyLocalAuthEnvironment();
     const ip = clientIp(request);
     const rl = rateLimit(`convert:${ip}`, LIMITS.convert.limit, LIMITS.convert.windowMs);
     if (!rl.allowed) {
