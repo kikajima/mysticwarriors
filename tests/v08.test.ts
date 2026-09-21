@@ -146,10 +146,9 @@ describe('v0.8 — sanitizeCloudProgress (nuvem não confiável → válido)', (
     expect(c.xp).toBe(0);
     expect(c.zeni).toBe(100_000_000);
     expect(c.crystals).toBe(100_000);
-    // v0.9: atributos concedidos pelo painel de admin (até 999.999)
-    // precisam sobreviver a uma restauração futura da nuvem
-    expect(c.strength).toBe(999_999);
-    expect(c.hp).toBe(10_000_000);
+    // Atributos e HP de progressão longa não são mais truncados no antigo teto.
+    expect(c.strength).toBe(10_000_000);
+    expect(c.hp).toBe(1_000_000_000);
     expect(c.energy).toBe(0);
     expect(c.dragonBalls).toBe(7);
     expect(c.battlesWon).toBe(1_000_000);
