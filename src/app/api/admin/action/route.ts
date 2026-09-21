@@ -45,7 +45,7 @@ function notFound(): NextResponse {
 const intField = z
   .number()
   .int()
-  .refine((v) => Math.abs(v) <= 1_000_000_000, 'Valor fora do limite permitido.');
+  .refine((v) => Number.isSafeInteger(v), 'Valor fora da faixa numérica segura.');
 
 const actionSchema = z.object({
   characterId: z.string().min(5).max(64),

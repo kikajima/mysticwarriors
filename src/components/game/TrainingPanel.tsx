@@ -13,7 +13,7 @@ import {
   getTransformation,
   RACES,
 } from '@/lib/game/constants';
-import type { PlayerView, Loadout, LoadoutSlot, TechniqueDef } from '@/lib/game/types';
+import type { PlayerView, Loadout, LoadoutSlot, TechniqueDef, TransformationDef } from '@/lib/game/types';
 import { Chip, GameButton, GameCard, SectionTitle } from './Bits';
 import { Swords, Shield, Gauge, Sparkles, Coins, Zap, Lock, Check, GraduationCap, Brain, Swords as SwordsIcon } from 'lucide-react';
 
@@ -48,6 +48,35 @@ function techniqueDetailLabels(tech: TechniqueDef): string[] {
   if (tech.effects?.selfHealPct) {
     labels.push(`Cura ${Math.round(tech.effects.selfHealPct * 100)}% HP`);
   }
+  return labels;
+}
+
+function transformationEffectLabels(tr: TransformationDef): string[] {
+  const labels: string[] = [];
+  const pct = (mult: number) => Math.round((mult - 1) * 100);
+
+  if (tr.multipliers?.physical && tr.multipliers.physical !== 1) {
+    labels.push(`Dano físico +${pct(tr.multipliers.physical)}%`);
+  }
+  if (tr.multipliers?.ki && tr.multipliers.ki !== 1) {
+    labels.push(`Dano de Ki +${pct(tr.multipliers.ki)}%`);
+  }
+  if (tr.multipliers?.defense && tr.multipliers.defense !== 1) {
+    labels.push(`Defesa +${pct(tr.multipliers.defense)}%`);
+  }
+  if (tr.multipliers?.speed && tr.multipliers.speed !== 1) {
+    labels.push(`Velocidade +${pct(tr.multipliers.speed)}%`);
+  }
+
+  return labels;
+}
+
+function transformationPermanentBonusLabels(tr: TransformationDef): string[] {
+  const labels: string[] = [];
+  if (tr.bonuses?.strength) labels.push(`+${tr.bonuses.strength} Força`);
+  if (tr.bonuses?.defense) labels.push(`+${tr.bonuses.defense} Defesa`);
+  if (tr.bonuses?.speed) labels.push(`+${tr.bonuses.speed} Velocidade`);
+  if (tr.bonuses?.ki) labels.push(`+${tr.bonuses.ki} Ki`);
   return labels;
 }
 
@@ -171,10 +200,10 @@ function TrainTab({
                 </div>
                 <GameButton
                   onClick={() => handleTrain(stat.key)}
-                  disabled={!canAfford || busy || value >= 999}
+                  disabled={!canAfford || busy}
                   className={bounce === stat.key ? 'animate-train-pop' : undefined}
                 >
-                  {value >= 999 ? 'MÁXIMO' : `Treinar +${gain}`}
+                  {`Treinar +${gain}`}
                 </GameButton>
               </div>
 
@@ -574,6 +603,18 @@ function TransformTab({
                           )}
                         </div>
                         <p className="text-xs text-amber-200/55 mt-1.5 leading-relaxed">{tr!.description}</p>
+                        {transformationEffectLabels(tr!).length > 0 && (
+                          <p className="text-[11px] text-purple-300/85 mt-2 leading-relaxed">
+                            <span className="font-heading">Efeito ativo:</span>{' '}
+                            {transformationEffectLabels(tr!).join(' · ')}
+                          </p>
+                        )}
+                        {transformationPermanentBonusLabels(tr!).length > 0 && (
+                          <p className="text-[10px] text-emerald-300/75 mt-1 leading-relaxed">
+                            <span className="font-heading">Ao desbloquear:</span>{' '}
+                            {transformationPermanentBonusLabels(tr!).join(' · ')}
+                          </p>
+                        )}
 
                         {!isOwned && req.missing.length > 0 && (
                           <p className="text-[11px] text-red-300/70 mt-1.5">🔒 Requisitos: {req.missing.join(' · ')}</p>

@@ -90,20 +90,21 @@ describe('v0.9.6 — patchCloudCharacterState (patch direto no estado do persona
     expect(charFixture().zeni).toBe(5000);
   });
 
-  test('edita atributos e define nível/XP absolutos; energia total usa a fórmula do jogo', () => {
+  test('edita atributos muito acima de 999 sem truncar; nível/XP continuam independentes', () => {
     const out = patchCloudCharacterState(charFixture(), {
-      strength: 5_000_000,
+      strength: 5_000_000_000,
       ki: 500,
       level: 42,
       xp: 0,
       restoreEnergy: true,
     });
     expect(out).not.toBeNull();
-    expect(out!.strength).toBe(ADMIN_LIMITS.stat); // 999.999
+    expect(out!.strength).toBe(5_000_000_000);
+    expect(out!.strength).toBeLessThan(ADMIN_LIMITS.stat);
     expect(out!.ki).toBe(500);
     expect(out!.level).toBe(42);
     expect(out!.xp).toBe(0);
-    expect(out!.energy).toBe(100); // mesma fórmula do jogo
+    expect(out!.energy).toBe(100); // patch de nuvem preserva a política atual de restore
   });
 
   test('acelerar atividade vence o turno AGORA; alias legado continua aceito', () => {

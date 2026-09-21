@@ -16,7 +16,7 @@ import type {
 //  * turnos válidos: 1h / 2h / 4h / 8h;
 //  * turnos longos concedem bônus progressivo de XP e chance de material raro;
 //  * Zeni, atributo, horas e material comum mantêm a regra base;
-//  * atributo é sempre inteiro e respeita STAT_CAP=999 no servidor;
+//  * atributo é sempre inteiro e não possui teto de gameplay;
 //  * Acadêmico não dá atributo: fornece bônus global de XP e, na PR de
 //    crafting, redução do tempo de fabricação.
 // =====================================================================
@@ -81,8 +81,7 @@ export const PROFESSION_SHIFTS: ProfessionShiftDef[] = [
   { hours: 4, efficiency: 1.15 },
   { hours: 8, efficiency: 1.30 },
 ];
-/** Busca ativa: uma tentativa curta e independente dos turnos profissionais. */
-export const DRAGON_BALL_SEARCH_ENERGY_COST = 5;
+/** Busca ativa: uma tentativa temporizada e sem custo de energia. */
 export const DRAGON_BALL_SEARCH_SHIFTS = [
   { hours: 1, chance: 0.04 },
   { hours: 2, chance: 0.08 },

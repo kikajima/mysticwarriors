@@ -6,7 +6,6 @@ import {
   dayKey,
   weekKey,
   shouldGrantZenkai,
-  STAT_CAP,
   trainingCost,
   raceCombat,
   raceEconomy,
@@ -26,11 +25,11 @@ import { baseTrainingCost, elixirPrice, TRAINING_COST_CEILING, professionEnergyC
 //  * duração de atividades + allowlist de missão.
 // =====================================================================
 
-describe('STAT CAP (limite máximo de atributos)', () => {
-  test('capStat nunca ultrapassa 999', () => {
-    expect(capStat(998 + 5)).toBe(999);
-    expect(capStat(999)).toBe(999);
-    expect(capStat(1000000)).toBe(999);
+describe('ATRIBUTOS SEM TETO ARTIFICIAL', () => {
+  test('capStat apenas normaliza: não corta em 999 nem em Int32', () => {
+    expect(capStat(998 + 5)).toBe(1003);
+    expect(capStat(1_000_000)).toBe(1_000_000);
+    expect(capStat(5_000_000_000)).toBe(5_000_000_000);
   });
 
   test('capStat nunca fica negativo e arredonda para baixo', () => {
@@ -39,18 +38,17 @@ describe('STAT CAP (limite máximo de atributos)', () => {
     expect(capStat(NaN)).toBe(0);
   });
 
-  test('addStat aplica o limite global (Elixir, desejo, treino, Zenkai...)', () => {
+  test('addStat continua crescendo acima de 999', () => {
     const player = { strength: 998, defense: 500, speed: 500, ki: 500 };
     const r = addStat(player, 'strength', 10);
-    expect(r.after).toBe(STAT_CAP);
-    expect(player.strength).toBe(999);
-    expect(r.capped).toBe(true);
+    expect(r.after).toBe(1008);
+    expect(player.strength).toBe(1008);
   });
 
-  test('addStat normal funciona abaixo do cap', () => {
-    const player = { strength: 10, defense: 10, speed: 10, ki: 10 };
-    addStat(player, 'ki', 5);
-    expect(player.ki).toBe(15);
+  test('addStat suporta progressão muito acima do antigo Int32', () => {
+    const player = { strength: 5_000_000_000, defense: 10, speed: 10, ki: 10 };
+    addStat(player, 'strength', 25);
+    expect(player.strength).toBe(5_000_000_025);
   });
 });
 

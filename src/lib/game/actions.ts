@@ -11,15 +11,12 @@ import {
   dayKey,
   raceEconomy,
   shouldGrantZenkai,
-  statAtCap,
-  STAT_CAP,
   statName,
   trainingCost,
   ZENKAI,
 } from './rules';
 import {
   BATTLE_ENERGY_COST,
-  DRAGON_BALL_SEARCH_ENERGY_COST,
   dragonBallSearchShift,
   DRAGON_BALL_SEARCH_MAX_CHANCE,
   DRAGON_BALL_PVP_STEAL_CHANCE,
@@ -94,7 +91,7 @@ import type { ActivityView, BattleResult, EquipmentSlot, EquippedSlot, Loadout, 
 // * Toda ação roda dentro de UMA transação ($transaction);
 // * Autorização: sessão → conta → player.accountId (requirePlayer);
 // * Economia: apenas via lib/economy (atômica + ledger);
-// * Atributos: apenas via addStat (respeita STAT_CAP);
+// * Atributos: apenas via addStat (sem teto de progressão);
 // * O frontend envia apenas a INTENÇÃO — dano, preços, recompensas,
 //   XP e resultados são SEMPRE calculados aqui.
 // =====================================================================
@@ -362,10 +359,6 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
   }
   const statKey = stat as 'strength' | 'defense' | 'speed' | 'ki';
 
-  if (statAtCap(player, statKey)) {
-    throw new ApiError('STAT_CAP_REACHED', `${statName(statKey)} já está no máximo (${STAT_CAP}).`);
-  }
-
   const cost = trainingCost(player[statKey], player.race);
   if (player.energy < TRAIN_ENERGY_COST) {
     throw new ApiError('INSUFFICIENT_ENERGY', 'Energia insuficiente! Descanse um pouco (a energia regenera com o tempo).');
@@ -379,10 +372,10 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
   });
   if (energyRes.count === 0) throw new ApiError('INSUFFICIENT_ENERGY', 'Energia insuficiente!');
 
-  // ganho com bônus de equipamento de treino + limite central
+  // ganho com bônus de equipamento de treino, sem teto de atributo
   const items = parseItems(player.items);
   const gain = trainingGain(items.owned, statKey);
-  const target = Math.min(STAT_CAP, player[statKey] + gain);
+  const target = player[statKey] + gain;
 
   const payload: TrainActivityResult = {
     kind: 'train',
@@ -397,7 +390,7 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
   };
 
   // v0.9: aplica AGORA (mesma rotina usada pelas atividades vencidas —
-  // addStat com STAT_CAP, trainingsDone, quests e analytics)
+  // addStat sem teto, trainingsDone, quests e analytics)
   const applied = await applyTrainResult(tx, player, payload, { playerIsFresh: true });
 
   await bumpQuests(tx, player.id, 'energy_spent', TRAIN_ENERGY_COST);
@@ -410,8 +403,7 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
 }
 
 // ===== PROFISSÕES — carreira 1–10, turnos 1/2/4/8h e loot =====
-// Busca ativa separada dos turnos: o jogador decide quando gastar energia
-// para procurar, em vez de depender do encerramento de uma profissão.
+// Busca ativa separada dos turnos: é temporizada, mas não consome energia.
 async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown): Promise<ActionResult> {
   const ownedCount = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
   if (player.dragonBalls !== ownedCount) {
@@ -435,15 +427,6 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
     );
   }
 
-  const energyRes = await tx.player.updateMany({
-    where: { id: player.id, energy: { gte: DRAGON_BALL_SEARCH_ENERGY_COST } },
-    data: { energy: { decrement: DRAGON_BALL_SEARCH_ENERGY_COST } },
-  });
-  if (energyRes.count === 0) {
-    throw new ApiError('INSUFFICIENT_ENERGY', `Cada busca exige ${DRAGON_BALL_SEARCH_ENERGY_COST} de energia.`);
-  }
-  player.energy -= DRAGON_BALL_SEARCH_ENERGY_COST;
-  await bumpQuests(tx, player.id, 'energy_spent', DRAGON_BALL_SEARCH_ENERGY_COST);
   const rng = battleRng();
   const items = parseItems(player.items);
   const searchBonus = [items.accessory, items.accessory2]
@@ -488,7 +471,7 @@ async function actionCancelDragonBallSearch(tx: Tx, player: Player): Promise<Act
   if (canceled.count === 0) throw new ApiError('CONFLICT', 'A busca já foi encerrada.');
 
   return {
-    message: 'Busca pelas Esferas interrompida. A energia gasta não é devolvida e nenhuma esfera foi encontrada.',
+    message: 'Busca pelas Esferas interrompida. Nenhuma esfera foi encontrada.',
     levelsGained: 0,
   };
 }
@@ -1410,11 +1393,6 @@ async function actionUseItem(tx: Tx, player: Player, itemId: string): Promise<Ac
   if (item.effect === 'full_energy' && player.energy >= derived.maxEnergy) {
     throw new ApiError('VALIDATION_ERROR', 'Sua energia já está cheia!');
   }
-  if (item.effect === 'stat_boost') {
-    const capped = (['strength', 'defense', 'speed', 'ki'] as const).every((s) => statAtCap(player, s));
-    if (capped) throw new ApiError('STAT_CAP_REACHED', 'Todos os atributos já estão no máximo!');
-  }
-
   // consome o item (bloqueio otimista — nunca duplica)
   items.consumables[item.id] = count - 1;
   if (items.consumables[item.id] <= 0) delete items.consumables[item.id];
@@ -1437,16 +1415,13 @@ async function actionUseItem(tx: Tx, player: Player, itemId: string): Promise<Ac
     player.energy = derived.maxEnergy;
     message = 'Cápsula de Energia usada! Energia totalmente restaurada.';
   } else if (item.effect === 'stat_boost') {
-    // Elixir: +2 em todos os atributos — SEMPRE respeitando o limite central
-    const results = (['strength', 'defense', 'speed', 'ki'] as const).map((s) => addStat(player, s, 2));
+    // Elixir: +2 em todos os atributos, sem teto de progressão.
+    for (const stat of ['strength', 'defense', 'speed', 'ki'] as const) addStat(player, stat, 2);
     await tx.player.update({
       where: { id: player.id },
       data: { strength: player.strength, defense: player.defense, speed: player.speed, ki: player.ki },
     });
-    const capped = results.some((r) => r.capped);
-    message = capped
-      ? 'O Elixir do Dragão despertou seu potencial: +2 em todos os atributos (alguns chegaram ao limite máximo)!'
-      : 'O Elixir do Dragão despertou seu potencial oculto: +2 em todos os atributos!';
+    message = 'O Elixir do Dragão despertou seu potencial oculto: +2 em todos os atributos!';
   }
   return { message, levelsGained: 0 };
 }
@@ -1722,7 +1697,7 @@ async function actionUnlockTransformation(tx: Tx, player: Player, transformation
     throw new ApiError('TRANSFORMATION_LOCKED', `Requisitos faltando: ${missing.join(', ')}.`);
   }
 
-  // desbloqueia + aplica bônus permanentes (com limite central)
+  // desbloqueia + aplica bônus permanentes, sem teto de atributo
   owned.push(tr.id);
   const data: Record<string, unknown> = {
     transformationsOwned: JSON.stringify(owned),

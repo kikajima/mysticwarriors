@@ -38,13 +38,13 @@ async function main() {
     await db.player.update({ where: { id }, data: { zeni: Number(raw) } });
     return;
   }
-  if (command === 'setup-stat-cap') {
+  if (command === 'setup-high-stats') {
     const [id] = args; await qaPlayer(id);
     await db.player.update({
       where: { id },
       data: {
         level: 30, zeni: 5_000_000,
-        strength: 999, defense: 999, speed: 999, ki: 999,
+        strength: 5_000, defense: 5_000, speed: 5_000, ki: 5_000,
         items: JSON.stringify({
           weapon: null, armor: null, accessory: null,
           owned: ['elixir_dragao'],
