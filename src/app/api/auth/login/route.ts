@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { ApiError, toErrorResponse } from '@/lib/api';
 import { LIMITS, clientIp, rateLimit } from '@/lib/rate-limit';
-import { accountToView, createSession, setSessionCookie, verifyPassword } from '@/lib/auth';
+import { accountToView, createSession, setSessionCookie, verifyPassword, requireLegacyLocalAuthEnvironment } from '@/lib/auth';
 import { playerToView } from '@/lib/game/engine';
 
 const loginSchema = z.object({
@@ -13,6 +13,7 @@ const loginSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    requireLegacyLocalAuthEnvironment();
     const ip = clientIp(request);
     const rl = rateLimit(`login:${ip}`, LIMITS.login.limit, LIMITS.login.windowMs);
     if (!rl.allowed) {
