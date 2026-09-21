@@ -72,6 +72,11 @@ const professionBody = fnBody(
   'async function actionClaimProfession'
 );
 const trainBody = fnBody(actionsSrc, 'async function actionStartTrain', '// ===== PROFISSÕES');
+const dragonSearchBody = fnBody(
+  actionsSrc,
+  'async function actionSearchDragonBall',
+  'async function actionCancelDragonBallSearch'
+);
 
 /** Texto completo (indexável) de uma seção da wiki. */
 function wikiText(id: string): string {
@@ -120,6 +125,27 @@ describe('CONTRATO A — comportamento dos handlers reais × afirmações da wik
     expect(custos).toContain(`${TRAIN_ENERGY_COST} ⚡`);
     // a antiga duração de 1,6 s (constante morta) não pode voltar
     expect(atributos + custos).not.toContain('1,6 s');
+  });
+
+  test('BUSCA PELAS ESFERAS NÃO GASTA ENERGIA: handler e Wiki concordam', () => {
+    expect(dragonSearchBody).not.toContain('DRAGON_BALL_SEARCH_ENERGY_COST');
+    expect(dragonSearchBody).not.toContain('energy: { decrement');
+    expect(dragonSearchBody).not.toContain("'energy_spent'");
+    expect(dragonSearchBody).not.toContain('INSUFFICIENT_ENERGY');
+    const t = wikiText('esferas-dragao') + ' ' + wikiText('accoes-custos');
+    expect(t).toContain('não gasta energia');
+    expect(t).toContain('0 ⚡');
+  });
+
+  test('ATRIBUTOS NÃO TÊM TETO DE GAMEPLAY: código e Wiki não reintroduzem 999', async () => {
+    const rulesSrc = await Bun.file(`${import.meta.dir}/../src/lib/game/rules.ts`).text();
+    const trainingSrc = await Bun.file(`${import.meta.dir}/../src/components/game/TrainingPanel.tsx`).text();
+    const t = wikiText('atributos') + ' ' + wikiText('profissoes') + ' ' + wikiText('esferas-dragao');
+    expect(rulesSrc).not.toContain('STAT_CAP');
+    expect(trainingSrc).not.toContain('value >= 999');
+    expect(t).toContain('sem teto máximo');
+    expect(t).not.toContain('teto 999');
+    expect(t).not.toContain('teto de 999');
   });
 
   test('TRABALHO BLOQUEIA EXATAMENTE 3 AÇÕES: PvE, torneio e Busca de Esferas', async () => {
@@ -353,6 +379,7 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     const search = wikiText('esferas-dragao');
     expect(search).toContain('1h a 12h');
     expect(search).toContain('20%');
+    expect(search).toContain('não gasta energia');
     for (const shift of DRAGON_BALL_SEARCH_SHIFTS) expect(search).toContain(`${shift.hours}h`);
     for (const material of PROFESSION_MATERIALS) {
       expect(t).toContain(material.name);
