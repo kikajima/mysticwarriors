@@ -1,6 +1,6 @@
 'use client';
 
-import { equippedCosmetic } from '@/lib/game/content/cosmetics';
+import { activeCosmeticSets, dominantCosmeticSet, equippedCosmetic } from '@/lib/game/content/cosmetics';
 import type { CosmeticsView, PublicCosmeticsView } from '@/lib/game/types';
 import { PlayerAvatar } from './Bits';
 
@@ -30,11 +30,13 @@ export function PublicPlayerIdentity({
   const nameplate = equippedCosmetic(equipped, 'nameplate');
   const outfit = equippedCosmetic(equipped, 'outfit');
   const pose = equippedCosmetic(equipped, 'pose');
+  const activeSets = activeCosmeticSets(equipped);
+  const dominantSet = dominantCosmeticSet(equipped);
 
   const body = (
     <span
       className={`flex min-w-0 items-center gap-2 rounded-xl border px-2 py-1.5 transition-colors ${
-        outfit?.identityAccentCss ?? 'border-transparent'
+        dominantSet?.activeMilestone.identityCss ?? outfit?.identityAccentCss ?? 'border-transparent'
       } ${onClick ? 'hover:border-amber-700/50 hover:bg-amber-950/15' : ''} ${className}`}
     >
       <PlayerAvatar
@@ -61,6 +63,15 @@ export function PublicPlayerIdentity({
           {!compact && pose?.profileBadge ? (
             <span title={pose.name}>{pose.profileBadge.icon} {pose.profileBadge.label}</span>
           ) : null}
+          {activeSets.slice(0, compact ? 1 : 2).map((progress) => (
+            <span
+              key={progress.set.id}
+              className={`rounded-full border px-1.5 py-0.5 ${progress.activeMilestone.badgeCss}`}
+              title={`${progress.set.name}: ${progress.activeMilestone.name} (${progress.equippedCount}/${progress.total} peças equipadas)`}
+            >
+              {progress.set.icon} {compact ? progress.activeMilestone.pieces : progress.activeMilestone.name}
+            </span>
+          ))}
         </span>
       </span>
     </span>
