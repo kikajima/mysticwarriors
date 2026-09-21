@@ -40,7 +40,7 @@ import { ApiError } from '../src/lib/api';
 // em 5000 ms. Mantemos uma margem explícita apenas neste arquivo pesado.
 setDefaultTimeout(15_000);
 
-const ADMIN_EMAIL = 'alicomprasbbbb@gmail.com';
+const ADMIN_EMAIL = 'admin@example.com';
 const ADMIN_UUID = '00000000-0000-0000-0000-0000000000aa';
 const OTHER_UUID = '00000000-0000-0000-0000-0000000000bb';
 
