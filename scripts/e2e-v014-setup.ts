@@ -22,6 +22,7 @@
 const GAME = 'http://localhost:3000';
 const MOCK = 'http://localhost:4010';
 const PASSWORD = 'qa-e2e-password';
+const ADMIN_EMAIL = process.env.MW_E2E_ADMIN_EMAIL ?? 'admin@example.com';
 
 interface Ctx {
   cookie: string;
@@ -106,7 +107,7 @@ async function main() {
   const liderPlayerId = await createCharacter(lider, 'QA Líder E2E', 'saiyajin');
   console.log('✓ personagem QA Líder E2E criado:', liderPlayerId);
 
-  const admin = await bridgeLogin('alicomprasbbbb@gmail.com');
+  const admin = await bridgeLogin(ADMIN_EMAIL);
   await api(admin, '/api/admin/action', {
     characterId: liderPlayerId,
     ownerId: null,
