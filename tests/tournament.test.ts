@@ -9,6 +9,7 @@ import {
   fighterForRound,
   roundDef,
   tournamentRewards,
+  tournamentZeniReward,
   tournamentXpReward,
   parseTournament,
   serializeTournament,
@@ -85,12 +86,11 @@ describe('TORNEIO — catálogo (elenco, rodadas, premiação)', () => {
     expect(TOURNAMENT_ROUNDS.length).toBe(3);
     expect(TOURNAMENT_ROUNDS[0].powerMult).toBeLessThan(TOURNAMENT_ROUNDS[1].powerMult);
     expect(TOURNAMENT_ROUNDS[1].powerMult).toBeLessThan(TOURNAMENT_ROUNDS[2].powerMult);
-    expect(TOURNAMENT_ROUNDS[0].zeni).toBeLessThan(TOURNAMENT_ROUNDS[1].zeni);
-    expect(TOURNAMENT_ROUNDS[1].zeni).toBeLessThan(TOURNAMENT_ROUNDS[2].zeni);
+    expect(TOURNAMENT_ROUNDS[0].zeniBase).toBeLessThan(TOURNAMENT_ROUNDS[1].zeniBase);
+    expect(TOURNAMENT_ROUNDS[1].zeniBase).toBeLessThan(TOURNAMENT_ROUNDS[2].zeniBase);
     expect(TOURNAMENT_ROUNDS[0].xpPct).toBeLessThan(TOURNAMENT_ROUNDS[1].xpPct);
     expect(TOURNAMENT_ROUNDS[1].xpPct).toBeLessThan(TOURNAMENT_ROUNDS[2].xpPct);
-    // final é a única rodada com cristais no pack base... semi também tem 1
-    expect(TOURNAMENT_ROUNDS[2].crystals).toBeGreaterThanOrEqual(TOURNAMENT_ROUNDS[1].crystals);
+    expect(TOURNAMENT_ROUNDS.every((round) => !('crystals' in round))).toBe(true);
     expect(roundDef(1).short).toBe('Quartas');
     expect(roundDef(2).short).toBe('Semifinal');
     expect(roundDef(3).name).toBe('GRANDE FINAL');
@@ -99,15 +99,43 @@ describe('TORNEIO — catálogo (elenco, rodadas, premiação)', () => {
     expect(roundDef(99).round).toBe(3);
   });
 
-  test('premiação: título apenas na final; XP acompanha o nível', () => {
+  test('premiação: título apenas na final; Zeni e XP acompanham o nível; sem cristais', () => {
     const r1 = tournamentRewards(1, 10);
     const r3 = tournamentRewards(3, 10);
     expect(r1.title).toBe(false);
     expect(r3.title).toBe(true);
     expect(r3.xp).toBeGreaterThan(r1.xp);
-    // níveis maiores rendem proporcionalmente mais XP
+    expect(r3.zeni).toBeGreaterThan(r1.zeni);
+    expect('crystals' in r1).toBe(false);
+    expect('crystals' in r3).toBe(false);
+
+    // níveis maiores rendem proporcionalmente mais XP e Zeni.
     expect(tournamentXpReward(2, 30)).toBeGreaterThan(tournamentXpReward(2, 10));
+    expect(tournamentZeniReward(2, 30)).toBeGreaterThan(tournamentZeniReward(2, 10));
+    expect(tournamentZeniReward(3, 100)).toBeGreaterThan(tournamentZeniReward(3, 50));
     expect(tournamentXpReward(1, 1)).toBeGreaterThanOrEqual(1);
+    expect(tournamentZeniReward(1, 1)).toBe(TOURNAMENT_ROUNDS[0].zeniBase);
+  });
+
+  test('fluxo direto do torneio não concede nem anuncia cristais', async () => {
+    const actions = await Bun.file(`${import.meta.dir}/../src/lib/game/actions.ts`).text();
+    const activities = await Bun.file(`${import.meta.dir}/../src/lib/game/activities.ts`).text();
+    const panel = await Bun.file(`${import.meta.dir}/../src/components/game/TournamentPanel.tsx`).text();
+
+    const actionStart = actions.indexOf('async function actionStartTournamentFight');
+    const actionEnd = actions.indexOf('// ===== PVP', actionStart);
+    const tournamentAction = actions.slice(actionStart, actionEnd);
+    expect(tournamentAction).not.toContain('rewards.crystals');
+    expect(tournamentAction).not.toContain('crystalsGain');
+
+    const applyStart = activities.indexOf('async function applyTournamentResult');
+    const applyEnd = activities.indexOf('// ===== helpers exportados', applyStart);
+    const tournamentApply = activities.slice(applyStart, applyEnd);
+    expect(tournamentApply).not.toContain('data.crystals');
+    expect(tournamentApply).toContain('crystalsGain: undefined');
+
+    expect(panel).not.toContain('roundDef(round).crystals');
+    expect(panel).not.toContain('r.crystals');
   });
 
   test('consolação do eliminado: metade do XP, nunca zero (a luta ensina)', () => {
