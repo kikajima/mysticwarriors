@@ -546,6 +546,39 @@ model ChatMute {
   @@index([playerId])
 }
 
+/**
+ * Lista pessoal de amigos do chat. É unilateral de propósito: adicionar
+ * alguém organiza seus próprios contatos sem forçar reciprocidade.
+ * Sem FK para continuar simples diante de exclusão/reset de personagens;
+ * entradas órfãs são descartadas pelas consultas e limpas no reset geral.
+ */
+model ChatFriend {
+  id               String   @id @default(cuid())
+  playerId         String
+  friendPlayerId   String
+  friendPlayerName String
+  createdAt        DateTime @default(now())
+
+  @@unique([playerId, friendPlayerId])
+  @@index([playerId, createdAt])
+}
+
+/**
+ * Bloqueio social unilateral. Além de esconder mensagens para o bloqueador,
+ * impede conversa privada nos dois sentidos enquanto existir.
+ */
+model ChatBlock {
+  id                String   @id @default(cuid())
+  playerId          String
+  blockedPlayerId   String
+  blockedPlayerName String
+  createdAt         DateTime @default(now())
+
+  @@unique([playerId, blockedPlayerId])
+  @@index([playerId, createdAt])
+  @@index([blockedPlayerId])
+}
+
 // ===== Auditoria administrativa (v0.14) =====
 //
 // REGISTRO DAS AÇÕES DESTRUTIVAS do painel admin (excluir personagem /
