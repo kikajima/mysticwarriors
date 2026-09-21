@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { makeBackupTarGz } from '@/lib/game/persistence';
 import { requirePanelAdmin } from '@/lib/supabase/admin';
+import { clientIp, rateLimit } from '@/lib/rate-limit';
 
 // =====================================================================
 // GET /api/game/backup — backup administrativo do banco completo
@@ -19,6 +20,14 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { success: false, error: { code: guard.code, message: guard.message } },
       { status: guard.status }
+    );
+  }
+
+  const rl = rateLimit(`admin-backup:${clientIp(request)}`, 3, 10 * 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { success: false, error: { code: 'RATE_LIMITED', message: 'Muitas exportações seguidas. Aguarde alguns minutos.' } },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
     );
   }
 
