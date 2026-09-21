@@ -148,8 +148,6 @@ function defaultMessage(code: ErrorCode): string {
       return 'Energia insuficiente.';
     case 'INSUFFICIENT_HP':
       return 'Você está ferido demais para isso.';
-    case 'STAT_CAP_REACHED':
-      return 'Atributo já está no nível máximo.';
     case 'MISSION_IN_PROGRESS':
       return 'Você já está em uma missão.';
     case 'MISSION_NOT_READY':
