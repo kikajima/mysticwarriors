@@ -42,6 +42,7 @@ import {
   FINAL_FIGHTERS,
   TOURNAMENT_COOLDOWN_MS,
   TOURNAMENT_ENTRY_FEE,
+  tournamentZeniReward,
 } from '@/lib/game/content/tournament';
 import { ACHIEVEMENTS, DAILY_QUESTS, WEEKLY_QUESTS } from '@/lib/game/content/quests';
 import { TALENTS } from '@/lib/game/content/talents';
@@ -1278,19 +1279,19 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'table',
         table: {
           caption: 'Rodadas e premiação (ORIGEM: content/tournament.ts — TOURNAMENT_ROUNDS)',
-          headers: ['Rodada', 'Poder do adversário', 'Zeni', 'XP', 'Cristais'],
+          headers: ['Rodada', 'Poder do adversário', 'Zeni escalável', 'XP'],
           rows: TOURNAMENT_ROUNDS.map((r) => [
             r.name,
             `${Math.round(r.powerMult * 100)}% do seu poder`,
-            br(r.zeni),
-            `${Math.round(r.xpPct * 100)}% do nível atual`,
-            r.crystals === 0 ? '—' : String(r.crystals),
+            `Nv. 10: ${br(tournamentZeniReward(r.round, 10))} · Nv. 50: ${br(tournamentZeniReward(r.round, 50))} · Nv. 100: ${br(tournamentZeniReward(r.round, 100))}`,
+            `${Math.round(r.xpPct * 100)}% do XP necessário para o próximo nível`,
           ]),
         },
       },
       {
         kind: 'list',
         items: [
+          '**Recompensas:** Zeni e XP escalam com o nível do personagem. O torneio não concede cristais/diamantes diretamente.',
           '**Cinturão do Campeão:** vencer a GRANDE FINAL soma 1 título (conquistas *Campeão Mundial* e *Dinastia do Ringue*).',
           `**Eliminação:** 1 derrota encerra a campanha; o rejeitado leva METADE do XP da rodada (a taxa de inscrição não é devolvida — o comitê tem despesas) — e o comitê reorganiza a chave por **${minutes(TOURNAMENT_COOLDOWN_MS)}** antes da próxima inscrição.`,
           'O painel do Torneio mostra o desafiante da rodada com apelido e provocação — lutadores de elite SEM técnicas/talentos: a vantagem de recursos é sua, a numérica é deles.',

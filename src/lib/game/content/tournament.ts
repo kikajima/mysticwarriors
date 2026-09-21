@@ -26,12 +26,9 @@ import { xpToNextLevel } from './world';
 /**
  * Duração do cooldown entre campanhas (ms).
  *
- * v0.9.24 (C1) — 15min → 30min: o torneio era a atividade dominante
- * da economia inicial (playtest: 2.800 Zeni + 4 💎 por campanha de
- * ~2min, teto sustentado de ~9.900 Zeni/h vs PvE ~272/h e profissão
- * ~300/h). Com 30min o ciclo real passa a ~32min (lutas + cooldown):
- * teto de campeão ≈ 1.9 campanhas/h. Veja o relatório de balanceamento
- * v0.9.24 (tabela ANTES/DEPOIS) — wiki e contrato atualizados juntos.
+ * v0.9.24 (C1) — 15min → 30min para controlar a frequência econômica.
+ * v0.9.25 — o torneio deixa de conceder cristais e passa a escalar Zeni
+ * com o nível do guerreiro; o cooldown continua sendo a trava de frequência.
  */
 export const TOURNAMENT_COOLDOWN_MS = 30 * 60_000;
 
@@ -166,50 +163,63 @@ export interface TournamentRoundDef {
   name: string;
   /** multiplicador do PODER DO ADVERSÁRIO sobre o poder atual do jogador */
   powerMult: number;
-  /** premiação por vitória */
-  zeni: number;
-  /** fração do XP exigido pelo nível ATUAL do jogador (como profissões) */
+  /** Zeni-base da rodada no patamar de referência (Nv. 10). */
+  zeniBase: number;
+  /** fração do XP exigido pelo nível ATUAL do jogador. */
   xpPct: number;
-  crystals: number;
 }
 
+export const TOURNAMENT_REWARD_REFERENCE_LEVEL = 10;
+
 export const TOURNAMENT_ROUNDS: TournamentRoundDef[] = [
-  // v0.9.24 (C1) — premiação recalibrada (zeni 300/700/1800 → 150/400/800;
-  // cristais 0/1/3 → 0/1/2) + taxa de inscrição de 200 Zeni: campeão
-  // passa a receber líquido ~1.150 (era 2.800 bruto). O XP% segue o
-  // NÍVEL do lutador — continua valendo a pena em qualquer estágio.
-  { round: 1, short: 'Quartas', name: 'Quartas de Final', powerMult: 0.82, zeni: 150, xpPct: 0.12, crystals: 0 },
-  { round: 2, short: 'Semifinal', name: 'Semifinal', powerMult: 0.95, zeni: 400, xpPct: 0.18, crystals: 1 },
+  // v0.9.25 — os valores de Zeni abaixo são a BASE no nível 10.
+  // A recompensa real cresce com o nível pela função tournamentZeniReward.
+  // Cristais foram removidos completamente da premiação direta do torneio.
+  { round: 1, short: 'Quartas', name: 'Quartas de Final', powerMult: 0.82, zeniBase: 150, xpPct: 0.12 },
+  { round: 2, short: 'Semifinal', name: 'Semifinal', powerMult: 0.95, zeniBase: 400, xpPct: 0.18 },
   // calibração (grind 200 seeds): a final é um duelo PAR — o viés do
   // campeão defensor (+6% médio) já é a vantagem dele; ×1.10 em cima
   // tornava a final quase impossível (8% de vitória entrando cheio)
-  { round: 3, short: 'Final', name: 'GRANDE FINAL', powerMult: 1.0, zeni: 800, xpPct: 0.3, crystals: 2 },
+  { round: 3, short: 'Final', name: 'GRANDE FINAL', powerMult: 1.0, zeniBase: 800, xpPct: 0.3 },
 ];
 
 export function roundDef(round: number): TournamentRoundDef {
   return TOURNAMENT_ROUNDS[Math.min(Math.max(1, round), 3) - 1];
 }
 
-/** XP exato da premiação da rodada (fração do nível atual). */
+/**
+ * Zeni exato da rodada no nível atual.
+ *
+ * O patamar Nv. 10 preserva o balanceamento anterior (150/400/800).
+ * Acima dele, a renda cresce de forma moderada (expoente 1,25):
+ * acompanha o encarecimento do jogo sem explodir tão rápido quanto a curva
+ * de treino. Abaixo do Nv. 10, o piso 1× protege o iniciante da taxa de
+ * inscrição e mantém o torneio relevante desde o começo.
+ */
+export function tournamentZeniReward(round: number, playerLevel: number): number {
+  const level = Math.max(1, Math.trunc(Number(playerLevel) || 1));
+  const levelFactor = Math.max(1, Math.pow(level / TOURNAMENT_REWARD_REFERENCE_LEVEL, 1.25));
+  return Math.max(1, Math.round(roundDef(round).zeniBase * levelFactor));
+}
+
+/** XP exato da premiação da rodada (fração do XP do nível atual). */
 export function tournamentXpReward(round: number, playerLevel: number): number {
-  return Math.max(1, Math.ceil(xpToNextLevel(playerLevel) * roundDef(round).xpPct));
+  const level = Math.max(1, Math.trunc(Number(playerLevel) || 1));
+  return Math.max(1, Math.ceil(xpToNextLevel(level) * roundDef(round).xpPct));
 }
 
 export interface TournamentRewards {
   zeni: number;
   xp: number;
-  crystals: number;
   /** true quando a vitória vale o TÍTULO de campeão (final) */
   title: boolean;
 }
 
 /** Premiação por vencer a rodada N no nível dado. */
 export function tournamentRewards(round: number, playerLevel: number): TournamentRewards {
-  const def = roundDef(round);
   return {
-    zeni: def.zeni,
+    zeni: tournamentZeniReward(round, playerLevel),
     xp: tournamentXpReward(round, playerLevel),
-    crystals: def.crystals,
     title: round === 3,
   };
 }

@@ -17,7 +17,7 @@
 //     PONTO DE CRUZAMENTO onde elixir supera treinar;
 //  5. LIMITADORES: teto de treino por energia (3⚡/treino, 12⚡/h) e
 //     teto de elixir por renda de 💎 (quests diárias/semanais,
-//     torneio com cooldown, boss mundial, conquistas one-time).
+//     boss mundial e conquistas one-time; torneio não gera mais 💎).
 //
 // Uso: bun scripts/auditoria-f2-economia.ts
 // =====================================================================
@@ -31,7 +31,7 @@ import {
 import { BOSS_ATTACK_ENERGY_COST } from '../src/lib/game/rules';
 import { trainingCost } from '../src/lib/game/rules';
 import { DAILY_QUESTS, WEEKLY_QUESTS, ACHIEVEMENTS } from '../src/lib/game/content/quests';
-import { TOURNAMENT_ROUNDS, TOURNAMENT_COOLDOWN_MS } from '../src/lib/game/content/tournament';
+import { TOURNAMENT_COOLDOWN_MS } from '../src/lib/game/content/tournament';
 
 const RACES: Array<[string, number]> = [
   ['saiyajin', 1.0],
@@ -130,8 +130,7 @@ console.log('=================================================================')
 const dailyCrystals = DAILY_QUESTS.reduce((s, q) => s + (q.rewardCrystals ?? 0), 0);
 const weeklyCrystals = WEEKLY_QUESTS.reduce((s, q) => s + (q.rewardCrystals ?? 0), 0);
 const achCrystals = ACHIEVEMENTS.reduce((s, a) => s + (a.rewardCrystals ?? 0), 0);
-const tournCrystals = TOURNAMENT_ROUNDS.reduce((s, r) => s + (r.crystals ?? 0), 0);
-const tournPerDay = Math.floor((24 * 60 * 60 * 1000) / TOURNAMENT_COOLDOWN_MS);
+const tournCrystals = 0;
 
 console.log(`A) ENERGIA limita o TREINO: ${TRAIN_ENERGY_COST}⚡/treino · regen 12⚡/h (${REGEN.energySeconds}s/ponto)`);
 console.log(`   ⇒ teto teórico de treino = 4 pontos/h = 96/dia (Zeni disponível à parte).`);
@@ -140,16 +139,12 @@ console.log('');
 console.log(`B) RENDA DE 💎 limita o ELIXIR (75💎 cada):`);
 console.log(`   • quests diárias: ${dailyCrystals}💎/dia`);
 console.log(`   • quests semanais: ${weeklyCrystals}💎/semana ≈ ${(weeklyCrystals / 7).toFixed(1)}💎/dia`);
-console.log(`   • torneio: ${tournCrystals}💎/campanha perfeita (entrada 200 Zeni, cooldown ${TOURNAMENT_COOLDOWN_MS / 60_000}min)`);
-console.log(`     ⇒ teto por COOLDOWN: ${tournCrystals}×${tournPerDay} = ${tournCrystals * tournPerDay}💎/dia (1 campanha/30min, 24h/dia)`);
-console.log(`   • LIMITAÇÃO CRUZADA: cada campanha gasta 3×${BATTLE_ENERGY_COST}⚡ do MESMO pool de 96⚡/dia`);
-const campaignsEnergyCapped = Math.floor(96 / (3 * BATTLE_ENERGY_COST));
-console.log(`     ⇒ teto REAL de campanhas ≈ ${campaignsEnergyCapped}/dia ⇒ ${tournCrystals}×${campaignsEnergyCapped} = ${tournCrystals * campaignsEnergyCapped}💎/dia do torneio`);
+console.log(`   • torneio: ${tournCrystals}💎 — desde v0.9.25, lutas concedem somente Zeni + XP (cooldown ${TOURNAMENT_COOLDOWN_MS / 60_000}min)`);
 console.log(`   • boss mundial: 1💎 participação + bônus por posição, 1 boss/3 dias`);
 console.log(`   • conquistas: ${achCrystals}💎 NO TOTAL (one-time, irrecuperáveis)`);
 console.log('');
 const casualPerDay = dailyCrystals + weeklyCrystals / 7 + 1; // +1 boss participation diluído
-const hardcorePerDay = dailyCrystals + weeklyCrystals / 7 + tournCrystals * campaignsEnergyCapped;
+const hardcorePerDay = dailyCrystals + weeklyCrystals / 7 + 1;
 console.log(`   ⇒ jogador casual: ~${casualPerDay.toFixed(1)}💎/dia ⇒ ${(casualPerDay / 75).toFixed(2)} elixir/dia ⇒ ${((casualPerDay / 75) * 8).toFixed(1)} pontos/dia (distribuídos entre 4 atributos)`);
 console.log(`   ⇒ jogador hardcore 24/7: ~${hardcorePerDay.toFixed(0)}💎/dia ⇒ ${(hardcorePerDay / 75).toFixed(1)} elixir/dia ⇒ ${((hardcorePerDay / 75) * 8).toFixed(0)} pontos/dia ESPALHADOS (vs. 96/dia CONCENTRADOS do treino)`);
 console.log('');

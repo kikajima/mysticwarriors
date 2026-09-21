@@ -7,6 +7,7 @@ import {
   TOURNAMENT_ENTRY_FEE,
   fighterForRound,
   roundDef,
+  tournamentZeniReward,
   tournamentXpReward,
   fightersForRound,
   type TournamentFighter,
@@ -151,6 +152,7 @@ export function TournamentPanel({
 
   const rewards = TOURNAMENT_ROUNDS.map((r) => ({
     ...r,
+    zeni: tournamentZeniReward(r.round, player.level),
     xp: tournamentXpReward(r.round, player.level),
   }));
 
@@ -372,18 +374,12 @@ export function TournamentPanel({
                   </span>{' '}
                   · Premiação:{' '}
                   <span className="text-amber-300 font-heading">
-                    +{roundDef(round).zeni.toLocaleString('pt-BR')} Zeni
+                    +{tournamentZeniReward(round, player.level).toLocaleString('pt-BR')} Zeni
                   </span>
                   {' · '}
                   <span className="text-amber-300 font-heading">
                     +{tournamentXpReward(round, player.level)} XP
                   </span>
-                  {roundDef(round).crystals > 0 && (
-                    <>
-                      {' · '}
-                      <span className="text-cyan-300 font-heading">+{roundDef(round).crystals} 💎</span>
-                    </>
-                  )}
                   {round === 3 && (
                     <>
                       {' · '}
@@ -460,12 +456,6 @@ export function TournamentPanel({
                   <span className="text-amber-300 font-heading">{r.zeni.toLocaleString('pt-BR')} Zeni</span>
                   <span className="text-amber-200/40">·</span>
                   <span className="text-amber-300 font-heading">{r.xp} XP</span>
-                  {r.crystals > 0 && (
-                    <>
-                      <span className="text-amber-200/40">·</span>
-                      <span className="text-cyan-300 font-heading">{r.crystals} 💎</span>
-                    </>
-                  )}
                   {champion && (
                     <Chip className="bg-yellow-950/70 text-yellow-300 border-yellow-700/60">👑 Cinturão</Chip>
                   )}

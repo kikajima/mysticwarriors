@@ -95,7 +95,6 @@ export interface BattleActivityResult {
       won: boolean;
       xp: number;
       zeni: number;
-      crystals: number;
       /** vitória na GRANDE FINAL — soma título de campeão */
       title: boolean;
       techniquesUsed: number;
@@ -601,11 +600,12 @@ async function applyTournamentResult(
   const data = payload.apply.tournament!;
   const now = new Date();
 
-  // premiação: Zeni/cristais só do vencedor; o rejeitado leva METADE do
-  // XP da rodada (a luta ensina — coerente com o diálogo de derrota)
+  // premiação: Zeni só do vencedor; o rejeitado leva METADE do XP da
+  // rodada (a luta ensina — coerente com o diálogo de derrota).
+  // O torneio não concede mais cristais.
   const reward = data.won
-    ? { xp: data.xp, zeni: data.zeni, crystals: data.crystals }
-    : { xp: data.xp, zeni: 0, crystals: 0 };
+    ? { xp: data.xp, zeni: data.zeni }
+    : { xp: data.xp, zeni: 0 };
   const grant = await grantRewards(tx, player, reward, {
     type: 'reward',
     source: 'tournament',
@@ -664,14 +664,15 @@ async function applyTournamentResult(
     ...payload.display.battle,
     xpGain: grant.xpGranted,
     zeniGain: data.won ? data.zeni : 0,
-    crystalsGain: data.won ? data.crystals : 0,
+    // Neutraliza atividades antigas que ainda carregavam crystalsGain no JSON.
+    crystalsGain: undefined,
   };
 
   const roundName = roundDef(data.round).name;
   const message = data.title
-    ? `🏆 CAMPEÃO! Você venceu a GRANDE FINAL contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP, +${data.crystals} cristais — o cinturão é SEU!`
+    ? `🏆 CAMPEÃO! Você venceu a GRANDE FINAL contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP — o cinturão é SEU!`
     : data.won
-      ? `Vitória na ${roundName} contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP${data.crystals > 0 ? `, +${data.crystals} cristais` : ''}.`
+      ? `Vitória na ${roundName} contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP.`
       : data.playerEndHp <= 0
         ? `Eliminado na ${roundName} por ${payload.display.battle.enemyName}... Você foi resgatado com 1 de vida (+${data.xp} XP de aprendizado) — o comitê reorganiza a chave para a próxima inscrição.`
         : `Eliminado na ${roundName} por decisão dos jurados contra ${payload.display.battle.enemyName}... Você deixou o ringue com ${data.playerEndHp} de vida (+${data.xp} XP de aprendizado) — o comitê reorganiza a chave para a próxima inscrição.`;
