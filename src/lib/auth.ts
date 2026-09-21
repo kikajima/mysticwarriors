@@ -16,6 +16,17 @@ import type { Account, Player, Prisma, Session } from '@prisma/client';
 export const SESSION_COOKIE = 'gm_session';
 export const SESSION_TTL_DAYS = 30;
 
+/**
+ * Username/senha locais são legado de desenvolvimento. Produção autentica
+ * contas permanentes exclusivamente pelo Supabase; manter estas rotas
+ * disponíveis permitiria contornar confirmação de e-mail.
+ */
+export function requireLegacyLocalAuthEnvironment(): void {
+  if (process.env.NODE_ENV === 'production') {
+    throw new ApiError('NOT_FOUND', 'Não encontrado.');
+  }
+}
+
 // ===== Hash de senha (scrypt nativo) =====
 
 export function hashPassword(password: string): string {
