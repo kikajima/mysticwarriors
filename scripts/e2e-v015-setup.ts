@@ -102,7 +102,7 @@ async function main() {
   if (localGuilds !== 0) throw new Error(`banco local deveria ter 0 guildas, tem ${localGuilds}`);
 
   // ===== 1) ADMIN: personagem + zeni para fundar a guilda do ciclo =====
-  const admin = await bridgeLogin('alicomprasbbbb@gmail.com');
+  const admin = await bridgeLogin('admin@example.test');
   const adminPlayerId = await createCharacter(admin, 'Admin QA E2E', 'humano');
   console.log('✓ Admin QA E2E:', adminPlayerId);
   await api(admin, '/api/admin/action', { characterId: adminPlayerId, ownerId: null, action: 'grant', zeniDelta: 20000 });
