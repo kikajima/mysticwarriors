@@ -147,148 +147,110 @@ export function getProfessionMaterial(id: string): ProfessionMaterialDef | undef
 // INIMIGOS (PvE)
 // =====================================================================
 
-export const ENEMIES: Enemy[] = [
-  {
-    id: 'arruaceiro_ermo',
-    name: 'Arruaceiro do Ermo',
-    taunt: '"Você escolheu o caminho errado, forasteiro."',
-    level: 1,
-    strength: 8,
-    defense: 7,
-    speed: 9,
-    ki: 6,
-    zeniReward: 60,
-    xpReward: 40,
-    color: 'from-stone-700 to-stone-950',
-    emoji: '🥊',
-  },
-  {
-    id: 'capanga_dojo_negro',
-    name: 'Capanga do Dojo Negro',
-    taunt: '"O mestre não precisa sujar as mãos com você."',
-    level: 3,
-    strength: 11,
-    defense: 10,
-    speed: 12,
-    ki: 9,
-    zeniReward: 180,
-    xpReward: 120,
-    color: 'from-lime-800 to-stone-950',
-    emoji: '🥋',
-  },
-  {
-    id: 'mercenario_bioaprimorado',
-    name: 'Mercenário Bioaprimorado',
-    taunt: '"Meu contrato termina quando você cair."',
-    level: 6,
-    strength: 32,
-    defense: 27,
-    speed: 30,
-    ki: 24,
-    zeniReward: 500,
-    xpReward: 340,
-    color: 'from-emerald-700 to-slate-950',
-    emoji: '🦾',
-  },
-  {
-    id: 'soldado_choque_planetario',
-    name: 'Soldado de Choque Planetário',
-    taunt: '"Já derrubei cidades inteiras por ordens menores."',
-    level: 12,
-    strength: 82,
-    defense: 70,
-    speed: 78,
-    ki: 65,
-    zeniReward: 1200,
-    xpReward: 850,
-    color: 'from-teal-700 to-cyan-950',
-    emoji: '🪖',
-  },
-  {
-    id: 'executor_estelar',
-    name: 'Executor Estelar',
-    taunt: '"Seu planeta é apenas mais um ponto no meu relatório."',
-    level: 20,
-    strength: 180,
-    defense: 158,
-    speed: 170,
-    ki: 152,
-    zeniReward: 3000,
-    xpReward: 2100,
-    color: 'from-cyan-700 to-sky-950',
-    emoji: '⭐',
-  },
-  {
-    id: 'capitao_saque_galactico',
-    name: 'Capitão de Saque Galáctico',
-    taunt: '"Uma galáxia inteira já pagou para não me enfrentar."',
-    level: 35,
-    strength: 410,
-    defense: 365,
-    speed: 390,
-    ki: 345,
-    zeniReward: 8000,
-    xpReward: 5500,
-    color: 'from-sky-700 to-indigo-950',
-    emoji: '🌌',
-  },
-  {
-    id: 'sentinela_cosmica',
-    name: 'Sentinela Cósmica',
-    taunt: '"A ordem do cosmos exige sua rendição."',
-    level: 50,
-    strength: 960,
-    defense: 860,
-    speed: 910,
-    ki: 830,
-    zeniReward: 22000,
-    xpReward: 15000,
-    color: 'from-violet-700 to-purple-950',
-    emoji: '🌠',
-  },
-  {
-    id: 'acolito_celestial',
-    name: 'Acólito Celestial',
-    taunt: '"Mortais também podem aprender reverência pela força."',
-    level: 75,
-    strength: 2200,
-    defense: 1980,
-    speed: 2120,
-    ki: 1920,
-    zeniReward: 60000,
-    xpReward: 42000,
-    color: 'from-fuchsia-700 to-violet-950',
-    emoji: '✨',
-  },
-  {
-    id: 'arauto_ordem_superior',
-    name: 'Arauto da Ordem Superior',
-    taunt: '"Eu sou apenas o mensageiro. Isso deveria preocupar você."',
-    level: 100,
-    strength: 5200,
-    defense: 4450,
-    speed: 4800,
-    ki: 4300,
-    zeniReward: 170000,
-    xpReward: 120000,
-    color: 'from-amber-600 to-orange-950',
-    emoji: '⚡',
-  },
-  {
-    id: 'guardiao_vazio_transcendente',
-    name: 'Guardião do Vazio Transcendente',
-    taunt: '"Além daqui, até os deuses enviam servos."',
-    level: 150,
-    strength: 11500,
-    defense: 10200,
-    speed: 11000,
-    ki: 9900,
-    zeniReward: 500000,
-    xpReward: 350000,
-    color: 'from-orange-600 to-red-950',
-    emoji: '👁️',
-  },
-];
+type EnemyProfile = 'balanced' | 'brute' | 'tank' | 'speed' | 'ki';
+
+const ENEMY_PROFILE_RATIOS: Record<EnemyProfile, { strength: number; defense: number; speed: number; ki: number }> = {
+  balanced: { strength: 1, defense: 1, speed: 1, ki: 1 },
+  brute: { strength: 1.35, defense: 1, speed: 0.82, ki: 0.72 },
+  tank: { strength: 0.9, defense: 1.38, speed: 0.74, ki: 0.84 },
+  speed: { strength: 0.9, defense: 0.78, speed: 1.42, ki: 0.9 },
+  ki: { strength: 0.75, defense: 0.9, speed: 1, ki: 1.38 },
+};
+
+interface EnemySpec {
+  id: string;
+  name: string;
+  taunt: string;
+  intent: string;
+  tier: 1 | 2 | 3;
+  level: number;
+  targetPower: number;
+  profile: EnemyProfile;
+  color: string;
+  emoji: string;
+}
+
+/**
+ * Cada Escala de Poder recebe três degraus EXCLUSIVOS de PvE (I/II/III).
+ * O jogador continua usando somente as 10 escalas principais; a subdivisão
+ * existe apenas para dar mais passos, personalidade e intenção aos capangas.
+ */
+const ENEMY_SPECS: readonly EnemySpec[] = [
+  { id: 'arruaceiro_ermo', name: 'Arruaceiro do Ermo', taunt: '"Você escolheu o caminho errado, forasteiro."', intent: 'Cobrar pedágio de viajantes e tomar suprimentos de quem atravessa o ermo.', tier: 1, level: 1, targetPower: 45, profile: 'brute', color: 'from-stone-700 to-stone-950', emoji: '🥊' },
+  { id: 'cacador_recompensas_iniciante', name: 'Caçador de Recompensas Iniciante', taunt: '"Seu nome vale algumas moedas. Já é o bastante."', intent: 'Capturar guerreiros novatos para construir reputação no submundo.', tier: 2, level: 2, targetPower: 80, profile: 'speed', color: 'from-stone-700 to-stone-950', emoji: '🎯' },
+  { id: 'discipulo_dojo_clandestino', name: 'Discípulo do Dojo Clandestino', taunt: '"Se eu derrotar você, finalmente vão notar meu nome."', intent: 'Provar seu valor vencendo desconhecidos e subir dentro de um dojo ilegal.', tier: 3, level: 3, targetPower: 110, profile: 'balanced', color: 'from-stone-700 to-stone-950', emoji: '🥋' },
+
+  { id: 'cobrador_cla_ferro', name: 'Cobrador do Clã de Ferro', taunt: '"Tributo ou dentes. Você escolhe."', intent: 'Recolher tributos de pequenas vilas para financiar o seu clã marcial.', tier: 1, level: 4, targetPower: 150, profile: 'tank', color: 'from-lime-800 to-stone-950', emoji: '⛓️' },
+  { id: 'patrulheiro_arena_ilegal', name: 'Patrulheiro da Arena Ilegal', taunt: '"A arena sempre precisa de lutadores novos."', intent: 'Recrutar combatentes à força para circuitos clandestinos de luta.', tier: 2, level: 5, targetPower: 205, profile: 'balanced', color: 'from-lime-800 to-stone-950', emoji: '🏟️' },
+  { id: 'executor_dojo_negro', name: 'Executor do Dojo Negro', taunt: '"O mestre não precisa sujar as mãos com você."', intent: 'Eliminar escolas rivais e qualquer guerreiro que ameace o prestígio do dojo.', tier: 3, level: 6, targetPower: 260, profile: 'brute', color: 'from-lime-800 to-stone-950', emoji: '🥋' },
+
+  { id: 'mercenario_bioaprimorado', name: 'Mercenário Bioaprimorado', taunt: '"Meu contrato termina quando você cair."', intent: 'Roubar dados de combate para vender aperfeiçoamentos biológicos ao melhor comprador.', tier: 1, level: 7, targetPower: 360, profile: 'balanced', color: 'from-emerald-700 to-slate-950', emoji: '🦾' },
+  { id: 'cacador_de_ki', name: 'Caçador de Ki', taunt: '"Sua assinatura energética é rara. O cliente vai pagar bem."', intent: 'Rastrear guerreiros com Ki incomum e entregá-los vivos a laboratórios clandestinos.', tier: 2, level: 9, targetPower: 550, profile: 'ki', color: 'from-emerald-700 to-slate-950', emoji: '📡' },
+  { id: 'sabotador_genetico', name: 'Sabotador Genético', taunt: '"Só preciso de uma amostra. Você pode colaborar ou sangrar."', intent: 'Coletar material genético de lutadores excepcionais para um projeto secreto.', tier: 3, level: 11, targetPower: 780, profile: 'speed', color: 'from-emerald-700 to-slate-950', emoji: '🧬' },
+
+  { id: 'soldado_choque_planetario', name: 'Soldado de Choque Planetário', taunt: '"Já derrubei cidades inteiras por ordens menores."', intent: 'Abrir caminho para uma força de ocupação e quebrar a resistência local.', tier: 1, level: 12, targetPower: 1050, profile: 'brute', color: 'from-teal-700 to-cyan-950', emoji: '🪖' },
+  { id: 'oficial_ocupacao', name: 'Oficial de Ocupação', taunt: '"Uma capital rende mais rápido quando o campeão dela cai primeiro."', intent: 'Tomar centros políticos e usar a derrota de guerreiros locais como demonstração de força.', tier: 2, level: 15, targetPower: 1350, profile: 'tank', color: 'from-teal-700 to-cyan-950', emoji: '🎖️' },
+  { id: 'demolidor_mundos_menores', name: 'Demolidor de Mundos Menores', taunt: '"Seu planeta nem vai entrar no relatório final."', intent: 'Destruir defesas planetárias antes da chegada de uma frota invasora.', tier: 3, level: 18, targetPower: 1700, profile: 'ki', color: 'from-teal-700 to-cyan-950', emoji: '💥' },
+
+  { id: 'executor_estelar', name: 'Executor Estelar', taunt: '"Seu planeta é apenas mais um ponto no meu relatório."', intent: 'Impor embargos interestelares e eliminar quem se recusa a obedecer.', tier: 1, level: 20, targetPower: 2200, profile: 'balanced', color: 'from-cyan-700 to-sky-950', emoji: '⭐' },
+  { id: 'corsario_de_sistemas', name: 'Corsário de Sistemas', taunt: '"Três luas, cinco rotas comerciais e agora você. Boa semana."', intent: 'Saquear rotas de comércio e vender tecnologia capturada entre sistemas.', tier: 2, level: 24, targetPower: 2850, profile: 'speed', color: 'from-cyan-700 to-sky-950', emoji: '🚀' },
+  { id: 'capitao_guarda_orbital', name: 'Capitão da Guarda Orbital', taunt: '"Você vai servir melhor como prisioneiro do que como herói."', intent: 'Capturar guerreiros de elite e neutralizar ameaças antes que deixem o planeta.', tier: 3, level: 28, targetPower: 3700, profile: 'tank', color: 'from-cyan-700 to-sky-950', emoji: '🛰️' },
+
+  { id: 'capitao_saque_galactico', name: 'Capitão de Saque Galáctico', taunt: '"Uma galáxia inteira já pagou para não me enfrentar."', intent: 'Extorquir sistemas inteiros em troca de não atacar suas rotas e colônias.', tier: 1, level: 32, targetPower: 5000, profile: 'balanced', color: 'from-sky-700 to-indigo-950', emoji: '🌌' },
+  { id: 'inquisidor_braco_espiral', name: 'Inquisidor do Braço Espiral', taunt: '"Rebeldes, heróis... todos confessam quando o espaço fica pequeno."', intent: 'Caçar rebeldes e desmontar redes de resistência espalhadas pela galáxia.', tier: 2, level: 38, targetPower: 6500, profile: 'ki', color: 'from-sky-700 to-indigo-950', emoji: '🔭' },
+  { id: 'marechal_frota_mercenaria', name: 'Marechal de Frota Mercenária', taunt: '"Não conquisto mundos. Eu vendo a conquista pronta."', intent: 'Dominar corredores galácticos e revendê-los a impérios rivais.', tier: 3, level: 45, targetPower: 8200, profile: 'brute', color: 'from-sky-700 to-indigo-950', emoji: '🛸' },
+
+  { id: 'sentinela_cosmica', name: 'Sentinela Cósmica', taunt: '"A ordem do cosmos exige sua rendição."', intent: 'Silenciar guerreiros cuja ascensão ameaça o equilíbrio imposto por sua ordem.', tier: 1, level: 50, targetPower: 11000, profile: 'tank', color: 'from-violet-700 to-purple-950', emoji: '🌠' },
+  { id: 'ceifador_de_nebulosas', name: 'Ceifador de Nebulosas', taunt: '"Estrelas nascem, estrelas morrem. Eu só acelero o processo."', intent: 'Extrair energia de regiões estelares e eliminar quem interrompe a colheita.', tier: 2, level: 60, targetPower: 14500, profile: 'ki', color: 'from-violet-700 to-purple-950', emoji: '☄️' },
+  { id: 'vigia_horizonte_negro', name: 'Vigia do Horizonte Negro', taunt: '"Você chegou perto demais de algo que não deveria existir."', intent: 'Conter rupturas cósmicas apagando testemunhas e combatentes curiosos.', tier: 3, level: 70, targetPower: 18500, profile: 'speed', color: 'from-violet-700 to-purple-950', emoji: '🕳️' },
+
+  { id: 'acolito_celestial', name: 'Acólito Celestial', taunt: '"Mortais também podem aprender reverência pela força."', intent: 'Cumprir decretos de um templo celestial e testar a submissão dos mortais.', tier: 1, level: 80, targetPower: 25000, profile: 'balanced', color: 'from-fuchsia-700 to-violet-950', emoji: '✨' },
+  { id: 'guardiao_reliquia_divina', name: 'Guardião de Relíquia Divina', taunt: '"O artefato não pertence ao seu mundo."', intent: 'Recuperar relíquias sagradas espalhadas pelo universo, custe o que custar.', tier: 2, level: 90, targetPower: 33000, profile: 'tank', color: 'from-fuchsia-700 to-violet-950', emoji: '🔱' },
+  { id: 'executor_do_santuario', name: 'Executor do Santuário', taunt: '"Seu crime foi acreditar que poder e permissão são a mesma coisa."', intent: 'Punir mortais que ultrapassam limites considerados proibidos pela ordem celestial.', tier: 3, level: 105, targetPower: 42000, profile: 'ki', color: 'from-fuchsia-700 to-violet-950', emoji: '⚜️' },
+
+  { id: 'arauto_ordem_superior', name: 'Arauto da Ordem Superior', taunt: '"Eu sou apenas o mensageiro. Isso deveria preocupar você."', intent: 'Entregar ultimatos a civilizações antes que forças superiores intervenham.', tier: 1, level: 120, targetPower: 55000, profile: 'balanced', color: 'from-amber-600 to-orange-950', emoji: '⚡' },
+  { id: 'juiz_trono_astral', name: 'Juiz do Trono Astral', taunt: '"Seu mundo foi pesado. Agora falta apenas a sentença."', intent: 'Julgar mundos inteiros e executar sentenças contra aqueles considerados instáveis.', tier: 2, level: 140, targetPower: 70000, profile: 'tank', color: 'from-amber-600 to-orange-950', emoji: '⚖️' },
+  { id: 'mao_conselho_eterno', name: 'Mão do Conselho Eterno', taunt: '"O Conselho não debate ameaças. Ele as remove."', intent: 'Apagar guerreiros capazes de desequilibrar pactos entre potências superiores.', tier: 3, level: 160, targetPower: 90000, profile: 'brute', color: 'from-amber-600 to-orange-950', emoji: '🖐️' },
+
+  { id: 'guardiao_vazio_transcendente', name: 'Guardião do Vazio Transcendente', taunt: '"Além daqui, até os deuses enviam servos."', intent: 'Selar passagens entre realidades e eliminar qualquer um que tente atravessá-las.', tier: 1, level: 180, targetPower: 120000, profile: 'tank', color: 'from-orange-600 to-red-950', emoji: '👁️' },
+  { id: 'peregrino_fim_tempos', name: 'Peregrino do Fim dos Tempos', taunt: '"Eu já vi este universo terminar. Quero saber se você muda alguma coisa."', intent: 'Testar guerreiros que poderiam alterar futuros que ele considera inevitáveis.', tier: 2, level: 220, targetPower: 180000, profile: 'speed', color: 'from-orange-600 to-red-950', emoji: '⌛' },
+  { id: 'executor_limiar_absoluto', name: 'Executor do Limiar Absoluto', taunt: '"Depois de mim não existe julgamento. Só silêncio."', intent: 'Eliminar ameaças que já ultrapassaram fronteiras entre universos e linhas temporais.', tier: 3, level: 280, targetPower: 300000, profile: 'ki', color: 'from-orange-600 to-red-950', emoji: '♾️' },
+] as const;
+
+function buildEnemy(spec: EnemySpec): Enemy {
+  const ratio = ENEMY_PROFILE_RATIOS[spec.profile];
+  // npcCombatPower = level*15 + STR*2.2 + KI*2.7 + DEF*2.46 + VEL*2
+  const divisor =
+    ratio.strength * 2.2 +
+    ratio.ki * 2.7 +
+    ratio.defense * 2.46 +
+    ratio.speed * 2;
+  const remaining = Math.max(4, spec.targetPower - spec.level * 15);
+  const base = remaining / divisor;
+  const strength = Math.max(1, Math.round(base * ratio.strength));
+  const defense = Math.max(1, Math.round(base * ratio.defense));
+  const speed = Math.max(1, Math.round(base * ratio.speed));
+  const ki = Math.max(1, Math.round(base * ratio.ki));
+
+  return {
+    id: spec.id,
+    name: spec.name,
+    taunt: spec.taunt,
+    intent: spec.intent,
+    tier: spec.tier,
+    level: spec.level,
+    strength,
+    defense,
+    speed,
+    ki,
+    zeniReward: Math.max(60, Math.round(spec.targetPower * (1.35 + spec.tier * 0.15))),
+    xpReward: Math.max(40, Math.round(spec.targetPower * (0.9 + spec.tier * 0.08))),
+    color: spec.color,
+    emoji: spec.emoji,
+  };
+}
+
+export const ENEMIES: Enemy[] = ENEMY_SPECS.map(buildEnemy);
 
 export function getEnemy(id: string): { enemy: Enemy; index: number } | null {
   const index = ENEMIES.findIndex((e) => e.id === id);
