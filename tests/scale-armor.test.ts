@@ -209,8 +209,9 @@ describe('calibração com o conteúdo real do jogo', () => {
   test('cada trio I/II/III ocupa exatamente a Escala de Poder correspondente', () => {
     expect(ENEMIES).toHaveLength(POWER_SCALES.length * 3);
     ENEMIES.forEach((enemy, index) => {
+      const expectedTier = ((index % 3) + 1) as 1 | 2 | 3;
       expect(getPowerScale(npcCombatPower(enemy)).scale.index).toBe(Math.floor(index / 3));
-      expect(enemy.tier).toBe((index % 3) + 1);
+      expect(enemy.tier).toBe(expectedTier);
     });
   });
 
