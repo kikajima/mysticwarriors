@@ -349,6 +349,22 @@ async function changeSocial(data: z.infer<typeof socialSchema>) {
     throw new ApiError('VALIDATION_ERROR', 'Escolha outro guerreiro.');
   }
 
+  // Remoções não dependem da existência atual do outro personagem: relações
+  // órfãs continuam sempre reversíveis após exclusão/reset parcial.
+  if (data.action === 'remove_friend') {
+    await db.chatFriend.deleteMany({
+      where: { playerId: player.id, friendPlayerId: data.targetId },
+    });
+    return ok({ friendship: 'none', target: { playerId: data.targetId } });
+  }
+
+  if (data.action === 'unblock') {
+    await db.chatBlock.deleteMany({
+      where: { playerId: player.id, blockedPlayerId: data.targetId },
+    });
+    return ok({ blocked: false, target: { playerId: data.targetId } });
+  }
+
   const target = await db.player.findFirst({
     where: { id: data.targetId, isBot: false },
     select: { id: true, name: true },
@@ -371,38 +387,24 @@ async function changeSocial(data: z.infer<typeof socialSchema>) {
     return ok({ friendship: 'friend', target: { playerId: target.id, name: target.name } });
   }
 
-  if (data.action === 'remove_friend') {
-    await db.chatFriend.deleteMany({
+  await db.$transaction([
+    db.chatFriend.deleteMany({
       where: { playerId: player.id, friendPlayerId: target.id },
-    });
-    return ok({ friendship: 'none', target: { playerId: target.id, name: target.name } });
-  }
-
-  if (data.action === 'block') {
-    await db.$transaction([
-      db.chatFriend.deleteMany({
-        where: { playerId: player.id, friendPlayerId: target.id },
-      }),
-      db.chatMute.deleteMany({
-        where: { playerId: player.id, mutedPlayerId: target.id },
-      }),
-      db.chatBlock.upsert({
-        where: { playerId_blockedPlayerId: { playerId: player.id, blockedPlayerId: target.id } },
-        update: { blockedPlayerName: target.name },
-        create: {
-          playerId: player.id,
-          blockedPlayerId: target.id,
-          blockedPlayerName: target.name,
-        },
-      }),
-    ]);
-    return ok({ blocked: true, target: { playerId: target.id, name: target.name } });
-  }
-
-  await db.chatBlock.deleteMany({
-    where: { playerId: player.id, blockedPlayerId: target.id },
-  });
-  return ok({ blocked: false, target: { playerId: target.id, name: target.name } });
+    }),
+    db.chatMute.deleteMany({
+      where: { playerId: player.id, mutedPlayerId: target.id },
+    }),
+    db.chatBlock.upsert({
+      where: { playerId_blockedPlayerId: { playerId: player.id, blockedPlayerId: target.id } },
+      update: { blockedPlayerName: target.name },
+      create: {
+        playerId: player.id,
+        blockedPlayerId: target.id,
+        blockedPlayerName: target.name,
+      },
+    }),
+  ]);
+  return ok({ blocked: true, target: { playerId: target.id, name: target.name } });
 }
 
 export async function GET(request: Request) {
