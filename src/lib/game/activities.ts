@@ -246,7 +246,7 @@ async function applyDragonBallSearchResult(
 // ===== APLICAÇÃO: TREINO =====
 
 /**
- * Aplica o ganho de um treino (atributo + STAT_CAP + contadores).
+ * Aplica o ganho de um treino (atributo sem teto + contadores).
  * v0.9: além das atividades vencidas, é usada pelo TREINO INSTANTÂNEO —
  * o ganho é concedido na mesma transação do clique, sem espera.
  */
