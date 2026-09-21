@@ -1165,16 +1165,16 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Batalhas PvE (Capangas)',
     icon: '👹',
     group: 'Progressão',
-    summary: 'Um capanga genérico para cada uma das 10 Escalas de Poder, com dificuldade e recompensas crescentes.',
+    summary: 'Três capangas genéricos por Escala de Poder — I, II e III — com intenção própria, dificuldade e recompensas crescentes.',
     resumo: [
-      '**10 capangas genéricos**, exatamente um em cada Escala de Poder — de Mortal Comum a Transcendente.',
+      '**30 capangas genéricos**: três em cada Escala de Poder, subdivididos somente no PvE em **I, II e III**.',
       'O painel mostra stats e recompensas de cada um antes de você aceitar.',
       'Vencer paga Zeni + XP; perder rende uma fração do XP e um KO exige recuperação antes da próxima luta.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: `A sequência começa no **${ENEMIES[0].name}** (nível ${ENEMIES[0].level}, escala ${POWER_SCALES[0].nome}), que paga ~${br(ENEMIES[0].zeniReward)} Zeni e ~${br(ENEMIES[0].xpReward)} XP, e termina no **${ENEMIES[ENEMIES.length - 1].name}** (nível ${ENEMIES[ENEMIES.length - 1].level}, escala ${POWER_SCALES[POWER_SCALES.length - 1].nome}), com ~${br(ENEMIES[ENEMIES.length - 1].zeniReward)} Zeni e ~${br(ENEMIES[ENEMIES.length - 1].xpReward)} XP por vitória. São ${ENEMIES.length} capangas ao todo — exatamente um por escala. O painel de Batalha mostra os atributos, recompensas e a comparação de [[escala-poder|escala]] com o seu poder atual.`,
+        text: `A sequência começa no **${ENEMIES[0].name}** (nível ${ENEMIES[0].level}, escala ${POWER_SCALES[0].nome}), que paga ~${br(ENEMIES[0].zeniReward)} Zeni e ~${br(ENEMIES[0].xpReward)} XP, e termina no **${ENEMIES[ENEMIES.length - 1].name}** (nível ${ENEMIES[ENEMIES.length - 1].level}, escala ${POWER_SCALES[POWER_SCALES.length - 1].nome}), com ~${br(ENEMIES[ENEMIES.length - 1].zeniReward)} Zeni e ~${br(ENEMIES[ENEMIES.length - 1].xpReward)} XP por vitória. São ${ENEMIES.length} capangas ao todo — três por escala. As subdivisões I/II/III existem somente para inimigos; o guerreiro continua usando as 10 escalas principais. Cada capanga também mostra sua intenção no mundo, além dos atributos, recompensas e da comparação de [[escala-poder|escala]] com o seu poder atual.`,
       },
       {
         kind: 'list',

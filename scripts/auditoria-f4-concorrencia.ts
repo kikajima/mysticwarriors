@@ -206,9 +206,9 @@ async function main() {
     const deltaZ = p8.zeni - zeniBefore;
     check('T8: resultado da batalha aplicado exatamente 1× (3 leitores paralelos)', totalResults === 1, `resultados=${totalResults}`);
     check('T8: sem batalha pendente residual', (await db.activity.count({ where: { playerId: main.playerId, completedAt: null } })) === 0);
-    // vitória paga 70×rand(0,9–1,15) = 63–80 (npcRewards tem variância);
-    // derrota paga 0 — qualquer valor FORA desse intervalo seria duplicação
-    check('T8: recompensa refletida 1× (ΔZeni em 63–81 vitória / 0 derrota)', deltaZ === 0 || (deltaZ >= 63 && deltaZ <= 81), `Δ=${deltaZ}`);
+    // Mortal I paga 68 Zeni base × rand(0,9–1,15) = 61–78.
+    // Derrota paga 0 — qualquer valor FORA desse intervalo seria duplicação.
+    check('T8: recompensa refletida 1× (ΔZeni em 61–78 vitória / 0 derrota)', deltaZ === 0 || (deltaZ >= 61 && deltaZ <= 78), `Δ=${deltaZ}`);
   }
 
   // ============ T1 — claim de conquista ×4 paralelo ============

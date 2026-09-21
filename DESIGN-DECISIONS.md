@@ -232,8 +232,8 @@
 - **Canais permanentes:** Global, Guilda e Privado. Mensagens privadas são
   assíncronas: o destinatário pode estar offline e lê o histórico quando
   voltar.
-- **Fonte de verdade:** tabelas `game."ChatMessage"` e `game."ChatMute"`
-  no PostgreSQL autoritativo. O Render não guarda histórico em memória ou
+- **Fonte de verdade:** tabelas `game."ChatMessage"`, `game."ChatMute"`,
+  `game."ChatFriend"` e `game."ChatBlock"` no PostgreSQL autoritativo. O Render não guarda histórico em memória ou
   disco efêmero.
 - **Histórico deliberadamente SEM FK destrutiva para Player/Guild:** nomes e
   ids de remetente/destinatário/guilda são snapshots históricos. Excluir um
@@ -394,3 +394,13 @@ idempotência, cooldown condicional ou autoridade do servidor.
 - **ATRIBUTOS SEM TETO DE GAMEPLAY:** Força, Defesa, Velocidade e Ki não param mais em 999. `addStat` apenas normaliza para inteiro não-negativo. O banco autoritativo usa `DOUBLE PRECISION` para os quatro atributos e HP (que cresce com Defesa), evitando o antigo limite de `INTEGER`; energia continua inteira e limitada pela regra própria do recurso.
 - **BUSCA PELAS ESFERAS CUSTA 0 ENERGIA:** a duração de 1h/2h/4h/8h/12h continua sendo o custo temporal e a chance continua limitada a 50%, mas iniciar ou cancelar uma busca não debita energia e não progride quests de energia gasta.
 - **TRANSFORMAÇÕES EXPLICAM O EFEITO:** além do texto de lore, o card mostra os multiplicadores ativos de combate e os bônus permanentes concedidos ao desbloquear, seguindo o mesmo princípio de clareza usado nos Talentos.
+
+
+## PvE em três degraus por Escala + relações sociais no chat — 2026-09-20
+
+- **Escala do jogador não mudou:** continuam existindo apenas as 10 Escalas de Poder de Mortal Comum a Transcendente. A subdivisão **I / II / III é exclusiva dos inimigos PvE** e não altera Armadura de Escala, ranking ou selo do personagem.
+- **Três capangas por escala:** o PvE passa a ter 30 inimigos genéricos, em ordem crescente. Cada trio ocupa a mesma Escala de Poder real segundo `npcCombatPower`, mas os degraus I, II e III oferecem progressão interna, níveis e recompensas crescentes.
+- **Inimigos têm intenção:** além da provocação, cada card explica o objetivo daquele capanga no mundo (extorquir, ocupar, caçar, coletar energia, cumprir ordens etc.). Vilões principais da franquia continuam fora do catálogo PvE comum.
+- **Amigos vivem dentro do chat:** `ChatFriend` é uma lista pessoal/unilateral de contatos. Adicionar alguém não força reciprocidade e serve para reencontrar rapidamente personagens com quem o jogador quer conversar.
+- **Bloqueio é mais forte que silêncio:** `ChatMute` apenas oculta mensagens para quem silenciou. `ChatBlock` remove o contato da lista de amigos, oculta mensagens do bloqueado para o bloqueador e impede mensagens privadas nos dois sentidos enquanto qualquer um dos dois mantiver o bloqueio.
+- **Relações sociais são reversíveis:** remover amigo, bloquear e desbloquear são controles do próprio balão do chat. Desbloquear/remover continuam funcionando mesmo se a outra personagem tiver sido excluída, evitando relações órfãs impossíveis de limpar.

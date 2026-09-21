@@ -1291,7 +1291,7 @@ function ChatAdminTab({
         <p className="text-[11px] text-amber-200/50 mt-1 leading-relaxed">
           O histórico global, privado e de guilda vive no PostgreSQL e sobrevive a deploys, exclusões de personagens,
           dissolução de guildas e reset do mundo. Mensagens só são removidas por este comando administrativo.
-          Preferências de jogadores silenciados não são apagadas.
+          Preferências sociais (amigos, bloqueios e jogadores silenciados) não são apagadas por este comando.
         </p>
       </div>
 

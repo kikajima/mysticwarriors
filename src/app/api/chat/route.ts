@@ -32,6 +32,12 @@ const muteSchema = z.object({
   targetId: z.string().min(1).max(80),
 });
 
+const socialSchema = z.object({
+  action: z.enum(['add_friend', 'remove_friend', 'block', 'unblock']),
+  playerId: z.string().min(1).max(80).optional(),
+  targetId: z.string().min(1).max(80),
+});
+
 function parseBefore(value: string | null): Date | null {
   if (!value) return null;
   const date = new Date(value);
@@ -50,6 +56,26 @@ async function mutedIds(playerId: string): Promise<string[]> {
   return rows.map((row) => row.mutedPlayerId);
 }
 
+async function blockedIds(playerId: string): Promise<string[]> {
+  const rows = await db.chatBlock.findMany({
+    where: { playerId },
+    select: { blockedPlayerId: true },
+  });
+  return rows.map((row) => row.blockedPlayerId);
+}
+
+async function isBlockedEitherWay(playerId: string, targetId: string): Promise<boolean> {
+  return Boolean(await db.chatBlock.findFirst({
+    where: {
+      OR: [
+        { playerId, blockedPlayerId: targetId },
+        { playerId: targetId, blockedPlayerId: playerId },
+      ],
+    },
+    select: { id: true },
+  }));
+}
+
 async function listMessages(request: Request) {
   const auth = await requireAuth();
   const player = await requireChatPlayer(auth, requestPlayerId(request));
@@ -60,9 +86,10 @@ async function listMessages(request: Request) {
   }
 
   const before = parseBefore(url.searchParams.get('before'));
-  const muted = await mutedIds(player.id);
-  const visibleSender: Prisma.ChatMessageWhereInput | undefined = muted.length
-    ? { OR: [{ senderPlayerId: player.id }, { senderPlayerId: { notIn: muted } }] }
+  const hidden = new Set([...(await mutedIds(player.id)), ...(await blockedIds(player.id))]);
+  const hiddenIds = [...hidden];
+  const visibleSender: Prisma.ChatMessageWhereInput | undefined = hiddenIds.length
+    ? { OR: [{ senderPlayerId: player.id }, { senderPlayerId: { notIn: hiddenIds } }] }
     : undefined;
 
   let channelWhere: Prisma.ChatMessageWhereInput;
@@ -74,6 +101,9 @@ async function listMessages(request: Request) {
   } else {
     const targetId = url.searchParams.get('targetId');
     if (!targetId) throw new ApiError('VALIDATION_ERROR', 'Escolha um guerreiro para a conversa privada.');
+    if (await isBlockedEitherWay(player.id, targetId)) {
+      throw new ApiError('FORBIDDEN', 'Esta conversa privada está bloqueada.');
+    }
     channelWhere = {
       channel: 'private',
       OR: [
@@ -105,7 +135,7 @@ async function listMessages(request: Request) {
 async function listConversations(request: Request) {
   const auth = await requireAuth();
   const player = await requireChatPlayer(auth, requestPlayerId(request));
-  const muted = new Set(await mutedIds(player.id));
+  const hidden = new Set([...(await mutedIds(player.id)), ...(await blockedIds(player.id))]);
   const rows = await db.chatMessage.findMany({
     where: {
       channel: 'private',
@@ -128,7 +158,7 @@ async function listConversations(request: Request) {
     const mine = row.senderPlayerId === player.id;
     const otherId = mine ? row.recipientPlayerId : row.senderPlayerId;
     const otherName = mine ? row.recipientName : row.senderName;
-    if (!otherId || !otherName || seen.has(otherId) || muted.has(otherId)) continue;
+    if (!otherId || !otherName || seen.has(otherId) || hidden.has(otherId)) continue;
     seen.add(otherId);
     conversations.push({
       playerId: otherId,
@@ -163,20 +193,32 @@ async function searchPlayers(request: Request) {
 
 async function context(request: Request) {
   const auth = await getAuth();
-  if (!auth) return ok({ authenticated: false, player: null, muted: [] });
+  if (!auth) return ok({ authenticated: false, player: null, muted: [], friends: [], blocked: [] });
 
   const explicitPlayerId = requestPlayerId(request);
   const player = explicitPlayerId
     ? await requireChatPlayer(auth, explicitPlayerId)
     : await getChatPlayer(auth);
 
-  if (!player) return ok({ authenticated: true, player: null, muted: [] });
+  if (!player) return ok({ authenticated: true, player: null, muted: [], friends: [], blocked: [] });
 
-  const muted = await db.chatMute.findMany({
-    where: { playerId: player.id },
-    select: { mutedPlayerId: true, mutedPlayerName: true, createdAt: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  const [muted, friends, blocked] = await Promise.all([
+    db.chatMute.findMany({
+      where: { playerId: player.id },
+      select: { mutedPlayerId: true, mutedPlayerName: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.chatFriend.findMany({
+      where: { playerId: player.id },
+      select: { friendPlayerId: true, friendPlayerName: true, createdAt: true },
+      orderBy: [{ friendPlayerName: 'asc' }, { createdAt: 'asc' }],
+    }),
+    db.chatBlock.findMany({
+      where: { playerId: player.id },
+      select: { blockedPlayerId: true, blockedPlayerName: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    }),
+  ]);
   return ok({
     authenticated: true,
     player: {
@@ -189,6 +231,16 @@ async function context(request: Request) {
     muted: muted.map((row) => ({
       playerId: row.mutedPlayerId,
       name: row.mutedPlayerName,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    friends: friends.map((row) => ({
+      playerId: row.friendPlayerId,
+      name: row.friendPlayerName,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    blocked: blocked.map((row) => ({
+      playerId: row.blockedPlayerId,
+      name: row.blockedPlayerName,
       createdAt: row.createdAt.toISOString(),
     })),
   });
@@ -221,6 +273,9 @@ async function sendMessage(data: z.infer<typeof sendSchema>) {
       select: { id: true, name: true },
     });
     if (!target) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado.');
+    if (await isBlockedEitherWay(player.id, target.id)) {
+      throw new ApiError('FORBIDDEN', 'Não é possível enviar mensagem privada enquanto houver bloqueio entre vocês.');
+    }
     const mutedByMe = await db.chatMute.findUnique({
       where: { playerId_mutedPlayerId: { playerId: player.id, mutedPlayerId: target.id } },
       select: { id: true },
@@ -286,6 +341,72 @@ async function changeMute(data: z.infer<typeof muteSchema>) {
   return ok({ muted: true, target: { playerId: target.id, name: target.name } });
 }
 
+
+async function changeSocial(data: z.infer<typeof socialSchema>) {
+  const auth = await requireAuth();
+  const player = await requireChatPlayer(auth, data.playerId);
+  if (data.targetId === player.id) {
+    throw new ApiError('VALIDATION_ERROR', 'Escolha outro guerreiro.');
+  }
+
+  // Remoções não dependem da existência atual do outro personagem: relações
+  // órfãs continuam sempre reversíveis após exclusão/reset parcial.
+  if (data.action === 'remove_friend') {
+    await db.chatFriend.deleteMany({
+      where: { playerId: player.id, friendPlayerId: data.targetId },
+    });
+    return ok({ friendship: 'none', target: { playerId: data.targetId } });
+  }
+
+  if (data.action === 'unblock') {
+    await db.chatBlock.deleteMany({
+      where: { playerId: player.id, blockedPlayerId: data.targetId },
+    });
+    return ok({ blocked: false, target: { playerId: data.targetId } });
+  }
+
+  const target = await db.player.findFirst({
+    where: { id: data.targetId, isBot: false },
+    select: { id: true, name: true },
+  });
+  if (!target) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado.');
+
+  if (data.action === 'add_friend') {
+    if (await isBlockedEitherWay(player.id, target.id)) {
+      throw new ApiError('FORBIDDEN', 'Desfaça o bloqueio antes de adicionar este guerreiro aos amigos.');
+    }
+    await db.chatFriend.upsert({
+      where: { playerId_friendPlayerId: { playerId: player.id, friendPlayerId: target.id } },
+      update: { friendPlayerName: target.name },
+      create: {
+        playerId: player.id,
+        friendPlayerId: target.id,
+        friendPlayerName: target.name,
+      },
+    });
+    return ok({ friendship: 'friend', target: { playerId: target.id, name: target.name } });
+  }
+
+  await db.$transaction([
+    db.chatFriend.deleteMany({
+      where: { playerId: player.id, friendPlayerId: target.id },
+    }),
+    db.chatMute.deleteMany({
+      where: { playerId: player.id, mutedPlayerId: target.id },
+    }),
+    db.chatBlock.upsert({
+      where: { playerId_blockedPlayerId: { playerId: player.id, blockedPlayerId: target.id } },
+      update: { blockedPlayerName: target.name },
+      create: {
+        playerId: player.id,
+        blockedPlayerId: target.id,
+        blockedPlayerName: target.name,
+      },
+    }),
+  ]);
+  return ok({ blocked: true, target: { playerId: target.id, name: target.name } });
+}
+
 export async function GET(request: Request) {
   try {
     const view = new URL(request.url).searchParams.get('view') ?? 'context';
@@ -306,6 +427,11 @@ export async function POST(request: Request) {
       const parsed = sendSchema.safeParse(raw);
       if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message);
       return await sendMessage(parsed.data);
+    }
+    if (['add_friend', 'remove_friend', 'block', 'unblock'].includes(String(raw?.action))) {
+      const parsed = socialSchema.safeParse(raw);
+      if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Ação social inválida.');
+      return await changeSocial(parsed.data);
     }
     const parsed = muteSchema.safeParse(raw);
     if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Ação inválida.');

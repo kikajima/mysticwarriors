@@ -15,6 +15,19 @@ import { Crosshair, Heart, Shield, Swords, Skull, Timer, Zap } from 'lucide-reac
  * (Armadura de Escala, regra 5.1): o que o card mostra é o que o duelo usa. */
 const enemyPower = npcCombatPower;
 
+const ENEMY_TIER_ROMAN = ['I', 'II', 'III'] as const;
+
+function enemyScaleLabel(scaleName: string, tier: 1 | 2 | 3): string {
+  const short = scaleName
+    .replace('Mortal Comum', 'Mortal')
+    .replace('Super-Humana', 'Super-Humano')
+    .replace('Guerreiro Planetário', 'Planetário')
+    .replace('Guerreiro Estelar', 'Estelar')
+    .replace('Guerreiro Galáctico', 'Galáctico')
+    .replace('Guerreiro Cósmico', 'Cósmico');
+  return `${short} ${ENEMY_TIER_ROMAN[tier - 1]}`;
+}
+
 function formatCountdown(ms: number): string {
   if (ms <= 0) return 'encerrado';
   const totalSec = Math.ceil(ms / 1000);
@@ -70,19 +83,27 @@ export function BattlePanel({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {ENEMIES.map((enemy) => {
+          const power = enemyPower(enemy);
+          const scale = getPowerScale(power).scale;
           const recommended = player.level >= enemy.level - 2 && player.level <= enemy.level + 5;
           const hard = player.level < enemy.level - 2;
           return (
             <GameCard key={enemy.id} className="overflow-hidden" interactive>
               <div className={`bg-gradient-to-br ${enemy.color} p-4 relative`}>
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
                   <Chip className="bg-black/40 text-white border-white/20">Nv {enemy.level}</Chip>
+                  <Chip className="bg-black/55 text-amber-100 border-amber-300/25">
+                    {enemyScaleLabel(scale.nome, enemy.tier)}
+                  </Chip>
                 </div>
                 <div className="text-5xl mb-2 drop-shadow-lg" aria-hidden>
                   {enemy.emoji}
                 </div>
-                <h3 className="font-heading text-white text-lg leading-tight drop-shadow">{enemy.name}</h3>
+                <h3 className="font-heading text-white text-lg leading-tight drop-shadow pr-24">{enemy.name}</h3>
                 <p className="text-white/70 text-xs italic mt-1">{enemy.taunt}</p>
+                <p className="text-white/85 text-[11px] mt-2 leading-relaxed">
+                  <span className="font-heading text-amber-100">Intenção:</span> {enemy.intent}
+                </p>
               </div>
               <div className="p-4">
                 <div className="grid grid-cols-4 gap-1 mb-3 text-center">
@@ -121,18 +142,18 @@ export function BattlePanel({
                 {/* Escala de Poder do oponente vs a sua (ASCENSÃO Z — regra 5.1) */}
                 <div
                   className="flex flex-wrap items-center justify-center gap-2 mb-3"
-                  title={`Poder de luta do oponente: ${enemyPower(enemy).toLocaleString('pt-BR')}`}
+                  title={`Poder de luta do oponente: ${power.toLocaleString('pt-BR')}`}
                 >
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-heading ${getPowerScale(enemyPower(enemy)).scale.badge}`}
+                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-heading ${scale.badge}`}
                   >
-                    <span aria-hidden>{getPowerScale(enemyPower(enemy)).scale.emoji}</span>
-                    {getPowerScale(enemyPower(enemy)).scale.nome}
+                    <span aria-hidden>{scale.emoji}</span>
+                    {enemyScaleLabel(scale.nome, enemy.tier)}
                   </span>
                   <span
-                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${scaleDiffLabel(enemyPower(enemy), player.derived.power).className}`}
+                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${scaleDiffLabel(power, player.derived.power).className}`}
                   >
-                    {scaleDiffLabel(enemyPower(enemy), player.derived.power).text}
+                    {scaleDiffLabel(power, player.derived.power).text}
                   </span>
 
                 </div>
