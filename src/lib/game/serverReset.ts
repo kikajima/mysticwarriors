@@ -69,6 +69,7 @@ async function countAll(): Promise<Record<string, number>> {
     analytics,
     dedups,
     chatFriends,
+    chatFriendRequests,
     chatBlocks,
   ] = await Promise.all([
     db.account.count(),
@@ -91,6 +92,7 @@ async function countAll(): Promise<Record<string, number>> {
     db.analyticsEvent.count(),
     db.requestDedup.count(),
     db.chatFriend.count(),
+    db.chatFriendRequest.count(),
     db.chatBlock.count(),
   ]);
   return {
@@ -114,6 +116,7 @@ async function countAll(): Promise<Record<string, number>> {
     eventos_analytics: analytics,
     dedups: dedups,
     amigos_chat: chatFriends,
+    convites_amizade_chat: chatFriendRequests,
     bloqueios_chat: chatBlocks,
   };
 }
@@ -220,6 +223,7 @@ export async function performServerReset(confirm: string): Promise<ServerResetRe
       await tx.purchase.deleteMany({});
       await tx.cosmeticOwned.deleteMany({});
       await tx.analyticsEvent.deleteMany({});
+      await tx.chatFriendRequest.deleteMany({});
       await tx.chatFriend.deleteMany({});
       await tx.chatBlock.deleteMany({});
       await tx.worldBoss.deleteMany({});
