@@ -17,6 +17,8 @@ import type {
   WarriorRankingCategory,
 } from '@/lib/game/types';
 import { Chip, GameButton } from './Bits';
+import { PublicPlayerIdentity } from './PublicPlayerIdentity';
+import { PublicPlayerProfileDialog } from './PublicPlayerProfileDialog';
 import { fetchPanelJson, LoadFail, RankingSkeleton } from './PanelLoad';
 import { ChevronLeft, ChevronRight, Crosshair, Crown, Shield, Users } from 'lucide-react';
 
@@ -43,6 +45,7 @@ export function RankingPanel({
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const pageRef = useRef(page);
   pageRef.current = page;
 
@@ -235,10 +238,13 @@ export function RankingPanel({
           entries={ranking}
           category={warriorCategory}
           onAttack={onAttack}
+          onProfile={setProfileId}
           busy={busy}
           noEnergy={noEnergy}
         />
       )}
+
+      <PublicPlayerProfileDialog playerId={profileId} onOpenChange={(open) => !open && setProfileId(null)} />
 
       {data && data.total > 0 && (
         <div className="flex items-center justify-center gap-3 pt-2">
@@ -271,12 +277,14 @@ function WarriorRanking({
   entries,
   category,
   onAttack,
+  onProfile,
   busy,
   noEnergy,
 }: {
   entries: RankingEntry[];
   category: WarriorRankingCategory;
   onAttack: (targetId: string) => void;
+  onProfile: (targetId: string) => void;
   busy: boolean;
   noEnergy: boolean;
 }) {
@@ -311,9 +319,15 @@ function WarriorRanking({
                   {entry.position === 1 ? '👑' : `${entry.position}º`}
                 </td>
                 <td className="px-3 py-2.5">
-                  <span className={entry.isMe ? 'text-orange-300 font-heading' : 'text-amber-100'}>
-                    {entry.name}
-                  </span>
+                  <PublicPlayerIdentity
+                    name={entry.name}
+                    race={entry.race}
+                    avatarUrl={entry.avatarUrl}
+                    cosmetics={entry.cosmetics}
+                    level={entry.level}
+                    compact
+                    onClick={() => onProfile(entry.id)}
+                  />
                   {entry.isMe && (
                     <Chip className="ml-2 bg-orange-900/60 text-orange-200 border-orange-700/60">você</Chip>
                   )}
@@ -376,11 +390,17 @@ function WarriorRanking({
                 {entry.position === 1 ? '👑' : `${entry.position}º`}
               </span>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm truncate ${entry.isMe ? 'text-orange-300 font-heading' : 'text-amber-100'}`}>
-                  {entry.name}
-                </p>
+                <PublicPlayerIdentity
+                  name={entry.name}
+                  race={entry.race}
+                  avatarUrl={entry.avatarUrl}
+                  cosmetics={entry.cosmetics}
+                  level={entry.level}
+                  compact
+                  onClick={() => onProfile(entry.id)}
+                />
                 <p className="text-[11px] text-amber-200/50">
-                  {RACE_EMOJI[entry.race]} {RACES[entry.race]?.name ?? entry.race} · Nv {entry.level}
+                  {RACE_EMOJI[entry.race]} {RACES[entry.race]?.name ?? entry.race}
                 </p>
                 <p className="mt-1 font-heading text-yellow-300 text-sm">
                   <WarriorMetric entry={entry} category={category} />
