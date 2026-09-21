@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GuildDetail, GuildSummary, PlayerView } from '@/lib/game/types';
 import { GUILD_BONUS_TABLE, GUILD_PERMISSIONS, guildThreshold } from '@/lib/game/guildRules';
 import { GameButton, GameCard, SectionTitle } from './Bits';
+import { PublicPlayerIdentity } from './PublicPlayerIdentity';
+import { PublicPlayerProfileDialog } from './PublicPlayerProfileDialog';
 import { fetchPanelJson, GuildsSkeleton, LoadFail } from './PanelLoad';
 const input = 'w-full min-w-0 rounded border border-amber-800 bg-black/40 p-2 text-amber-100';
 type Invite = { id: string; name: string; guildId: string; expiresAt: string };
@@ -24,6 +26,7 @@ export function GuildsPanel({ player, onAction, busy }: { player: PlayerView; on
   const [permissions, setPermissions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const submitting = useRef(false);
   const refresh = useCallback(async () => {
     try {
@@ -51,8 +54,19 @@ export function GuildsPanel({ player, onAction, busy }: { player: PlayerView; on
     catch { setFailed(true); }
   };
   const roster = (g: GuildDetail, manage: boolean) => <ul className="space-y-3">{g.members.map(m => <li key={m.id} className="rounded border border-amber-900/50 p-3 space-y-2">
-    <p className="break-words font-bold">{m.name} · {m.roleName}</p>
-    <p className="text-sm">Nv {m.level} · {m.online ? 'Online' : 'Offline'}{manage ? ` · Doou ${m.donated ?? 0} Zeni` : ''}</p>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <PublicPlayerIdentity
+        name={m.name}
+        race={m.race}
+        avatarUrl={m.avatarUrl}
+        cosmetics={m.cosmetics}
+        level={m.level}
+        compact
+        onClick={() => setProfileId(m.id)}
+      />
+      <span className="text-xs text-amber-200/55">{m.roleName}</span>
+    </div>
+    <p className="text-sm">⚡ {m.power.toLocaleString('pt-BR')} · {m.online ? 'Online' : 'Offline'}{manage ? ` · Doou ${m.donated ?? 0} Zeni` : ''}</p>
     {manage && !m.isLeader && (m.rank ?? 0) < (g.myRank ?? 0) && <div className="flex flex-wrap gap-2">
       {can('promover') && <select aria-label={`Cargo de ${m.name}`} className={input} value={m.roleId ?? ''} disabled={busy} onChange={e => void run({ type: 'guild_assign', targetId: m.id, roleId: e.target.value || null })}>
         <option value="">Membro</option>{g.roles?.filter(r => r.rank < (g.myRank ?? 0)).map(r => <option value={r.id} key={r.id}>{r.name}</option>)}
@@ -97,5 +111,6 @@ export function GuildsPanel({ player, onAction, busy }: { player: PlayerView; on
     {publicGuild && <GameCard className="p-4 space-y-3"><GameButton size="sm" onClick={() => setPublicGuild(null)}>Fechar perfil</GameButton><h3 className="font-heading text-xl">🛡️ {publicGuild.name} · Nv {publicGuild.level}</h3><p className="whitespace-pre-wrap break-words">{publicGuild.description}</p><p>Líder: {publicGuild.members.find(m => m.isLeader)?.name}</p>{roster(publicGuild, false)}</GameCard>}
     <h3 className="font-heading">Guildas do universo</h3>{guilds.map(g => <GameCard key={g.id} className="p-3"><button className="text-left w-full break-words" onClick={() => void showPublic(g.id)}><strong>{g.name}</strong> · Nv {g.level} · {g.memberCount} membros<p className="text-sm">{g.description}</p></button></GameCard>)}
     <div className="flex gap-2"><GameButton disabled={page === 1} onClick={() => setPage(p => p - 1)}>Anterior</GameButton><span>{page}</span><GameButton disabled={page * 50 >= total} onClick={() => setPage(p => p + 1)}>Próxima</GameButton></div>
+    <PublicPlayerProfileDialog playerId={profileId} onOpenChange={(open) => !open && setProfileId(null)} />
   </div>;
 }
