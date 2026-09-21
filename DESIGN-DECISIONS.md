@@ -47,14 +47,12 @@
 
 ## Painel Admin — Exclusões Destrutivas (v0.14 · v0.15)
 
-- **ADMIN ÚNICO por e-mail HARDCODED (v1 do sistema de permissão):**
-  `ADMIN_EMAIL = 'alicomprasbbbb@gmail.com'` em `src/lib/adminIdentity.ts`
-  — constante ÚNICA central, nunca espalhada. O MESMO valor vive na tabela
-  `admins` do Supabase (`supabase-admin.sql` — fonte do `is_admin()`).
-  Camadas em ordem: TRANSPORTE (Bearer token + RPC `is_admin`, modelo v0.9
-  intacto) → AUTORIZAÇÃO (e-mail da sessão autenticada === `ADMIN_EMAIL`,
-  resolvido server-side via `/auth/v1/user`). O front usa a MESMA constante
-  para ESCONDER botões — o backend é a segurança real.
+- **Autorização administrativa:** a fonte de verdade é a tabela privada
+  `admins` do Supabase + RPC `is_admin()`. O repositório não deve conter
+  e-mail administrativo real nem lista hardcoded de administradores.
+  Camadas em ordem: TRANSPORTE (Bearer token) → AUTORIZAÇÃO server-side
+  pela RPC `is_admin()`. O front apenas esconde controles; o backend
+  revalida toda operação privilegiada.
 - **Semântica de status das rotas destrutivas:** sem token/token inválido →
   **404** (rota invisível, fail-safe das demais /api/admin); autenticado que
   não é o admin (is_admin false OU e-mail ≠ ADMIN_EMAIL) → **403**.
