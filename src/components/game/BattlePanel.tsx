@@ -20,6 +20,7 @@ const ENEMY_TIER_ROMAN = ['I', 'II', 'III'] as const;
 function enemyScaleLabel(scaleName: string, tier: 1 | 2 | 3): string {
   const short = scaleName
     .replace('Mortal Comum', 'Mortal')
+    .replace('Super-Humana', 'Super-Humano')
     .replace('Guerreiro Planetário', 'Planetário')
     .replace('Guerreiro Estelar', 'Estelar')
     .replace('Guerreiro Galáctico', 'Galáctico')
