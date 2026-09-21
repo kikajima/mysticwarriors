@@ -106,7 +106,7 @@ async function main() {
   const liderPlayerId = await createCharacter(lider, 'QA Líder E2E', 'saiyajin');
   console.log('✓ personagem QA Líder E2E criado:', liderPlayerId);
 
-  const admin = await bridgeLogin('alicomprasbbbb@gmail.com');
+  const admin = await bridgeLogin('admin@example.test');
   await api(admin, '/api/admin/action', {
     characterId: liderPlayerId,
     ownerId: null,
