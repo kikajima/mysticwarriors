@@ -443,6 +443,8 @@ export interface GuildMemberView {
   race: RaceId;
   level: number;
   power: number;
+  avatarUrl: string | null;
+  cosmetics: PublicCosmeticsView;
   isLeader: boolean;
   isMe: boolean;
 }
@@ -643,12 +645,33 @@ export interface ActivityView {
   };
 }
 
-/** Cosméticos do personagem: posse é por CONTA, equipar é por PERSONAGEM. */
+/** Cosméticos do personagem: posse e equipados pertencem ao personagem. */
 export interface CosmeticsView {
-  /** ids de cosméticos adquiridos pela conta */
+  /** ids de cosméticos adquiridos por este personagem */
   owned: string[];
   /** cosmético equipado por slot (deste personagem) */
   equipped: Partial<Record<CosmeticSlot, string>>;
+}
+
+/** Recorte seguro para exibir a identidade visual para outros jogadores. */
+export interface PublicCosmeticsView {
+  equipped: Partial<Record<CosmeticSlot, string>>;
+}
+
+export interface PublicPlayerProfile {
+  id: string;
+  name: string;
+  race: RaceId;
+  avatarUrl: string | null;
+  level: number;
+  power: number;
+  battlesWon: number;
+  battlesLost: number;
+  tournamentWins: number;
+  tournamentTitles: number;
+  guild: { id: string; name: string } | null;
+  transformation: { id: string; name: string; icon: string } | null;
+  cosmetics: PublicCosmeticsView;
 }
 
 /** v0.9.18 — Torneio de Artes Marciais (visão do cliente). */
@@ -727,6 +750,8 @@ export interface RankingEntry {
   id: string;
   name: string;
   race: RaceId;
+  avatarUrl: string | null;
+  cosmetics: PublicCosmeticsView;
   level: number;
   power: number;
   battlesWon: number;
@@ -795,7 +820,15 @@ export interface WorldBossView {
   crystalReward: number;
   myDamage: number;
   myPosition: number | null;
-  topDamage: Array<{ name: string; damage: number; isMe: boolean }>;
+  topDamage: Array<{
+    id: string;
+    name: string;
+    race: RaceId;
+    avatarUrl: string | null;
+    cosmetics: PublicCosmeticsView;
+    damage: number;
+    isMe: boolean;
+  }>;
   totalAttackers: number;
   canAttackAt: string | null; // quando poderá atacar de novo
 }
