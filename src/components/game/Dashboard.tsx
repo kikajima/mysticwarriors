@@ -186,10 +186,12 @@ export function Dashboard({
 
           {/* Identidade */}
           <div className="flex-1 text-center sm:text-left min-w-0">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
-              <h2 className="font-display text-3xl sm:text-4xl leading-[1.18] py-1 -my-1 text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-orange-500 tracking-wide break-words">
-                {player.name}
-              </h2>
+            <div className="flex flex-wrap items-start justify-center sm:justify-start gap-2 mb-1 overflow-visible">
+              <div className="min-w-0 overflow-visible pb-1 pr-1">
+                <h2 className="font-display font-display-safe text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-orange-500 tracking-wide break-words">
+                  {player.name}
+                </h2>
+              </div>
               {playerTitle && (
                 <span title={`Título equipado: ${playerTitle.name}`}>
                   <Chip className="bg-yellow-950/70 text-yellow-300 border-yellow-600/60">

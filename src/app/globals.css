@@ -128,6 +128,19 @@
   letter-spacing: 0.04em;
 }
 
+/*
+ * Bangers possui glifos que ultrapassam a caixa visual padrão, sobretudo
+ * em letras como N/M. Quando combinado com background-clip:text, essa
+ * sobra pode ser recortada. Use em títulos grandes com gradiente.
+ */
+.font-display-safe {
+  display: inline-block;
+  line-height: 1.24;
+  padding-right: 0.06em;
+  padding-bottom: 0.16em;
+  overflow: visible;
+}
+
 .font-heading {
   font-family: var(--font-russo), var(--font-geist-sans), sans-serif;
 }
