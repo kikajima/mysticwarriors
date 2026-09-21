@@ -1653,6 +1653,7 @@ export default function PlayPage() {
           o "Continuar" também ACORDA o fundo com o estado diferido) */}
       <BattleLogDialog
         battle={battle}
+        player={player}
         lockUntil={runningActivity?.kind === 'battle' ? runningActivity.endsAt : undefined}
         onClose={() => {
           setBattle(null);
