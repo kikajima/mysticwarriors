@@ -40,7 +40,12 @@ import {
 import { COMBAT, MAX_ROUNDS, BASIC_ENERGY_KI_COST } from '../src/lib/game/engine';
 import { IMPETO } from '../src/lib/game/impeto';
 import { POWER_SCALES } from '../src/lib/game/powerScale';
-import { TOURNAMENT_ROUNDS, TOURNAMENT_COOLDOWN_MS, TOURNAMENT_ENTRY_FEE } from '../src/lib/game/content/tournament';
+import {
+  TOURNAMENT_ROUNDS,
+  TOURNAMENT_COOLDOWN_MS,
+  TOURNAMENT_ENTRY_FEE,
+  tournamentZeniReward,
+} from '../src/lib/game/content/tournament';
 import { RACES } from '../src/lib/game/content/races';
 import { CRAFT_RECIPES, CRAFT_STACK_ITEMS, CRAFT_TIER_PROFESSION_LEVEL } from '../src/lib/game/content/crafting';
 import {
@@ -289,9 +294,11 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(TOURNAMENT_ENTRY_FEE).toBe(200);
     expect(t).toContain(TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR'));
     for (const r of TOURNAMENT_ROUNDS) {
-      expect(t).toContain(r.zeni.toLocaleString('pt-BR'));
+      expect(t).toContain(tournamentZeniReward(r.round, 10).toLocaleString('pt-BR'));
+      expect(t).toContain(tournamentZeniReward(r.round, 100).toLocaleString('pt-BR'));
       expect(t).toContain(`${Math.round(r.powerMult * 100)}% do seu poder`);
     }
+    expect(t).toContain('não concede cristais/diamantes diretamente');
   });
 
   test('Chefe mundial: duração, participação e cadência = worldboss.ts real', () => {
