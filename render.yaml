@@ -24,3 +24,9 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+      # Segredo server-side opcional da exportação administrativa.
+      # Gere um valor aleatório forte no painel do Render; nunca versione.
+      - key: GM_ADMIN_EXPORT_SECRET
+        sync: false
