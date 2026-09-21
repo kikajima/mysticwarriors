@@ -393,7 +393,7 @@ Stage Summary:
 ---
 Task ID: 12
 Agent: main (Super Z)
-Task: v0.9 — três mudanças: (1) profissões sem custo de energia; (2) treinamento instantâneo com micro-animação; (3) painel de administrador exclusivo para alicomprasbbbb@gmail.com (validação server-side via RPCs security definer no Supabase)
+Task: v0.9 — três mudanças: (1) profissões sem custo de energia; (2) treinamento instantâneo com micro-animação; (3) painel de administrador exclusivo para <admin-redacted> (validação server-side via RPCs security definer no Supabase)
 
 Work Log:
 - MUDANÇA 1 — Profissões sem energia: actions.ts actionStartProfession reescrita (updateMany apenas com missionId null; sem decrement/validação de energia; sem bumpQuests energy_spent); ProfessionsPanel.tsx: chip de custo de energia removido, canWork sem checagem de energia, textos atualizados ("Trabalhar não gasta energia — só o seu tempo"). Catálogo PROFESSIONS.energyCost e helpers professionEnergyCost/Of mantidos (inertes) para diff mínimo. Duração de 1h preservada.
@@ -413,7 +413,7 @@ Work Log:
 Stage Summary:
 - Profissões: grátis de energia, mesma duração; Treino: clique = efeito imediato com puladinha de 300ms; Painel admin: invisível e inexistente para não-admin (client E server), ações validadas por RPC security definer no Supabase e aplicadas em local+nuvem
 - Decisões tomadas: (a) convidados aparecem na lista do painel como contas locais (chave local:<id>, ações só locais — não têm nuvem); (b) "completar agora" encerra timers (trabalho fica pronto p/ coletar; batalha resolve no próximo toque) em vez de auto-coletar; (c) atributos admin limitados a 999.999 (defensivo) e o clamp de restore foi elevado para acompanhar; (d) reset remove personagens mas PRESERVA a conta (política do projeto)
-- PENDENTE no lado do usuário: colar supabase-admin.sql no SQL Editor do Supabase (sem isso o painel não aparece para ninguém — falha segura) e criar/entrar com a conta alicomprasbbbb@gmail.com
+- PENDENTE no lado do usuário: colar supabase-admin.sql no SQL Editor do Supabase (sem isso o painel não aparece para ninguém — falha segura) e criar/entrar com a conta <admin-redacted>
 
 ---
 Task ID: 13
@@ -433,7 +433,7 @@ Work Log:
 Stage Summary:
 - Deploy falhava por conflito de porta 3000 + memória consumida por processo órfão da sessão anterior, não por erro no código (build/tsc/lint/testes todos verificados novamente)
 - Ambiente limpo e servidor fresco rodando com as três mudanças da Task 12 ativas; usuário deve RETENTAR o deploy na página de geração
-- Lembrete pendente ao dono: colar supabase-admin.sql no SQL Editor do Supabase (sem isso o painel admin não aparece para ninguém — falha segura) e entrar com a conta alicomprasbbbb@gmail.com
+- Lembrete pendente ao dono: colar supabase-admin.sql no SQL Editor do Supabase (sem isso o painel admin não aparece para ninguém — falha segura) e entrar com a conta <admin-redacted>
 
 ---
 Task ID: 14
@@ -460,7 +460,7 @@ Stage Summary:
 - Painel não aparecia porque o SQL nunca foi colado no Supabase (confirmado por chamada direta: função inexistente). O código estava correto e é falha-segura.
 - Reset do painel agora preserva TODOS os personagens (local e nuvem) — só o progresso volta ao início; diamantes/cosméticos/nome/raça/avatar mantidos
 - AdminPanel re-checa is_admin ao entrar em personagem e tolera soluços de rede
-- PENDENTE no usuário: (1) colar o SQL v0.9.1 no SQL Editor do Supabase; (2) redeployar o jogo; (3) logar com alicomprasbbbb@gmail.com e entrar com o personagem (ex.: Rei Taurion) → painel aparece (F2 ou botão do escudo)
+- PENDENTE no usuário: (1) colar o SQL v0.9.1 no SQL Editor do Supabase; (2) redeployar o jogo; (3) logar com <admin-redacted> e entrar com o personagem (ex.: Rei Taurion) → painel aparece (F2 ou botão do escudo)
 
 ---
 Task ID: 15
@@ -835,12 +835,12 @@ Stage Summary:
 ---
 Task ID: v0.9.10.5 (fim do HTTP 400 cego + verificação de projeto duplicado)
 Agent: main (Super Z)
-Task: Dono relatou DIAG-OK (corpo v3 válido no banco onde executa SQL) e levantou hipótese de PROJETO DUPLICADO: config.ts usa fallback ruyjwdvmsubnltvisexw e o ambiente de build não teria as env vars — o jogo chamaria outro projeto do que aquele onde o SQL roda. Pediu verificação + melhoria do callRpc para revelar o erro real do Supabase.
+Task: Dono relatou DIAG-OK (corpo v3 válido no banco onde executa SQL) e levantou hipótese de PROJETO DUPLICADO: config.ts usa fallback <supabase-project-redacted> e o ambiente de build não teria as env vars — o jogo chamaria outro projeto do que aquele onde o SQL roda. Pediu verificação + melhoria do callRpc para revelar o erro real do Supabase.
 
 Work Log:
-- VERIFICADO .env do projeto: só existe DATABASE_URL=file:...custom.db — NÃO há NEXT_PUBLIC_SUPABASE_URL nem NEXT_PUBLIC_SUPABASE_ANON_KEY. Confirmação: o build usa MESMO o fallback https://ruyjwdvmsubnltvisexw.supabase.co (alegação do dono procede)
-- PROBE fresco (scripts/probe-postgrest.mjs, somente-leitura, chave publicável) contra ruyjwdvmsubnltvisexw: projeto VIVO e com schema COMPLETO do jogo — admins/personagens/profiles existem (401 42501 permission denied for TABLE) e admin_reset_cloud EXISTE (401 permission denied for FUNCTION, revogada do anon como projetado). ranking_nuvem segue com 2 sobrecargas (PGRST203/300)
-- ANÁLISE DA HIPÓTESE DE PROJETO DUPLICADO: para ela ser verdadeira seria preciso UM SEGUNDO projeto com o schema COMPLETO (profiles com progresso NOT NULL, personagens, admins, ranking_nuvem com 2 sobrecargas) — cenário improvável. Evidência convergente para UM projeto só: (a) RPC instalada no alvo do jogo (probe anterior + atual); (b) 23502 do diag bateria EXATAMENTE com o bug v1 (progresso=null); (c) DIAG-OK após v3 no mesmo fluxo. Não é 100% comprovável remotamente (probe anônimo não distingue v1 de v3 instaladas) — dono deve confirmar o Reference ID no dashboard (Settings→General→Reference ID = ruyjwdvmsubnltvisexw ou URL /project/ruyjwdvmsubnltvisexw)
+- VERIFICADO .env do projeto: só existe DATABASE_URL=file:...custom.db — NÃO há NEXT_PUBLIC_SUPABASE_URL nem NEXT_PUBLIC_SUPABASE_ANON_KEY. Confirmação: o build usa MESMO o fallback https://<supabase-project-redacted>.supabase.co (alegação do dono procede)
+- PROBE fresco (scripts/probe-postgrest.mjs, somente-leitura, chave publicável) contra <supabase-project-redacted>: projeto VIVO e com schema COMPLETO do jogo — admins/personagens/profiles existem (401 42501 permission denied for TABLE) e admin_reset_cloud EXISTE (401 permission denied for FUNCTION, revogada do anon como projetado). ranking_nuvem segue com 2 sobrecargas (PGRST203/300)
+- ANÁLISE DA HIPÓTESE DE PROJETO DUPLICADO: para ela ser verdadeira seria preciso UM SEGUNDO projeto com o schema COMPLETO (profiles com progresso NOT NULL, personagens, admins, ranking_nuvem com 2 sobrecargas) — cenário improvável. Evidência convergente para UM projeto só: (a) RPC instalada no alvo do jogo (probe anterior + atual); (b) 23502 do diag bateria EXATAMENTE com o bug v1 (progresso=null); (c) DIAG-OK após v3 no mesmo fluxo. Não é 100% comprovável remotamente (probe anônimo não distingue v1 de v3 instaladas) — dono deve confirmar o Reference ID no dashboard (Settings→General→Reference ID = <supabase-project-redacted> ou URL /project/<supabase-project-redacted>)
 - PONTO-CHAVE DETECTADO NA MENSAGEM DO DONO: ele afirma "a RPC v3 está válida no banco" — mas o DIAG-OK só prova que o CORPO v3 (cópia interna da função de diagnóstico) roda; o diag NÃO instala a RPC. Se ele não rodou o supabase-reset-rpc.sql ATUALIZADO, a admin_reset_cloud INSTALADA ainda é v1 (bug do null) e o RESET falharia igual. Runbook reforçado: rodar o instalador v3 ANTES de clicar
 - CÓDIGO v0.9.10.5 (commit 1836c9f): callRpc em src/lib/supabase/admin.ts agora lê o corpo da resposta de erro e anexa code/message/details/hint ("HTTP 400 — 23502 — null value in column progresso...") — tolerante a corpo vazio/não-JSON; classifyCloudResetProbe e explainCloudResetError passaram a comparar por PREFIXO (startsWith) para o pré-cheque continuar classificando certo; mensagem genérica menciona "versão v3 ou superior" do SQL
 - Testes (tests/reset-cloud.test.ts): +5 casos cobrindo formato detalhado (22023→ready, PGRST202→missing, 23502 aparece na mensagem do painel, 403 detalhado→error). Suíte: 25/25 no arquivo, 242/242 completa; typecheck limpo; build de produção OK
@@ -849,7 +849,7 @@ Work Log:
 Stage Summary:
 - callRpc CEGO eliminado: qualquer falha futura da RPC aparece no painel com código+mensagem+hint do Postgres (era pendência da v0.9.10.3, agora resolvida)
 - Evidência prévia aponta fortemente para UM único projeto Supabase; confirmação final é do dono (Reference ID no dashboard)
-- RUNBOOK ATUALIZADO para o dono: (1) conferir Reference ID = ruyjwdvmsubnltvisexw; (2) rodar supabase-reset-rpc.sql ATUALIZADO (v3, cabeçalho "RPC admin_reset_cloud (v3 — corrige o erro 23502)") no SQL Editor do MESMO projeto; (3) clicar RESET — verde esperado; se falhar, a mensagem agora mostra a causa real (code/message/hint)
+- RUNBOOK ATUALIZADO para o dono: (1) conferir Reference ID = <supabase-project-redacted>; (2) rodar supabase-reset-rpc.sql ATUALIZADO (v3, cabeçalho "RPC admin_reset_cloud (v3 — corrige o erro 23502)") no SQL Editor do MESMO projeto; (3) clicar RESET — verde esperado; se falhar, a mensagem agora mostra a causa real (code/message/hint)
 - Deploy: build novo gerado (standalone em .next/); preview serve a v0.9.10.5
 
 ---
@@ -876,7 +876,7 @@ Stage Summary:
 ---
 Task ID: nova-base-1
 Agent: main (Super Z)
-Task: Restaurar o projeto Guerreiros Místicos neste ambiente de desenvolvimento e apontá-lo para a NOVA base Supabase (rugbhzcmxmtmoqoxrhki), a pedido do dono, para não misturar com o projeto antigo (ruyjwdvmsubnltvisexw)
+Task: Restaurar o projeto Guerreiros Místicos neste ambiente de desenvolvimento e apontá-lo para a NOVA base Supabase (<supabase-project-redacted>), a pedido do dono, para não misturar com o projeto antigo (<supabase-project-redacted>)
 
 Work Log:
 - Upload recebido: workspace-90d347a9-...tar (36MB) + regras do sistema ASCENSÃO Z em texto (o sistema RPG original do dono que fundamenta o jogo)
@@ -895,8 +895,8 @@ Work Log:
 Stage Summary:
 - JOGO COMPLETO RODANDO: v0.9.11 restaurada e funcional neste ambiente (mesmo sistema que o dono já usa)
 - NOVA BASE CONFIGURADA no código (config.ts + .env + scripts de probe); até o SQL ser instalado, o jogo funciona 100% local (convidado, contas locais, ranking reserva)
-- PENDÊNCIA ÚNICA DO DONO: colar supabase-instalacao-nova-base.sql no SQL Editor do projeto novo (rugbhzcmxmtmoqoxrhki) — UMA vez; depois disso contas na nuvem, save por personagem, ranking público ao vivo e painel admin funcionam contra a nova base
-- Admin continua alicomprasbbbb@gmail.com (tabela admins do instalador)
+- PENDÊNCIA ÚNICA DO DONO: colar supabase-instalacao-nova-base.sql no SQL Editor do projeto novo (<supabase-project-redacted>) — UMA vez; depois disso contas na nuvem, save por personagem, ranking público ao vivo e painel admin funcionam contra a nova base
+- Admin continua <admin-redacted> (tabela admins do instalador)
 - Próximas rodadas sugeridas: aplicar o SQL (dono), testar signup/login nuvem E2E, painel admin contra a base nova, e continua o roadmap do jogo (melhorias de estilo/detalhes, novos recursos)
 
 ---
@@ -936,7 +936,7 @@ Work Log:
 
 Stage Summary:
 - ESCALA DE PODER agora coberta de ponta a ponta: ficha (card + progresso), cartas de oponentes (regra 5.1), ranking in-game, ranking público e celebração ao subir de escala
-- Estado: estável; pendência externa inalterada — dono rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (rugbhzcmxmtmoqoxrhki) para ativar nuvem/contas/painel admin
+- Estado: estável; pendência externa inalterada — dono rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (<supabase-project-redacted>) para ativar nuvem/contas/painel admin
 - Próximas sugestões: (a) Ímpeto (recurso de combate, Cap. das regras) como mecânica de batalha — exige desenho cuidadoso no engine; (b) Armadura de Escala da regra 5.1 (dano reduzido p/ escalas abaixo) aplicada nas batalhas PvE/PvP; (c) selo de escala no painel admin e perfis de guilda
 
 ---
@@ -964,7 +964,7 @@ Work Log:
 Stage Summary:
 - P0 RESOLVIDO: o jogo voltou a ser jogável DENTRO do painel de visualização (iframe cross-site) — cookie SameSite=None+Secure + Storage Access API no clique + diálogo orientando abrir em nova aba caso o navegador bloqueie cookies de terceiros. Validado em localhost, no domínio real do preview (top-level) e no iframe cross-site (login do zero + criação de personagem)
 - ARMADURA DE ESCALA entregue de ponta a ponta: motor (duelos + world boss), narrativa no log de batalha, badges informativos nos cards ANTES de lutar, testes dedicados — a regra 5.1/5.3 do sistema ASCENSÃO Z agora tem efeito mecânico real, com a narrativa do azarão (Aberturas → Quebra de Barreira)
-- Estado: estável — 276 testes verdes, lint/tsc limpos, banco pristino; pendência externa INALTERADA: dono rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (rugbhzcmxmtmoqoxrhki) para ativar nuvem/contas/ranking vivo/painel admin (Supabase Auth JÁ funciona por si — cadastro exige confirmação de e-mail, habilitada por padrão no projeto novo)
+- Estado: estável — 276 testes verdes, lint/tsc limpos, banco pristino; pendência externa INALTERADA: dono rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (<supabase-project-redacted>) para ativar nuvem/contas/ranking vivo/painel admin (Supabase Auth JÁ funciona por si — cadastro exige confirmação de e-mail, habilitada por padrão no projeto novo)
 - Próximas sugestões: (a) Ímpeto/Quebra de Limite (recurso de combate central das regras — próximo capítulo a integrar); (b) selo da escala no painel admin e perfis de guilda; (c) conquista narrativa por Aberturas/Quebra de Barreira ("David vs Golias"); (d) E2E nuvem após o SQL do dono (signup→login→save→ranking vivo→admin)
 
 ---
@@ -993,7 +993,7 @@ Work Log:
 Stage Summary:
 - RECURSO ENTREGUE: ÍMPETO (Cap. 7) + QUEBRA DE LIMITE (Cap. 29) de ponta a ponta — motor (duelos PvE/PvP + World Boss), narrativa no log, medidores visuais, card de regras, badges informativos ANTES de lutar e 24 testes dedicados; o combate agora tem o RITMO DRAMÁTICO do sistema do dono (adrenalina acumula, viradas gastam), sem quebrar o determinismo da engine
 - Adaptações documentadas nos comentários: teste ESP+Disciplina da Quebra representado pelo custo acumulado (3 Ímpetos + Ki); Espírito de Superação generalizado para qualquer raça (talento Saiyajin no livro); "2 Energia" do custo da Quebra já coberto pelo custo de energia da batalha
-- Estado: estável — 300 testes verdes, lint/tsc limpos, banco pristino; pendência externa INALTERADA: dono rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (rugbhzcmxmtmoqoxrhki) para ativar nuvem/contas/ranking vivo/painel admin
+- Estado: estável — 300 testes verdes, lint/tsc limpos, banco pristino; pendência externa INALTERADA: dono rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (<supabase-project-redacted>) para ativar nuvem/contas/ranking vivo/painel admin
 - Próximas sugestões: (a) Exaustão/falha da Quebra de Limite (Cap. 29: benefício único + Exaustão 2) como variante de risco; (b) "Repetir um d10" e "Reposicionamento dramático" (gastos de 1 Ímpeto restantes da tabela do Cap. 7) como perks/talentos compráveis; (c) selo da escala + menção de Ímpeto no painel admin; (d) E2E nuvem após o SQL do dono (signup→login→save→ranking vivo→admin)
 
 ---
@@ -1020,7 +1020,7 @@ Stage Summary:
 - CORREÇÕES DE DEPLOY ENTREGUES: pacote 12× menor, build 100% offline (sem Google Fonts), SQLite resolvido em runtime em qualquer ambiente (dev local, standalone na raiz, standalone interno, volumes /app-data), build copia db+prisma para o standalone
 - Estado: estável — builds verificados com e sem env, lint/tsc limpos, dev server saudável, banco pristino 15 bots/0 contas, E2E completo verde
 - PRÓXIMO PASSO DO DONO: clicar Deploy novamente — as causas prováveis (tamanho/dependências) foram eliminadas. Se ainda falhar, próxima hipótese: limite no histórico do .git (69MB com o tar antigo em commits passados) → remoção via git filter-repo (não feito por ser histórico gerenciado pela plataforma)
-- Pendência externa INALTERADA: rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (rugbhzcmxmtmoqoxrhki) para ativar nuvem/contas/ranking vivo/painel admin
+- Pendência externa INALTERADA: rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (<supabase-project-redacted>) para ativar nuvem/contas/ranking vivo/painel admin
 
 ---
 Task ID: v0.9.15
@@ -1053,7 +1053,7 @@ Stage Summary:
 - Cascata defensiva inédita: Reposicionamento (1 Ímpeto, chance de anular) → Defesa Heroica (2 Ímpetos, metade garantida) → o azarão tem DUAS camadas de resposta a golpes pesados
 - Estado: estável — 315 testes verdes, lint/tsc limpos, banco pristino, dev server saudável, commit feito
 - LEMBRANÇA OPERACIONAL: após `bun run db:push`, SEMPRE reiniciar o dev server (client Prisma em memória fica obsoleto)
-- Pendência externa INALTERADA: dono rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (rugbhzcmxmtmoqoxrhki) para ativar nuvem/contas/ranking vivo/painel admin; deploy pendente de nova tentativa do dono (correções v0.9.14 aplicadas)
+- Pendência externa INALTERADA: dono rodar supabase-instalacao-nova-base.sql no SQL Editor da base nova (<supabase-project-redacted>) para ativar nuvem/contas/ranking vivo/painel admin; deploy pendente de nova tentativa do dono (correções v0.9.14 aplicadas)
 - Próximas sugestões: (a) talento de PVP — bots/nomes de PvP poderiam ter talentos próprios (worldboss pipeline já recebe o combatant com talents); (b) Exaustão pós-Quebra de Limite (Cap. 29) como variante de risco; (c) conquista narrativa "David vs Golias" por reposition bem-sucedido contra oponente ≥2 escalas; (d) painel admin: coluna de talentos dominados
 
 ---
@@ -1156,7 +1156,7 @@ Stage Summary:
 - RECURSO ENTREGUE: TORNEIO DE ARTES MARCIAIS de ponta a ponta — a chave de 8 com eliminação direta, vida que carrega entre as rodadas (o drama do mangá), adversários elásticos que escalam com o guerreiro (nunca trivial, nunca impossível), título de campeão permanente, cooldown de 15min do comitê, 3 conquistas + quest semanal, e o snapshot de nuvem agora leva TUDO (talentos v0.9.15 e torneio v0.9.18 incluídos — gap preexistente corrigido)
 - CALIBRAÇÃO DOCUMENTADA: curva final quartas 100% → semi 93% → final 54% (entrando cheio); ferido 60% HP: 99% → 53% → 14% — administrar vida/Zeni entre rodadas é a decisão central do modo
 - Estado: estável — 359 testes verdes, lint/tsc limpos, banco pristino, dev server saudável, commit feito
-- Pendências externas INALTERADAS: (1) dono rodar supabase-instalacao-nova-base.sql na base nova (rugbhzcmxmtmoqoxrhki) — quando rodar, o E2E de nuvem deve incluir um restore com talentos+torneio; (2) nova tentativa de Deploy (correções v0.9.14 prontas)
+- Pendências externas INALTERADAS: (1) dono rodar supabase-instalacao-nova-base.sql na base nova (<supabase-project-redacted>) — quando rodar, o E2E de nuvem deve incluir um restore com talentos+torneio; (2) nova tentativa de Deploy (correções v0.9.14 prontas)
 - Próximas sugestões: (a) coluna de talentos/cinturões no painel admin + selo 🏆 ao lado do nome no ranking; (b) bots de PvP com talentos (o campo talents já flui para o combatente de PvP); (c) "Torradas do Torneio" — premiação de participação para os 8 (flavor de feed/notícias); (d) E2E nuvem pós-SQL com foco no restore do torneio
 
 ---
@@ -1183,7 +1183,7 @@ Stage Summary:
 - DEPLOY CONSERTADO (causa real encontrada e eliminada): pacote 142MB→~50MB estimado (96MB descomprimido), sem lixo de desenvolvimento e sem engines mortos; smoke test 100% verde
 - LIÇÃO REGISTRADA: mudanças em código com fs dinâmico (process.cwd()) têm efeito colateral invisível no tamanho do standalone — outputFileTracingExcludes + trim-standalone.sh agora protegem permanentemente
 - Estado: estável — build verificado, standalone testado em produção simulada, lint/tsc limpos, dev server saudável, banco pristino 0 contas/15 bots
-- Pendências externas: (1) dono RETENTAR o Deploy (agora com o pacote real ~50MB); (2) dono rodar supabase-instalacao-nova-base.sql na base nova (rugbhzcmxmtmoqoxrhki) para ativar nuvem/contas/ranking vivo/admin
+- Pendências externas: (1) dono RETENTAR o Deploy (agora com o pacote real ~50MB); (2) dono rodar supabase-instalacao-nova-base.sql na base nova (<supabase-project-redacted>) para ativar nuvem/contas/ranking vivo/admin
 - Se o Deploy AINDA falhar com o pacote pequeno: próximos suspeitos = limite menor da plataforma (pedir log do erro ao dono) ou health check no fn-ws (não reproduzível no sandbox — precisaríamos do erro exato da plataforma)
 
 
@@ -1464,7 +1464,7 @@ Stage Summary:
 ---
 Task ID: v0.14
 Agent: main (Z.ai Code)
-Task: FEATURE — Painel Admin: excluir personagens e guildas (admin: alicomprasbbbb@gmail.com) — erasure nas duas camadas, proteções, auditoria e E2E
+Task: FEATURE — Painel Admin: excluir personagens e guildas (admin: <admin-redacted>) — erasure nas duas camadas, proteções, auditoria e E2E
 
 Work Log:
 - ⚠️ INCIDENTE DE AMBIENTE (19:27): a plataforma restaurou o sandbox ao checkpoint de 14/set 17:24 NO MEIO da sessão (dev server reiniciado junto). TODO o trabalho não-commitado de 15/set foi PERDIDO do disco: v0.10 (sistema completo de guildas: cargos, convites, solicitações, MOTD), v0.11 (solicitações + remoção de gênero), v0.12 (rankings multi-categoria + erasure de doações com FK), v0.13/13.1 (migrations de produção + reset total + anti-órfã + forense). Git HEAD = checkpoint (nenhum commit novo); .next recompilado pós-restauro; backups/ vazios — irrecoverável localmente. O estado vivo era v0.9.24/25 (guildas simples, ranking v0.9.5, gênero ainda presente)
@@ -1477,7 +1477,7 @@ Work Log:
 - TESTES HERMÉTICOS (tests/admin-delete.test.ts, 16 testes): erasure membro comum (cascade+nuvem+auditoria); líder → auto-dissolução + 2 linhas de auditoria + ex-membro íntegro + nome livre; só-nuvem (local skipped); modos de falha (probe missing → precondition nada morre; nuvem falha → nada morre; local falha pós-nuvem → partial alto); proteções (bot/próprio/nome errado → blocked auditado); guilda com membros+doações (erasure manual, inventário no log); Tropa bloqueada; listGuilds inventário; vigilância: doação órfã de guilda detectada pela matriz + operação reporta falha
 - ANTI-ÓRFÃ RECONSTRUÍDO (tests/anti-orphan.test.ts): camada hermética (temp DB + cadeia REAL agora completa + mundo completo + erasure por raiz com limpeza manual de doações) + camada banco-vivo (guardião) — ambos consomem orphanCheck.ts (fonte única)
 - MOCK SUPABASE (mini-services/supabase-mock, porta 4010): emula auth (token/refresh/user — tokens DETERMINÍSTICOS que sobrevivem a hot-reload), RPCs (is_admin, admin_list_personagens, admin_delete_personagem com a MESMA semântica do SQL, ranking_nuvem, admin_reset_cloud probe) e PostgREST mínimo (personagens/profiles); CORS que ECOA os headers pedidos (content-profile do supabase-js travava lista fechada — diagnóstico real); GET /__dump para verificação E2E
-- E2E BROWSER (agent-browser, dev server temporariamente com NEXT_PUBLIC_SUPABASE_URL=http://localhost:4010, devolvido à URL real depois): (1a) admin vê painel+abas+botões; (1b) conta comum NÃO vê painel e endpoints → 403 FORBIDDEN; (2) QA Nuvem Alvo (espelhado na nuvem-mock via jogo real: login→criar→treinar→sync) excluído → sumiu do ranking (antes/depois screenshot), da lista do painel, DA NUVEM (dump: personagens sem, backupPersonagens com), matriz 18/18 limpa, audit ok local+cloud; (3) QA Líder E2E (com doações 500 zeni, guilda nv2, 2 membros) → aviso de auto-dissolução na seção E no modal → excluído → guilda DISSOLVIDA (linha+doações varridas), ex-membro íntegro sem guilda, 2 linhas de auditoria (personagem + guilda com triggeredBy); (4) QA Guilda Dois com membro+doação 400 → modal com INVENTÁRIO completo → excluída → ex-membro intacto, doações 0, NOME REUTILIZADO (refundação imediata OK) e re-exclusão com relatório VISÍVEL (fix do modal) incluindo aviso de membro online; (5) bloqueios: próprio personagem (mensagem clara), bot Kaoran (400 endpoint), Tropa da Tartaruga (400 endpoint com a razão ensureSystemGuild); (6) aba auditoria com todos os campos (timestamp, por alicomprasbbbb@gmail.com, alvo, camadas local/nuvem, resultado, detalhes); (7) mobile 390px com toque real: seleção→modal→digitação→EXCLUIR→relatório
+- E2E BROWSER (agent-browser, dev server temporariamente com NEXT_PUBLIC_SUPABASE_URL=http://localhost:4010, devolvido à URL real depois): (1a) admin vê painel+abas+botões; (1b) conta comum NÃO vê painel e endpoints → 403 FORBIDDEN; (2) QA Nuvem Alvo (espelhado na nuvem-mock via jogo real: login→criar→treinar→sync) excluído → sumiu do ranking (antes/depois screenshot), da lista do painel, DA NUVEM (dump: personagens sem, backupPersonagens com), matriz 18/18 limpa, audit ok local+cloud; (3) QA Líder E2E (com doações 500 zeni, guilda nv2, 2 membros) → aviso de auto-dissolução na seção E no modal → excluído → guilda DISSOLVIDA (linha+doações varridas), ex-membro íntegro sem guilda, 2 linhas de auditoria (personagem + guilda com triggeredBy); (4) QA Guilda Dois com membro+doação 400 → modal com INVENTÁRIO completo → excluída → ex-membro intacto, doações 0, NOME REUTILIZADO (refundação imediata OK) e re-exclusão com relatório VISÍVEL (fix do modal) incluindo aviso de membro online; (5) bloqueios: próprio personagem (mensagem clara), bot Kaoran (400 endpoint), Tropa da Tartaruga (400 endpoint com a razão ensureSystemGuild); (6) aba auditoria com todos os campos (timestamp, por <admin-redacted>, alvo, camadas local/nuvem, resultado, detalhes); (7) mobile 390px com toque real: seleção→modal→digitação→EXCLUIR→relatório
 - SETUP/CLEANUP SCRIPTS: scripts/e2e-v014-setup.ts (mundo QA via APIs reais — login mock→ponte→criação→grant do admin→fundar/entrar/doar) e scripts/e2e-v014-cleanup.ts (banco → pristino: 0 humanos/contas/guildas/doações/sessions, 16 bots, matriz limpa; AdminActionLog PRESERVADO — 9 entradas como prova viva)
 - GATES FINAIS: suíte 433/433 (417 base + 16 novos) · lint ✓ · tsc ✓ (cache incremental limpo) · dev server devolvido à URL real (nuvem de produção intocada — barreira do dono) · jogo abre limpo no real
 
