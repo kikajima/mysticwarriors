@@ -1,9 +1,7 @@
 -- =====================================================================
 -- GUERREIROS MÍSTICOS — INSTALAÇÃO COMPLETA NA NOVA BASE (2026)
 -- =====================================================================
--- PROJETO ALVO: rugbhzcmxmtmoqoxrhki (base NOVA, separada do projeto
--- antigo a pedido do dono, para não misturar os dados).
---
+-- PROJETO ALVO: configure no projeto Supabase de produção correto.\n--
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE (do projeto novo)
 -- E CLIQUE EM "Run". UMA VEZ SÓ — depois disso o jogo está completo.
 --
@@ -187,9 +185,10 @@ create table if not exists public.admins (
   email text primary key
 );
 
-insert into public.admins (email)
-values ('alicomprasbbbb@gmail.com')
-on conflict (email) do nothing;
+-- Configure o administrador explicitamente no projeto de produção.
+-- Não versionamos e-mail real no repositório.
+-- Depois de aplicar este arquivo, execute no SQL Editor:
+-- insert into public.admins (email) values ('SEU_EMAIL_ADMIN') on conflict (email) do nothing;
 
 alter table public.admins enable row level security;
 -- RLS ligado e NENHUMA policy: ninguém lê nem escreve pela API — só as
