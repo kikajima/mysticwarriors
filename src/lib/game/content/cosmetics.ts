@@ -378,6 +378,16 @@ export function serializeCosmeticsEquipped(equipped: Partial<Record<CosmeticSlot
   return JSON.stringify(equipped);
 }
 
+/** Recorte público: só revela o que está equipado, nunca a coleção possuída. */
+export function publicCosmeticsFromRaw(raw: string | null | undefined) {
+  return { equipped: parseCosmeticsEquipped(raw) };
+}
+
+/** Texto curto para a loja deixar claro onde o cosmético é visto. */
+export function cosmeticPublicSurfaces(cosmetic: CosmeticDef): string[] {
+  return cosmetic.publicSurfaces ?? ['Perfil'];
+}
+
 // ===== Produtos (estrutura para monetização futura — NÃO à venda ainda) =====
 
 export interface ProductDef {
