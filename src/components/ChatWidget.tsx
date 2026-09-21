@@ -373,8 +373,13 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                 onClick={() => {
                   setChannel(id);
                   setError(null);
-                  setDirectoryVisible(false);
-                  if (id !== 'private') setPrivateTarget(null);
+                  if (id === 'private') {
+                    setDirectoryVisible(true);
+                    void loadDirectory();
+                  } else {
+                    setDirectoryVisible(false);
+                    setPrivateTarget(null);
+                  }
                 }}
                 className={`flex items-center justify-center gap-1.5 py-2 text-xs border-b-2 transition-colors disabled:opacity-30 ${
                   channel === id ? 'border-orange-500 text-orange-200 bg-orange-950/20' : 'border-transparent text-amber-200/50'
@@ -387,6 +392,12 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
 
           {channel === 'private' && !privateTarget ? (
             <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+              <div className="rounded-lg border border-orange-900/30 bg-orange-950/10 px-3 py-2">
+                <p className="text-xs font-heading text-amber-100">Amigos e contatos</p>
+                <p className="text-[10px] text-amber-200/45 mt-0.5">
+                  Encontre um guerreiro e use os botões ao lado para adicionar, remover, bloquear ou desbloquear.
+                </p>
+              </div>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-200/30" />
                 <input
@@ -412,23 +423,67 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                   {directoryLoading && directory.length === 0 ? (
                     <p className="px-2 py-2 text-xs text-amber-200/40">Carregando guerreiros…</p>
                   ) : filteredDirectory.length > 0 ? (
-                    filteredDirectory.map((person) => (
-                      <button
-                        type="button"
-                        key={person.id}
-                        onClick={() => openPrivate(person)}
-                        className="w-full text-left rounded-lg px-3 py-2 hover:bg-orange-950/30"
-                      >
-                        <span className="text-sm text-amber-100">{person.name}</span>
-                        {person.level ? <span className="ml-2 text-[10px] text-amber-200/40">Nv {person.level}</span> : null}
-                        {friendIds.has(person.id) && (
-                          <span className="ml-2 text-[9px] text-emerald-300">★ Amigo</span>
-                        )}
-                        {blockedIds.has(person.id) && (
-                          <span className="ml-2 text-[9px] text-red-300">Bloqueado</span>
-                        )}
-                      </button>
-                    ))
+                    filteredDirectory.map((person) => {
+                      const isFriend = friendIds.has(person.id);
+                      const isBlocked = blockedIds.has(person.id);
+                      return (
+                        <div
+                          key={person.id}
+                          className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-orange-950/30"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => openPrivate(person)}
+                            className="min-w-0 flex-1 text-left rounded-md px-1 py-1"
+                            title={isBlocked ? 'Abrir contato bloqueado' : 'Abrir conversa privada'}
+                          >
+                            <span className="text-sm text-amber-100">{person.name}</span>
+                            {person.level ? <span className="ml-2 text-[10px] text-amber-200/40">Nv {person.level}</span> : null}
+                            {isFriend && <span className="ml-2 text-[9px] text-emerald-300">★ Amigo</span>}
+                            {isBlocked && <span className="ml-2 text-[9px] text-red-300">Bloqueado</span>}
+                          </button>
+
+                          {isBlocked ? (
+                            <button
+                              type="button"
+                              disabled={socialBusy !== null}
+                              onClick={() => void changeSocial(person, 'unblock')}
+                              className="shrink-0 flex items-center gap-1 rounded-md border border-emerald-900/40 bg-emerald-950/20 px-2 py-1 text-[10px] text-emerald-300 hover:border-emerald-700/60 disabled:opacity-30"
+                              title="Desbloquear guerreiro"
+                              aria-label={`Desbloquear ${person.name}`}
+                            >
+                              <ShieldOff className="h-3.5 w-3.5" />
+                              <span className="hidden sm:inline">Desbloquear</span>
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                disabled={socialBusy !== null}
+                                onClick={() => void changeSocial(person, isFriend ? 'remove_friend' : 'add_friend')}
+                                className="shrink-0 flex items-center gap-1 rounded-md border border-emerald-900/40 bg-emerald-950/15 px-2 py-1 text-[10px] text-emerald-300 hover:border-emerald-700/60 disabled:opacity-30"
+                                title={isFriend ? 'Remover dos amigos' : 'Adicionar aos amigos'}
+                                aria-label={isFriend ? `Remover ${person.name} dos amigos` : `Adicionar ${person.name} aos amigos`}
+                              >
+                                {isFriend ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                                <span className="hidden sm:inline">{isFriend ? 'Remover' : 'Amigo'}</span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={socialBusy !== null}
+                                onClick={() => void changeSocial(person, 'block')}
+                                className="shrink-0 flex items-center gap-1 rounded-md border border-red-900/40 bg-red-950/15 px-2 py-1 text-[10px] text-red-300 hover:border-red-700/60 disabled:opacity-30"
+                                title="Bloquear guerreiro"
+                                aria-label={`Bloquear ${person.name}`}
+                              >
+                                <Ban className="h-3.5 w-3.5" />
+                                <span className="hidden sm:inline">Bloquear</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })
                   ) : (
                     <p className="px-2 py-2 text-xs text-amber-200/40">Nenhum guerreiro encontrado.</p>
                   )}
@@ -436,7 +491,10 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
               )}
 
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-amber-200/40 mb-1">Amigos</p>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <p className="text-[10px] uppercase tracking-wide text-amber-200/40">Amigos</p>
+                  <span className="text-[9px] text-emerald-300/60">{friends.length}</span>
+                </div>
                 <div className="space-y-1">
                   {friends.map((friend) => (
                     <div
