@@ -91,8 +91,6 @@ const COMBAT = {
 const BASIC_ENERGY_KI_COST = 10;
 /** ORIGEM: src/lib/game/engine.ts — batalhas: replay base 1,1 s + 0,48 s/rodada (teto 32 s). */
 const BATTLE_REPLAY = { baseMs: 1100, perRoundMs: 480, maxMs: 32_000 } as const;
-/** ORIGEM: src/lib/game/rules.ts — STAT_CAP. */
-const STAT_CAP = 999;
 /** ORIGEM: src/lib/game/rules.ts — ZENKAI. */
 const ZENKAI = { relevanceFactor: 0.6, sameOpponentCooldownHours: 12, zenkaiRequiresHpPct: 0.5 } as const;
 /** ORIGEM: src/lib/worldboss.ts — exportado e validado pelo teste de contrato. */
@@ -665,11 +663,11 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Atributos',
     icon: '💪',
     group: 'Progressão',
-    summary: 'Força, Ki, Defesa e Velocidade: efeitos, treino instantâneo, custos e o teto de 999.',
+    summary: 'Força, Ki, Defesa e Velocidade: efeitos, treino instantâneo e progressão sem teto máximo.'
     resumo: [
       '**Força** = golpes físicos · **Ki** = ondas de energia (sem aumentar a energia de ações).',
       '**Defesa** = vida máxima e resistência · **Velocidade** = iniciativa e esquiva.',
-      'Treino custa **3 ⚡ + Zeni** e é **instantâneo** (teto 999 por atributo); a ficha mostra **base + equipamento = total**.',
+      'Treino custa **3 ⚡ + Zeni** e é **instantâneo**; os quatro atributos podem continuar crescendo sem teto máximo de gameplay, e a ficha mostra **base + equipamento = total**.',
     ],
     blocks: [
       {
@@ -712,7 +710,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           {
             kind: 'table',
             table: {
-              caption: `Curva de custo de treino (ORIGEM: content/world.ts — baseTrainingCost; ×1,05 por ponto até 150, ×1,035 depois; teto de qualquer atributo: ${STAT_CAP})`,
+              caption: 'Curva de custo de treino (ORIGEM: content/world.ts — baseTrainingCost; ×1,05 por ponto até 150, ×1,035 depois; sem teto máximo de atributo)',
               headers: ['Atributo em', 'Custo por ponto (Zeni)'],
               rows: [10, 25, 50, 100, 150, 200, 300].map((v) => [String(v), br(baseTrainingCost(v))]),
             },
@@ -816,7 +814,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Progressão',
     summary: 'Quanto custa cada ação em energia/tempo e a matriz completa de ocupação (o que fica bloqueado durante o trabalho).',
     resumo: [
-      '**Trabalhar não gasta energia** — só 1 hora de tempo real.',
+      '**Trabalhar e buscar Esferas não gastam energia** — essas ações cobram apenas tempo real.',
       '**Treinar e lutar** custam 3 ⚡ cada; **Ameaça Universal** custa 10 ⚡.',
       'No trabalho SÓ PvE/torneio travam — **tudo mais liberado, coleta inclusive**.',
     ],
@@ -830,6 +828,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Treino de atributo', `${TRAIN_ENERGY_COST} ⚡`, 'Instantâneo'],
             ['Batalha PvE / PvP / [[torneio|torneio]]', `${BATTLE_ENERGY_COST} ⚡`, 'Replay animado de ~2 a 20 s (conforme as rodadas)'],
             ['Turno de [[profissoes|profissão]]', '**0 ⚡** (não gasta energia)', '60 min reais'],
+            ['[[esferas-dragao|Busca pelas Esferas]]', '**0 ⚡** (não gasta energia)', '1h, 2h, 4h, 8h ou 12h'],
             ['Ataque ao [[world-boss|Ameaça Universal]]', `${BOSS.attackEnergyCost} ⚡`, `Cooldown de ${BOSS.attackCooldownSec} s entre ataques`],
           ],
         },
@@ -1060,10 +1059,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'list',
         items: [
           `A carreira fecha o ciclo em **${br(PROFESSION_MASTERY_HOURS)} horas**. No Nível 10 você continua recebendo as recompensas do Nível 10; Mestria/Prestígio será uma etapa própria.`,
-          'O ganho de atributo é sempre um **número inteiro** e respeita o teto global de **999**; ao chegar no teto, Zeni, XP, horas e loot continuam normalmente.',
+          'O ganho de atributo é sempre um **número inteiro** e **não possui teto máximo de gameplay**; carreiras podem continuar fortalecendo o personagem indefinidamente.',
           'O XP de trabalho é **linear com o nível do personagem**: dobrar o nível dobra o XP base por hora na mesma carreira e duração.',
           'A chance de material raro é testada **uma vez por hora** e recebe o bônus da duração do turno. O material comum nunca deixa de vir: **1–2 unidades por hora**.',
-          'A Busca pelas Esferas é uma atividade separada das profissões, com duração de **1h a 12h**. A chance base cresce até **20%**; bônus de equipamento podem elevar o total até o teto mundial de **50%**. Cada busca pode encontrar no máximo uma esfera.',
+          'A Busca pelas Esferas é uma atividade separada das profissões, com duração de **1h a 12h** e **não gasta energia**. A chance base cresce até **20%**; bônus de equipamento podem elevar o total até o teto mundial de **50%**. Cada busca pode encontrar no máximo uma esfera.',
           'Cancelar um turno em andamento não concede recompensa parcial.',
           '**Androide:** o bônus racial de Zeni de trabalho continua valendo.',
         ],
@@ -1390,7 +1389,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: 'A aba **Busca** em [[profissoes|Atividades]] mostra em tempo real quantas Esferas estão **espalhadas pelo mundo** (sem dono) e permite procurar por 1h, 2h, 4h, 8h ou 12h. Se o contador chegar a **0/7 espalhadas**, a busca é bloqueada **antes de gastar energia**: todas as estrelas já pertencem a guerreiros, então a alternativa é PvP ou aguardar um desejo dispersá-las. A chance base vai até 20%; o **Radar das Esferas** pode ser equipado em Acessório I ou II e adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais**, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Quando isso acontece, **os dois jogadores são avisados**: o vencedor vê o alerta ao terminar a batalha e a vítima recebe o aviso mesmo se estava offline, no próximo acesso. Junte as **7 esferas**, invoque Shenlon e escolha:',
+        text: 'A aba **Busca** em [[profissoes|Atividades]] mostra em tempo real quantas Esferas estão **espalhadas pelo mundo** (sem dono) e permite procurar por 1h, 2h, 4h, 8h ou 12h. Se o contador chegar a **0/7 espalhadas**, a busca é bloqueada **antes de iniciar o timer**: todas as estrelas já pertencem a guerreiros, então a alternativa é PvP ou aguardar um desejo dispersá-las. **Buscar não gasta energia.** A chance base vai até 20%; o **Radar das Esferas** pode ser equipado em Acessório I ou II e adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais**, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Quando isso acontece, **os dois jogadores são avisados**: o vencedor vê o alerta ao terminar a batalha e a vítima recebe o aviso mesmo se estava offline, no próximo acesso. Junte as **7 esferas**, invoque Shenlon e escolha:',
       },
       {
         kind: 'table',
@@ -1399,7 +1398,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           headers: ['Desejo', 'Efeito'],
           rows: [
             ['💰 Riqueza', '+8.000 Zeni'],
-            ['💪 Poder', '+3 em TODOS os atributos (respeita o teto de 999)'],
+            ['💪 Poder', '+3 em TODOS os atributos, sem teto máximo'],
             ['❤️ Vitalidade', 'Vida e energia restauradas a 100%'],
             ['📚 Sabedoria', '+1.500 XP'],
           ],
