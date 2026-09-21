@@ -150,7 +150,7 @@ model Player {
   defense       Float     @default(10)
   speed         Float     @default(10)
   ki            Float     @default(10)
-  energy        Float     @default(100)
+  energy        Int       @default(100)
   battlesWon    Int       @default(0)
   battlesLost   Int       @default(0)
   pvpWins       Int       @default(0)
