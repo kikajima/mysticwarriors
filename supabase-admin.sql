@@ -31,9 +31,10 @@ create table if not exists public.admins (
   email text primary key
 );
 
-insert into public.admins (email)
-values ('alicomprasbbbb@gmail.com')
-on conflict (email) do nothing;
+-- Configure o administrador manualmente após rodar este arquivo:
+-- insert into public.admins (email) values ('SEU_EMAIL_REAL_AQUI')
+-- on conflict (email) do nothing;
+-- Não versione o e-mail real neste repositório.
 
 alter table public.admins enable row level security;
 
@@ -164,4 +165,4 @@ grant execute on function public.admin_list_players() to authenticated;
 grant execute on function public.admin_get_progress(uuid) to authenticated;
 grant execute on function public.admin_update_progress(uuid, jsonb) to authenticated;
 
--- ===== FIM — painel liberado para alicomprasbbbb@gmail.com =====
+-- ===== FIM — painel liberado para SEU_EMAIL_ADMIN_AQUI =====

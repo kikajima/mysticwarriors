@@ -1,4 +1,4 @@
-import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
@@ -38,6 +38,11 @@ export function newSessionToken(): string {
   return randomBytes(32).toString('hex');
 }
 
+/** Só o hash do token fica persistido no banco. O cookie guarda o valor bruto. */
+export function hashSessionToken(token: string): string {
+  return createHash('sha256').update(token, 'utf8').digest('hex');
+}
+
 // ===== Sessões =====
 
 export interface AuthContext {
@@ -51,21 +56,29 @@ export async function createSession(
   userAgent?: string,
   tx: Prisma.TransactionClient = db as unknown as Prisma.TransactionClient
 ): Promise<Session> {
-  const token = newSessionToken();
-  return tx.session.create({
+  const rawToken = newSessionToken();
+  const storedToken = hashSessionToken(rawToken);
+  const session = await tx.session.create({
     data: {
-      token,
+      token: storedToken,
       accountId,
       userAgent: userAgent?.slice(0, 200),
       expiresAt: new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000),
     },
   });
+  // Compatibilidade com os chamadores atuais: devolve o token bruto SOMENTE
+  // em memória para ser gravado no cookie; o banco já contém apenas o hash.
+  return { ...session, token: rawToken };
 }
 
 /** Invalida a sessão no banco (logout real). */
 export async function revokeSession(token: string): Promise<void> {
+  const hashed = hashSessionToken(token);
   await db.session.updateMany({
-    where: { token, revokedAt: null },
+    where: {
+      revokedAt: null,
+      OR: [{ token: hashed }, { token }],
+    },
     data: { revokedAt: new Date() },
   });
 }
@@ -79,10 +92,28 @@ export async function getAuth(client: Prisma.TransactionClient = db): Promise<Au
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
 
-  const session = await client.session.findUnique({
-    where: { token },
+  const hashed = hashSessionToken(token);
+  let session = await client.session.findUnique({
+    where: { token: hashed },
     include: { account: true },
   });
+
+  // Compatibilidade de rollout: sessões criadas antes deste hardening
+  // guardavam o token bruto. Se uma delas for válida, migra para hash
+  // imediatamente e segue sem deslogar o usuário.
+  if (!session) {
+    const legacy = await client.session.findUnique({
+      where: { token },
+      include: { account: true },
+    });
+    if (legacy) {
+      session = await client.session.update({
+        where: { id: legacy.id },
+        data: { token: hashed },
+        include: { account: true },
+      });
+    }
+  }
   if (!session) return null;
   if (session.revokedAt) return null;
   if (session.expiresAt.getTime() < Date.now()) return null;

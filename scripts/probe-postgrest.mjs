@@ -12,8 +12,12 @@
 // Objetivo: provar se "HTTP 400" no botão = função EXISTE e falhou
 // dentro (vs. 404 = não instalada).
 // =====================================================================
-const URL = 'https://rugbhzcmxmtmoqoxrhki.supabase.co';
-const KEY = 'sb_publishable_pPxZG2kASZLr_mgv-1BNBg_dvfCN7-a';
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!URL || !KEY) {
+  throw new Error('Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no ambiente antes do probe.');
+}
 
 async function probe(label, path, init) {
   try {
