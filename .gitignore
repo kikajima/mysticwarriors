@@ -81,3 +81,7 @@ db/backups/
 *.rar
 *.zip
 *.bak
+
+# Artefatos internos de desenvolvimento / auditoria (podem conter PII ou metadados)
+/worklog.md
+/scripts/vlm-*.json
