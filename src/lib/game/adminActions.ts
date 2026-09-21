@@ -50,7 +50,7 @@ export const ADMIN_LIMITS = {
   zeni: 100_000_000,
   crystals: 100_000,
   dragonBalls: 7,
-  stat: 999_999,
+  stat: Number.MAX_SAFE_INTEGER,
   level: 999,
   xp: 1_000_000_000,
   maxDelta: 1_000_000_000,
