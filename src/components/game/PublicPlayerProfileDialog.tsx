@@ -23,40 +23,36 @@ export function PublicPlayerProfileDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [profile, setProfile] = useState<PublicPlayerProfile | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failedPlayerId, setFailedPlayerId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!playerId) {
-      setProfile(null);
-      setFailed(false);
-      return;
-    }
+    if (!playerId) return;
     let cancelled = false;
-    setLoading(true);
-    setFailed(false);
     fetch(`/api/game/public-player?playerId=${encodeURIComponent(playerId)}`, { cache: 'no-store' })
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json?.error?.message ?? 'Falha ao carregar perfil.');
-        if (!cancelled) setProfile(json.player);
+        if (!cancelled) {
+          setProfile(json.player);
+          setFailedPlayerId(null);
+        }
       })
       .catch(() => {
-        if (!cancelled) setFailed(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setFailedPlayerId(playerId);
       });
     return () => {
       cancelled = true;
     };
   }, [playerId]);
 
-  const equipped = profile?.cosmetics.equipped ?? {};
+  const currentProfile = profile?.id === playerId ? profile : null;
+  const failed = !!playerId && failedPlayerId === playerId;
+  const loading = !!playerId && !currentProfile && !failed;
+  const equipped = currentProfile?.cosmetics.equipped ?? {};
   const background = equippedCosmetic(equipped, 'background');
   const card = equippedCosmetic(equipped, 'card');
   const pose = equippedCosmetic(equipped, 'pose');
-  const scale = profile ? getPowerScale(profile.power).scale : null;
+  const scale = currentProfile ? getPowerScale(currentProfile.power).scale : null;
 
   return (
     <Dialog open={!!playerId} onOpenChange={onOpenChange}>
@@ -76,41 +72,41 @@ export function PublicPlayerProfileDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {loading && !profile ? (
+          {loading && !currentProfile ? (
             <div className="py-10 text-center text-sm text-amber-200/45">Carregando guerreiro…</div>
           ) : failed ? (
             <div className="py-10 text-center text-sm text-red-300/80">Não foi possível abrir esta ficha.</div>
-          ) : profile ? (
+          ) : currentProfile ? (
             <div className="mt-4 space-y-4">
               <PublicPlayerIdentity
-                name={profile.name}
-                race={profile.race}
-                avatarUrl={profile.avatarUrl}
-                cosmetics={profile.cosmetics}
-                level={profile.level}
+                name={currentProfile.name}
+                race={currentProfile.race}
+                avatarUrl={currentProfile.avatarUrl}
+                cosmetics={currentProfile.cosmetics}
+                level={currentProfile.level}
                 className="w-full"
               />
 
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <Stat label="Raça" value={RACES[profile.race]?.name ?? profile.race} />
-                <Stat label="Nível" value={profile.level.toLocaleString('pt-BR')} />
-                <Stat label="Poder" value={profile.power.toLocaleString('pt-BR')} />
+                <Stat label="Raça" value={RACES[currentProfile.race]?.name ?? currentProfile.race} />
+                <Stat label="Nível" value={currentProfile.level.toLocaleString('pt-BR')} />
+                <Stat label="Poder" value={currentProfile.power.toLocaleString('pt-BR')} />
                 <Stat label="Escala" value={scale ? `${scale.emoji} ${scale.nome}` : '—'} />
-                <Stat label="Vitórias" value={profile.battlesWon.toLocaleString('pt-BR')} />
-                <Stat label="Derrotas" value={profile.battlesLost.toLocaleString('pt-BR')} />
-                <Stat label="Vitórias no torneio" value={profile.tournamentWins.toLocaleString('pt-BR')} />
-                <Stat label="Títulos do torneio" value={profile.tournamentTitles.toLocaleString('pt-BR')} />
+                <Stat label="Vitórias" value={currentProfile.battlesWon.toLocaleString('pt-BR')} />
+                <Stat label="Derrotas" value={currentProfile.battlesLost.toLocaleString('pt-BR')} />
+                <Stat label="Vitórias no torneio" value={currentProfile.tournamentWins.toLocaleString('pt-BR')} />
+                <Stat label="Títulos do torneio" value={currentProfile.tournamentTitles.toLocaleString('pt-BR')} />
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {profile.guild ? (
+                {currentProfile.guild ? (
                   <Chip className="border-emerald-800/50 bg-emerald-950/50 text-emerald-300">
-                    🛡️ {profile.guild.name}
+                    🛡️ {currentProfile.guild.name}
                   </Chip>
                 ) : null}
-                {profile.transformation ? (
+                {currentProfile.transformation ? (
                   <Chip className="border-orange-800/50 bg-orange-950/50 text-orange-300">
-                    {profile.transformation.icon} {profile.transformation.name}
+                    {currentProfile.transformation.icon} {currentProfile.transformation.name}
                   </Chip>
                 ) : null}
                 {pose?.profileBadge ? (
