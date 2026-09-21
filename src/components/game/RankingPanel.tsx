@@ -326,7 +326,7 @@ function WarriorRanking({
                     cosmetics={entry.cosmetics}
                     level={entry.level}
                     compact
-                    onClick={() => onProfile(entry.id)}
+                    onClick={entry.id.startsWith('cloud:') ? undefined : () => onProfile(entry.id)}
                   />
                   {entry.isMe && (
                     <Chip className="ml-2 bg-orange-900/60 text-orange-200 border-orange-700/60">você</Chip>
@@ -397,7 +397,7 @@ function WarriorRanking({
                   cosmetics={entry.cosmetics}
                   level={entry.level}
                   compact
-                  onClick={() => onProfile(entry.id)}
+                  onClick={entry.id.startsWith('cloud:') ? undefined : () => onProfile(entry.id)}
                 />
                 <p className="text-[11px] text-amber-200/50">
                   {RACE_EMOJI[entry.race]} {RACES[entry.race]?.name ?? entry.race}
