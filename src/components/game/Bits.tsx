@@ -88,7 +88,7 @@ function CosmeticsWrapper({
   cosmetics,
   children,
 }: {
-  cosmetics?: CosmeticsView;
+  cosmetics?: Pick<CosmeticsView, 'equipped'>;
   children: React.ReactNode;
 }) {
   const equipped = cosmetics?.equipped ?? {};
@@ -127,7 +127,7 @@ export function PlayerAvatar({
   race: string;
   avatarUrl?: string | null;
   /** cosméticos equipados (aura/moldura/overlay aplicados ao redor) */
-  cosmetics?: CosmeticsView;
+  cosmetics?: Pick<CosmeticsView, 'equipped'>;
   className?: string;
   emojiSize?: string;
 }) {
