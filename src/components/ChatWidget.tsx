@@ -326,7 +326,7 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
 
   const canCompose =
     (channel !== 'guild' || Boolean(player.guild)) &&
-    (channel !== 'private' || Boolean(privateTarget));
+    (channel !== 'private' || (Boolean(privateTarget) && !blockedIds.has(privateTarget!.id)));
 
   return (
     <>
@@ -538,39 +538,53 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                   <span className="flex-1 truncate text-xs font-heading text-amber-100">{privateTarget.name}</span>
-                  <button
-                    type="button"
-                    disabled={socialBusy !== null}
-                    onClick={() => void changeSocial(
-                      privateTarget,
-                      friendIds.has(privateTarget.id) ? 'remove_friend' : 'add_friend'
-                    )}
-                    className="flex items-center gap-1 p-1.5 text-[10px] text-emerald-300/80 hover:text-emerald-200 disabled:opacity-30"
-                    title={friendIds.has(privateTarget.id) ? 'Remover dos amigos' : 'Adicionar aos amigos'}
-                  >
-                    {friendIds.has(privateTarget.id)
-                      ? <UserMinus className="h-3.5 w-3.5" />
-                      : <UserPlus className="h-3.5 w-3.5" />}
-                    {friendIds.has(privateTarget.id) ? 'Remover' : 'Amigo'}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={socialBusy !== null}
-                    onClick={() => void changeSocial(privateTarget, 'block')}
-                    className="flex items-center gap-1 p-1.5 text-[10px] text-red-300/70 hover:text-red-200 disabled:opacity-30"
-                    title="Bloquear jogador"
-                  >
-                    <Ban className="h-3.5 w-3.5" /> Bloquear
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void setMute(privateTarget, !mutedIds.has(privateTarget.id))}
-                    className="p-1.5 text-amber-200/45 hover:text-amber-100"
-                    title={mutedIds.has(privateTarget.id) ? 'Remover silêncio' : 'Silenciar jogador'}
-                    aria-label={mutedIds.has(privateTarget.id) ? 'Remover silêncio' : 'Silenciar jogador'}
-                  >
-                    {mutedIds.has(privateTarget.id) ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-                  </button>
+                  {blockedIds.has(privateTarget.id) ? (
+                    <button
+                      type="button"
+                      disabled={socialBusy !== null}
+                      onClick={() => void changeSocial(privateTarget, 'unblock')}
+                      className="flex items-center gap-1 p-1.5 text-[10px] text-emerald-300 hover:text-emerald-200 disabled:opacity-30"
+                      title="Desbloquear jogador"
+                    >
+                      <ShieldOff className="h-3.5 w-3.5" /> Desbloquear
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={socialBusy !== null}
+                        onClick={() => void changeSocial(
+                          privateTarget,
+                          friendIds.has(privateTarget.id) ? 'remove_friend' : 'add_friend'
+                        )}
+                        className="flex items-center gap-1 p-1.5 text-[10px] text-emerald-300/80 hover:text-emerald-200 disabled:opacity-30"
+                        title={friendIds.has(privateTarget.id) ? 'Remover dos amigos' : 'Adicionar aos amigos'}
+                      >
+                        {friendIds.has(privateTarget.id)
+                          ? <UserMinus className="h-3.5 w-3.5" />
+                          : <UserPlus className="h-3.5 w-3.5" />}
+                        {friendIds.has(privateTarget.id) ? 'Remover' : 'Amigo'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={socialBusy !== null}
+                        onClick={() => void changeSocial(privateTarget, 'block')}
+                        className="flex items-center gap-1 p-1.5 text-[10px] text-red-300/70 hover:text-red-200 disabled:opacity-30"
+                        title="Bloquear jogador"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Bloquear
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void setMute(privateTarget, !mutedIds.has(privateTarget.id))}
+                        className="p-1.5 text-amber-200/45 hover:text-amber-100"
+                        title={mutedIds.has(privateTarget.id) ? 'Remover silêncio' : 'Silenciar jogador'}
+                        aria-label={mutedIds.has(privateTarget.id) ? 'Remover silêncio' : 'Silenciar jogador'}
+                      >
+                        {mutedIds.has(privateTarget.id) ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
