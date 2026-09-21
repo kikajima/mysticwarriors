@@ -20,6 +20,12 @@ export type CosmeticSlot =
   | 'nameplate'
   | 'chat';
 
+export type CosmeticSetId =
+  | 'ascensao_dourada'
+  | 'heranca_dragao'
+  | 'vazio_cosmico'
+  | 'caminho_mestre';
+
 export const COSMETIC_SLOTS: ReadonlySet<string> = new Set<CosmeticSlot>([
   'aura',
   'outfit',
@@ -42,6 +48,8 @@ export interface CosmeticDef {
   price: number; // em cristais
   rarity: 'comum' | 'raro' | 'épico' | 'lendário';
   icon: string;
+  /** coleção temática; serve SOMENTE para composição visual. */
+  setId?: CosmeticSetId;
   previewCss?: string; // classe tailwind para pré-visualização de aura/efeito
   // ===== v0.5: metadados visuais USADOS DE VERDADE pela UI =====
   /** slot 'title': texto exibido junto ao nome do guerreiro */
@@ -74,6 +82,42 @@ export interface CosmeticDef {
   publicSurfaces?: string[];
 }
 
+export interface CosmeticSetMilestone {
+  pieces: number;
+  name: string;
+  description: string;
+  /** selo da coleção exibido na identidade/ficha. */
+  badgeCss: string;
+  /** acabamento do bloco público de identidade. */
+  identityCss?: string;
+  /** halo adicional no avatar, sem substituir aura/moldura equipadas. */
+  avatarCss?: string;
+  /** acabamento da ficha/card do personagem. */
+  profileCss?: string;
+  /** acabamento extra do balão do chat. */
+  chatCss?: string;
+  /** acabamento extra da apresentação de vitória. */
+  victoryCss?: string;
+}
+
+export interface CosmeticSetDef {
+  id: CosmeticSetId;
+  name: string;
+  icon: string;
+  description: string;
+  pieceIds: string[];
+  milestones: CosmeticSetMilestone[];
+}
+
+export interface CosmeticSetProgress {
+  set: CosmeticSetDef;
+  ownedCount: number;
+  equippedCount: number;
+  total: number;
+  activeMilestone: CosmeticSetMilestone | null;
+  nextMilestone: CosmeticSetMilestone | null;
+}
+
 export const COSMETICS: CosmeticDef[] = [
   // Auras — glow ao redor do avatar (header, ficha, seleção de personagem)
   {
@@ -90,6 +134,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'aura_trovao',
+    setId: 'vazio_cosmico',
     slot: 'aura',
     name: 'Aura de Trovão',
     description: 'Descargas elétricas crepitam ao seu redor.',
@@ -102,6 +147,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'aura_divina',
+    setId: 'ascensao_dourada',
     slot: 'aura',
     name: 'Aura Divina',
     description: 'A luz dos próprios deuses emana do seu corpo.',
@@ -116,6 +162,7 @@ export const COSMETICS: CosmeticDef[] = [
     // v0.6 — o brilho dourado pulsante que era GRÁTIS ao redor do retrato
     // virou cosmético adquirível com diamantes (decisão do usuário).
     id: 'aura_ki_pulsante',
+    setId: 'caminho_mestre',
     slot: 'aura',
     name: 'Aura de Ki Pulsante',
     description:
@@ -130,6 +177,7 @@ export const COSMETICS: CosmeticDef[] = [
   // Títulos — exibidos junto ao nome do guerreiro
   {
     id: 'title_lendario',
+    setId: 'caminho_mestre',
     slot: 'title',
     name: 'Título: o Lendário',
     description: 'Seu nome carrega o peso das lendas.',
@@ -152,6 +200,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'title_campeao',
+    setId: 'ascensao_dourada',
     slot: 'title',
     name: 'Título: Campeão Universal',
     description: 'O maior dos títulos para o maior dos guerreiros.',
@@ -164,6 +213,7 @@ export const COSMETICS: CosmeticDef[] = [
   // Molduras de perfil — anel ao redor do avatar
   {
     id: 'frame_dourada',
+    setId: 'ascensao_dourada',
     slot: 'frame',
     name: 'Moldura Dourada',
     description: 'Moldura de ouro puro para o seu perfil.',
@@ -175,6 +225,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'frame_dragao',
+    setId: 'heranca_dragao',
     slot: 'frame',
     name: 'Moldura do Dragão',
     description: 'Entalhada nas escamas de Shenlon.',
@@ -187,6 +238,7 @@ export const COSMETICS: CosmeticDef[] = [
   // Fundos de perfil — atrás da ficha de personagem
   {
     id: 'bg_sala_tempo',
+    setId: 'caminho_mestre',
     slot: 'background',
     name: 'Fundo: Sala do Tempo',
     description: 'O infinito branco do outro lado da porta.',
@@ -197,6 +249,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'bg_planeta_namek',
+    setId: 'heranca_dragao',
     slot: 'background',
     name: 'Fundo: Namekusei',
     description: 'Céus verdes e dois sóis no horizonte.',
@@ -208,6 +261,7 @@ export const COSMETICS: CosmeticDef[] = [
   // Efeitos — animação ao entrar em cena
   {
     id: 'fx_teleporte',
+    setId: 'vazio_cosmico',
     slot: 'effect',
     name: 'Efeito: Teleporte',
     description: 'Um clarão azul quando você entra em cena.',
@@ -229,6 +283,7 @@ export const COSMETICS: CosmeticDef[] = [
   // Avatar + pose + roupa
   {
     id: 'avatar_dourado',
+    setId: 'ascensao_dourada',
     slot: 'avatar',
     name: 'Avatar Dourado',
     description: 'Um retrato seu banhado em ouro.',
@@ -239,6 +294,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'pose_suprema',
+    setId: 'ascensao_dourada',
     slot: 'pose',
     name: 'Pose Suprema',
     description: 'A pose final do guerreiro que venceu tudo.',
@@ -255,6 +311,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'roupa_gi_branco',
+    setId: 'caminho_mestre',
     slot: 'outfit',
     name: 'Gi Branco Mestre',
     description: 'O uniforme dos que transcendem a tartaruga.',
@@ -268,6 +325,7 @@ export const COSMETICS: CosmeticDef[] = [
   // Identidade social — itens feitos para serem vistos por outros jogadores.
   {
     id: 'nameplate_dragao_eterno',
+    setId: 'heranca_dragao',
     slot: 'nameplate',
     name: 'Nameplate do Dragão Eterno',
     description: 'Seu nome aparece em uma placa esmeralda com brilho de escamas.',
@@ -279,6 +337,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'nameplate_cosmico',
+    setId: 'vazio_cosmico',
     slot: 'nameplate',
     name: 'Nameplate Cósmico',
     description: 'Uma placa violeta estrelada para destacar seu nome no universo.',
@@ -290,6 +349,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'chat_ki_dourado',
+    setId: 'ascensao_dourada',
     slot: 'chat',
     name: 'Balão de Ki Dourado',
     description: 'Suas mensagens recebem uma borda dourada e brilho discreto.',
@@ -301,6 +361,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'chat_abissal',
+    setId: 'vazio_cosmico',
     slot: 'chat',
     name: 'Balão Abissal',
     description: 'Um acabamento violeta profundo para mensagens de presença marcante.',
@@ -312,6 +373,7 @@ export const COSMETICS: CosmeticDef[] = [
   },
   {
     id: 'pose_mestre_sereno',
+    setId: 'caminho_mestre',
     slot: 'pose',
     name: 'Pose do Mestre Sereno',
     description: 'Uma saudação calma após a vitória — confiança sem provocação.',
@@ -330,6 +392,7 @@ export const COSMETICS: CosmeticDef[] = [
     // v0.6 — a aura que envolvia o CARD da ficha de graça virou cosmético
     // adquirível com diamantes (decisão do usuário). Classe .aura do globals.css.
     id: 'card_aura_ancestral',
+    setId: 'caminho_mestre',
     slot: 'card',
     name: 'Aura Ancestral do Card',
     description:
@@ -341,6 +404,205 @@ export const COSMETICS: CosmeticDef[] = [
     cardGlowCss: 'aura',
   },
 ];
+
+export const COSMETIC_SETS: CosmeticSetDef[] = [
+  {
+    id: 'ascensao_dourada',
+    name: 'Ascensão Dourada',
+    icon: '🌟',
+    description: 'Prestígio, luz divina e presença de campeão.',
+    pieceIds: [
+      'aura_divina',
+      'title_campeao',
+      'frame_dourada',
+      'avatar_dourado',
+      'pose_suprema',
+      'chat_ki_dourado',
+    ],
+    milestones: [
+      {
+        pieces: 2,
+        name: 'Centelha Dourada',
+        description: 'A identidade ganha um halo dourado discreto.',
+        badgeCss: 'border-yellow-700/50 bg-yellow-950/50 text-yellow-300',
+        identityCss: 'border-yellow-700/35 bg-gradient-to-r from-yellow-950/20 via-orange-950/15 to-yellow-950/20',
+        avatarCss: 'shadow-[0_0_20px_rgba(250,204,21,0.28)]',
+      },
+      {
+        pieces: 4,
+        name: 'Ascensão',
+        description: 'Ficha, chat e identidade recebem um acabamento dourado combinado.',
+        badgeCss: 'border-yellow-600/60 bg-yellow-950/65 text-yellow-200',
+        identityCss: 'border-yellow-600/45 bg-gradient-to-r from-yellow-950/35 via-orange-950/25 to-amber-950/35 shadow-[0_0_18px_rgba(234,179,8,0.12)]',
+        avatarCss: 'shadow-[0_0_26px_rgba(250,204,21,0.38)]',
+        profileCss: 'ring-1 ring-yellow-500/35 shadow-[0_0_34px_rgba(234,179,8,0.15)]',
+        chatCss: 'ring-1 ring-yellow-600/30 shadow-[0_0_14px_rgba(234,179,8,0.10)]',
+      },
+      {
+        pieces: 6,
+        name: 'Lenda Solar',
+        description: 'Conjunto completo: presença dourada máxima e celebração especial de vitória.',
+        badgeCss: 'border-yellow-400/70 bg-gradient-to-r from-yellow-950/80 to-orange-950/70 text-yellow-100 shadow-[0_0_14px_rgba(250,204,21,0.18)]',
+        identityCss: 'border-yellow-400/55 bg-gradient-to-r from-yellow-950/50 via-orange-950/35 to-yellow-950/50 shadow-[0_0_26px_rgba(250,204,21,0.18)]',
+        avatarCss: 'shadow-[0_0_34px_rgba(250,204,21,0.52)]',
+        profileCss: 'ring-2 ring-yellow-400/45 shadow-[0_0_46px_rgba(250,204,21,0.22)]',
+        chatCss: 'ring-1 ring-yellow-400/40 shadow-[0_0_18px_rgba(250,204,21,0.14)]',
+        victoryCss: 'ring-2 ring-yellow-400/45 shadow-[0_0_36px_rgba(250,204,21,0.24)]',
+      },
+    ],
+  },
+  {
+    id: 'heranca_dragao',
+    name: 'Herança do Dragão',
+    icon: '🐉',
+    description: 'Escamas, Namekusei e a assinatura ancestral do dragão.',
+    pieceIds: ['frame_dragao', 'bg_planeta_namek', 'nameplate_dragao_eterno'],
+    milestones: [
+      {
+        pieces: 2,
+        name: 'Escamas Despertas',
+        description: 'A identidade recebe brilho esmeralda de escamas.',
+        badgeCss: 'border-emerald-700/50 bg-emerald-950/55 text-emerald-300',
+        identityCss: 'border-emerald-700/40 bg-gradient-to-r from-emerald-950/30 via-teal-950/20 to-emerald-950/30',
+        avatarCss: 'shadow-[0_0_22px_rgba(16,185,129,0.30)]',
+      },
+      {
+        pieces: 3,
+        name: 'Legado Eterno',
+        description: 'Conjunto completo: ficha e mensagens carregam a presença do Dragão Eterno.',
+        badgeCss: 'border-emerald-500/65 bg-emerald-950/75 text-emerald-100 shadow-[0_0_12px_rgba(16,185,129,0.16)]',
+        identityCss: 'border-emerald-500/55 bg-gradient-to-r from-emerald-950/45 via-teal-950/35 to-green-950/45 shadow-[0_0_24px_rgba(16,185,129,0.16)]',
+        avatarCss: 'shadow-[0_0_30px_rgba(52,211,153,0.42)]',
+        profileCss: 'ring-1 ring-emerald-400/40 shadow-[0_0_38px_rgba(16,185,129,0.18)]',
+        chatCss: 'ring-1 ring-emerald-500/35 shadow-[0_0_16px_rgba(16,185,129,0.12)]',
+        victoryCss: 'ring-1 ring-emerald-400/40 shadow-[0_0_30px_rgba(16,185,129,0.18)]',
+      },
+    ],
+  },
+  {
+    id: 'vazio_cosmico',
+    name: 'Vazio Cósmico',
+    icon: '🌌',
+    description: 'Energia violeta, teleporte e presença de outro plano.',
+    pieceIds: ['aura_trovao', 'fx_teleporte', 'nameplate_cosmico', 'chat_abissal'],
+    milestones: [
+      {
+        pieces: 2,
+        name: 'Fenda Astral',
+        description: 'A identidade passa a irradiar um brilho violeta frio.',
+        badgeCss: 'border-violet-700/50 bg-violet-950/55 text-violet-300',
+        identityCss: 'border-violet-700/40 bg-gradient-to-r from-violet-950/30 via-indigo-950/20 to-fuchsia-950/25',
+        avatarCss: 'shadow-[0_0_22px_rgba(139,92,246,0.32)]',
+      },
+      {
+        pieces: 4,
+        name: 'Horizonte do Vazio',
+        description: 'Conjunto completo: ficha, chat e vitórias recebem distorção cósmica.',
+        badgeCss: 'border-violet-500/65 bg-gradient-to-r from-violet-950/80 to-fuchsia-950/65 text-violet-100 shadow-[0_0_14px_rgba(139,92,246,0.18)]',
+        identityCss: 'border-violet-500/55 bg-gradient-to-r from-violet-950/50 via-indigo-950/35 to-fuchsia-950/45 shadow-[0_0_26px_rgba(139,92,246,0.18)]',
+        avatarCss: 'shadow-[0_0_32px_rgba(139,92,246,0.48)]',
+        profileCss: 'ring-2 ring-violet-500/35 shadow-[0_0_44px_rgba(139,92,246,0.20)]',
+        chatCss: 'ring-1 ring-violet-500/40 shadow-[0_0_18px_rgba(139,92,246,0.14)]',
+        victoryCss: 'ring-2 ring-violet-500/35 shadow-[0_0_34px_rgba(139,92,246,0.20)]',
+      },
+    ],
+  },
+  {
+    id: 'caminho_mestre',
+    name: 'Caminho do Mestre',
+    icon: '🥋',
+    description: 'Disciplina, serenidade e a presença de quem dominou a própria energia.',
+    pieceIds: [
+      'aura_ki_pulsante',
+      'title_lendario',
+      'bg_sala_tempo',
+      'roupa_gi_branco',
+      'pose_mestre_sereno',
+      'card_aura_ancestral',
+    ],
+    milestones: [
+      {
+        pieces: 2,
+        name: 'Disciplina',
+        description: 'A identidade ganha acabamento sereno de mestre.',
+        badgeCss: 'border-sky-800/50 bg-sky-950/45 text-sky-300',
+        identityCss: 'border-slate-600/35 bg-gradient-to-r from-slate-950/35 via-sky-950/15 to-slate-950/35',
+        avatarCss: 'shadow-[0_0_18px_rgba(125,211,252,0.24)]',
+      },
+      {
+        pieces: 4,
+        name: 'Domínio Interior',
+        description: 'Ficha e mensagens recebem uma presença calma e luminosa.',
+        badgeCss: 'border-sky-600/55 bg-sky-950/55 text-sky-200',
+        identityCss: 'border-sky-700/40 bg-gradient-to-r from-slate-950/45 via-sky-950/25 to-cyan-950/20 shadow-[0_0_16px_rgba(125,211,252,0.10)]',
+        avatarCss: 'shadow-[0_0_24px_rgba(125,211,252,0.32)]',
+        profileCss: 'ring-1 ring-sky-500/30 shadow-[0_0_32px_rgba(125,211,252,0.12)]',
+        chatCss: 'ring-1 ring-sky-700/30 shadow-[0_0_12px_rgba(125,211,252,0.08)]',
+      },
+      {
+        pieces: 6,
+        name: 'Mestre Transcendente',
+        description: 'Conjunto completo: assinatura serena máxima em todas as superfícies sociais.',
+        badgeCss: 'border-cyan-400/55 bg-gradient-to-r from-slate-950/80 to-cyan-950/55 text-cyan-100 shadow-[0_0_12px_rgba(103,232,249,0.14)]',
+        identityCss: 'border-cyan-500/45 bg-gradient-to-r from-slate-950/60 via-sky-950/30 to-cyan-950/35 shadow-[0_0_24px_rgba(103,232,249,0.14)]',
+        avatarCss: 'shadow-[0_0_30px_rgba(103,232,249,0.40)]',
+        profileCss: 'ring-2 ring-cyan-400/30 shadow-[0_0_42px_rgba(103,232,249,0.16)]',
+        chatCss: 'ring-1 ring-cyan-400/30 shadow-[0_0_16px_rgba(103,232,249,0.10)]',
+        victoryCss: 'ring-2 ring-cyan-400/30 shadow-[0_0_32px_rgba(103,232,249,0.16)]',
+      },
+    ],
+  },
+];
+
+export function getCosmeticSet(id: CosmeticSetId): CosmeticSetDef | undefined {
+  return COSMETIC_SETS.find((set) => set.id === id);
+}
+
+export function cosmeticSetProgress(
+  set: CosmeticSetDef,
+  ownedIds: Iterable<string>,
+  equipped: Partial<Record<CosmeticSlot, string>> | null | undefined
+): CosmeticSetProgress {
+  const owned = new Set(ownedIds);
+  const equippedIds = new Set(Object.values(equipped ?? {}).filter((id): id is string => typeof id === 'string'));
+  const ownedCount = set.pieceIds.filter((id) => owned.has(id)).length;
+  const equippedCount = set.pieceIds.filter((id) => equippedIds.has(id)).length;
+  const activeMilestone =
+    [...set.milestones].sort((a, b) => b.pieces - a.pieces).find((milestone) => equippedCount >= milestone.pieces) ?? null;
+  const nextMilestone =
+    [...set.milestones].sort((a, b) => a.pieces - b.pieces).find((milestone) => equippedCount < milestone.pieces) ?? null;
+  return {
+    set,
+    ownedCount,
+    equippedCount,
+    total: set.pieceIds.length,
+    activeMilestone,
+    nextMilestone,
+  };
+}
+
+export function activeCosmeticSets(
+  equipped: Partial<Record<CosmeticSlot, string>> | null | undefined
+): Array<CosmeticSetProgress & { activeMilestone: CosmeticSetMilestone }> {
+  return COSMETIC_SETS
+    .map((set) => cosmeticSetProgress(set, [], equipped))
+    .filter(
+      (progress): progress is CosmeticSetProgress & { activeMilestone: CosmeticSetMilestone } =>
+        progress.activeMilestone !== null
+    )
+    .sort(
+      (a, b) =>
+        b.activeMilestone.pieces - a.activeMilestone.pieces ||
+        b.equippedCount - a.equippedCount ||
+        a.set.name.localeCompare(b.set.name, 'pt-BR')
+    );
+}
+
+export function dominantCosmeticSet(
+  equipped: Partial<Record<CosmeticSlot, string>> | null | undefined
+): (CosmeticSetProgress & { activeMilestone: CosmeticSetMilestone }) | null {
+  return activeCosmeticSets(equipped)[0] ?? null;
+}
 
 export function getCosmetic(id: string): CosmeticDef | undefined {
   return COSMETICS.find((c) => c.id === id);

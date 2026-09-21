@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { equippedCosmetic } from '@/lib/game/content/cosmetics';
+import { dominantCosmeticSet, equippedCosmetic } from '@/lib/game/content/cosmetics';
 import type { PublicCosmeticsView } from '@/lib/game/types';
 import { PublicPlayerIdentity } from '@/components/game/PublicPlayerIdentity';
 import { PublicPlayerProfileDialog } from '@/components/game/PublicPlayerProfileDialog';
@@ -865,14 +865,16 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                     name: message.senderName,
                     race: 'humano',
                   };
-                  const bubble = equippedCosmetic(sender.cosmetics?.equipped ?? {}, 'chat');
+                  const senderEquipped = sender.cosmetics?.equipped ?? {};
+                  const bubble = equippedCosmetic(senderEquipped, 'chat');
+                  const setEffect = dominantCosmeticSet(senderEquipped)?.activeMilestone;
                   return (
                     <article
                       key={message.id}
                       className={`rounded-xl border px-3 py-2 ${
                         bubble?.chatBubbleCss ??
                         (mine ? 'ml-8 border-orange-700/40 bg-orange-950/30' : 'mr-8 border-amber-900/30 bg-black/25')
-                      } ${mine ? 'ml-8' : 'mr-8'}`}
+                      } ${setEffect?.chatCss ?? ''} ${mine ? 'ml-8' : 'mr-8'}`}
                     >
                       <div className="flex items-center gap-2">
                         <PublicPlayerIdentity

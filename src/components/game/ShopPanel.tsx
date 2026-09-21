@@ -2,8 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { SHOP_ITEMS, COSMETICS, PRODUCTS, SHOP_MAX_QUANTITY, TALENTS } from '@/lib/game/constants';
-import { cosmeticPublicSurfaces } from '@/lib/game/content/cosmetics';
-import type { CosmeticDef } from '@/lib/game/content/cosmetics';
+import {
+  COSMETIC_SETS,
+  cosmeticPublicSurfaces,
+  cosmeticSetProgress,
+  dominantCosmeticSet,
+  equippedCosmetic,
+  getCosmetic,
+  getCosmeticSet,
+} from '@/lib/game/content/cosmetics';
+import type { CosmeticDef, CosmeticSetId } from '@/lib/game/content/cosmetics';
 import type { TalentDef } from '@/lib/game/content/talents';
 import { EQUIPMENT_SLOT_META, EQUIPMENT_SLOTS } from '@/lib/game/types';
 import type { EquipmentSlot, PlayerView, ShopItem } from '@/lib/game/types';
@@ -466,12 +474,25 @@ function CosmeticsSection({
 }) {
   const owned = new Set(ownedCosmetics);
   const [previewId, setPreviewId] = useState<string | null>(null);
-  // Equipados deste personagem. A prévia substitui apenas o slot do item testado.
+  const [previewSetId, setPreviewSetId] = useState<CosmeticSetId | null>(null);
+  // Equipados deste personagem. A prévia de conjunto ocupa temporariamente
+  // todos os slots das peças da coleção — sem comprar/equipar nada no servidor.
   const equipped = player.cosmetics?.equipped ?? {};
   const preview = COSMETICS.find((item) => item.id === previewId);
-  const previewEquipped = preview
-    ? { ...equipped, [preview.slot]: preview.id }
-    : equipped;
+  const previewSet = previewSetId ? getCosmeticSet(previewSetId) : undefined;
+  const previewEquipped = previewSet
+    ? previewSet.pieceIds.reduce((next, id) => {
+        const piece = getCosmetic(id);
+        return piece ? { ...next, [piece.slot]: piece.id } : next;
+      }, { ...equipped })
+    : preview
+      ? { ...equipped, [preview.slot]: preview.id }
+      : equipped;
+  const previewCard = equippedCosmetic(previewEquipped, 'card');
+  const previewBackground = equippedCosmetic(previewEquipped, 'background');
+  const previewChat = equippedCosmetic(previewEquipped, 'chat');
+  const previewPose = equippedCosmetic(previewEquipped, 'pose');
+  const previewSetEffect = dominantCosmeticSet(previewEquipped);
   const rarityClass: Record<CosmeticDef['rarity'], string> = {
     comum: 'bg-amber-950/50 text-amber-300 border-amber-800/50',
     raro: 'bg-sky-950/50 text-sky-300 border-sky-800/50',
@@ -494,9 +515,9 @@ function CosmeticsSection({
 
   return (
     <>
-      <GameCard className={`relative overflow-hidden p-4 ${preview?.cardGlowCss ?? ''}`}>
-        {preview?.profileBgCss ? (
-          <div className={`absolute inset-0 opacity-70 ${preview.profileBgCss}`} aria-hidden />
+      <GameCard className={`relative overflow-hidden p-4 ${previewCard?.cardGlowCss ?? ''} ${previewSetEffect?.activeMilestone.profileCss ?? ''}`}>
+        {previewBackground?.profileBgCss ? (
+          <div className={`absolute inset-0 opacity-70 ${previewBackground.profileBgCss}`} aria-hidden />
         ) : null}
         <div className="relative space-y-3">
           <div className="flex items-center justify-between gap-2">
@@ -506,8 +527,15 @@ function CosmeticsSection({
                 Veja como o item aparece antes de gastar diamantes.
               </p>
             </div>
-            {preview ? (
-              <GameButton size="sm" variant="ghost" onClick={() => setPreviewId(null)}>
+            {preview || previewSet ? (
+              <GameButton
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setPreviewId(null);
+                  setPreviewSetId(null);
+                }}
+              >
                 <X className="w-3.5 h-3.5" /> Limpar
               </GameButton>
             ) : null}
@@ -519,29 +547,145 @@ function CosmeticsSection({
             cosmetics={{ equipped: previewEquipped }}
             level={player.level}
           />
-          {preview?.chatBubbleCss ? (
-            <div className={`max-w-md rounded-xl border px-3 py-2 text-xs text-amber-50/90 ${preview.chatBubbleCss}`}>
+          {previewChat?.chatBubbleCss || previewSetEffect?.activeMilestone.chatCss ? (
+            <div className={`max-w-md rounded-xl border px-3 py-2 text-xs text-amber-50/90 ${previewChat?.chatBubbleCss ?? 'border-amber-900/40 bg-black/25'} ${previewSetEffect?.activeMilestone.chatCss ?? ''}`}>
               💬 Assim sua mensagem aparece para os outros guerreiros.
             </div>
           ) : null}
-          {preview?.victoryPresentation ? (
-            <div className={`rounded-xl border p-3 text-center font-heading ${preview.victoryPresentation.css}`}>
-              <span className="mr-2 text-xl">{preview.victoryPresentation.icon}</span>
-              {preview.victoryPresentation.label}
+          {previewPose?.victoryPresentation || previewSetEffect?.activeMilestone.victoryCss ? (
+            <div className={`rounded-xl border p-3 text-center font-heading ${previewPose?.victoryPresentation?.css ?? 'border-amber-800/50 bg-amber-950/30 text-amber-200'} ${previewSetEffect?.activeMilestone.victoryCss ?? ''}`}>
+              <span className="mr-2 text-xl">{previewPose?.victoryPresentation?.icon ?? previewSetEffect?.set.icon ?? '✨'}</span>
+              {previewPose?.victoryPresentation?.label ?? previewSetEffect?.activeMilestone.name}
+              {previewSetEffect ? (
+                <span className="ml-2 text-[10px] opacity-70">
+                  · {previewSetEffect.set.name}
+                </span>
+              ) : null}
             </div>
           ) : null}
-          {preview?.screenEffect ? (
-            <p className="text-xs text-cyan-300/75">✨ Efeito animado: {preview.name}</p>
+          {equippedCosmetic(previewEquipped, 'effect')?.screenEffect ? (
+            <p className="text-xs text-cyan-300/75">
+              ✨ Efeito animado: {equippedCosmetic(previewEquipped, 'effect')?.name}
+            </p>
+          ) : null}
+          {previewSetEffect ? (
+            <p className={`inline-flex rounded-full border px-2 py-1 text-[10px] ${previewSetEffect.activeMilestone.badgeCss}`}>
+              {previewSetEffect.set.icon} {previewSetEffect.set.name} · {previewSetEffect.activeMilestone.name}
+            </p>
           ) : null}
           {preview ? (
             <p className="text-[10px] text-emerald-300/70">
               Visível em: {cosmeticPublicSurfaces(preview).join(' · ')}
             </p>
+          ) : previewSet ? (
+            <p className="text-[10px] text-emerald-300/70">
+              Prévia do conjunto completo — os marcos dependem de peças equipadas simultaneamente.
+            </p>
           ) : (
-            <p className="text-[10px] text-amber-200/35">Escolha “Experimentar” em qualquer item abaixo.</p>
+            <p className="text-[10px] text-amber-200/35">Escolha “Experimentar” em qualquer item ou conjunto abaixo.</p>
           )}
         </div>
       </GameCard>
+
+      <div className="space-y-3">
+        <div>
+          <h3 className="font-heading text-amber-100">Coleções temáticas</h3>
+          <p className="text-[11px] text-amber-200/45">
+            Equipar peças da mesma coleção desbloqueia somente efeitos visuais combinados. Nenhum marco altera atributos.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {COSMETIC_SETS.map((set) => {
+            const progress = cosmeticSetProgress(set, ownedCosmetics, equipped);
+            return (
+              <GameCard key={set.id} className={`p-4 ${progress.activeMilestone?.profileCss ?? ''}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl" aria-hidden>{set.icon}</span>
+                      <div>
+                        <h4 className="font-heading text-amber-100">{set.name}</h4>
+                        <p className="text-[11px] text-amber-200/45">{set.description}</p>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <Chip className="border-sky-900/50 bg-sky-950/35 text-sky-300">
+                        Coleção {progress.ownedCount}/{progress.total}
+                      </Chip>
+                      <Chip className="border-emerald-900/50 bg-emerald-950/35 text-emerald-300">
+                        Equipado {progress.equippedCount}/{progress.total}
+                      </Chip>
+                      {progress.activeMilestone ? (
+                        <Chip className={progress.activeMilestone.badgeCss}>
+                          ✓ {progress.activeMilestone.name}
+                        </Chip>
+                      ) : null}
+                    </div>
+                  </div>
+                  <GameButton
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => {
+                      setPreviewId(null);
+                      setPreviewSetId(set.id);
+                    }}
+                  >
+                    <Eye className="w-3.5 h-3.5" /> Conjunto
+                  </GameButton>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-1.5">
+                  {set.pieceIds.map((id) => {
+                    const piece = getCosmetic(id);
+                    if (!piece) return null;
+                    const pieceOwned = owned.has(piece.id);
+                    const pieceEquipped = equipped[piece.slot] === piece.id;
+                    return (
+                      <button
+                        type="button"
+                        key={piece.id}
+                        onClick={() => {
+                          setPreviewSetId(null);
+                          setPreviewId(piece.id);
+                        }}
+                        className={`rounded-lg border px-2 py-1.5 text-left text-[10px] transition-colors ${
+                          pieceEquipped
+                            ? 'border-emerald-600/50 bg-emerald-950/25 text-emerald-200'
+                            : pieceOwned
+                              ? 'border-sky-800/40 bg-sky-950/15 text-sky-200'
+                              : 'border-amber-900/30 bg-black/20 text-amber-200/45'
+                        }`}
+                        title={piece.name}
+                      >
+                        <span className="mr-1" aria-hidden>{piece.icon}</span>
+                        {piece.name}
+                        <span className="ml-1 opacity-60">{pieceEquipped ? '✓' : pieceOwned ? '•' : '○'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3 space-y-1.5">
+                  {set.milestones.map((milestone) => {
+                    const active = progress.equippedCount >= milestone.pieces;
+                    return (
+                      <div key={milestone.pieces} className="flex items-start gap-2 text-[10px]">
+                        <span className={active ? 'text-emerald-300' : 'text-amber-200/25'}>
+                          {active ? '◆' : '◇'}
+                        </span>
+                        <span className={active ? 'text-amber-100' : 'text-amber-200/45'}>
+                          <strong>{milestone.pieces} peças — {milestone.name}:</strong> {milestone.description}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </GameCard>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {COSMETICS.map((c) => {
@@ -569,6 +713,11 @@ function CosmeticsSection({
                   </div>
                   <p className="text-[11px] text-amber-200/50 mt-1 leading-snug">{c.description}</p>
                   <p className="text-[10px] text-amber-200/30 mt-1 uppercase tracking-wide">{SLOT_LABEL[c.slot] ?? c.slot}</p>
+                  {c.setId ? (
+                    <p className="text-[10px] text-violet-300/75 mt-1">
+                      {getCosmeticSet(c.setId)?.icon} Coleção: {getCosmeticSet(c.setId)?.name}
+                    </p>
+                  ) : null}
                   <p className="text-[10px] text-emerald-300/60 mt-1">
                     Aparece em: {cosmeticPublicSurfaces(c).join(' · ')}
                   </p>
@@ -583,7 +732,10 @@ function CosmeticsSection({
                     size="sm"
                     variant="ghost"
                     disabled={busy}
-                    onClick={() => setPreviewId(c.id)}
+                    onClick={() => {
+                      setPreviewSetId(null);
+                      setPreviewId(c.id);
+                    }}
                     title="Visualizar no seu guerreiro antes de comprar"
                   >
                     <Eye className="w-3.5 h-3.5" /> Experimentar

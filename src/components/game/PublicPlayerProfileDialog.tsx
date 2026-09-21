@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { PublicPlayerProfile } from '@/lib/game/types';
 import { RACES } from '@/lib/game/constants';
-import { equippedCosmetic } from '@/lib/game/content/cosmetics';
+import { activeCosmeticSets, dominantCosmeticSet, equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { getPowerScale } from '@/lib/game/powerScale';
 import { PublicPlayerIdentity } from './PublicPlayerIdentity';
 import { Chip } from './Bits';
@@ -52,6 +52,8 @@ export function PublicPlayerProfileDialog({
   const background = equippedCosmetic(equipped, 'background');
   const card = equippedCosmetic(equipped, 'card');
   const pose = equippedCosmetic(equipped, 'pose');
+  const activeSets = activeCosmeticSets(equipped);
+  const dominantSet = dominantCosmeticSet(equipped);
   const scale = currentProfile ? getPowerScale(currentProfile.power).scale : null;
 
   return (
@@ -59,7 +61,7 @@ export function PublicPlayerProfileDialog({
       <DialogContent
         className={`overflow-hidden border-amber-800/60 bg-[#1a130c] text-amber-100 sm:max-w-lg ${
           card?.cardGlowCss ?? ''
-        }`}
+        } ${dominantSet?.activeMilestone.profileCss ?? ''}`}
       >
         {background?.profileBgCss ? (
           <div className={`pointer-events-none absolute inset-0 opacity-60 ${background.profileBgCss}`} aria-hidden />
@@ -115,6 +117,19 @@ export function PublicPlayerProfileDialog({
                   </Chip>
                 ) : null}
               </div>
+
+              {activeSets.length > 0 ? (
+                <div className="rounded-xl border border-amber-900/30 bg-black/20 p-3">
+                  <p className="text-[10px] uppercase tracking-wide text-amber-200/40">Coleções ativas</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {activeSets.map((progress) => (
+                      <Chip key={progress.set.id} className={progress.activeMilestone.badgeCss}>
+                        {progress.set.icon} {progress.set.name} · {progress.activeMilestone.name}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>

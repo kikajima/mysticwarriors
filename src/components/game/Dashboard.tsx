@@ -3,7 +3,7 @@
 import { HpRecovery } from './HpRecovery';
 import { useEffect } from 'react';
 import { RACES, getItem, getTechnique, trainingCost, getStrategy, getProfession, professionLevel, professionLevelTitle } from '@/lib/game/constants';
-import { equippedCosmetic } from '@/lib/game/content/cosmetics';
+import { activeCosmeticSets, dominantCosmeticSet, equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { useServerNow } from '@/lib/game/clock';
 import { EQUIPPED_SLOTS, type PlayerView } from '@/lib/game/types';
 import { Chip, GameCard, PlayerAvatar, RACE_EMOJI, ResourceBar, GameButton } from './Bits';
@@ -120,6 +120,8 @@ export function Dashboard({
   const outfitBadge = equippedCosmetic(equipped, 'outfit')?.profileBadge;
   // v0.6 — aura do CARD virou cosmético (antes era grátis em toda ficha)
   const cardAuraCss = equippedCosmetic(equipped, 'card')?.cardGlowCss;
+  const activeSets = activeCosmeticSets(equipped);
+  const dominantSet = dominantCosmeticSet(equipped);
 
   return (
     <div className="space-y-6">
@@ -143,7 +145,7 @@ export function Dashboard({
       {/* ===== FICHA DO PERSONAGEM (estilo RPG) =====
            v0.6: o glow que era GRÁTIS foi removido — agora é o cosmético
            "Aura Ancestral do Card" (slot 'card', comprado com diamantes) */}
-      <GameCard className={`p-5 sm:p-7 relative overflow-hidden ${cardAuraCss ?? ''}`}>
+      <GameCard className={`p-5 sm:p-7 relative overflow-hidden ${cardAuraCss ?? ''} ${dominantSet?.activeMilestone.profileCss ?? ''}`}>
         <div
           className={`absolute inset-0 pointer-events-none ${
             profileBg ?? 'bg-gradient-to-br from-orange-950/50 via-transparent to-amber-950/30'
@@ -206,7 +208,7 @@ export function Dashboard({
               {RACE_EMOJI[player.race]} {race.name} · {race.tagline}
             </p>
 
-            {(poseBadge || outfitBadge) && (
+            {(poseBadge || outfitBadge || activeSets.length > 0) && (
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mb-2">
                 {poseBadge && (
                   <Chip className="bg-fuchsia-950/50 text-fuchsia-300 border-fuchsia-800/50">
@@ -218,6 +220,11 @@ export function Dashboard({
                     {outfitBadge.icon} {outfitBadge.label}
                   </Chip>
                 )}
+                {activeSets.map((progress) => (
+                  <Chip key={progress.set.id} className={progress.activeMilestone.badgeCss}>
+                    {progress.set.icon} {progress.activeMilestone.name}
+                  </Chip>
+                ))}
               </div>
             )}
 
