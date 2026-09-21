@@ -443,8 +443,8 @@ export interface GuildMemberView {
   race: RaceId;
   level: number;
   power: number;
-  avatarUrl: string | null;
-  cosmetics: PublicCosmeticsView;
+  avatarUrl?: string | null;
+  cosmetics?: PublicCosmeticsView;
   isLeader: boolean;
   isMe: boolean;
 }
@@ -750,8 +750,8 @@ export interface RankingEntry {
   id: string;
   name: string;
   race: RaceId;
-  avatarUrl: string | null;
-  cosmetics: PublicCosmeticsView;
+  avatarUrl?: string | null;
+  cosmetics?: PublicCosmeticsView;
   level: number;
   power: number;
   battlesWon: number;
@@ -821,11 +821,11 @@ export interface WorldBossView {
   myDamage: number;
   myPosition: number | null;
   topDamage: Array<{
-    id: string;
+    id?: string;
     name: string;
-    race: RaceId;
-    avatarUrl: string | null;
-    cosmetics: PublicCosmeticsView;
+    race?: RaceId;
+    avatarUrl?: string | null;
+    cosmetics?: PublicCosmeticsView;
     damage: number;
     isMe: boolean;
   }>;
