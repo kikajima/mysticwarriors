@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
+  Check,
+  Clock3,
   Globe2,
   MessageCircle,
   MessagesSquare,
@@ -76,6 +78,8 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [muted, setMuted] = useState<MutedPlayer[]>([]);
   const [friends, setFriends] = useState<SocialPlayer[]>([]);
+  const [friendRequestsIncoming, setFriendRequestsIncoming] = useState<SocialPlayer[]>([]);
+  const [friendRequestsOutgoing, setFriendRequestsOutgoing] = useState<SocialPlayer[]>([]);
   const [blocked, setBlocked] = useState<SocialPlayer[]>([]);
   const [socialBusy, setSocialBusy] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -89,6 +93,14 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
   const guildId = player.guild?.id ?? null;
   const mutedIds = useMemo(() => new Set(muted.map((item) => item.playerId)), [muted]);
   const friendIds = useMemo(() => new Set(friends.map((item) => item.playerId)), [friends]);
+  const incomingRequestIds = useMemo(
+    () => new Set(friendRequestsIncoming.map((item) => item.playerId)),
+    [friendRequestsIncoming]
+  );
+  const outgoingRequestIds = useMemo(
+    () => new Set(friendRequestsOutgoing.map((item) => item.playerId)),
+    [friendRequestsOutgoing]
+  );
   const blockedIds = useMemo(() => new Set(blocked.map((item) => item.playerId)), [blocked]);
   const filteredDirectory = useMemo(() => {
     const q = search.trim().toLocaleLowerCase('pt-BR');
@@ -103,6 +115,8 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
     if (res.ok) {
       setMuted(Array.isArray(data.muted) ? data.muted : []);
       setFriends(Array.isArray(data.friends) ? data.friends : []);
+      setFriendRequestsIncoming(Array.isArray(data.friendRequestsIncoming) ? data.friendRequestsIncoming : []);
+      setFriendRequestsOutgoing(Array.isArray(data.friendRequestsOutgoing) ? data.friendRequestsOutgoing : []);
       setBlocked(Array.isArray(data.blocked) ? data.blocked : []);
     }
   }, [player.id]);
@@ -181,6 +195,8 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
     setConversations([]);
     setMuted([]);
     setFriends([]);
+    setFriendRequestsIncoming([]);
+    setFriendRequestsOutgoing([]);
     setBlocked([]);
     setSocialBusy(null);
     setDirectory([]);
@@ -282,7 +298,14 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
 
   const changeSocial = useCallback(async (
     target: Person,
-    action: 'add_friend' | 'remove_friend' | 'block' | 'unblock'
+    action:
+      | 'send_friend_request'
+      | 'cancel_friend_request'
+      | 'accept_friend_request'
+      | 'decline_friend_request'
+      | 'remove_friend'
+      | 'block'
+      | 'unblock'
   ) => {
     setSocialBusy(`${action}:${target.id}`);
     try {
@@ -395,7 +418,7 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
               <div className="rounded-lg border border-orange-900/30 bg-orange-950/10 px-3 py-2">
                 <p className="text-xs font-heading text-amber-100">Amigos e contatos</p>
                 <p className="text-[10px] text-amber-200/45 mt-0.5">
-                  Encontre um guerreiro e use os botões ao lado para adicionar, remover, bloquear ou desbloquear.
+                  Envie um convite de amizade. O outro guerreiro precisa aceitar antes de vocês virarem amigos.
                 </p>
               </div>
               <div className="relative">
@@ -425,6 +448,8 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                   ) : filteredDirectory.length > 0 ? (
                     filteredDirectory.map((person) => {
                       const isFriend = friendIds.has(person.id);
+                      const hasIncomingRequest = incomingRequestIds.has(person.id);
+                      const hasOutgoingRequest = outgoingRequestIds.has(person.id);
                       const isBlocked = blockedIds.has(person.id);
                       return (
                         <div
@@ -440,6 +465,8 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                             <span className="text-sm text-amber-100">{person.name}</span>
                             {person.level ? <span className="ml-2 text-[10px] text-amber-200/40">Nv {person.level}</span> : null}
                             {isFriend && <span className="ml-2 text-[9px] text-emerald-300">★ Amigo</span>}
+                            {hasIncomingRequest && <span className="ml-2 text-[9px] text-cyan-300">Pedido recebido</span>}
+                            {hasOutgoingRequest && <span className="ml-2 text-[9px] text-amber-300">Convite enviado</span>}
                             {isBlocked && <span className="ml-2 text-[9px] text-red-300">Bloqueado</span>}
                           </button>
 
@@ -457,17 +484,62 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                             </button>
                           ) : (
                             <>
-                              <button
-                                type="button"
-                                disabled={socialBusy !== null}
-                                onClick={() => void changeSocial(person, isFriend ? 'remove_friend' : 'add_friend')}
-                                className="shrink-0 flex items-center gap-1 rounded-md border border-emerald-900/40 bg-emerald-950/15 px-2 py-1 text-[10px] text-emerald-300 hover:border-emerald-700/60 disabled:opacity-30"
-                                title={isFriend ? 'Remover dos amigos' : 'Adicionar aos amigos'}
-                                aria-label={isFriend ? `Remover ${person.name} dos amigos` : `Adicionar ${person.name} aos amigos`}
-                              >
-                                {isFriend ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                                <span className="hidden sm:inline">{isFriend ? 'Remover' : 'Amigo'}</span>
-                              </button>
+                              {isFriend ? (
+                                <button
+                                  type="button"
+                                  disabled={socialBusy !== null}
+                                  onClick={() => void changeSocial(person, 'remove_friend')}
+                                  className="shrink-0 flex items-center gap-1 rounded-md border border-emerald-900/40 bg-emerald-950/15 px-2 py-1 text-[10px] text-emerald-300 hover:border-emerald-700/60 disabled:opacity-30"
+                                  title="Remover dos amigos"
+                                >
+                                  <UserMinus className="h-3.5 w-3.5" />
+                                  <span className="hidden sm:inline">Remover</span>
+                                </button>
+                              ) : hasIncomingRequest ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={socialBusy !== null}
+                                    onClick={() => void changeSocial(person, 'accept_friend_request')}
+                                    className="shrink-0 flex items-center gap-1 rounded-md border border-emerald-800/50 bg-emerald-950/25 px-2 py-1 text-[10px] text-emerald-300 disabled:opacity-30"
+                                    title="Aceitar convite de amizade"
+                                  >
+                                    <Check className="h-3.5 w-3.5" />
+                                    <span className="hidden sm:inline">Aceitar</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={socialBusy !== null}
+                                    onClick={() => void changeSocial(person, 'decline_friend_request')}
+                                    className="shrink-0 rounded-md border border-amber-900/40 px-2 py-1 text-[10px] text-amber-300 disabled:opacity-30"
+                                    title="Recusar convite de amizade"
+                                  >
+                                    Recusar
+                                  </button>
+                                </>
+                              ) : hasOutgoingRequest ? (
+                                <button
+                                  type="button"
+                                  disabled={socialBusy !== null}
+                                  onClick={() => void changeSocial(person, 'cancel_friend_request')}
+                                  className="shrink-0 flex items-center gap-1 rounded-md border border-amber-900/40 bg-amber-950/15 px-2 py-1 text-[10px] text-amber-300 disabled:opacity-30"
+                                  title="Cancelar convite de amizade"
+                                >
+                                  <Clock3 className="h-3.5 w-3.5" />
+                                  <span className="hidden sm:inline">Cancelar</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={socialBusy !== null}
+                                  onClick={() => void changeSocial(person, 'send_friend_request')}
+                                  className="shrink-0 flex items-center gap-1 rounded-md border border-emerald-900/40 bg-emerald-950/15 px-2 py-1 text-[10px] text-emerald-300 hover:border-emerald-700/60 disabled:opacity-30"
+                                  title="Enviar convite de amizade"
+                                >
+                                  <UserPlus className="h-3.5 w-3.5" />
+                                  <span className="hidden sm:inline">Convidar</span>
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 disabled={socialBusy !== null}
@@ -487,6 +559,65 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                   ) : (
                     <p className="px-2 py-2 text-xs text-amber-200/40">Nenhum guerreiro encontrado.</p>
                   )}
+                </div>
+              )}
+
+              {friendRequestsIncoming.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <p className="text-[10px] uppercase tracking-wide text-cyan-300/70">Pedidos de amizade</p>
+                    <span className="text-[9px] text-cyan-300/60">{friendRequestsIncoming.length}</span>
+                  </div>
+                  <div className="space-y-1">
+                    {friendRequestsIncoming.map((request) => (
+                      <div key={request.playerId} className="flex items-center gap-2 rounded-lg border border-cyan-900/40 bg-cyan-950/10 px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => openPrivate({ id: request.playerId, name: request.name })}
+                          className="min-w-0 flex-1 text-left text-xs text-amber-100 truncate"
+                        >
+                          {request.name}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={socialBusy !== null}
+                          onClick={() => void changeSocial({ id: request.playerId, name: request.name }, 'accept_friend_request')}
+                          className="flex items-center gap-1 text-[10px] text-emerald-300 disabled:opacity-30"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Aceitar
+                        </button>
+                        <button
+                          type="button"
+                          disabled={socialBusy !== null}
+                          onClick={() => void changeSocial({ id: request.playerId, name: request.name }, 'decline_friend_request')}
+                          className="text-[10px] text-amber-300 disabled:opacity-30"
+                        >
+                          Recusar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {friendRequestsOutgoing.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-amber-300/60 mb-1">Convites enviados</p>
+                  <div className="space-y-1">
+                    {friendRequestsOutgoing.map((request) => (
+                      <div key={request.playerId} className="flex items-center gap-2 rounded-lg border border-amber-900/30 bg-amber-950/10 px-3 py-2">
+                        <span className="min-w-0 flex-1 text-xs text-amber-100 truncate">{request.name}</span>
+                        <button
+                          type="button"
+                          disabled={socialBusy !== null}
+                          onClick={() => void changeSocial({ id: request.playerId, name: request.name }, 'cancel_friend_request')}
+                          className="flex items-center gap-1 text-[10px] text-amber-300 disabled:opacity-30"
+                        >
+                          <Clock3 className="h-3.5 w-3.5" /> Cancelar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -521,7 +652,7 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                     </div>
                   ))}
                   {friends.length === 0 && (
-                    <p className="text-xs text-amber-200/35">Adicione guerreiros às suas amizades para encontrá-los rapidamente.</p>
+                    <p className="text-xs text-amber-200/35">Amizades aparecem aqui depois que o convite é aceito.</p>
                   )}
                 </div>
               </div>
@@ -608,21 +739,58 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                     </button>
                   ) : (
                     <>
-                      <button
-                        type="button"
-                        disabled={socialBusy !== null}
-                        onClick={() => void changeSocial(
-                          privateTarget,
-                          friendIds.has(privateTarget.id) ? 'remove_friend' : 'add_friend'
-                        )}
-                        className="flex items-center gap-1 p-1.5 text-[10px] text-emerald-300/80 hover:text-emerald-200 disabled:opacity-30"
-                        title={friendIds.has(privateTarget.id) ? 'Remover dos amigos' : 'Adicionar aos amigos'}
-                      >
-                        {friendIds.has(privateTarget.id)
-                          ? <UserMinus className="h-3.5 w-3.5" />
-                          : <UserPlus className="h-3.5 w-3.5" />}
-                        {friendIds.has(privateTarget.id) ? 'Remover' : 'Amigo'}
-                      </button>
+                      {friendIds.has(privateTarget.id) ? (
+                        <button
+                          type="button"
+                          disabled={socialBusy !== null}
+                          onClick={() => void changeSocial(privateTarget, 'remove_friend')}
+                          className="flex items-center gap-1 p-1.5 text-[10px] text-emerald-300/80 disabled:opacity-30"
+                          title="Remover dos amigos"
+                        >
+                          <UserMinus className="h-3.5 w-3.5" /> Remover
+                        </button>
+                      ) : incomingRequestIds.has(privateTarget.id) ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={socialBusy !== null}
+                            onClick={() => void changeSocial(privateTarget, 'accept_friend_request')}
+                            className="flex items-center gap-1 p-1.5 text-[10px] text-emerald-300 disabled:opacity-30"
+                            title="Aceitar convite de amizade"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Aceitar
+                          </button>
+                          <button
+                            type="button"
+                            disabled={socialBusy !== null}
+                            onClick={() => void changeSocial(privateTarget, 'decline_friend_request')}
+                            className="p-1.5 text-[10px] text-amber-300 disabled:opacity-30"
+                            title="Recusar convite de amizade"
+                          >
+                            Recusar
+                          </button>
+                        </>
+                      ) : outgoingRequestIds.has(privateTarget.id) ? (
+                        <button
+                          type="button"
+                          disabled={socialBusy !== null}
+                          onClick={() => void changeSocial(privateTarget, 'cancel_friend_request')}
+                          className="flex items-center gap-1 p-1.5 text-[10px] text-amber-300 disabled:opacity-30"
+                          title="Cancelar convite de amizade"
+                        >
+                          <Clock3 className="h-3.5 w-3.5" /> Pendente
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={socialBusy !== null}
+                          onClick={() => void changeSocial(privateTarget, 'send_friend_request')}
+                          className="flex items-center gap-1 p-1.5 text-[10px] text-emerald-300/80 hover:text-emerald-200 disabled:opacity-30"
+                          title="Enviar convite de amizade"
+                        >
+                          <UserPlus className="h-3.5 w-3.5" /> Convidar
+                        </button>
+                      )}
                       <button
                         type="button"
                         disabled={socialBusy !== null}
@@ -691,17 +859,32 @@ export function ChatWidget({ player }: { player: ChatPlayer }) {
                               disabled={socialBusy !== null}
                               onClick={() => void changeSocial(
                                 { id: message.senderPlayerId, name: message.senderName },
-                                friendIds.has(message.senderPlayerId) ? 'remove_friend' : 'add_friend'
+                                friendIds.has(message.senderPlayerId)
+                                  ? 'remove_friend'
+                                  : incomingRequestIds.has(message.senderPlayerId)
+                                    ? 'accept_friend_request'
+                                    : outgoingRequestIds.has(message.senderPlayerId)
+                                      ? 'cancel_friend_request'
+                                      : 'send_friend_request'
                               )}
                               className="text-amber-200/30 hover:text-emerald-300 disabled:opacity-30"
-                              title={friendIds.has(message.senderPlayerId) ? 'Remover dos amigos' : 'Adicionar aos amigos'}
-                              aria-label={friendIds.has(message.senderPlayerId)
-                                ? `Remover ${message.senderName} dos amigos`
-                                : `Adicionar ${message.senderName} aos amigos`}
+                              title={
+                                friendIds.has(message.senderPlayerId)
+                                  ? 'Remover dos amigos'
+                                  : incomingRequestIds.has(message.senderPlayerId)
+                                    ? 'Aceitar convite de amizade'
+                                    : outgoingRequestIds.has(message.senderPlayerId)
+                                      ? 'Cancelar convite de amizade'
+                                      : 'Enviar convite de amizade'
+                              }
                             >
                               {friendIds.has(message.senderPlayerId)
                                 ? <UserMinus className="h-3 w-3" />
-                                : <UserPlus className="h-3 w-3" />}
+                                : incomingRequestIds.has(message.senderPlayerId)
+                                  ? <Check className="h-3 w-3" />
+                                  : outgoingRequestIds.has(message.senderPlayerId)
+                                    ? <Clock3 className="h-3 w-3" />
+                                    : <UserPlus className="h-3 w-3" />}
                             </button>
                             <button
                               type="button"
