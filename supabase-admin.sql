@@ -31,9 +31,10 @@ create table if not exists public.admins (
   email text primary key
 );
 
-insert into public.admins (email)
-values ('SEU_EMAIL_ADMIN_AQUI')
-on conflict (email) do nothing;
+-- Configure o administrador manualmente após rodar este arquivo:
+-- insert into public.admins (email) values ('SEU_EMAIL_REAL_AQUI')
+-- on conflict (email) do nothing;
+-- Não versione o e-mail real neste repositório.
 
 alter table public.admins enable row level security;
 
