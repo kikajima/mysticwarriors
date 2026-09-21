@@ -157,6 +157,10 @@ export interface Enemy {
   id: string;
   name: string;
   taunt: string;
+  /** O que este capanga quer alcançar no mundo — dá contexto ao encontro. */
+  intent: string;
+  /** Subdivisão exclusiva dos inimigos dentro da Escala de Poder: I, II ou III. */
+  tier: 1 | 2 | 3;
   level: number;
   strength: number;
   defense: number;
