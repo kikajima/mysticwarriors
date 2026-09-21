@@ -391,6 +391,6 @@ idempotência, cooldown condicional ou autoridade do servidor.
 
 ## Progressão sem teto e Busca pelas Esferas sem energia — 2026-09-20
 
-- **ATRIBUTOS SEM TETO DE GAMEPLAY:** Força, Defesa, Velocidade e Ki não param mais em 999. `addStat` apenas normaliza para inteiro não-negativo. O banco autoritativo usa `DOUBLE PRECISION` para atributos, HP e energia, evitando o antigo limite de `INTEGER` conforme a progressão cresce.
+- **ATRIBUTOS SEM TETO DE GAMEPLAY:** Força, Defesa, Velocidade e Ki não param mais em 999. `addStat` apenas normaliza para inteiro não-negativo. O banco autoritativo usa `DOUBLE PRECISION` para os quatro atributos e HP (que cresce com Defesa), evitando o antigo limite de `INTEGER`; energia continua inteira e limitada pela regra própria do recurso.
 - **BUSCA PELAS ESFERAS CUSTA 0 ENERGIA:** a duração de 1h/2h/4h/8h/12h continua sendo o custo temporal e a chance continua limitada a 50%, mas iniciar ou cancelar uma busca não debita energia e não progride quests de energia gasta.
 - **TRANSFORMAÇÕES EXPLICAM O EFEITO:** além do texto de lore, o card mostra os multiplicadores ativos de combate e os bônus permanentes concedidos ao desbloquear, seguindo o mesmo princípio de clareza usado nos Talentos.
