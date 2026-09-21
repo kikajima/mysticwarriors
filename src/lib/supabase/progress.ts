@@ -70,7 +70,7 @@ const CLAMP = {
   // Sem teto de gameplay: snapshots aceitam toda a faixa de inteiros
   // exatos representável pelo runtime JavaScript.
   hp: [1, Number.MAX_SAFE_INTEGER],
-  energy: [0, Number.MAX_SAFE_INTEGER],
+  energy: [0, 10_000_000],
   stat: [1, Number.MAX_SAFE_INTEGER],
   counter: [0, 1_000_000],
   dragonBalls: [0, 7],
