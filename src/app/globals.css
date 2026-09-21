@@ -437,3 +437,19 @@
     animation: none !important;
   }
 }
+
+
+/* Cosméticos sociais — entrada curta da pose de vitória. */
+@keyframes victory-pose-enter {
+  0% { opacity: 0; transform: translateY(10px) scale(0.94); filter: blur(3px); }
+  55% { opacity: 1; transform: translateY(-2px) scale(1.03); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+.victory-pose-enter {
+  animation: victory-pose-enter 520ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .victory-pose-enter { animation: none !important; }
+}
