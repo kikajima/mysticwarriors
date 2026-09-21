@@ -17,7 +17,7 @@
 //     PONTO DE CRUZAMENTO onde elixir supera treinar;
 //  5. LIMITADORES: teto de treino por energia (3⚡/treino, 12⚡/h) e
 //     teto de elixir por renda de 💎 (quests diárias/semanais,
-//     torneio com cooldown, boss mundial, conquistas one-time).
+//     boss mundial e conquistas one-time; torneio não gera mais 💎).
 //
 // Uso: bun scripts/auditoria-f2-economia.ts
 // =====================================================================
@@ -144,7 +144,7 @@ console.log(`   • boss mundial: 1💎 participação + bônus por posição, 1
 console.log(`   • conquistas: ${achCrystals}💎 NO TOTAL (one-time, irrecuperáveis)`);
 console.log('');
 const casualPerDay = dailyCrystals + weeklyCrystals / 7 + 1; // +1 boss participation diluído
-const hardcorePerDay = dailyCrystals + weeklyCrystals / 7;
+const hardcorePerDay = dailyCrystals + weeklyCrystals / 7 + 1;
 console.log(`   ⇒ jogador casual: ~${casualPerDay.toFixed(1)}💎/dia ⇒ ${(casualPerDay / 75).toFixed(2)} elixir/dia ⇒ ${((casualPerDay / 75) * 8).toFixed(1)} pontos/dia (distribuídos entre 4 atributos)`);
 console.log(`   ⇒ jogador hardcore 24/7: ~${hardcorePerDay.toFixed(0)}💎/dia ⇒ ${(hardcorePerDay / 75).toFixed(1)} elixir/dia ⇒ ${((hardcorePerDay / 75) * 8).toFixed(0)} pontos/dia ESPALHADOS (vs. 96/dia CONCENTRADOS do treino)`);
 console.log('');
