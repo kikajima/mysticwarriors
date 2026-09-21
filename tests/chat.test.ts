@@ -39,25 +39,67 @@ test('silêncio é unilateral e único por par', async () => {
   expect(await db.chatMute.count({ where: { playerId: 'p2' } })).toBe(1);
 });
 
-test('amigos são contatos pessoais e bloqueios são únicos por par', async () => {
-  await db.chatFriend.create({
-    data: { playerId: 'p1', friendPlayerId: 'p2', friendPlayerName: 'Beta' },
+test('amizade exige convite pendente e aceite gera relação recíproca', async () => {
+  await db.chatFriendRequest.create({
+    data: {
+      senderPlayerId: 'p1',
+      senderPlayerName: 'Alpha',
+      recipientPlayerId: 'p2',
+      recipientPlayerName: 'Beta',
+    },
   });
-  expect(await db.chatFriend.count({ where: { playerId: 'p1' } })).toBe(1);
-  expect(await db.chatFriend.count({ where: { playerId: 'p2' } })).toBe(0);
+  expect(await db.chatFriendRequest.count({ where: { recipientPlayerId: 'p2' } })).toBe(1);
+  expect(await db.chatFriend.count()).toBe(0);
+
+  await db.$transaction([
+    db.chatFriend.create({ data: { playerId: 'p1', friendPlayerId: 'p2', friendPlayerName: 'Beta' } }),
+    db.chatFriend.create({ data: { playerId: 'p2', friendPlayerId: 'p1', friendPlayerName: 'Alpha' } }),
+    db.chatFriendRequest.deleteMany({
+      where: { senderPlayerId: 'p1', recipientPlayerId: 'p2' },
+    }),
+  ]);
+  expect(await db.chatFriendRequest.count()).toBe(0);
+  expect(await db.chatFriend.count()).toBe(2);
+  expect(await db.chatFriend.count({ where: { playerId: 'p1', friendPlayerId: 'p2' } })).toBe(1);
+  expect(await db.chatFriend.count({ where: { playerId: 'p2', friendPlayerId: 'p1' } })).toBe(1);
+});
+
+test('convites e bloqueios são únicos por direção', async () => {
+  await db.chatFriendRequest.create({
+    data: {
+      senderPlayerId: 'p3',
+      senderPlayerName: 'Gamma',
+      recipientPlayerId: 'p4',
+      recipientPlayerName: 'Delta',
+    },
+  });
+  let duplicateInviteRejected = false;
+  try {
+    await db.chatFriendRequest.create({
+      data: {
+        senderPlayerId: 'p3',
+        senderPlayerName: 'Gamma',
+        recipientPlayerId: 'p4',
+        recipientPlayerName: 'Delta',
+      },
+    });
+  } catch {
+    duplicateInviteRejected = true;
+  }
+  expect(duplicateInviteRejected).toBe(true);
 
   await db.chatBlock.create({
     data: { playerId: 'p1', blockedPlayerId: 'p3', blockedPlayerName: 'Gamma' },
   });
-  let duplicateRejected = false;
+  let duplicateBlockRejected = false;
   try {
     await db.chatBlock.create({
       data: { playerId: 'p1', blockedPlayerId: 'p3', blockedPlayerName: 'Gamma' },
     });
   } catch {
-    duplicateRejected = true;
+    duplicateBlockRejected = true;
   }
-  expect(duplicateRejected).toBe(true);
+  expect(duplicateBlockRejected).toBe(true);
 });
 
 
@@ -75,7 +117,11 @@ test('contrato: chat só existe dentro do jogo e mantém limpeza administrativa'
   expect(widget).toContain("Todos os guerreiros");
   expect(widget).toContain("onFocus={() =>");
   expect(widget).toContain("playerId: player.id");
-  expect(widget).toContain("Adicionar aos amigos");
+  expect(widget).toContain("Enviar convite de amizade");
+  expect(widget).toContain("Pedidos de amizade");
+  expect(widget).toContain("Convites enviados");
+  expect(widget).toContain("Aceitar");
+  expect(widget).toContain("Recusar");
   expect(widget).toContain("Remover dos amigos");
   expect(widget).toContain("Bloquear jogador");
   expect(widget).toContain("Bloqueados");
@@ -84,8 +130,12 @@ test('contrato: chat só existe dentro do jogo e mantém limpeza administrativa'
   expect(widget).toContain("id === 'private'");
   expect(widget).toContain("void loadDirectory()");
   expect(api).toContain("playerId: z.string().min(1).max(80).optional()");
-  expect(api).toContain("'add_friend', 'remove_friend', 'block', 'unblock'");
+  expect(api).toContain("'send_friend_request'");
+  expect(api).toContain("'accept_friend_request'");
+  expect(api).toContain("'decline_friend_request'");
+  expect(api).toContain("'cancel_friend_request'");
   expect(api).toContain("isBlockedEitherWay");
+  expect(api).toContain("db.chatFriendRequest.upsert");
   expect(api).toContain("db.chatFriend.upsert");
   expect(api).toContain("db.chatBlock.upsert");
   expect(api).toContain("take: q ? 50 : 200");

@@ -548,10 +548,9 @@ model ChatMute {
 }
 
 /**
- * Lista pessoal de amigos do chat. É unilateral de propósito: adicionar
- * alguém organiza seus próprios contatos sem forçar reciprocidade.
- * Sem FK para continuar simples diante de exclusão/reset de personagens;
- * relações órfãs permanecem reversíveis e o reset geral as limpa.
+ * Amizade aceita. A relação é gravada em duas linhas espelhadas (A→B e B→A)
+ * para manter consultas simples e garantir que amizade seja sempre recíproca.
+ * Sem FK para continuar reversível diante de exclusão/reset de personagens.
  */
 model ChatFriend {
   id               String   @id @default(cuid())
@@ -562,6 +561,23 @@ model ChatFriend {
 
   @@unique([playerId, friendPlayerId])
   @@index([playerId, createdAt])
+}
+
+/**
+ * Convite de amizade pendente. Só vira ChatFriend quando o destinatário
+ * aceita explicitamente. Recusa/cancelamento removem a linha.
+ */
+model ChatFriendRequest {
+  id                 String   @id @default(cuid())
+  senderPlayerId     String
+  senderPlayerName   String
+  recipientPlayerId  String
+  recipientPlayerName String
+  createdAt          DateTime @default(now())
+
+  @@unique([senderPlayerId, recipientPlayerId])
+  @@index([recipientPlayerId, createdAt])
+  @@index([senderPlayerId, createdAt])
 }
 
 /**

@@ -33,7 +33,15 @@ const muteSchema = z.object({
 });
 
 const socialSchema = z.object({
-  action: z.enum(['add_friend', 'remove_friend', 'block', 'unblock']),
+  action: z.enum([
+    'send_friend_request',
+    'cancel_friend_request',
+    'accept_friend_request',
+    'decline_friend_request',
+    'remove_friend',
+    'block',
+    'unblock',
+  ]),
   playerId: z.string().min(1).max(80).optional(),
   targetId: z.string().min(1).max(80),
 });
@@ -193,16 +201,32 @@ async function searchPlayers(request: Request) {
 
 async function context(request: Request) {
   const auth = await getAuth();
-  if (!auth) return ok({ authenticated: false, player: null, muted: [], friends: [], blocked: [] });
+  if (!auth) return ok({
+    authenticated: false,
+    player: null,
+    muted: [],
+    friends: [],
+    blocked: [],
+    friendRequestsIncoming: [],
+    friendRequestsOutgoing: [],
+  });
 
   const explicitPlayerId = requestPlayerId(request);
   const player = explicitPlayerId
     ? await requireChatPlayer(auth, explicitPlayerId)
     : await getChatPlayer(auth);
 
-  if (!player) return ok({ authenticated: true, player: null, muted: [], friends: [], blocked: [] });
+  if (!player) return ok({
+    authenticated: true,
+    player: null,
+    muted: [],
+    friends: [],
+    blocked: [],
+    friendRequestsIncoming: [],
+    friendRequestsOutgoing: [],
+  });
 
-  const [muted, friends, blocked] = await Promise.all([
+  const [muted, friends, blocked, incomingRequests, outgoingRequests] = await Promise.all([
     db.chatMute.findMany({
       where: { playerId: player.id },
       select: { mutedPlayerId: true, mutedPlayerName: true, createdAt: true },
@@ -216,6 +240,16 @@ async function context(request: Request) {
     db.chatBlock.findMany({
       where: { playerId: player.id },
       select: { blockedPlayerId: true, blockedPlayerName: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.chatFriendRequest.findMany({
+      where: { recipientPlayerId: player.id },
+      select: { senderPlayerId: true, senderPlayerName: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.chatFriendRequest.findMany({
+      where: { senderPlayerId: player.id },
+      select: { recipientPlayerId: true, recipientPlayerName: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     }),
   ]);
@@ -241,6 +275,16 @@ async function context(request: Request) {
     blocked: blocked.map((row) => ({
       playerId: row.blockedPlayerId,
       name: row.blockedPlayerName,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    friendRequestsIncoming: incomingRequests.map((row) => ({
+      playerId: row.senderPlayerId,
+      name: row.senderPlayerName,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    friendRequestsOutgoing: outgoingRequests.map((row) => ({
+      playerId: row.recipientPlayerId,
+      name: row.recipientPlayerName,
       createdAt: row.createdAt.toISOString(),
     })),
   });
@@ -349,11 +393,39 @@ async function changeSocial(data: z.infer<typeof socialSchema>) {
     throw new ApiError('VALIDATION_ERROR', 'Escolha outro guerreiro.');
   }
 
-  // Remoções não dependem da existência atual do outro personagem: relações
-  // órfãs continuam sempre reversíveis após exclusão/reset parcial.
+  // Limpezas continuam reversíveis mesmo se o outro personagem for excluído.
   if (data.action === 'remove_friend') {
-    await db.chatFriend.deleteMany({
-      where: { playerId: player.id, friendPlayerId: data.targetId },
+    await db.$transaction([
+      db.chatFriend.deleteMany({
+        where: {
+          OR: [
+            { playerId: player.id, friendPlayerId: data.targetId },
+            { playerId: data.targetId, friendPlayerId: player.id },
+          ],
+        },
+      }),
+      db.chatFriendRequest.deleteMany({
+        where: {
+          OR: [
+            { senderPlayerId: player.id, recipientPlayerId: data.targetId },
+            { senderPlayerId: data.targetId, recipientPlayerId: player.id },
+          ],
+        },
+      }),
+    ]);
+    return ok({ friendship: 'none', target: { playerId: data.targetId } });
+  }
+
+  if (data.action === 'cancel_friend_request') {
+    await db.chatFriendRequest.deleteMany({
+      where: { senderPlayerId: player.id, recipientPlayerId: data.targetId },
+    });
+    return ok({ friendship: 'none', target: { playerId: data.targetId } });
+  }
+
+  if (data.action === 'decline_friend_request') {
+    await db.chatFriendRequest.deleteMany({
+      where: { senderPlayerId: data.targetId, recipientPlayerId: player.id },
     });
     return ok({ friendship: 'none', target: { playerId: data.targetId } });
   }
@@ -371,25 +443,114 @@ async function changeSocial(data: z.infer<typeof socialSchema>) {
   });
   if (!target) throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado.');
 
-  if (data.action === 'add_friend') {
+  if (data.action === 'send_friend_request') {
     if (await isBlockedEitherWay(player.id, target.id)) {
-      throw new ApiError('FORBIDDEN', 'Desfaça o bloqueio antes de adicionar este guerreiro aos amigos.');
+      throw new ApiError('FORBIDDEN', 'Não é possível enviar convite enquanto houver bloqueio entre vocês.');
     }
-    await db.chatFriend.upsert({
-      where: { playerId_friendPlayerId: { playerId: player.id, friendPlayerId: target.id } },
-      update: { friendPlayerName: target.name },
+    const [alreadyFriend, incoming] = await Promise.all([
+      db.chatFriend.findUnique({
+        where: { playerId_friendPlayerId: { playerId: player.id, friendPlayerId: target.id } },
+        select: { id: true },
+      }),
+      db.chatFriendRequest.findUnique({
+        where: {
+          senderPlayerId_recipientPlayerId: {
+            senderPlayerId: target.id,
+            recipientPlayerId: player.id,
+          },
+        },
+        select: { id: true },
+      }),
+    ]);
+    if (alreadyFriend) throw new ApiError('VALIDATION_ERROR', 'Vocês já são amigos.');
+    if (incoming) {
+      throw new ApiError('VALIDATION_ERROR', 'Você já recebeu um convite deste guerreiro. Aceite ou recuse o pedido.');
+    }
+
+    await db.chatFriendRequest.upsert({
+      where: {
+        senderPlayerId_recipientPlayerId: {
+          senderPlayerId: player.id,
+          recipientPlayerId: target.id,
+        },
+      },
+      update: {
+        senderPlayerName: player.name,
+        recipientPlayerName: target.name,
+      },
       create: {
-        playerId: player.id,
-        friendPlayerId: target.id,
-        friendPlayerName: target.name,
+        senderPlayerId: player.id,
+        senderPlayerName: player.name,
+        recipientPlayerId: target.id,
+        recipientPlayerName: target.name,
       },
     });
+    return ok({ friendship: 'pending', target: { playerId: target.id, name: target.name } });
+  }
+
+  if (data.action === 'accept_friend_request') {
+    if (await isBlockedEitherWay(player.id, target.id)) {
+      throw new ApiError('FORBIDDEN', 'Desfaça o bloqueio antes de aceitar este convite.');
+    }
+    const request = await db.chatFriendRequest.findUnique({
+      where: {
+        senderPlayerId_recipientPlayerId: {
+          senderPlayerId: target.id,
+          recipientPlayerId: player.id,
+        },
+      },
+      select: { id: true },
+    });
+    if (!request) throw new ApiError('NOT_FOUND', 'Este convite de amizade não está mais pendente.');
+
+    await db.$transaction([
+      db.chatFriend.upsert({
+        where: { playerId_friendPlayerId: { playerId: player.id, friendPlayerId: target.id } },
+        update: { friendPlayerName: target.name },
+        create: {
+          playerId: player.id,
+          friendPlayerId: target.id,
+          friendPlayerName: target.name,
+        },
+      }),
+      db.chatFriend.upsert({
+        where: { playerId_friendPlayerId: { playerId: target.id, friendPlayerId: player.id } },
+        update: { friendPlayerName: player.name },
+        create: {
+          playerId: target.id,
+          friendPlayerId: player.id,
+          friendPlayerName: player.name,
+        },
+      }),
+      db.chatFriendRequest.deleteMany({
+        where: {
+          OR: [
+            { senderPlayerId: player.id, recipientPlayerId: target.id },
+            { senderPlayerId: target.id, recipientPlayerId: player.id },
+          ],
+        },
+      }),
+    ]);
     return ok({ friendship: 'friend', target: { playerId: target.id, name: target.name } });
   }
 
+  // Bloquear desfaz amizade e cancela convites nos dois sentidos.
   await db.$transaction([
     db.chatFriend.deleteMany({
-      where: { playerId: player.id, friendPlayerId: target.id },
+      where: {
+        OR: [
+          { playerId: player.id, friendPlayerId: target.id },
+          { playerId: target.id, friendPlayerId: player.id },
+        ],
+      },
+    }),
+    db.chatFriendRequest.deleteMany({
+      where: {
+        OR: [
+          { senderPlayerId: player.id, recipientPlayerId: target.id },
+          { senderPlayerId: target.id, recipientPlayerId: player.id },
+        ],
+      },
     }),
     db.chatMute.deleteMany({
       where: { playerId: player.id, mutedPlayerId: target.id },
@@ -428,7 +589,15 @@ export async function POST(request: Request) {
       if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message);
       return await sendMessage(parsed.data);
     }
-    if (['add_friend', 'remove_friend', 'block', 'unblock'].includes(String(raw?.action))) {
+    if ([
+      'send_friend_request',
+      'cancel_friend_request',
+      'accept_friend_request',
+      'decline_friend_request',
+      'remove_friend',
+      'block',
+      'unblock',
+    ].includes(String(raw?.action))) {
       const parsed = socialSchema.safeParse(raw);
       if (!parsed.success) throw new ApiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Ação social inválida.');
       return await changeSocial(parsed.data);
