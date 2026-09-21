@@ -2,7 +2,7 @@
 // SUPABASE-MOCK — mini-serviço para E2E do painel admin (v0.14)
 // ---------------------------------------------------------------------
 // POR QUE EXISTE: o sandbox NÃO tem as credenciais da conta admin real
-// (alicomprasbbbb@gmail.com) nem a RPC admin_delete_personagem instalada
+// (admin@example.test) nem a RPC admin_delete_personagem instalada
 // na nuvem de produção. Para provar o fluxo COMPLETO no navegador
 // (login → painel → exclusão nas DUAS camadas → ranking → auditoria),
 // o dev server é temporariamente apontado para ESTE mock via
@@ -20,7 +20,7 @@
 //  * GET /__dump — estado vivo (verificação E2E: "sumiu da NUVEM").
 //
 // Usuários semeados (password única "qa-e2e-password"):
-//  * alicomprasbbbb@gmail.com  (ADMIN — bate com a tabela admins)
+//  * admin@example.test  (ADMIN — bate com a tabela admins)
 //  * qa-jogador@example.com    (jogador comum)
 //  * qa-lider@example.com      (jogador comum)
 //
@@ -55,7 +55,7 @@ interface MockPersonagem {
 }
 
 const users: MockUser[] = [
-  { id: '11111111-1111-1111-1111-111111111111', email: 'alicomprasbbbb@gmail.com', password: 'qa-e2e-password', isAdmin: true, createdAt: new Date().toISOString() },
+  { id: '11111111-1111-1111-1111-111111111111', email: 'admin@example.test', password: 'qa-e2e-password', isAdmin: true, createdAt: new Date().toISOString() },
   { id: '22222222-2222-2222-2222-222222222222', email: 'qa-jogador@example.com', password: 'qa-e2e-password', isAdmin: false, createdAt: new Date().toISOString() },
   { id: '33333333-3333-3333-3333-333333333333', email: 'qa-lider@example.com', password: 'qa-e2e-password', isAdmin: false, createdAt: new Date().toISOString() },
 ];
@@ -436,5 +436,5 @@ const server = Bun.serve({
   },
 });
 
-console.log(`[supabase-mock] ouvindo em http://localhost:${server.port} — admin: alicomprasbbbb@gmail.com / qa-e2e-password`);
+console.log(`[supabase-mock] ouvindo em http://localhost:${server.port} — admin: admin@example.test / qa-e2e-password`);
 console.log('[supabase-mock] estado vivo em GET /__dump');
