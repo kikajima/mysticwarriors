@@ -206,10 +206,11 @@ describe('simulateBattle — Armadura de Escala aplicada', () => {
 });
 
 describe('calibração com o conteúdo real do jogo', () => {
-  test('cada NPC ocupa exatamente a escala correspondente à sua posição', () => {
-    expect(ENEMIES).toHaveLength(POWER_SCALES.length);
+  test('cada trio I/II/III ocupa exatamente a Escala de Poder correspondente', () => {
+    expect(ENEMIES).toHaveLength(POWER_SCALES.length * 3);
     ENEMIES.forEach((enemy, index) => {
-      expect(getPowerScale(npcCombatPower(enemy)).scale.index).toBe(index);
+      expect(getPowerScale(npcCombatPower(enemy)).scale.index).toBe(Math.floor(index / 3));
+      expect(enemy.tier).toBe((index % 3) + 1);
     });
   });
 
