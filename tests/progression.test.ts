@@ -94,6 +94,9 @@ test('UI de treino não repete saldo/energia no topo e Transformações exibem d
   expect(src).not.toContain("{player.energy} energia (cada treino:");
   expect(src).not.toContain("player.zeni.toLocaleString('pt-BR')} Zeni");
   expect(src).toContain('{tr!.description}');
+  expect(src).toContain('Efeito ativo:');
+  expect(src).toContain("transformationEffectLabels(tr!).join(' · ')");
+  expect(src).toContain('Ao desbloquear:');
 });
 
 describe('Integridade do conteúdo', () => {
