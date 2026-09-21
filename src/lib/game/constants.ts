@@ -90,6 +90,7 @@ export {
   fighterForRound,
   roundDef,
   tournamentRewards,
+  tournamentZeniReward,
   tournamentXpReward,
   tournamentCooldownRemainingMs,
   parseTournament,
