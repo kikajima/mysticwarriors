@@ -52,7 +52,7 @@ PB=$(echo "$R" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"
 check "criação personagem B" "audit" "$( [ -n "$PB" ] && echo audit || echo erro)"
 
 # 1.4 CONTA A tenta agir no personagem da CONTA B → 403 FORBIDDEN
-R=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"heal\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
+R=$(curl -s -b $JAR_A -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"train\",\"stat\":\"strength\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "conta A age no personagem de B → 403 FORBIDDEN" "FORBIDDEN" "$R"
 
 # 1.5 playerId sozinho (sem cookie, sabendo o ID) não autoriza nada
@@ -85,7 +85,7 @@ R=$(curl -s -c $JAR_G -H "X-Forwarded-For: $E2E_IP_G" -X POST $BASE/api/auth/gue
 check "sessão de convidado criada" "True" "$R"
 
 # convidado tenta agir no personagem de B → 403
-R=$(curl -s -b $JAR_G -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"heal\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
+R=$(curl -s -b $JAR_G -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"train\",\"stat\":\"strength\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "convidado não acessa personagem de outro → 403" "FORBIDDEN" "$R"
 
 # convidado cria personagem próprio
@@ -94,7 +94,7 @@ PG=$(echo "$R" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"
 check "convidado cria personagem" "audit" "$( [ -n "$PG" ] && echo audit || echo erro)"
 
 echo ""
-echo "=== 4. ECONOMIA: saldos e stat cap ==="
+echo "=== 4. ECONOMIA: saldos e atributos sem teto ==="
 
 # 4.1 (v0.9.2) consumíveis custam DIAMANTES: B tem 0 cristais; Senzu = 10 💎
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"senzu\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
@@ -114,23 +114,18 @@ bun scripts/e2e-db.ts set-zeni "$PB" 100 >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"luvas\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "compra sem Zeni → INSUFFICIENT_ZENI" "INSUFFICIENT_ZENI" "$R"
 
-# 4.2 stat cap: dá 5.000.000 Zeni ao B direto no banco e usa 2000 elixires? — via wish não dá;
-# usa o método direto: treina até o cap é inviável. Teste funcional do cap: setar strength=999 no banco
-BUN_SET=$(bun scripts/e2e-db.ts setup-stat-cap "$PB" 2>&1 | tail -1)
-check "setup banco (zeni alto + atributos no cap)" "ok" "$BUN_SET"
+# 4.2 atributos sem teto: começa muito acima do antigo limite 999
+BUN_SET=$(bun scripts/e2e-db.ts setup-high-stats "$PB" 2>&1 | tail -1)
+check "setup banco (atributos 5.000 + Elixir)" "ok" "$BUN_SET"
 
-# usar Elixir com todos os atributos no cap → deve ser bloqueado (STAT_CAP_REACHED) e NÃO consumir o item
-R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"use_item\",\"itemId\":\"elixir_dragao\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
-check "Elixir com todos atributos no cap → STAT_CAP_REACHED" "STAT_CAP_REACHED" "$R"
-
-# reseta strength para 997 e usa elixir → deve ir a 999 e não passar
-bun scripts/e2e-db.ts set-strength "$PB" 997 >/dev/null
-# prepara para os próximos testes: defesa baixa (treino barato) e ki alto
-bun scripts/e2e-db.ts set-combat-stats "$PB" >/dev/null
+# Elixir continua funcionando acima de 999 e soma +2 normalmente
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"use_item\",\"itemId\":\"elixir_dragao\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["strength"])' 2>/dev/null)
-check "Elixir respeita o cap (997+2 → 999)" "999" "$R"
+check "Elixir ultrapassa antigo teto (5000+2 → 5002)" "5002" "$R"
 R=$(curl -s -b $JAR_B "$BASE/api/game/state?playerId=$PB" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["items"]["consumables"].get("elixir_dragao",0))' 2>/dev/null)
 check "Elixir consumido exatamente 1 (2 restantes)" "2" "$R"
+
+# prepara os próximos testes com defesa barata e Ki suficiente
+bun scripts/e2e-db.ts set-combat-stats "$PB" >/dev/null
 
 echo ""
 echo "=== 5. COMBATE: loadout, estratégia e PvP ==="
