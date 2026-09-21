@@ -39,6 +39,28 @@ test('silêncio é unilateral e único por par', async () => {
   expect(await db.chatMute.count({ where: { playerId: 'p2' } })).toBe(1);
 });
 
+test('amigos são contatos pessoais e bloqueios são únicos por par', async () => {
+  await db.chatFriend.create({
+    data: { playerId: 'p1', friendPlayerId: 'p2', friendPlayerName: 'Beta' },
+  });
+  expect(await db.chatFriend.count({ where: { playerId: 'p1' } })).toBe(1);
+  expect(await db.chatFriend.count({ where: { playerId: 'p2' } })).toBe(0);
+
+  await db.chatBlock.create({
+    data: { playerId: 'p1', blockedPlayerId: 'p3', blockedPlayerName: 'Gamma' },
+  });
+  let duplicateRejected = false;
+  try {
+    await db.chatBlock.create({
+      data: { playerId: 'p1', blockedPlayerId: 'p3', blockedPlayerName: 'Gamma' },
+    });
+  } catch {
+    duplicateRejected = true;
+  }
+  expect(duplicateRejected).toBe(true);
+});
+
+
 test('contrato: chat só existe dentro do jogo e mantém limpeza administrativa', async () => {
   const layout = await Bun.file(path.join(process.cwd(), 'src/app/layout.tsx')).text();
   const page = await Bun.file(path.join(process.cwd(), 'src/app/jogar/page.tsx')).text();
@@ -53,7 +75,15 @@ test('contrato: chat só existe dentro do jogo e mantém limpeza administrativa'
   expect(widget).toContain("Todos os guerreiros");
   expect(widget).toContain("onFocus={() =>");
   expect(widget).toContain("playerId: player.id");
+  expect(widget).toContain("Adicionar aos amigos");
+  expect(widget).toContain("Remover dos amigos");
+  expect(widget).toContain("Bloquear jogador");
+  expect(widget).toContain("Bloqueados");
   expect(api).toContain("playerId: z.string().min(1).max(80).optional()");
+  expect(api).toContain("'add_friend', 'remove_friend', 'block', 'unblock'");
+  expect(api).toContain("isBlockedEitherWay");
+  expect(api).toContain("db.chatFriend.upsert");
+  expect(api).toContain("db.chatBlock.upsert");
   expect(api).toContain("take: q ? 50 : 200");
   expect(admin).toContain("z.literal('LIMPAR CHAT'");
   expect(admin).toContain('chatMessage.deleteMany');
