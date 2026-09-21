@@ -663,7 +663,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Atributos',
     icon: '💪',
     group: 'Progressão',
-    summary: 'Força, Ki, Defesa e Velocidade: efeitos, treino instantâneo e progressão sem teto máximo.'
+    summary: 'Força, Ki, Defesa e Velocidade: efeitos, treino instantâneo e progressão sem teto máximo.',
     resumo: [
       '**Força** = golpes físicos · **Ki** = ondas de energia (sem aumentar a energia de ações).',
       '**Defesa** = vida máxima e resistência · **Velocidade** = iniciativa e esquiva.',
