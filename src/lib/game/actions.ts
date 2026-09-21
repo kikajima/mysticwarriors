@@ -991,7 +991,7 @@ async function actionStartTournamentFight(tx: Tx, player: Player): Promise<Actio
   const levelsEstimate = estimateLevelsGained(player, rewards.xp);
 
   // consolação do rejeitado: METADE do XP da rodada (a luta ensina; o
-  // Zeni/cristais/cinturão são só do vencedor) — coerente com o texto
+  // Zeni/cinturão são só do vencedor) — coerente com o texto
   // "Ainda ganhou X XP" do diálogo de derrota
   const xpGain = sim.won ? rewards.xp : Math.max(1, Math.floor(rewards.xp / 2));
 
@@ -1007,7 +1007,6 @@ async function actionStartTournamentFight(tx: Tx, player: Player): Promise<Actio
         ...sim,
         xpGain,
         zeniGain: sim.won ? rewards.zeni : 0,
-        crystalsGain: sim.won ? rewards.crystals : 0,
         enemyName: fighter.name,
         enemyEmoji: fighter.emoji,
         opponentLevel: enemyCombatant.level,
@@ -1020,7 +1019,6 @@ async function actionStartTournamentFight(tx: Tx, player: Player): Promise<Actio
         won: sim.won,
         xp: xpGain,
         zeni: rewards.zeni,
-        crystals: rewards.crystals,
         title: sim.won && round === 3,
         techniquesUsed: sim.playerTechniquesUsed.length,
         firstBattle: totalBattlesBefore === 0,
