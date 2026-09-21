@@ -356,7 +356,7 @@ function WorldBossSection({
             <div className="grid gap-2 sm:grid-cols-2">
               {boss.topDamage.slice(0, 6).map((d, i) => (
                 <div
-                  key={d.id}
+                  key={d.id ?? `${d.name}:${i}`}
                   className={`flex items-center gap-2 rounded-xl border p-2 ${
                     d.isMe
                       ? 'border-orange-600/60 bg-orange-950/35'
@@ -367,11 +367,11 @@ function WorldBossSection({
                   <div className="min-w-0 flex-1">
                     <PublicPlayerIdentity
                       name={d.name}
-                      race={d.race}
+                      race={d.race ?? 'humano'}
                       avatarUrl={d.avatarUrl}
                       cosmetics={d.cosmetics}
                       compact
-                      onClick={() => setProfileId(d.id)}
+                      onClick={d.id ? () => setProfileId(d.id!) : undefined}
                     />
                   </div>
                   <span className="shrink-0 font-heading text-xs text-red-300">
