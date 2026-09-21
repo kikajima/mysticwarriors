@@ -224,7 +224,15 @@ async function searchPlayers(request: Request) {
       id: { not: player.id },
       ...(q ? { name: { contains: q } } : {}),
     },
-    select: { id: true, name: true, level: true, race: true, guildId: true },
+    select: {
+      id: true,
+      name: true,
+      level: true,
+      race: true,
+      guildId: true,
+      avatarUrl: true,
+      cosmeticsEquipped: true,
+    },
     orderBy: { name: 'asc' },
     take: q ? 50 : 200,
   });
