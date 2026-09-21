@@ -79,6 +79,10 @@ test('contrato: chat só existe dentro do jogo e mantém limpeza administrativa'
   expect(widget).toContain("Remover dos amigos");
   expect(widget).toContain("Bloquear jogador");
   expect(widget).toContain("Bloqueados");
+  expect(widget).toContain("Amigos e contatos");
+  expect(widget).toContain("Desbloquear guerreiro");
+  expect(widget).toContain("id === 'private'");
+  expect(widget).toContain("void loadDirectory()");
   expect(api).toContain("playerId: z.string().min(1).max(80).optional()");
   expect(api).toContain("'add_friend', 'remove_friend', 'block', 'unblock'");
   expect(api).toContain("isBlockedEitherWay");
