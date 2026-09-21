@@ -719,6 +719,10 @@ export interface PlayerView {
   rankingPosition?: number | null;
 }
 
+export type RankingKind = 'warriors' | 'guilds';
+export type WarriorRankingCategory = 'level' | 'power' | 'tournament' | 'boss_damage';
+export type GuildRankingCategory = 'power' | 'level';
+
 export interface RankingEntry {
   id: string;
   name: string;
@@ -727,6 +731,12 @@ export interface RankingEntry {
   power: number;
   battlesWon: number;
   battlesLost: number;
+  /** Lutas vencidas no Torneio de Artes Marciais, em toda a carreira. */
+  tournamentWins: number;
+  /** Títulos de campeão, usado também como desempate do ranking de torneio. */
+  tournamentTitles: number;
+  /** Soma histórica de dano em todas as Ameaças Globais registradas. */
+  bossDamage: number;
   isMe: boolean;
   isBot: boolean;
   attackable: boolean;
@@ -738,15 +748,31 @@ export interface RankingEntry {
   blockReason?: 'level' | null;
 }
 
+export interface GuildRankingEntry {
+  id: string;
+  name: string;
+  level: number;
+  xp: number;
+  totalPower: number;
+  memberCount: number;
+  totalDonated: number;
+  leaderName: string;
+  isMine: boolean;
+  position: number;
+}
+
 export interface RankingPage {
   entries: RankingEntry[];
+  guilds?: GuildRankingEntry[];
   total: number;
   page: number;
   pageSize: number;
   myPosition: number | null;
+  kind?: RankingKind;
+  category?: WarriorRankingCategory | GuildRankingCategory;
+  race?: RaceId | null;
   /** v0.9.5 — de onde veio a lista: nuvem (todos do Supabase) ou servidor (reserva). */
   source?: 'cloud' | 'local';
-
 }
 
 // ===== Ameaça Universal =====
