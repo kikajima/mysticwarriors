@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { BattleResult } from '@/lib/game/types';
+import type { BattleResult, PlayerView } from '@/lib/game/types';
+import { equippedCosmetic } from '@/lib/game/content/cosmetics';
 import { IMPETO } from '@/lib/game/impeto';
 import { BATTLE_REVEAL_INTERVAL_MS } from '@/lib/game/rules';
 import { serverNowMs } from '@/lib/game/clock';
@@ -32,10 +33,12 @@ import {
  */
 export function BattleLogDialog({
   battle,
+  player,
   lockUntil,
   onClose,
 }: {
   battle: BattleResult | null;
+  player?: Pick<PlayerView, 'cosmetics'>;
   /** ISO timestamp: término server-side da atividade (enquanto houver, NÃO fecha) */
   lockUntil?: string;
   onClose: () => void;
@@ -88,6 +91,7 @@ export function BattleLogDialog({
   const finished = battle
     ? revealed >= battle.rounds.length && lockRemaining <= 0
     : false;
+  const victoryPose = equippedCosmetic(player?.cosmetics?.equipped ?? {}, 'pose')?.victoryPresentation;
 
   return (
     <Dialog
@@ -104,6 +108,7 @@ export function BattleLogDialog({
           finished={finished}
           revealed={revealed}
           lockRemaining={lockRemaining}
+          victoryPose={victoryPose}
           onClose={onClose}
         />
       )}
@@ -116,12 +121,14 @@ function BattleContent({
   finished,
   revealed,
   lockRemaining,
+  victoryPose,
   onClose,
 }: {
   battle: BattleResult;
   finished: boolean;
   revealed: number;
   lockRemaining: number;
+  victoryPose?: { icon: string; label: string; css: string };
   onClose: () => void;
 }) {
   const visibleRounds = battle.rounds.slice(0, revealed);
@@ -308,6 +315,12 @@ function BattleContent({
               <p className="font-display text-4xl text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-500 mb-1">
                 VITÓRIA!
               </p>
+              {victoryPose ? (
+                <div className={`mx-auto mb-3 max-w-sm rounded-xl border p-3 font-heading victory-pose-enter ${victoryPose.css}`}>
+                  <span className="mr-2 text-2xl" aria-hidden>{victoryPose.icon}</span>
+                  {victoryPose.label}
+                </div>
+              ) : null}
               <p className="text-sm text-amber-200/80 mb-3">
                 +{battle.zeniGain.toLocaleString('pt-BR')} Zeni • +{battle.xpGain.toLocaleString('pt-BR')} XP
                 {battle.crystalsGain ? ` • +${battle.crystalsGain} 💎` : ''}
