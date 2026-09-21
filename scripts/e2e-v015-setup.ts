@@ -21,6 +21,7 @@ import { db } from '@/lib/db';
 const GAME = 'http://localhost:3000';
 const MOCK = 'http://localhost:4010';
 const PASSWORD = 'qa-e2e-password';
+const ADMIN_EMAIL = process.env.MW_E2E_ADMIN_EMAIL ?? 'admin@example.com';
 
 interface Ctx {
   cookie: string;
@@ -102,7 +103,7 @@ async function main() {
   if (localGuilds !== 0) throw new Error(`banco local deveria ter 0 guildas, tem ${localGuilds}`);
 
   // ===== 1) ADMIN: personagem + zeni para fundar a guilda do ciclo =====
-  const admin = await bridgeLogin('alicomprasbbbb@gmail.com');
+  const admin = await bridgeLogin(ADMIN_EMAIL);
   const adminPlayerId = await createCharacter(admin, 'Admin QA E2E', 'humano');
   console.log('✓ Admin QA E2E:', adminPlayerId);
   await api(admin, '/api/admin/action', { characterId: adminPlayerId, ownerId: null, action: 'grant', zeniDelta: 20000 });
