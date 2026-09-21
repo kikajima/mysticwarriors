@@ -1697,7 +1697,7 @@ async function actionUnlockTransformation(tx: Tx, player: Player, transformation
     throw new ApiError('TRANSFORMATION_LOCKED', `Requisitos faltando: ${missing.join(', ')}.`);
   }
 
-  // desbloqueia + aplica bônus permanentes (com limite central)
+  // desbloqueia + aplica bônus permanentes, sem teto de atributo
   owned.push(tr.id);
   const data: Record<string, unknown> = {
     transformationsOwned: JSON.stringify(owned),
