@@ -550,7 +550,7 @@ model ChatMute {
  * Lista pessoal de amigos do chat. É unilateral de propósito: adicionar
  * alguém organiza seus próprios contatos sem forçar reciprocidade.
  * Sem FK para continuar simples diante de exclusão/reset de personagens;
- * entradas órfãs são descartadas pelas consultas e limpas no reset geral.
+ * relações órfãs permanecem reversíveis e o reset geral as limpa.
  */
 model ChatFriend {
   id               String   @id @default(cuid())
