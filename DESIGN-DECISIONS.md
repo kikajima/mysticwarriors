@@ -47,10 +47,11 @@
 
 ## Painel Admin — Exclusões Destrutivas (v0.14 · v0.15)
 
-- **ADMIN ÚNICO por e-mail HARDCODED (v1 do sistema de permissão):**
-  `ADMIN_EMAIL = 'alicomprasbbbb@gmail.com'` em `src/lib/adminIdentity.ts`
-  — constante ÚNICA central, nunca espalhada. O MESMO valor vive na tabela
-  `admins` do Supabase (`supabase-admin.sql` — fonte do `is_admin()`).
+- **Identidade administrativa fora do código:** a lista de administradores vive
+  exclusivamente em `public.admins` no Supabase. Nenhum e-mail real deve ser
+  versionado em código, testes ou documentação. A RPC `is_admin()` cruza
+  `auth.uid()` com essa tabela e as rotas administrativas revalidam a sessão
+  no servidor.
   Camadas em ordem: TRANSPORTE (Bearer token + RPC `is_admin`, modelo v0.9
   intacto) → AUTORIZAÇÃO (e-mail da sessão autenticada === `ADMIN_EMAIL`,
   resolvido server-side via `/auth/v1/user`). O front usa a MESMA constante
