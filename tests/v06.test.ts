@@ -256,7 +256,9 @@ describe('COSMÉTICOS v0.6 — auras que eram grátis agora são itens da loja',
         (c.slot === 'effect' && !!c.screenEffect) ||
         (c.slot === 'avatar' && !!c.avatarOverlayCss) ||
         ((c.slot === 'pose' || c.slot === 'outfit') && !!c.profileBadge) ||
-        (c.slot === 'card' && !!c.cardGlowCss);
+        (c.slot === 'card' && !!c.cardGlowCss) ||
+        (c.slot === 'nameplate' && !!c.nameplateCss) ||
+        (c.slot === 'chat' && !!c.chatBubbleCss);
       expect(hasEffect, `${c.id} (${c.slot}) precisa de efeito visual`).toBe(true);
     }
   });
