@@ -507,7 +507,7 @@ Task: v0.9.3 — BUG "contas salvam no Supabase, mas os dados do personagem não
 Work Log:
 - DIAGNÓSTICO EMPÍRICO (chave publicável apenas, sem service_role):
   * Sondagem anon: profiles e "Jogadores" → 403 "permission denied" (42501) com hint de GRANT para anon (esperado para anon).
-  * Signup de PROBE (probe.gm.1789165112@gmail.com) devolveu SESSÃO → o dono já desativou "Confirm email" no Supabase (era pendência antiga).
+  * Signup de PROBE (probe-user@example.com) devolveu SESSÃO → o dono já desativou "Confirm email" no Supabase (era pendência antiga).
   * COM SESSÃO DE USUÁRIO (igual o jogo): SELECT profiles → 403 "permission denied for table profiles", hint "GRANT SELECT ... TO authenticated"; UPSERT (on_conflict=id, merge-duplicates) → 403, hint "GRANT SELECT, INSERT, UPDATE ... TO authenticated". BUG REPRODUZIDO — causa raiz: a tabela profiles foi criada SEM GRANT para o papel authenticated; o Postgres checa GRANT ANTES do RLS, então toda leitura/escrita falhava com 403 e o código só dava console.warn (falha em silêncio). O login funcionava porque auth é serviço separado.
   * is_admin RPC com a sessão probe → 200 false (SQL do painel confirmado aplicado e funcionando).
   * Tabela "Jogadores": CONFIRMADA inexistente no código (zero referências em src/) — criada manualmente no Supabase em algum momento; o jogo nunca leu nem escreveu nela. Decisão comunicada ao dono: profiles (id = user_id da conta logada, progresso jsonb) permanece a fonte única da verdade; "Jogadores" é inofensiva e pode ser apagada pelo Table Editor se quiser (nós NÃO apagamos — regra de nunca deletar nada do dono).
@@ -524,7 +524,7 @@ Work Log:
   * jogar/page.tsx saveToCloud: resposta não-ok do /api/game/cloud-snapshot agora logada (HTTP + erro).
   * jogar/page.tsx handleAuthed: ramo else do cloud-restore logado; catches da restauração e do upsert de perfil vazio logados (antes engolidos).
 - VALIDAÇÃO: tsc --noEmit limpo; bun test 164/164; npm run build ✓; dev :3000 GET /jogar → 200.
-- HIGIENE/DIVULGAÇÃO: conta de teste probe.gm.1789165112@gmail.com criada na nuvem para reproduzir o bug (não pode ser removida daqui — sem service_role; o dono pode removê-la em Authentication → Users se quiser; idem a probe antiga 439aa166 da v0.8). Nenhum dado de jogador tocado.
+- HIGIENE/DIVULGAÇÃO: conta de teste probe-user@example.com criada na nuvem para reproduzir o bug (não pode ser removida daqui — sem service_role; o dono pode removê-la em Authentication → Users se quiser; idem a probe antiga 439aa166 da v0.8). Nenhum dado de jogador tocado.
 
 Stage Summary:
 - CAUSA EXATA: GRANT faltando para o papel "authenticated" na tabela profiles (checado antes do RLS) → todas as leituras/escritas do jogo em profiles devolviam 403 e o save falhava em silêncio.
@@ -584,7 +584,7 @@ Work Log:
 - RPC ranking_nuvem (chamada como visitante anônimo, igual à página pública): HTTP 200 com dados reais — 1º Rei Taurion (nível 6, poder 277), 2º General Zorun (nível 5, poder 281), total 2 personagens. Expõe SOMENTE posicao/nome/nivel/poder/total — nenhum e-mail, nenhum dado interno.
 - Bucket avatars: listagem pública HTTP 200 (bucket existe e é legível por qualquer visitante).
 - /ranking no dev: HTML renderiza com fonte NUVEM ("calculado ao vivo a partir do progresso salvo na nuvem" + os 2 guerreiros da conta do dono); marcador de fallback ausente. As linhas "[nuvem] FALHA — HTTP 404" no dev-daemon.log são PRÉ-SQL (histórico do smoke da Task 18), não da requisição nova.
-- NOVO scripts/test-storage-avatar.sh — E2E do avatar no Storage (chave publicável apenas): signup de probe.avatar.1789178148@gmail.com (id 1302e6af-aedd-4906-be23-687c7a17761b) → upload em {userId}/avatar-{ts}.png (o MESMO caminho que o jogo usa) HTTP 200 → URL pública sem login HTTP 200 (image/png) → 3 bloqueios confirmados com "new row violates row-level security policy": (a) pasta de OUTRO usuário, (b) upload sem login, (c) arquivo que não é imagem.
+- NOVO scripts/test-storage-avatar.sh — E2E do avatar no Storage (chave publicável apenas): signup de probe-avatar@example.com (id 1302e6af-aedd-4906-be23-687c7a17761b) → upload em {userId}/avatar-{ts}.png (o MESMO caminho que o jogo usa) HTTP 200 → URL pública sem login HTTP 200 (image/png) → 3 bloqueios confirmados com "new row violates row-level security policy": (a) pasta de OUTRO usuário, (b) upload sem login, (c) arquivo que não é imagem.
 - Revisão de consistência do encadeamento do avatar (código): AvatarDialog comprime p/ JPEG 512px → uploadAvatarToStorage ({userId}/avatar-{ts}, upsert false) → getPublicUrl → /api/game/avatar modo 'storage' valida prefixo do PRÓPRIO projeto + pasta = auth.account.supabaseUserId → grava avatarUrl no personagem (entra no snapshot e volta ao relogar). Formato de URL bate exatamente com o testado na API.
 - Smoke v0.9.4 re-executado: 12/12 ✓ (convidado → personagem → treino → profissão → quests → snapshot v2 com campos novos → restore recusa convidado → /ranking → limpeza só do personagem de teste).
 - Servidor dev: vivo via start-stop-daemon (PID 15140); /, /jogar e /ranking todos 200.
@@ -592,7 +592,7 @@ Work Log:
 Stage Summary:
 - SQL da v0.9.4 confirmado FUNCIONANDO no Supabase do dono: ranking público calculado ao vivo (RPC ranking_nuvem) + bucket avatars com policies corretas (upload só pasta própria/só imagem/≤5MB; leitura pública; sem delete/update pela API).
 - Todas as verificações de runtime passaram SEM nenhuma mudança de código.
-- Deixados na nuvem (comunicados ao dono, removíveis pelo painel dele): conta probe.avatar.1789178148@gmail.com (Authentication → Users) e 1 PNG de ~95 bytes em avatars/1302e6af-aedd-4906-be23-687c7a17761b/avatar-1789178148.png (Storage → avatars).
+- Deixados na nuvem (comunicados ao dono, removíveis pelo painel dele): conta probe-avatar@example.com (Authentication → Users) e 1 PNG de ~95 bytes em avatars/1302e6af-aedd-4906-be23-687c7a17761b/avatar-1789178148.png (Storage → avatars).
 - PENDENTE no usuário: (1) REDEPLOYAR o jogo (o deploy atual ainda roda código pré-v0.9.4 — sem ele nada disso aparece no site público); (2) teste no navegador: upload de avatar volta ao relogar, quests/conquistas/turno de profissão sobrevivem a logout/login, /ranking mostra dados da nuvem.
 
 ---
@@ -881,7 +881,7 @@ Task: Restaurar o projeto Guerreiros Místicos neste ambiente de desenvolvimento
 Work Log:
 - Upload recebido: workspace-90d347a9-...tar (36MB) + regras do sistema ASCENSÃO Z em texto (o sistema RPG original do dono que fundamenta o jogo)
 - Projeto extraído para upload/extracted/ (excluídos .git/objects) e estudado: Next.js 16 + Prisma/SQLite + Supabase (contas na nuvem v0.8+, contrato de progresso v3)
-- PROBE na nova base (chave publicável sb_publishable_pPxZ...): VAZIA — sem tabelas (profiles/personagens/admins → 404 PGRST205) e sem RPCs (ranking_nuvem → 404 PGRST202). Degradação graciosa do jogo confirmada em código (ranking cai no servidor local)
+- PROBE na nova base (chave publicável <publishable-key-redacted>...): VAZIA — sem tabelas (profiles/personagens/admins → 404 PGRST205) e sem RPCs (ranking_nuvem → 404 PGRST202). Degradação graciosa do jogo confirmada em código (ranking cai no servidor local)
 - Servidor de dev antigo (boilerplate) parado; arquivos do jogo restaurados por cima: src, public, prisma, db, download, examples, scripts, backups, mini-services, .zscripts (versões do JOGO, com persistência v0.7 anti-wipe), supabase-*.sql, worklog.md, package.json, bun.lock, configs
 - Mantidos do ambiente: node_modules, skills/, gateway do sandbox, next-env.d.ts; tests/ MESCLADO (testes do jogo + scripts de infra do ambiente)
 - config.ts e .env atualizados para a NOVA base (URL + chave publicável, com fallback no código como no projeto original); scripts de probe (test-storage-avatar.sh, probe-postgrest.mjs) também atualizados
