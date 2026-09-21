@@ -24,6 +24,12 @@ describe('Ranking por categorias', () => {
       'tournament',
       'boss_damage',
     ]);
+    expect(WARRIOR_RANKING_CATEGORIES.map((item) => item.label)).toEqual([
+      'Nível',
+      'Nível de Poder',
+      'Vitórias no Torneio',
+      'Dano em Ameaças',
+    ]);
   });
 
   test('nível, poder, torneio e dano usam seus próprios critérios', () => {
@@ -58,6 +64,10 @@ describe('Ranking por categorias', () => {
 
   test('ranking de guildas oferece poder total e nível com desempates estáveis', () => {
     expect(GUILD_RANKING_CATEGORIES.map((item) => item.id)).toEqual(['power', 'level']);
+    expect(GUILD_RANKING_CATEGORIES.map((item) => item.label)).toEqual([
+      'Poder Total',
+      'Nível da Guilda',
+    ]);
 
     const guilds = [
       { name: 'A', level: 4, xp: 1000, totalPower: 90_000, memberCount: 10, totalDonated: 5000 },
@@ -67,20 +77,18 @@ describe('Ranking por categorias', () => {
     expect([...guilds].sort((a, b) => compareGuildRanking(a, b, 'level'))[0].name).toBe('A');
   });
 
-  test('API e UI mantêm filtro racial, histórico de boss e vitórias do torneio', async () => {
+  test('API e UI mantêm filtro racial, histórico de boss e catálogo compartilhado', async () => {
     const route = await Bun.file(`${import.meta.dir}/../src/app/api/game/ranking/route.ts`).text();
     const panel = await Bun.file(`${import.meta.dir}/../src/components/game/RankingPanel.tsx`).text();
 
     expect(route).toContain('tournamentRoundWins');
     expect(route).toContain('bossDamage.reduce');
-    expect(route).toContain("raceParam");
+    expect(route).toContain('raceParam');
     expect(route).toContain('computeDerived');
     expect(route).toContain("kind === 'guilds'");
 
     expect(panel).toContain('Todas as raças');
-    expect(panel).toContain('Vitórias no Torneio');
-    expect(panel).toContain('Dano em Ameaças');
-    expect(panel).toContain('Poder Total');
-    expect(panel).toContain('Nível da Guilda');
+    expect(panel).toContain('WARRIOR_RANKING_CATEGORIES');
+    expect(panel).toContain('GUILD_RANKING_CATEGORIES');
   });
 });
