@@ -3,6 +3,7 @@ import { ok, toErrorResponse } from '@/lib/api';
 import { getAuth, requirePlayer } from '@/lib/auth';
 import { RACES } from '@/lib/game/content/races';
 import { getItem } from '@/lib/game/content/world';
+import { publicCosmeticsFromRaw } from '@/lib/game/content/cosmetics';
 import { computeDerived, parseItems } from '@/lib/game/engine';
 import {
   compareGuildRanking,
@@ -131,6 +132,8 @@ async function warriorRanking(
     id: row.player.id,
     name: row.player.name,
     race: row.player.race as RaceId,
+    avatarUrl: row.player.avatarUrl,
+    cosmetics: publicCosmeticsFromRaw(row.player.cosmeticsEquipped),
     level: row.player.level,
     power: row.power,
     battlesWon: row.player.battlesWon,
@@ -237,6 +240,8 @@ async function legacyRanking(
             name: true,
             race: true,
             level: true,
+            avatarUrl: true,
+            cosmeticsEquipped: true,
             battlesWon: true,
             battlesLost: true,
             tournamentRoundWins: true,
@@ -261,6 +266,8 @@ async function legacyRanking(
         id: local?.id ?? `cloud:${encodeURIComponent(entry.nome)}`,
         name: entry.nome,
         race,
+        avatarUrl: local?.avatarUrl ?? null,
+        cosmetics: publicCosmeticsFromRaw(local?.cosmeticsEquipped),
         level: local?.level ?? entry.nivel,
         power: entry.poder,
         battlesWon: local?.battlesWon ?? entry.vitorias ?? 0,
@@ -303,6 +310,8 @@ async function legacyRanking(
         name: true,
         race: true,
         level: true,
+        avatarUrl: true,
+        cosmeticsEquipped: true,
         xp: true,
         strength: true,
         defense: true,
@@ -344,6 +353,8 @@ async function legacyRanking(
     id: player.id,
     name: player.name,
     race: player.race as RaceId,
+    avatarUrl: player.avatarUrl,
+    cosmetics: publicCosmeticsFromRaw(player.cosmeticsEquipped),
     level: player.level,
     power: scouterPower(player),
     battlesWon: player.battlesWon,
