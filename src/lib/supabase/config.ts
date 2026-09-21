@@ -11,10 +11,17 @@
 
 function requiredPublicEnv(name: 'NEXT_PUBLIC_SUPABASE_URL' | 'NEXT_PUBLIC_SUPABASE_ANON_KEY'): string {
   const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(`Variável obrigatória ausente: ${name}`);
+  if (value) return value;
+
+  // Testes unitários e a fase de build não precisam tocar no Supabase.
+  // Use placeholders neutros, nunca credenciais/projeto reais.
+  if (process.env.NODE_ENV === 'test' || process.env.MW_BUILD_PHASE === '1') {
+    return name === 'NEXT_PUBLIC_SUPABASE_URL'
+      ? 'https://example.supabase.co'
+      : 'test-publishable-placeholder';
   }
-  return value;
+
+  throw new Error(`Variável obrigatória ausente: ${name}`);
 }
 
 export const SUPABASE_URL = requiredPublicEnv('NEXT_PUBLIC_SUPABASE_URL');
