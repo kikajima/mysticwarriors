@@ -7,7 +7,7 @@ import {
   TOURNAMENT_ENTRY_FEE,
   fighterForRound,
   roundDef,
-  tournamentCréditosReward,
+  tournamentZeniReward,
   tournamentXpReward,
   fightersForRound,
   type TournamentFighter,
@@ -152,7 +152,7 @@ export function TournamentPanel({
 
   const rewards = TOURNAMENT_ROUNDS.map((r) => ({
     ...r,
-    zeni: tournamentCréditosReward(r.round, player.level),
+    zeni: tournamentZeniReward(r.round, player.level),
     xp: tournamentXpReward(r.round, player.level),
   }));
 
@@ -374,7 +374,7 @@ export function TournamentPanel({
                   </span>{' '}
                   · Premiação:{' '}
                   <span className="text-amber-300 font-heading">
-                    +{tournamentCréditosReward(round, player.level).toLocaleString('pt-BR')} Créditos
+                    +{tournamentZeniReward(round, player.level).toLocaleString('pt-BR')} Créditos
                   </span>
                   {' · '}
                   <span className="text-amber-300 font-heading">
