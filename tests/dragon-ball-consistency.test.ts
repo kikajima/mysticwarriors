@@ -67,7 +67,7 @@ describe('Chaves do Horizonte — consistência global', () => {
     const panel = await Bun.file(`${import.meta.dir}/../src/components/game/ProfessionsPanel.tsx`).text();
     expect(panel).toContain('Chaves livres');
     expect(panel).toContain('noFreeBalls');
-    expect(panel).toContain('Nenhuma Chave');
+    expect(panel).toContain('Nenhuma Chave livre');
     expect(panel).toContain('A busca não gasta energia');
     expect(panel).not.toContain('DRAGON_BALL_SEARCH_ENERGY_COST');
   });
