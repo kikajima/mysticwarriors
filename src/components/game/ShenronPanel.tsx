@@ -66,7 +66,7 @@ export function ShenronPanel({
               </div>
             ) : (
               <img
-                src="/images/shenron.png"
+                src="/images/aethelgard.svg"
                 alt="Aethelgard, Guardião Primordial do Horizonte"
                 className="w-28 h-28 rounded-2xl object-cover border-2 border-emerald-600/40 shadow-lg shadow-emerald-950/60"
                 onError={() => setImgFailed(true)}
