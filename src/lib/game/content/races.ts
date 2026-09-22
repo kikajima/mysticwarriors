@@ -21,16 +21,16 @@ import type { RaceId, RaceInfo } from '../types';
 export const RACES: Record<RaceId, RaceInfo> = {
   saiyajin: {
     id: 'saiyajin',
-    name: 'Saiyajin',
-    tagline: 'Guerreiros natos com sede de batalha',
+    name: 'Solaris',
+    tagline: 'A matilha estelar forjada em mundos de alta energia',
     description:
-      'Uma raça de guerreiros orgulhosos e implacáveis. Quanto mais próximos da morte, mais fortes ficam — o lendário Zenkai corre nas suas veias.',
+      'Humanoides lupinos do Setor Caelum, moldados por gravidade extrema e instinto de matilha. Sobrevivem a confrontos críticos tornando-se mais resistentes e perigosos.',
     color: 'orange',
-    avatar: '/images/race-saiyajin.png',
+    avatar: '/images/race-solaris.svg',
     perks: [
       '+8% de dano em ataques físicos',
       '+10% de XP em batalhas',
-      'Zenkai: +1 de Força ao perder batalha contra adversário relevante',
+      'Resiliência Estelar: +1 de Força ao sobreviver a uma derrota relevante',
     ],
     combat: {
       physicalDamageMult: 1.08,
@@ -54,17 +54,17 @@ export const RACES: Record<RaceId, RaceInfo> = {
   },
   humano: {
     id: 'humano',
-    name: 'Humano',
-    tagline: 'Determinação que supera limites',
+    name: 'Vanguardiano',
+    tagline: 'Disciplina, tecnologia e adaptação sem atalhos',
     description:
-      'Sem poderes natos, os humanos compensam com trabalho duro e engenhosidade. Aguentam o castigo, recuperam fôlego rápido e treinam de forma mais eficiente.',
+      'Mortais de ferro que compensam a ausência de mutações extremas com disciplina, engenharia tática e reflexos treinados para qualquer ambiente do Setor Caelum.',
     color: 'amber',
-    avatar: '/images/race-humano.png',
+    avatar: '/images/race-vanguardiano.svg',
     perks: [
       '+7% de Defesa em combate (físico e energia)',
       '+2% de dano em ataques de Ki',
       'Regeneração de energia 10% mais rápida',
-      'Treinos com 10% de desconto em Zeni',
+      'Treinos com 10% de desconto em Créditos',
     ],
     combat: {
       physicalDamageMult: 1.0,
@@ -88,12 +88,12 @@ export const RACES: Record<RaceId, RaceInfo> = {
   },
   namekuseijin: {
     id: 'namekuseijin',
-    name: 'Namekuseijin',
-    tagline: 'Sábios dragões de Namekusei',
+    name: 'Verdant',
+    tagline: 'Sábios de Sylva ligados à rede viva do Aether',
     description:
-      'Guerreiros-verdes com capacidade sobre-humana de regeneração. Seu Ki sereno castiga quem tenta vencê-los no longo prazo.',
+      'Seres de pele esmeralda e cristas sensoriais, sintonizados com as biosferas de Sylva. Sua regeneração e percepção energética favorecem combates prolongados.',
     color: 'emerald',
-    avatar: '/images/race-namekuseijin.png',
+    avatar: '/images/race-verdant.svg',
     perks: [
       'Regeneração de vida 15% mais rápida',
       '+5% de dano em ataques de Ki',
@@ -121,17 +121,17 @@ export const RACES: Record<RaceId, RaceInfo> = {
   },
   androide: {
     id: 'androide',
-    name: 'Androide',
-    tagline: 'Máquinas de destruição perfeitas',
+    name: 'Sintético',
+    tagline: 'Corpos artificiais e núcleos adaptativos de Nexus-9',
     description:
-      'Criados para lutar, os androides não sentem fadiga. Seus reatores internos disparam rajadas de energia sem descanso e lhes dão vantagem em longas jornadas.',
+      'Unidades artificiais e seres biomecanicamente aprimorados em Nexus-9. Núcleos reativos, sensores preditivos e chassis modulares sustentam sua eficiência constante.',
     color: 'slate',
-    avatar: '/images/race-androide.png',
+    avatar: '/images/race-sintetico.svg',
     perks: [
       '+3,5% de velocidade total (iniciativa e esquiva)',
       'Chassi evasivo: +4,5% de chance de esquiva',
       'Reator de energia: +6% de chance de atacar com Ki',
-      'Trabalhos rendem +5% de Zeni', // LEGADO — não usa, ver wiki-audit v0.9.23: profissões não gastam energia desde a v0.9 (o antigo "custam 15% menos energia" foi removido da exibição)
+      'Trabalhos rendem +5% de Créditos', // LEGADO — não usa, ver wiki-audit v0.9.23: profissões não gastam energia desde a v0.9 (o antigo "custam 15% menos energia" foi removido da exibição)
     ],
     combat: {
       physicalDamageMult: 1.0,
@@ -155,12 +155,12 @@ export const RACES: Record<RaceId, RaceInfo> = {
   },
   majin: {
     id: 'majin',
-    name: 'Majin',
-    tagline: 'Magia antiga e caos puro',
+    name: 'Amorph',
+    tagline: 'Filhos plásticos das fendas do caos estelar',
     description:
-      'Seres mágicos milenares movidos por caos e diversão. Sem excelência em nada, bons em TUDO — vire doce ou morra.',
+      'Entidades maleáveis formadas por biomassa de plasma elástico nas fendas de nebulosas escuras. Adaptam corpo e fluxo energético em pleno combate.',
     color: 'rose',
-    avatar: '/images/race-majin.png',
+    avatar: '/images/race-amorph.svg',
     perks: [
       '+2% em TODOS os atributos de combate (dano físico, Ki, defesa e velocidade)',
       'Absorve 4% do HP máximo ao vencer',
