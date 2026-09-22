@@ -3,9 +3,9 @@ import { RACE_LIST } from '@/lib/game/content/races';
 import { TRAINING_MASTERS } from '@/lib/game/content/techniques';
 
 export const metadata = {
-  title: 'O Universo — Guerreiros Místicos',
+  title: 'O Universo — Myst Ki Warriors',
   description:
-    'Conheça as cinco raças de Guerreiros Místicos, seus bônus, os mestres que ensinam técnicas lendárias e a eterna busca pelas Esferas do Dragão.',
+    'Conheça as cinco raças de Myst Ki Warriors, seus bônus, os mestres que ensinam técnicas lendárias e a eterna busca pelas Chaves do Horizonte.',
   alternates: { canonical: '/universo' },
 };
 
@@ -14,7 +14,7 @@ export default function UniversoPage() {
     <main className="min-h-screen bg-[#14100b] text-amber-100">
       <div className="max-w-4xl mx-auto px-4 py-12">
         <Link href="/" className="text-xs text-amber-200/40 hover:text-amber-200/70">
-          ← Guerreiros Místicos
+          ← Myst Ki Warriors
         </Link>
         <h1 className="font-display text-4xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600 mt-2 mb-3">
           O Universo
@@ -63,7 +63,7 @@ export default function UniversoPage() {
         </h2>
         <p className="text-amber-200/60 text-sm mb-6 max-w-2xl leading-relaxed">
           Grandes mestres do universo ensinam técnicas que usam Força ou Ki. Procure-os na Sala de Treino,
-          pague o treinamento em Zeni e domine golpes lendários.
+          pague o treinamento em Créditos e domine golpes lendários.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {TRAINING_MASTERS.map((m) => (
