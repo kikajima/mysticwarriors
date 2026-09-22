@@ -241,7 +241,7 @@ export function ProfessionsPanel({
                         />
                       </div>
                       <p className="text-[11px] text-amber-200/40">
-                        Base do turno: {currentPreview.zeni.toLocaleString('pt-BR')} Zeni · {currentPreview.xp.toLocaleString('pt-BR')} XP · {currentPreview.efficiency <= 1 ? 'sem bônus de duração' : `bônus de duração +${Math.round((currentPreview.efficiency - 1) * 100)}% em XP/raros`}.
+                        Base do turno: {currentPreview.zeni.toLocaleString('pt-BR')} Créditos · {currentPreview.xp.toLocaleString('pt-BR')} XP · {currentPreview.efficiency <= 1 ? 'sem bônus de duração' : `bônus de duração +${Math.round((currentPreview.efficiency - 1) * 100)}% em XP/raros`}.
                       </p>
                       <div className="mt-3">
                         {confirmCancel ? (
@@ -284,7 +284,7 @@ export function ProfessionsPanel({
                     <>
                       <p className="text-sm text-emerald-300/90 my-2">
                         Turno de {currentHours}h concluído. Base prevista:{' '}
-                        <span className="text-yellow-300">+{currentPreview.zeni.toLocaleString('pt-BR')} Zeni</span>{' '}
+                        <span className="text-yellow-300">+{currentPreview.zeni.toLocaleString('pt-BR')} Créditos</span>{' '}
                         e <span className="text-orange-300">+{currentPreview.xp.toLocaleString('pt-BR')} XP</span>.
                         Bônus raciais, de guilda e Acadêmico são fechados pelo servidor na coleta.
                       </p>
