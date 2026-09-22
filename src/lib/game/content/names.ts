@@ -5,30 +5,15 @@ import type { RaceId } from '../types';
 // ---------------------------------------------------------------------
 // POLÍTICA DE NOMES: todos os nomes são ORIGINAIS — "parecem" do
 // universo de artes marciais/kiai, mas NENHUM é nome exato de
-// personagem da franquia Dragon Ball (sem Goku, Vegeta, Freeza,
+// personagem da franquia Myst Ki Warriors (sem Goku, Vegeta, Freeza,
 // Cell, Kuririn, etc.). Variações fonéticas originais apenas.
 // =====================================================================
 
 const NAME_CORES = [
-  // linhagem saiyajin (sons "Ka/Ve/Br")
-  'Gotan', 'Kota', 'Genki', 'Katen', 'Subun',
-  'Kakora', 'Kakin', 'Kakun', 'Kakarun', 'Renkin',
-  'Vejun', 'Vegran', 'Vejora', 'Veggor', 'Vejinto',
-  'Brolan', 'Brogan', 'Raddon', 'Nappan', 'Zorun',
-  'Turlan', 'Cumbra', 'Yamosa', 'Selira', 'Kaizan',
-  // linhagem namekuseijin (sons "Pi/Na")
-  'Picala', 'Piquen', 'Piccun', 'Piccor', 'Picomai',
-  'Dendel', 'Nailo', 'Katats', 'Slugan', 'Pikonar',
-  // linhagem imperial do frio (sons "Fri/Ku")
-  'Frizex', 'Frizon', 'Frizain', 'Frizor', 'Frizuma',
-  'Cooran', 'Koldan', 'Gichamu', 'Sorbetto', 'Aisurom',
-  // linhagem bio-androide (sons "Ce")
-  'Celum', 'Cellix', 'Cellian', 'Cellor', 'Celuma',
-  'Celzar', 'Celon', 'Semic', 'Bioran', 'Nanoss',
-  // linhagem humana (sons "Ten/Ku/Ya")
-  'Tenshin', 'Tenkai', 'Tensora', 'Tensun', 'Tensai',
-  'Kurira', 'Kurizu', 'Yamcho', 'Chiazen', 'Lancha',
-  'Pualo', 'Olonga', 'Boran', 'Upao', 'Mairin',
+  'Kael', 'Voran', 'Sorin', 'Tarek', 'Rhyss', 'Auron', 'Selkar', 'Neris', 'Vael', 'Orun',
+  'Sylven', 'Thyra', 'Elyon', 'Maelis', 'Veyra', 'Nym', 'Cael', 'Ilyr', 'Seren', 'Ruun',
+  'Nexar', 'Cyron', 'Tessel', 'Vektor', 'Axiom', 'Nyxen', 'Kovar', 'Zerin', 'Omra', 'Prax',
+  'Moroq', 'Lumen', 'Vesh', 'Astra', 'Kair', 'Ravel', 'Oryn', 'Talos', 'Varyn', 'Sable',
 ];
 const NAME_TITLES = [
   'Príncipe', 'Mestre', 'Grande', 'Capitão', 'General', 'Lorde',
@@ -58,19 +43,19 @@ export function randomWarriorName(): string {
 // ===== Bots do ranking (PvP) — nomes originais =====
 
 export const BOTS = [
-  { name: 'Kaoran', race: 'saiyajin' as RaceId, level: 32 },
-  { name: 'Príncipe Vejor', race: 'saiyajin' as RaceId, level: 29 },
-  { name: 'Majin Bumbo', race: 'majin' as RaceId, level: 27 },
-  { name: 'Picolan Daimar', race: 'namekuseijin' as RaceId, level: 25 },
-  { name: 'Androide 87', race: 'androide' as RaceId, level: 24 },
-  { name: 'Gotan Escarlate', race: 'saiyajin' as RaceId, level: 23 },
-  { name: 'Trenzo do Futuro', race: 'humano' as RaceId, level: 21 },
-  { name: 'Tenshin Loto', race: 'humano' as RaceId, level: 19 },
-  { name: 'Yamcho Lobo', race: 'humano' as RaceId, level: 17 },
-  { name: 'Kurira o Careca', race: 'humano' as RaceId, level: 15 },
-  { name: 'Chiazen', race: 'humano' as RaceId, level: 12 },
-  { name: 'Sembrano 47', race: 'namekuseijin' as RaceId, level: 8 },
-  { name: 'Mercenário Toh', race: 'humano' as RaceId, level: 5 },
-  { name: 'Raddon Renegado', race: 'saiyajin' as RaceId, level: 4 },
-  { name: 'Mestre Kamo', race: 'humano' as RaceId, level: 2 },
+  { name: 'Kael Voran', race: 'Solaris' as RaceId, level: 32 },
+  { name: 'Rhyss da Matilha', race: 'Solaris' as RaceId, level: 29 },
+  { name: 'Moroq do Vazio', race: 'majin' as RaceId, level: 27 },
+  { name: 'Vaelor Syl', race: 'Verdant' as RaceId, level: 25 },
+  { name: 'Nexus-87', race: 'androide' as RaceId, level: 24 },
+  { name: 'Sorin Escarlate', race: 'Solaris' as RaceId, level: 23 },
+  { name: 'Tarek do Horizonte', race: 'humano' as RaceId, level: 21 },
+  { name: 'Sahir Venn', race: 'humano' as RaceId, level: 19 },
+  { name: 'Ravel Lobo', race: 'humano' as RaceId, level: 17 },
+  { name: 'Tarin Sol', race: 'humano' as RaceId, level: 15 },
+  { name: 'Maelis', race: 'humano' as RaceId, level: 12 },
+  { name: 'Sylven-47', race: 'Verdant' as RaceId, level: 8 },
+  { name: 'Mercenário Kovar', race: 'humano' as RaceId, level: 5 },
+  { name: 'Auron Renegado', race: 'Solaris' as RaceId, level: 4 },
+  { name: 'Mestre Orun', race: 'humano' as RaceId, level: 2 },
 ];
