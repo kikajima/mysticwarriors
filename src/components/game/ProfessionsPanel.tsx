@@ -672,9 +672,9 @@ function QuestsTab({
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              {q.rewardCréditos > 0 && (
+              {q.rewardZeni > 0 && (
                 <Chip className="bg-yellow-950/40 text-yellow-300 border-yellow-800/50">
-                  <Coins className="w-3 h-3" /> {q.rewardCréditos.toLocaleString('pt-BR')}
+                  <Coins className="w-3 h-3" /> {q.rewardZeni.toLocaleString('pt-BR')}
                 </Chip>
               )}
               {q.rewardXp > 0 && (
@@ -697,7 +697,7 @@ function QuestsTab({
                 await onAction({
                   type: 'claim_quest',
                   questId: q.questId,
-                  optimistic: { zeni: q.rewardCréditos, xp: q.rewardXp, crystals: q.rewardCrystals },
+                  optimistic: { zeni: q.rewardZeni, xp: q.rewardXp, crystals: q.rewardCrystals },
                 });
                 load();
               }}
