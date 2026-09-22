@@ -14,12 +14,12 @@ import type { TransformationDef } from '../types';
 // =====================================================================
 
 export const TRANSFORMATIONS: TransformationDef[] = [
-  // ===== Saiyajin: Oozaru → Super Saiyajin → 3 ramos =====
+  // ===== Solaris: Fera Lupina → Ascensão Prateada → 3 ramos =====
   {
     id: 'saiyajin_oozaru',
-    name: 'Oozaru',
+    name: 'Fera Lupina',
     race: 'saiyajin',
-    description: 'A transformação primordial: olhe para a lua cheia e deixe o macaco gigante aflorar.',
+    description: 'A herança lupina desperta sob radiação lunar e comprime Aether nos músculos, sentidos e ossatura.',
     icon: '🐒',
     color: 'from-amber-700 to-orange-900',
     order: 1,
@@ -29,9 +29,9 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'saiyajin_ss1',
-    name: 'Super Saiyajin',
+    name: 'Ascensão Prateada',
     race: 'saiyajin',
-    description: 'O lendário guerreiro de cabelos dourados, despertado pela fúria de um coração puro.',
+    description: 'A pelagem assume brilho prateado e o Aether percorre o corpo em descargas controladas de plasma.',
     icon: '⚡',
     color: 'from-yellow-400 to-amber-600',
     order: 2,
@@ -44,9 +44,9 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'saiyajin_ss2_forja', // ramo A: físico
-    name: 'Super Saiyajin 2 — Forja',
+    name: 'Forja do Titã Lupino',
     race: 'saiyajin',
-    description: 'O poder do SSJ2 canalizado no corpo: músculos densos como aço e punhos que racham o céu.',
+    description: 'O Aether é comprimido em musculatura e estrutura óssea, convertendo impulso estelar em força bruta.',
     icon: '💪',
     color: 'from-orange-400 to-red-600',
     order: 3,
@@ -58,9 +58,9 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'saiyajin_ss2_mestre', // ramo B: equilibrado
-    name: 'Super Saiyajin 2 — Mestre',
+    name: 'Matilha Solitária',
     race: 'saiyajin',
-    description: 'O SSJ2 perfeito: equilíbrio absoluto entre corpo e energia, sem desperdício de Ki.',
+    description: 'Instinto e razão entram em sincronia perfeita, sem desperdício de Aether entre ataque, defesa e movimento.',
     icon: '⚡',
     color: 'from-yellow-300 to-yellow-600',
     order: 3,
@@ -72,9 +72,9 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'saiyajin_ss2_furia', // ramo C: Ki
-    name: 'Super Saiyajin 2 — Fúria',
+    name: 'Fúria da Alcateia',
     race: 'saiyajin',
-    description: 'A fúria relâmpago do SSJ2: aura elétrica que transforma cada golpe em trovão.',
+    description: 'Descargas de Aether percorrem a pelagem e explodem em rajadas rápidas como uma tempestade estelar.',
     icon: '🌩️',
     color: 'from-sky-400 to-indigo-600',
     order: 3,
@@ -90,7 +90,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     id: 'humano_despertar',
     name: 'Despertar Interior',
     race: 'humano',
-    description: 'Técnicas milenares da Torre de Karin abrem os caminhos da energia interior humana.',
+    description: 'Disciplina vanguardiana e respiração de combate abrem os canais internos de Aether.',
     icon: '🌅',
     color: 'from-amber-500 to-orange-700',
     order: 1,
@@ -102,7 +102,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     id: 'humano_potencial',
     name: 'Potencial Desbloqueado',
     race: 'humano',
-    description: 'O ritual do Ancião Kaio libera 100% do seu potencial adormecido — sem perder a razão.',
+    description: 'Um protocolo meditativo de Aethel Prime libera reservas neuromusculares sem comprometer o controle.',
     icon: '✨',
     color: 'from-purple-400 to-violet-700',
     order: 2,
@@ -115,7 +115,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'humano_instinto', // ramo A: velocidade/precisão
-    name: 'Instinto Superior',
+    name: 'Reflexo Absoluto',
     race: 'humano',
     description: 'Anos de treino viram reflexo: o corpo reage antes do pensamento.',
     icon: '🌀',
@@ -143,9 +143,9 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'humano_kaio', // ramo C: energia
-    name: 'Chamado dos Kaios',
+    name: 'Convergência Celeste',
     race: 'humano',
-    description: 'Energia divina canalizada por um mortal determinado — o impossível feito realidade.',
+    description: 'O guerreiro ancora múltiplas correntes de Aether e as converte em uma única descarga de altíssima densidade.',
     icon: '🌟',
     color: 'from-yellow-200 to-amber-500',
     order: 3,
@@ -157,12 +157,12 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     multipliers: { ki: 1.32 },
   },
 
-  // ===== Namekuseijin: Sinergia → Super Namekuseijin → ramos =====
+  // ===== Verdant: Sinergia Raiz → Ascensão Silvestre → ramos =====
   {
     id: 'nameku_sinergia',
-    name: 'Sinergia Interior',
+    name: 'Sinergia Raiz',
     race: 'namekuseijin',
-    description: 'Os dois lados do coração namekuseijin combatem como um só pela primeira vez.',
+    description: 'A rede sensorial do Verdant sincroniza corpo, memória ancestral e biosfera em um único pulso.',
     icon: '🌱',
     color: 'from-green-500 to-emerald-800',
     order: 1,
@@ -172,9 +172,9 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'nameku_super',
-    name: 'Super Namekuseijin',
+    name: 'Ascensão Silvestre',
     race: 'namekuseijin',
-    description: 'A fusão perfeita consigo mesmo: o poder de vários guerreiros em um único corpo.',
+    description: 'Tecidos vegetais mineralizam em combate e ampliam simultaneamente força, defesa e condução de Aether.',
     icon: '🐲',
     color: 'from-emerald-400 to-green-700',
     order: 2,
@@ -187,9 +187,9 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'nameku_dragao', // ramo A: defesa
-    name: 'Dragão de Namekusei',
+    name: 'Colosso de Sylva',
     race: 'namekuseijin',
-    description: 'A lendária forma do dragão: escamas de energia que nenhum golpe atravessa.',
+    description: 'Camadas de fibra cristalina crescem sobre o corpo, criando uma couraça viva de densidade extrema.',
     icon: '🛡️',
     color: 'from-teal-400 to-emerald-800',
     order: 3,
@@ -203,7 +203,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     id: 'nameku_guardiao', // ramo B: equilíbrio
     name: 'Guardião Celestial',
     race: 'namekuseijin',
-    description: 'O posto de Guardião da Terra aceita você: serenidade e poder em harmonia.',
+    description: 'A sintonia com as correntes de Sylva equilibra corpo, mente e Aether em uma forma de proteção total.',
     icon: '🌏',
     color: 'from-lime-400 to-green-700',
     order: 3,
@@ -215,9 +215,9 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'nameku_sabio', // ramo C: Ki
-    name: 'Sábio do Dragão Eterno',
+    name: 'Oráculo do Horizonte',
     race: 'namekuseijin',
-    description: 'O conhecimento proibido dos Namekuseijins ancestrais flui pelas suas veias verdes.',
+    description: 'Memórias da rede viva de Sylva ampliam percepção e controle de Aether até o limite biológico.',
     icon: '📜',
     color: 'from-green-300 to-emerald-600',
     order: 3,
@@ -228,12 +228,12 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     multipliers: { ki: 1.3, defense: 1.1 },
   },
 
-  // ===== Androide: Overclock → Nano-melhorias → ramos =====
+  // ===== Sintético: Sobrecarga → Nano-melhorias → ramos =====
   {
     id: 'androide_overclock',
-    name: 'Overclock',
+    name: 'Sobrecarga',
     race: 'androide',
-    description: 'Reatores internos além do limite de fábrica. Aviso: esquentando.',
+    description: 'Travas térmicas e de potência são temporariamente removidas para elevar a vazão do núcleo de Aether.',
     icon: '⚙️',
     color: 'from-slate-400 to-slate-700',
     order: 1,
@@ -245,7 +245,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     id: 'androide_nanotech',
     name: 'Nano-melhorias',
     race: 'androide',
-    description: 'Nanomáquinas absorvem tecnologias de batalha e reescrevem seu núcleo de combate.',
+    description: 'Enxames de nanomáquinas de Nexus-9 reconfiguram blindagem, sensores e condução energética em tempo real.',
     icon: '🤖',
     color: 'from-sky-500 to-slate-800',
     order: 2,
@@ -259,7 +259,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     id: 'androide_absorcao', // ramo A: dano
     name: 'Protocolo de Absorção',
     race: 'androide',
-    description: 'Palmas que sugam a energia do inimigo: cada luta te deixa mais forte.',
+    description: 'Coletores de contato drenam energia cinética e Aether residual para alimentar subsistemas ofensivos.',
     icon: '🫱',
     color: 'from-red-400 to-rose-800',
     order: 3,
@@ -273,7 +273,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     id: 'androide_eterno', // ramo B: equilíbrio
     name: 'Reator Eterno',
     race: 'androide',
-    description: 'Energia infinita: a buggy final dos Drs. Gero e Brief combinados.',
+    description: 'Um reator fechado recicla perdas térmicas e mantém todos os subsistemas em equilíbrio contínuo.',
     icon: '♾️',
     color: 'from-violet-400 to-indigo-800',
     order: 3,
@@ -298,12 +298,12 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     multipliers: { ki: 1.32 },
   },
 
-  // ===== Majin: Forma Pura → Caos → ramos =====
+  // ===== Amorph: Forma Pura → Caos Desencadeado → ramos =====
   {
     id: 'majin_pura',
     name: 'Forma Pura',
     race: 'majin',
-    description: 'A casca externa cai: o mal puro de milênios finalmente respira.',
+    description: 'A biomassa abandona estruturas supérfluas e retorna a uma configuração compacta de plasma orgânico.',
     icon: '🍬',
     color: 'from-pink-400 to-fuchsia-700',
     order: 1,
@@ -315,7 +315,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     id: 'majin_caos',
     name: 'Caos Desencadeado',
     race: 'majin',
-    description: 'Magia antiga sem coleiras: a realidade verga ao seu redor quando você ri.',
+    description: 'A matriz molecular perde estabilidade deliberadamente e converte deformação corporal em potência de combate.',
     icon: '😈',
     color: 'from-purple-400 to-fuchsia-900',
     order: 2,
@@ -330,7 +330,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     id: 'majin_kid', // ramo A: destruição total
     name: 'Forma Original',
     race: 'majin',
-    description: 'O terror absoluto de tempos antigos: puro instinto de destruição.',
+    description: 'A forma primordial concentra massa, impulso e Aether em uma configuração agressiva de alta densidade.',
     icon: '💥',
     color: 'from-rose-400 to-red-800',
     order: 3,
@@ -342,9 +342,9 @@ export const TRANSFORMATIONS: TransformationDef[] = [
   },
   {
     id: 'majin_absoluto', // ramo B: equilíbrio
-    name: 'Majin Absoluto',
+    name: 'Núcleo Caótico',
     race: 'majin',
-    description: 'Caos e ordem dançando juntos: o corpo elástico perfeito do universo.',
+    description: 'Flexibilidade e rigidez estrutural alternam em microssegundos, produzindo uma forma equilibrada e imprevisível.',
     icon: '🔮',
     color: 'from-fuchsia-400 to-purple-800',
     order: 3,
@@ -358,7 +358,7 @@ export const TRANSFORMATIONS: TransformationDef[] = [
     id: 'majin_arcano', // ramo C: magia/Ki
     name: 'Feitiço Arcano Supremo',
     race: 'majin',
-    description: 'As palavras proibidas do Bibidi ecoam: magia bruta convertida em Ki infinito.',
+    description: 'Símbolos de ressonância dimensional convertem instabilidade do Vazio em Aether ofensivo concentrado.',
     icon: '🕯️',
     color: 'from-indigo-400 to-violet-900',
     order: 3,
