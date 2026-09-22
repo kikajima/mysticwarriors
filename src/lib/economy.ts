@@ -10,7 +10,7 @@ import { xpToNextLevel } from '@/lib/game/content/world';
 // =====================================================================
 // ECONOMIA CENTRALIZADA — todos os saldos passam por aqui
 // ---------------------------------------------------------------------
-// * Toda mutação de Zeni/cristais é atômica (updateMany condicional)
+// * Toda mutação de Créditos/cristais é atômica (updateMany condicional)
 //   → saldos nunca ficam negativos, mesmo com requisições simultâneas;
 // * Toda mutação grava uma linha no ledger (WalletTransaction) com
 //   saldo antes/depois para auditoria futura;
@@ -73,7 +73,7 @@ export async function spendCurrency(
     throw new ApiError(
       currency === 'zeni' ? 'INSUFFICIENT_ZENI' : 'INSUFFICIENT_CRYSTALS',
       currency === 'zeni'
-        ? `Zeni insuficiente! Você tem ${(current?.zeni ?? 0).toLocaleString('pt-BR')} e precisa de ${amount.toLocaleString('pt-BR')}.`
+        ? `Créditos insuficiente! Você tem ${(current?.zeni ?? 0).toLocaleString('pt-BR')} e precisa de ${amount.toLocaleString('pt-BR')}.`
         : `Cristais insuficientes! Você tem ${current?.crystals ?? 0} e precisa de ${amount}.`
     );
   }
@@ -85,7 +85,7 @@ export async function spendCurrency(
   return { balanceBefore, balanceAfter };
 }
 
-/** Teto de Zeni/cristais — Int32 seguro com folga (nenhuma fonte ultrapassa). */
+/** Teto de Créditos/cristais — Int32 seguro com folga (nenhuma fonte ultrapassa). */
 export const CURRENCY_CAP = 2_000_000_000;
 
 /** Credita moeda na carteira de forma atômica (sempre registra no ledger). */
@@ -133,7 +133,7 @@ export interface PvpTransferResult {
 }
 
 /**
- * Transfere Zeni entre dois jogadores de forma atômica, gerando AS DUAS
+ * Transfere Créditos entre dois jogadores de forma atômica, gerando AS DUAS
  * pontas do ledger compartilhando o mesmo transferId:
  *
  *   perdedor: PVP_TRANSFER_DEBIT  -amount (saldo antes/depois)
