@@ -46,7 +46,7 @@ export function ShenronPanel({
   busy: boolean;
 }) {
 
-  // v0.16 — matriz de ocupação: trabalho NÃO bloqueia desejos (só treino,
+  // v0.16 — matriz de ocupação: trabalho NÃO bloqueia Bênçãos Primordiais (só treino,
   // PvE e torneio). Aethelgard responde mesmo com o guerreiro em atividade.
   const [imgFailed, setImgFailed] = useState(false);
   const hasAll = player.dragonBalls >= 7;
@@ -62,7 +62,7 @@ export function ShenronPanel({
           <div className={`shrink-0 ${hasAll ? 'animate-float' : 'opacity-80'}`}>
             {imgFailed ? (
               <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-emerald-800 to-green-950 flex items-center justify-center text-5xl border-2 border-emerald-600/40">
-                🐉
+                ◇
               </div>
             ) : (
               <img
