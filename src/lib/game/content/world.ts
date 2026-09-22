@@ -430,7 +430,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'cristal_baba', name: 'Cristal de Uma Estrela', description: 'Slot: Acessório I ou II. Amuleto que amplifica o fluxo de Ki. Bônus: +8 KI.', category: 'accessory', price: 2400, minLevel: 6, ki: 8, icon: '🔮' },
   { id: 'potara', name: 'Brinco Potara', description: 'Slot: Acessório I ou II. Relíquia divina focada em Ki e reação. Bônus: +14 KI e +6 VEL.', category: 'accessory', price: 8000, minLevel: 12, ki: 14, spd: 6, icon: '💍' },
   { id: 'coracao_dourado', name: 'Coração do Dragão Eterno', description: 'Slot: Acessório I ou II. Melhor acessório de combate vendido pronto. Bônus: +10 ATQ, +10 DEF, +10 KI e +10 VEL.', category: 'accessory', price: 26000, minLevel: 20, atk: 10, def: 10, ki: 10, spd: 10, icon: '💎' },
-  { id: 'radar_esferas', name: 'Radar das Esferas', description: 'Slot: Acessório I ou II. Aumenta a chance da Busca pelas Esferas em +30 pontos percentuais, respeitando o teto mundial de 50%.', category: 'accessory', price: 500, currency: 'crystal', minLevel: 1, dragonBallSearchChanceBonus: 0.30, icon: '📡' },
+  { id: 'radar_esferas', name: 'Rastreador do Horizonte', description: 'Slot: Acessório I ou II. Aumenta a chance da Busca pelas Chaves em +30 pontos percentuais, respeitando o teto mundial de 50%.', category: 'accessory', price: 500, currency: 'crystal', minLevel: 1, dragonBallSearchChanceBonus: 0.30, icon: '📡' },
 
   // Endgame comercial — quatro novos degraus por slot (Nv. 30/50/75/100).
   ...ENDGAME_SHOP_ITEMS,
