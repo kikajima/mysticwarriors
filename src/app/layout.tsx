@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     "RPG online",
     "browser game",
     "jogo de gerenciamento",
-    "guerreiros místicos",
+    "Myst Ki Warriors",
     "jogo grátis",
     "RPG no navegador",
     "browser game brasileiro",
@@ -76,10 +76,10 @@ export const metadata: Metadata = {
       "Treine. Lute. Trabalhe. Colete as 7 Chaves do Horizonte e domine o universo — RPG de gerenciamento no navegador, grátis.",
     images: [
       {
-        url: "/images/banner.png",
+        url: "/images/banner-mystki.svg",
         width: 1024,
         height: 576,
-        alt: "Myst Ki Warriors carregando energia ao pôr do sol",
+        alt: "Setor Caelum e o símbolo do Horizonte",
       },
     ],
   },
@@ -88,7 +88,7 @@ export const metadata: Metadata = {
     title: "Myst Ki Warriors — RPG Online Grátis",
     description:
       "Treine. Lute. Trabalhe. Colete as 7 Chaves do Horizonte e domine o universo.",
-    images: ["/images/banner.png"],
+    images: ["/images/banner-mystki.svg"],
   },
   robots: {
     index: true,
