@@ -321,9 +321,9 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     const t = wikiText('pve');
     const first = ENEMIES[0];
     const last = ENEMIES[ENEMIES.length - 1];
-    expect(t).toContain(`~${first.zeniReward.toLocaleString('pt-BR')} Zeni`);
+    expect(t).toContain(`~${first.zeniReward.toLocaleString('pt-BR')} Créditos`);
     expect(t).toContain(`~${first.xpReward.toLocaleString('pt-BR')} XP`);
-    expect(t).toContain(`~${last.zeniReward.toLocaleString('pt-BR')} Zeni`);
+    expect(t).toContain(`~${last.zeniReward.toLocaleString('pt-BR')} Créditos`);
     expect(t).toContain(`~${last.xpReward.toLocaleString('pt-BR')} XP`);
   });
 
@@ -341,13 +341,13 @@ describe('CONTRATO B — valores publicados = constantes reais', () => {
     expect(elixir).toBeDefined();
     expect(elixir!.price).toBe(75);
     expect(t).toContain(`${elixir!.price} 💎`);
-    // o antigo enquadramento de preço dinâmico em Zeni (código morto) não pode voltar
+    // o antigo enquadramento de preço dinâmico em Créditos (código morto) não pode voltar
     expect(t).not.toContain('1,6×');
   });
 
-  test('Raças: Androide sem claim de energia em trabalho (bônus +5% Zeni mantido)', () => {
+  test('Raças: Androide sem claim de energia em trabalho (bônus +5% Créditos mantido)', () => {
     const t = wikiText('racas');
-    expect(t).toContain('+5% de Zeni em trabalhos');
+    expect(t).toContain('+5% de Créditos em trabalhos');
     expect(t).not.toContain('menos energia');
   });
 
