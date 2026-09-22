@@ -121,7 +121,7 @@ export function CharacterSelect({
                     <p className="font-heading text-orange-400">{p.derived.power.toLocaleString('pt-BR')}</p>
                   </div>
                   <div className="bg-black/30 rounded-lg py-2">
-                    <p className="text-[10px] text-amber-200/40 uppercase">Zeni</p>
+                    <p className="text-[10px] text-amber-200/40 uppercase">Créditos</p>
                     <p className="font-heading text-yellow-400">{p.zeni.toLocaleString('pt-BR')}</p>
                   </div>
                 </div>
@@ -203,7 +203,7 @@ export function CharacterSelect({
                 <h3 className="font-heading text-amber-100 text-lg">Excluir {confirming.name}?</h3>
                 <p className="text-xs text-amber-200/60 mt-1 leading-relaxed">
                   Nível {confirming.level} · {RACES[confirming.race]?.name}. Todo o progresso deste
-                  personagem (itens, técnicas, Zeni, profissões) será apagado para sempre. Sua
+                  personagem (itens, técnicas, Créditos, profissões) será apagado para sempre. Sua
                   conta continua ativa — esta ação não pode ser desfeita.
                 </p>
               </div>
