@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 576" role="img" aria-labelledby="t d">
+<title id="t">Myst Ki Warriors</title><desc id="d">Setor Caelum, guerreiros sob um horizonte de Aether</desc>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#07111f"/><stop offset=".48" stop-color="#17102b"/><stop offset="1" stop-color="#35130d"/></linearGradient>
+ <radialGradient id="a"><stop stop-color="#8cf7ff" stop-opacity=".9"/><stop offset=".45" stop-color="#8b5cf6" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+ <linearGradient id="h" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#67e8f9"/><stop offset=".5" stop-color="#c4b5fd"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+</defs>
+<rect width="1024" height="576" fill="url(#bg)"/>
+<circle cx="810" cy="115" r="170" fill="url(#a)"/><circle cx="810" cy="115" r="58" fill="none" stroke="#a78bfa" stroke-width="3" opacity=".7"/><ellipse cx="810" cy="115" rx="110" ry="34" fill="none" stroke="#67e8f9" stroke-width="2" opacity=".55" transform="rotate(-18 810 115)"/>
+<g fill="#fff" opacity=".75"><circle cx="85" cy="80" r="2"/><circle cx="210" cy="126" r="1.5"/><circle cx="362" cy="62" r="2"/><circle cx="566" cy="105" r="1"/><circle cx="690" cy="44" r="2"/><circle cx="930" cy="258" r="1.5"/><circle cx="470" cy="214" r="1.2"/></g>
+<path d="M0 425 Q180 360 350 430 T720 416 T1024 390 V576 H0Z" fill="#0b0d13"/>
+<g opacity=".95">
+ <path d="M152 420 l22-90 18-35 18 35 22 90z" fill="#b45309"/><circle cx="192" cy="276" r="20" fill="#d97706"/><path d="M174 287 l-22-18 13-20 27 18 27-18 13 20-22 18z" fill="#d97706"/>
+ <path d="M310 425 l20-102 18-31 18 31 20 102z" fill="#d6b26e"/><circle cx="348" cy="272" r="19" fill="#f1d49a"/>
+ <path d="M475 425 l18-95 20-38 20 38 18 95z" fill="#15803d"/><circle cx="513" cy="272" r="20" fill="#22c55e"/><path d="M495 260 l-15-25 20 11 13-29 13 29 20-11-15 25z" fill="#4ade80"/>
+ <path d="M636 425 l18-99 20-38 20 38 18 99z" fill="#64748b"/><circle cx="674" cy="270" r="20" fill="#94a3b8"/><path d="M654 270h40M674 250v40" stroke="#22d3ee" stroke-width="4"/>
+ <path d="M800 425 l24-100 18-32 18 32 24 100z" fill="#7e22ce"/><circle cx="842" cy="272" r="21" fill="#a855f7"/><path d="M825 276 q17-32 34 0 q-17 25-34 0" fill="#d8b4fe"/>
+</g>
+<rect x="76" y="116" width="550" height="162" rx="28" fill="#05070c" opacity=".58"/>
+<text x="110" y="190" fill="url(#h)" font-family="system-ui, sans-serif" font-weight="900" font-size="72" letter-spacing="3">MYST KI</text>
+<text x="110" y="254" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="800" font-size="58" letter-spacing="8">WARRIORS</text>
+<text x="112" y="300" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="18" letter-spacing="5">SETOR CAELUM • AETHER • CONVERGÊNCIA</text>
+</svg>
