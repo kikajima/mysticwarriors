@@ -325,10 +325,10 @@ export function Dashboard({
             {player.zeni.toLocaleString('pt-BR')} <span className="text-sm text-amber-200/50">Créditos</span>
           </p>
           <div className="mt-auto pt-2 flex items-center gap-2 text-[11px] text-amber-200/40">
-            <span>🔮 Esferas: {player.dragonBalls}/7</span>
+            <span>◇ Chaves: {player.dragonBalls}/7</span>
             {player.dragonBalls >= 7 && (
               <button onClick={() => onNavigate('shenron')} className="text-yellow-300 underline hover:text-yellow-200">
-                invocar Aethelgard!
+                abrir Convergência!
               </button>
             )}
           </div>
