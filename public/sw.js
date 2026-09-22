@@ -1,12 +1,10 @@
 // Service Worker — Myst Ki Warriors
 // Estratégia: cache-first para estáticos, network-only para APIs do jogo.
-const CACHE = 'gm-cache-v1';
+const CACHE = 'mkw-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/jogar',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/apple-touch-icon.png',
+  '/icons/icon.svg',
   '/manifest.webmanifest',
   '/images/banner-mystki.svg',
 ];
