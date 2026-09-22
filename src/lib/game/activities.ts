@@ -86,7 +86,7 @@ export interface BattleActivityResult {
       miracleWin: boolean;
       /** v0.9.17 — Reposicionamento exitoso vs 2+ escalas (David vs Golias). */
       davidReposition: boolean;
-      /** Chance de roubo: uma esfera do defensor por vitória PvP. */
+      /** Chance de roubo: uma Chave do defensor por vitória PvP. */
       dragonBallStealChance: number;
     };
     /** v0.9.18 — luta do Torneio de Artes Marciais (chave de 8). */
@@ -151,7 +151,7 @@ export async function assertNoRunningActivityTx(tx: Tx, playerId: string, action
       running.kind === 'train'
         ? `Seu guerreiro ainda está treinando (${remain}s). Aguarde o fim da sessão.`
         : running.kind === 'dragon_ball_search'
-          ? `Seu guerreiro ainda está procurando Esferas do Dragão (${remain}s). Pare a busca antes de iniciar outra atividade.`
+          ? `Seu guerreiro ainda está procurando Chaves do Horizonte (${remain}s). Pare a busca antes de iniciar outra atividade.`
           : `Seu guerreiro ainda está lutando (${remain}s). Aguarde o desfecho da batalha.`
     );
   }
@@ -219,7 +219,7 @@ async function applyDragonBallSearchResult(
   payload: DragonBallSearchActivityResult
 ): Promise<{ message: string; levelsGained: number }> {
   if (!payload.apply.found) {
-    return { message: 'A busca terminou sem encontrar uma Esfera do Dragão.', levelsGained: 0 };
+    return { message: 'A busca terminou sem encontrar uma Chave do Horizonte.', levelsGained: 0 };
   }
   const freeStar = await tx.dragonBallPossession.findFirst({
     where: { playerId: null },
@@ -234,12 +234,12 @@ async function applyDragonBallSearchResult(
     data: { playerId: player.id, acquiredAt: new Date() },
   });
   if (claimed.count === 0) {
-    return { message: 'Outro guerreiro encontrou essa esfera primeiro. A busca terminou.', levelsGained: 0 };
+    return { message: 'Outro guerreiro encontrou essa Chave primeiro. A busca terminou.', levelsGained: 0 };
   }
   const newOwnedCount = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
   await tx.player.update({ where: { id: player.id }, data: { dragonBalls: newOwnedCount } });
   player.dragonBalls = newOwnedCount;
-  return { message: `Busca concluída: você encontrou a Esfera de ${freeStar.star} estrela${freeStar.star === 1 ? '' : 's'}! (${newOwnedCount}/7)`, levelsGained: 0 };
+  return { message: `Busca concluída: você encontrou a Chave do Horizonte nº ${freeStar.star}! (${newOwnedCount}/7)`, levelsGained: 0 };
 }
 
 // ===== APLICAÇÃO: TREINO =====
