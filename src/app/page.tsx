@@ -18,7 +18,7 @@ export default function LandingPage() {
         <div className="absolute inset-0">
           <img
             src="/images/banner.png"
-            alt="Guerreiros místicos carregando energia ao pôr do sol"
+            alt="Myst Ki Warriors carregando energia ao pôr do sol"
             className="w-full h-full object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-[#14100b]/60 to-[#14100b]" />
@@ -187,7 +187,7 @@ export default function LandingPage() {
       {/* ===== FOOTER ===== */}
       <footer className="border-t border-amber-900/30 py-8">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-amber-200/40">
-          <p>Guerreiros Místicos — jogo de fã inspirado nos clássicos browser games de gerenciamento.</p>
+          <p>Myst Ki Warriors — jogo de fã inspirado nos clássicos browser games de gerenciamento.</p>
           <nav className="flex flex-wrap gap-4" aria-label="Links do site">
             <Link href="/jogar" className="hover:text-amber-200/70">Jogar</Link>
             <Link href="/ranking" className="hover:text-amber-200/70">Ranking</Link>
