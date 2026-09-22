@@ -4,7 +4,7 @@ import { TECHNIQUES } from '@/lib/game/content/techniques';
 export const metadata = {
   title: 'Técnicas Lendárias — Myst Ki Warriors',
   description:
-    'Catálogo completo das técnicas de Myst Ki Warriors: Rogafufuken, Onda de Aether, Disco de Ruptura, Ruptura do Horizonte, Convergência do Aether e mais — poder, custo de Ki e mestres que as ensinam.',
+    'Catálogo completo das técnicas de Myst Ki Warriors: Garras do Lobo, Onda de Aether, Disco de Ruptura, Ruptura do Horizonte, Convergência do Aether e mais — poder, custo de Ki e mestres que as ensinam.',
   alternates: { canonical: '/tecnicas' },
 };
 
