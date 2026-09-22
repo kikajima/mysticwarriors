@@ -360,7 +360,7 @@ export async function buildCloudCharacterRow(playerId: string): Promise<AdminClo
 
 type Tx = Prisma.TransactionClient;
 
-async function adjustZeni(tx: Tx, playerId: string, delta: number, accountId: string | null): Promise<void> {
+async function adjustCréditos(tx: Tx, playerId: string, delta: number, accountId: string | null): Promise<void> {
   const fresh = await tx.player.findUniqueOrThrow({ where: { id: playerId }, select: { zeni: true } });
   const after = clampAdminInt(fresh.zeni + delta, 0, ADMIN_LIMITS.zeni);
   if (after === fresh.zeni) return;
@@ -448,8 +448,8 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
         if (input.action === 'grant') {
           const parts: string[] = [];
           if (input.zeniDelta) {
-            await adjustZeni(tx, fresh.id, clampAdminInt(input.zeniDelta, -ADMIN_LIMITS.maxDelta, ADMIN_LIMITS.maxDelta), accountId);
-            parts.push('Zeni ajustado');
+            await adjustCréditos(tx, fresh.id, clampAdminInt(input.zeniDelta, -ADMIN_LIMITS.maxDelta, ADMIN_LIMITS.maxDelta), accountId);
+            parts.push('Créditos ajustado');
           }
           if (input.crystalDelta) {
             await adjustCrystals(tx, fresh.id, clampAdminInt(input.crystalDelta, -ADMIN_LIMITS.maxDelta, ADMIN_LIMITS.maxDelta), accountId);
@@ -461,8 +461,8 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
             const after = await setAdminDragonBallCount(tx, fresh.id, desired);
             parts.push(
               after === desired
-                ? `Esferas do Dragão: ${after}/7`
-                : `Esferas do Dragão: ${after}/7 (não há mais esferas globais livres)`
+                ? `Chaves do Horizonte: ${after}/7`
+                : `Chaves do Horizonte: ${after}/7 (não há mais esferas globais livres)`
             );
           }
           if (input.xpGain && input.xpGain > 0) {
@@ -555,7 +555,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
 
         } else if (input.action === 'grant_dragon_ball') {
           if (input.dragonBallStar === undefined) {
-            throw new ApiError('VALIDATION_ERROR', 'Escolha qual Esfera do Dragão deseja conceder.');
+            throw new ApiError('VALIDATION_ERROR', 'Escolha qual Chave do Horizonte deseja conceder.');
           }
           const message = await grantAdminDragonBallStar(tx, fresh, input.dragonBallStar);
           await trackEvent('admin_grant_dragon_ball', {
