@@ -58,7 +58,7 @@ export function CharacterSelect({
         <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
           <div>
             <h1 className="font-display text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600 tracking-wide">
-              Guerreiros Místicos
+              Myst Ki Warriors
             </h1>
             <p className="font-heading text-amber-200/60 text-sm mt-1 flex items-center gap-1.5">
               <User className="w-3.5 h-3.5" /> Conta: <span className="text-amber-100">{account.username}</span>
