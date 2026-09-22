@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     template: "%s — Myst Ki Warriors",
   },
   description:
-    "Crie seu guerreiro místico, treine atributos, aprenda técnicas lendárias com mestres, cumpra missões, funde guildas, enfrente chefes mundiais e colete as 7 Esferas do Dragão neste RPG de gerenciamento estilo browser game clássico.",
+    "Crie seu guerreiro místico, treine atributos, aprenda técnicas lendárias com mestres, cumpra missões, funde guildas, enfrente chefes mundiais e colete as 7 Chaves do Horizonte neste RPG de gerenciamento estilo browser game clássico.",
   keywords: [
     "RPG online",
     "browser game",
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     siteName: "Myst Ki Warriors",
     title: "Myst Ki Warriors — RPG Online Grátis",
     description:
-      "Treine. Lute. Trabalhe. Colete as 7 Esferas do Dragão e domine o universo — RPG de gerenciamento no navegador, grátis.",
+      "Treine. Lute. Trabalhe. Colete as 7 Chaves do Horizonte e domine o universo — RPG de gerenciamento no navegador, grátis.",
     images: [
       {
         url: "/images/banner.png",
@@ -87,7 +87,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Myst Ki Warriors — RPG Online Grátis",
     description:
-      "Treine. Lute. Trabalhe. Colete as 7 Esferas do Dragão e domine o universo.",
+      "Treine. Lute. Trabalhe. Colete as 7 Chaves do Horizonte e domine o universo.",
     images: ["/images/banner.png"],
   },
   robots: {
