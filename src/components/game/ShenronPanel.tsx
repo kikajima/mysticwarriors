@@ -8,28 +8,28 @@ import { Coins, Swords, Heart, BookOpen, Sparkles } from 'lucide-react';
 const WISHES = [
   {
     type: 'riqueza' as const,
-    title: 'Riqueza Infinita',
+    title: 'Riqueza Cósmica',
     icon: '💰',
-    description: '+8.000 Zeni caem direto na sua carteira.',
+    description: '+8.000 Zeni são transferidos para sua carteira.',
     chip: <Coins className="w-4 h-4 text-yellow-400" />,
   },
   {
     type: 'poder' as const,
-    title: 'Poder Absoluto',
+    title: 'Despertar de Poder',
     icon: '💪',
     description: '+3 em TODOS os atributos (Força, Defesa, Velocidade e Ki).',
     chip: <Swords className="w-4 h-4 text-orange-400" />,
   },
   {
     type: 'vitalidade' as const,
-    title: 'Vitalidade Eterna',
+    title: 'Renovação Vital',
     icon: '❤️',
     description: 'Vida e energia totalmente restauradas, na hora.',
     chip: <Heart className="w-4 h-4 text-red-400" />,
   },
   {
     type: 'sabedoria' as const,
-    title: 'Sabedoria Milenar',
+    title: 'Sabedoria Ancestral',
     icon: '📜',
     description: '+1.500 XP de conhecimento de batalha acumulado.',
     chip: <BookOpen className="w-4 h-4 text-emerald-400" />,
@@ -47,15 +47,15 @@ export function ShenronPanel({
 }) {
 
   // v0.16 — matriz de ocupação: trabalho NÃO bloqueia desejos (só treino,
-  // PvE e torneio). Shenron atende mesmo com o guerreiro no turno.
+  // PvE e torneio). Aethelgard responde mesmo com o guerreiro em atividade.
   const [imgFailed, setImgFailed] = useState(false);
   const hasAll = player.dragonBalls >= 7;
 
   return (
     <div className="space-y-6">
-      <SectionTitle icon="🐉">Altar de Shenlon</SectionTitle>
+      <SectionTitle icon="◇">Convergência do Horizonte</SectionTitle>
 
-      {/* Esferas */}
+      {/* Chaves do Horizonte */}
       <GameCard className="p-6 relative overflow-hidden" glow={hasAll}>
         <div className="absolute inset-0 bg-gradient-to-b from-yellow-950/20 via-transparent to-transparent pointer-events-none" />
         <div className="flex flex-col sm:flex-row items-center gap-6 relative">
@@ -67,7 +67,7 @@ export function ShenronPanel({
             ) : (
               <img
                 src="/images/shenron.png"
-                alt="Shenlon, o dragão sagrado, emergindo das nuvens"
+                alt="Aethelgard, Guardião Primordial do Horizonte"
                 className="w-28 h-28 rounded-2xl object-cover border-2 border-emerald-600/40 shadow-lg shadow-emerald-950/60"
                 onError={() => setImgFailed(true)}
               />
@@ -75,14 +75,14 @@ export function ShenronPanel({
           </div>
           <div className="flex-1 text-center sm:text-left">
             <h3 className="font-heading text-xl text-amber-100 mb-1">
-              {hasAll ? 'AS SETE ESFERAS ESTÃO REUNIDAS!' : 'Colete as 7 Esferas do Dragão'}
+              {hasAll ? 'AS CHAVES DO HORIZONTE ESTÃO REUNIDAS!' : 'Reúna as 7 Chaves do Horizonte'}
             </h3>
             <p className="text-sm text-amber-200/60 leading-relaxed mb-4">
               {hasAll
-                ? 'Os céus escurecem, o chão treme... Shenlon aguarda seu desejo. Escolha com sabedoria, guerreiro.'
-                : 'Use a Busca pelas Esferas em Atividades para procurar as sete estrelas globais. Vitórias no PvP também podem tomar uma esfera do adversário. Reúna todas as sete para invocar o dragão sagrado.'}
+                ? 'Os anéis do Horizonte entram em ressonância. Aethelgard desperta e oferece uma Bênção Primordial.'
+                : 'Use a Busca pelas Chaves em Atividades para rastrear os sete artefatos globais. Vitórias no PvP também podem tomar uma Chave do adversário. Reúna todas para abrir a Convergência do Horizonte.'}
             </p>
-            <div className="flex flex-wrap justify-center sm:justify-start gap-2" aria-label={`${player.dragonBalls} de 7 esferas coletadas`}>
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2" aria-label={`${player.dragonBalls} de 7 Chaves reunidas`}>
               {Array.from({ length: 7 }, (_, i) => {
                 const filled = i < player.dragonBalls;
                 return (
@@ -94,7 +94,7 @@ export function ShenronPanel({
                         : 'bg-black/50 border-amber-900/40 text-amber-900/40'
                     }`}
                     role="img"
-                    aria-label={filled ? `Esfera de ${i + 1} estrelas obtida` : `Esfera de ${i + 1} estrelas faltando`}
+                    aria-label={filled ? `Chave do Horizonte ${i + 1} obtida` : `Chave do Horizonte ${i + 1} faltando`}
                   >
                     {filled ? '⭐'.repeat(Math.min(3, i + 1)) : '·'}
                   </div>
@@ -105,7 +105,7 @@ export function ShenronPanel({
         </div>
       </GameCard>
 
-      {/* Desejos */}
+      {/* Bênçãos Primordiais */}
       {hasAll ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {WISHES.map((wish) => (
@@ -125,7 +125,7 @@ export function ShenronPanel({
                 onClick={() => onWish(wish.type)}
                 disabled={busy}
               >
-                <Sparkles className="w-4 h-4" /> Desejar {wish.title}
+                <Sparkles className="w-4 h-4" /> Receber {wish.title}
               </GameButton>
             </GameCard>
           ))}
@@ -134,7 +134,7 @@ export function ShenronPanel({
         <GameCard className="p-6 text-center">
           <p className="text-amber-200/50 text-sm">
             Faltam <span className="font-heading text-yellow-400 text-lg">{7 - player.dragonBalls}</span>{' '}
-            esferas para completar o conjunto.
+            Chaves para completar a Convergência.
           </p>
         </GameCard>
       )}
