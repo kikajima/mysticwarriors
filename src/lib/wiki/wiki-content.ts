@@ -184,7 +184,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         items: [
           '**Crie o personagem** ([[racas|Raças]]) — a raça define seus bônus permanentes. É para sempre!',
           '**Comece um turno de trabalho** ([[profissoes|Profissões]]) — dura 1 hora real, **não gasta energia** e rende Zeni + XP mesmo com o jogo fechado. Durante o turno só lutas contra inimigos e torneio esperam — PvP, Ameaça Universal, loja, guilda e coletas seguem liberados.',
-          '**Aprenda sua primeira técnica** ([[tecnicas|Técnicas]]) — o Rogafufuken (600 Zeni) já deixa seus golpes físicos 25% mais fortes.',
+          '**Aprenda sua primeira técnica** ([[tecnicas|Técnicas]]) — o Garras do Lobo Astral (600 Zeni) já deixa seus golpes físicos 25% mais fortes.',
           '**Treine o atributo da sua build** ([[atributos|Atributos]]) — Força para golpes físicos, Ki para ondas de energia.',
           '**Lute contra os capangas** ([[pve|Batalhas PvE]]) — comece pelo Arruaceiro do Ermo e avance até inimigos de escala Transcendente conforme seu [[escala-poder|Poder de Luta]] cresce.',
           '**Compre equipamento** ([[loja|Loja]]) — Luvas de Treino (300 Zeni) e Gi de Batalha (250 Zeni) custam pouco e já fazem diferença.',
@@ -305,11 +305,11 @@ export const WIKI_SECTIONS: WikiSection[] = [
           },
           {
             kind: 'text',
-            text: '**Esquiva:** base `5% + 0,5% por ponto de velocidade a favor do defensor` (entre 3% e 30%), somada a bônus de raça e [[estrategias|estratégia]] e ajustada pela precisão da técnica — piso final de 2%, teto de 40%. Técnicas com precisão negativa (ex.: Kienzan **−5%**) são mais fáceis de desviar; com valor positivo (Dodonpa **+5%**) acertam mais.',
+            text: '**Esquiva:** base `5% + 0,5% por ponto de velocidade a favor do defensor` (entre 3% e 30%), somada a bônus de raça e [[estrategias|estratégia]] e ajustada pela precisão da técnica — piso final de 2%, teto de 40%. Técnicas com precisão negativa (ex.: Disco de Ruptura **−5%**) são mais fáceis de desviar; com valor positivo (Lança Fotônica **+5%**) acertam mais.',
           },
           {
             kind: 'text',
-            text: '**Perfuração:** técnicas com `defensePierce` (ex.: Kienzan 35%) reduzem a defesa efetiva do alvo antes do soft cap — o caminho contra tanques. Multiplicadores de [[estrategias|estratégia]] e [[escala-poder|Escala de Poder]] entram por último, no líquido.',
+            text: '**Perfuração:** técnicas com `defensePierce` (ex.: Disco de Ruptura 35%) reduzem a defesa efetiva do alvo antes do soft cap — o caminho contra tanques. Multiplicadores de [[estrategias|estratégia]] e [[escala-poder|Escala de Poder]] entram por último, no líquido.',
           },
         ],
       },
@@ -564,7 +564,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: 'A primeira compra de qualquer guerreiro costuma ser o **Rogafufuken** (600 Zeni, nível 1): golpes físicos **25% mais fortes**. Lá no fim da jornada, a suprema **Genki Dama** multiplica por **1,75×** e perfura 30% da defesa — o golpe que apaga horizontes.',
+        text: 'A primeira compra de qualquer guerreiro costuma ser o **Garras do Lobo Astral** (600 Zeni, nível 1): golpes físicos **25% mais fortes**. Lá no fim da jornada, a suprema **Convergência do Aether** multiplica por **1,75×** e perfura 30% da defesa — o golpe que apaga horizontes.',
       },
       {
         kind: 'text',
@@ -580,7 +580,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'callout',
         tone: 'info',
         title: 'O caminho contra tanques',
-        text: 'A perfuração ignora parte da defesa: **Kienzan** corta 35%, **Makankosappo** e **Genki Dama** ignoram 30%. Contras e precisões estão na tabela de detalhes.',
+        text: 'A perfuração ignora parte da defesa: **Disco de Ruptura** corta 35%, **Espiral Penetrante** e **Convergência do Aether** ignoram 30%. Contras e precisões estão na tabela de detalhes.',
       },
       {
         kind: 'details',
@@ -952,7 +952,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'text',
-        text: `O Super Saiyajin, por exemplo, exige nível 12, Força 40 e Ki 30, a técnica Kamehameha e a forma anterior (Oozaru). Ao desbloquear, você ganha **+2 Força e +2 Ki permanentes** — e a forma ativa multiplica tudo: físico e Ki ×1,15, defesa ×1,08, velocidade ×1,05.`,
+        text: `O Super Saiyajin, por exemplo, exige nível 12, Força 40 e Ki 30, a técnica Onda de Aether e a forma anterior (Oozaru). Ao desbloquear, você ganha **+2 Força e +2 Ki permanentes** — e a forma ativa multiplica tudo: físico e Ki ×1,15, defesa ×1,08, velocidade ×1,05.`,
       },
       {
         kind: 'details',
