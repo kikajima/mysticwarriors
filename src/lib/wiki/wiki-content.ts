@@ -952,7 +952,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'text',
-        text: `O Super Saiyajin, por exemplo, exige nível 12, Força 40 e Ki 30, a técnica Onda de Aether e a forma anterior (Oozaru). Ao desbloquear, você ganha **+2 Força e +2 Ki permanentes** — e a forma ativa multiplica tudo: físico e Ki ×1,15, defesa ×1,08, velocidade ×1,05.`,
+        text: `O Ascensão Prateada, por exemplo, exige nível 12, Força 40 e Ki 30, a técnica Onda de Aether e a forma anterior (Fera Lupina). Ao desbloquear, você ganha **+2 Força e +2 Ki permanentes** — e a forma ativa multiplica tudo: físico e Ki ×1,15, defesa ×1,08, velocidade ×1,05.`,
       },
       {
         kind: 'details',
