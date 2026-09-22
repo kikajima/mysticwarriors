@@ -1336,9 +1336,9 @@ export default function PlayPage() {
             <a
               href="/"
               className="font-display text-xl sm:text-3xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600 shrink-0 tracking-wide"
-              title="Guerreiros Místicos — página inicial"
+              title="Myst Ki Warriors — página inicial"
             >
-              Guerreiros Místicos
+              Myst Ki Warriors
             </a>
 
             <div className="flex-1" />
@@ -1562,7 +1562,7 @@ export default function PlayPage() {
 
       {/* Rodapé (desktop) */}
       <footer className="hidden lg:block mt-auto border-t border-amber-900/30 py-4 text-center text-[11px] text-amber-200/30 px-4">
-        Guerreiros Místicos — jogo de fã inspirado nos clássicos browser games de gerenciamento.{' '}
+        Myst Ki Warriors — jogo de fã inspirado nos clássicos browser games de gerenciamento.{' '}
         {auth && !auth.isGuest
           ? `Progresso de ${auth.username} salvo na nuvem — sobrevive a qualquer atualização.`
           : 'Progresso de convidado — use "Salvar meu guerreiro" no menu para criar sua conta na nuvem sem perder nada.'}
