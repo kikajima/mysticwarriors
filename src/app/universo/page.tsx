@@ -20,9 +20,7 @@ export default function UniversoPage() {
           O Universo
         </h1>
         <p className="text-amber-200/60 text-sm leading-relaxed mb-10 max-w-2xl">
-          Um universo de guerreiros místicos onde o treino supera talento, esferas lendárias concedem
-          desejos e o poder de luta define a hierarquia. Cinco povos disputam o topo — e o seu guerreiro
-          pode virar a próxima lenda.
+          No Setor Caelum, mundos ligados por portais quânticos disputam recursos, conhecimento e controle do Aether. As sete Chaves do Horizonte podem abrir a Convergência de Aethelgard, enquanto cinco povos constroem caminhos próprios de evolução e combate.
         </p>
 
         {/* Raças */}
@@ -62,7 +60,7 @@ export default function UniversoPage() {
           Os Mestres
         </h2>
         <p className="text-amber-200/60 text-sm mb-6 max-w-2xl leading-relaxed">
-          Grandes mestres do universo ensinam técnicas que usam Força ou Ki. Procure-os na Sala de Treino,
+          Grandes mestres de Caelum ensinam técnicas físicas e formas de canalizar Aether através do Ki. Procure-os na Sala de Treino,
           pague o treinamento em Créditos e domine golpes lendários.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
