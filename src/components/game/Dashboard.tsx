@@ -328,7 +328,7 @@ export function Dashboard({
             <span>🔮 Esferas: {player.dragonBalls}/7</span>
             {player.dragonBalls >= 7 && (
               <button onClick={() => onNavigate('shenron')} className="text-yellow-300 underline hover:text-yellow-200">
-                invocar Shenlon!
+                invocar Aethelgard!
               </button>
             )}
           </div>
