@@ -5,7 +5,7 @@ import { TRANSFORMATIONS } from '@/lib/game/content/transformations';
 export const metadata = {
   title: 'Transformações — Myst Ki Warriors',
   description:
-    'As árvores de transformação de Myst Ki Warriors por raça: Fera Lupina, Super Solaris, Super Verdant, Overclock, Caos Desencadeado e os três caminhos finais de cada raça.',
+    'As árvores de transformação de Myst Ki Warriors por raça: Fera Lupina, Ascensão Prateada, Ascensão Silvestre, Sobrecarga, Caos Desencadeado e os três caminhos finais de cada raça.',
   alternates: { canonical: '/transformacoes' },
 };
 
