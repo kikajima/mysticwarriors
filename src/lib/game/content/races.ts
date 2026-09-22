@@ -26,7 +26,7 @@ export const RACES: Record<RaceId, RaceInfo> = {
     description:
       'Humanoides lupinos de mundos de alta energia. Instinto, disciplina de alcateia e adaptação extrema fazem dos Solaris combatentes ferozes do Setor Caelum.',
     color: 'orange',
-    avatar: '/images/race-saiyajin.png',
+    avatar: '/images/race-solaris.svg',
     perks: [
       '+8% de dano em ataques físicos',
       '+10% de XP em batalhas',
@@ -59,7 +59,7 @@ export const RACES: Record<RaceId, RaceInfo> = {
     description:
       'Povos mortais que compensam a ausência de mutações extremas com disciplina, tecnologia tática adaptativa e domínio preciso da energia vital.',
     color: 'amber',
-    avatar: '/images/race-humano.png',
+    avatar: '/images/race-vanguardiano.svg',
     perks: [
       '+7% de Defesa em combate (físico e energia)',
       '+2% de dano em ataques de Ki',
@@ -93,7 +93,7 @@ export const RACES: Record<RaceId, RaceInfo> = {
     description:
       'Seres de matriz vegetal e cristalina ligados à rede viva de Sylva. Seus corpos regenerativos sustentam combates longos e conduzem energia com grande estabilidade.',
     color: 'emerald',
-    avatar: '/images/race-namekuseijin.png',
+    avatar: '/images/race-verdant.svg',
     perks: [
       'Regeneração de vida 15% mais rápida',
       '+5% de dano em ataques de Ki',
@@ -126,7 +126,7 @@ export const RACES: Record<RaceId, RaceInfo> = {
     description:
       'Seres artificiais e organismos aprimorados em Nexus-9. Núcleos de fluxo, chassis evasivos e módulos adaptativos sustentam combate prolongado.',
     color: 'slate',
-    avatar: '/images/race-androide.png',
+    avatar: '/images/race-sintetico.svg',
     perks: [
       '+3,5% de velocidade total (iniciativa e esquiva)',
       'Chassi evasivo: +4,5% de chance de esquiva',
@@ -160,7 +160,7 @@ export const RACES: Record<RaceId, RaceInfo> = {
     description:
       'Entidades maleáveis surgidas em fendas de nebulosas escuras. Sua biomassa energética se reorganiza após cada confronto e absorve energia residual.',
     color: 'rose',
-    avatar: '/images/race-majin.png',
+    avatar: '/images/race-amorph.svg',
     perks: [
       '+2% em TODOS os atributos de combate (dano físico, Ki, defesa e velocidade)',
       'Absorve 4% do HP máximo ao vencer',

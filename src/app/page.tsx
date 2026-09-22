@@ -17,8 +17,8 @@ export default function LandingPage() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/images/banner.png"
-            alt="Myst Ki Warriors carregando energia ao pôr do sol"
+            src="/images/banner-mystki.svg"
+            alt="Setor Caelum e o símbolo do Horizonte"
             className="w-full h-full object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-[#14100b]/60 to-[#14100b]" />
@@ -29,7 +29,7 @@ export default function LandingPage() {
             O RPG de gerenciamento dos clássicos browser games
           </p>
           <h1 className="font-display text-6xl sm:text-8xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-orange-400 to-amber-600 drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)] tracking-wide leading-none">
-            Guerreiros<br />Místicos
+            Myst Ki<br />Warriors
           </h1>
           <p className="font-heading text-amber-200/90 text-base sm:text-xl mt-6 max-w-2xl mx-auto leading-relaxed">
             Treine. Lute. Trabalhe. Colete as <span className="text-yellow-300">7 Chaves do Horizonte</span> e
@@ -117,7 +117,7 @@ export default function LandingPage() {
             <Feature
               icon={<Sparkles className="w-6 h-6" />}
               title={`${TECHNIQUES.length} técnicas lendárias`}
-              text={`Aprenda com ${TRAINING_MASTERS.length} mestres icônicos — do Punho do Lobo à Convergência do Aether. Técnicas supremas ocupam um slot exclusivo do loadout.`}
+              text={`Aprenda com ${TRAINING_MASTERS.length} mestres do Setor Caelum — das Garras do Lobo Astral à Convergência do Aether. Técnicas supremas ocupam um slot exclusivo do loadout.`}
             />
             <Feature
               icon={<Map className="w-6 h-6" />}

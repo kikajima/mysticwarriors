@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="t d">
+<title id="t">Setor Caelum</title><desc id="d">Paisagem cósmica original de Myst Ki Warriors com mundos, portais e o símbolo do Horizonte.</desc>
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050816"/><stop offset=".45" stop-color="#172554"/><stop offset=".72" stop-color="#5b2412"/><stop offset="1" stop-color="#120b08"/></linearGradient>
+  <radialGradient id="sun"><stop stop-color="#fff7cc"/><stop offset=".18" stop-color="#fbbf24"/><stop offset=".55" stop-color="#ea580c" stop-opacity=".55"/><stop offset="1" stop-color="#ea580c" stop-opacity="0"/></radialGradient>
+  <radialGradient id="portal"><stop stop-color="#ecfeff"/><stop offset=".25" stop-color="#67e8f9"/><stop offset=".6" stop-color="#8b5cf6"/><stop offset="1" stop-color="#312e81" stop-opacity="0"/></radialGradient>
+  <linearGradient id="land" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#111827"/><stop offset="1" stop-color="#020617"/></linearGradient>
+</defs>
+<rect width="1600" height="900" fill="url(#sky)"/>
+<circle cx="1240" cy="215" r="290" fill="url(#sun)"/>
+<circle cx="345" cy="180" r="92" fill="#0f766e"/><path d="M282 175c55-63 122-53 158 2-48-17-101 0-158-2z" fill="#34d399" opacity=".45"/>
+<circle cx="560" cy="118" r="48" fill="#7c2d12"/><circle cx="575" cy="105" r="15" fill="#fb923c" opacity=".65"/>
+<g opacity=".95"><circle cx="150" cy="120" r="4" fill="#fff"/><circle cx="720" cy="110" r="3" fill="#fde68a"/><circle cx="940" cy="185" r="5" fill="#a5f3fc"/><circle cx="1450" cy="340" r="4" fill="#fff"/><circle cx="1100" cy="95" r="3" fill="#ddd6fe"/></g>
+<g transform="translate(800 390)">
+  <ellipse rx="245" ry="77" fill="none" stroke="#67e8f9" stroke-width="10" opacity=".8" transform="rotate(-18)"/>
+  <ellipse rx="205" ry="62" fill="none" stroke="#fde68a" stroke-width="7" opacity=".72" transform="rotate(37)"/>
+  <circle r="132" fill="none" stroke="#a78bfa" stroke-width="5" opacity=".45"/>
+  <path d="M0-155 72-77 50 44 0 156-50 44-72-77z" fill="#0f172a" stroke="#cffafe" stroke-width="9"/>
+  <path d="M0-98 35-31 0 12-35-31z" fill="#67e8f9"/>
+  <circle cy="54" r="24" fill="#fef3c7"/>
+</g>
+<path d="M0 690 170 575 310 625 478 505 645 650 835 545 1010 642 1212 518 1390 604 1600 475V900H0z" fill="url(#land)"/>
+<path d="M0 755 230 670 375 720 590 610 770 735 940 648 1130 740 1330 630 1600 700V900H0z" fill="#07101d"/>
+<g fill="#67e8f9" opacity=".55"><circle cx="800" cy="390" r="4"/><circle cx="730" cy="350" r="3"/><circle cx="875" cy="430" r="3"/></g>
+</svg>

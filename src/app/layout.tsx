@@ -37,7 +37,7 @@ const russoOne = localFont({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://guerreiros-misticos.exemplo.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mysticwarriors-ohio.onrender.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     "RPG online",
     "browser game",
     "jogo de gerenciamento",
-    "guerreiros místicos",
+    "Myst Ki Warriors",
     "jogo grátis",
     "RPG no navegador",
     "browser game brasileiro",
@@ -60,11 +60,7 @@ export const metadata: Metadata = {
   applicationName: "Myst Ki Warriors",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [
-      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/icon.svg", type: "image/svg+xml" },
-    ],
-    apple: "/icons/apple-touch-icon.png",
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
     type: "website",
@@ -76,10 +72,10 @@ export const metadata: Metadata = {
       "Treine. Lute. Trabalhe. Colete as 7 Chaves do Horizonte e domine o universo — RPG de gerenciamento no navegador, grátis.",
     images: [
       {
-        url: "/images/banner.png",
+        url: "/images/banner-mystki.svg",
         width: 1024,
         height: 576,
-        alt: "Myst Ki Warriors carregando energia ao pôr do sol",
+        alt: "Setor Caelum e o símbolo do Horizonte",
       },
     ],
   },
@@ -88,7 +84,7 @@ export const metadata: Metadata = {
     title: "Myst Ki Warriors — RPG Online Grátis",
     description:
       "Treine. Lute. Trabalhe. Colete as 7 Chaves do Horizonte e domine o universo.",
-    images: ["/images/banner.png"],
+    images: ["/images/banner-mystki.svg"],
   },
   robots: {
     index: true,
