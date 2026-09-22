@@ -18,7 +18,7 @@ import { TournamentPanel } from '@/components/game/TournamentPanel';
 import { ShopPanel } from '@/components/game/ShopPanel';
 import { MarketPanel } from '@/components/game/MarketPanel';
 import { RankingPanel } from '@/components/game/RankingPanel';
-import { AethelgardPanel } from '@/components/game/AethelgardPanel';
+import { ShenronPanel } from '@/components/game/ShenronPanel';
 import { GuildsPanel } from '@/components/game/GuildsPanel';
 import { AchievementsPanel, type ClaimableAchievement } from '@/components/game/AchievementsPanel';
 import { PlayerAvatar, GameButton } from '@/components/game/Bits';
@@ -1549,7 +1549,7 @@ export default function PlayPage() {
           <GuildsPanel player={player} onAction={doAction} busy={busy} />
         )}
         {view === 'shenron' && (
-          <AethelgardPanel
+          <ShenronPanel
             player={player}
             onWish={(wishType) => doAction({ type: 'wish', wishType })}
             busy={busy}
@@ -1562,7 +1562,7 @@ export default function PlayPage() {
 
       {/* Rodapé (desktop) */}
       <footer className="hidden lg:block mt-auto border-t border-amber-900/30 py-4 text-center text-[11px] text-amber-200/30 px-4">
-        Myst Ki Warriors — jogo de fã inspirado nos clássicos browser games de gerenciamento.{' '}
+        Myst Ki Warriors — RPG original de navegador ambientado no Setor Caelum.{' '}
         {auth && !auth.isGuest
           ? `Progresso de ${auth.username} salvo na nuvem — sobrevive a qualquer atualização.`
           : 'Progresso de convidado — use "Salvar meu guerreiro" no menu para criar sua conta na nuvem sem perder nada.'}
