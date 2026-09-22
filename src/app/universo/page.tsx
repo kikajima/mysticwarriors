@@ -5,7 +5,7 @@ import { TRAINING_MASTERS } from '@/lib/game/content/techniques';
 export const metadata = {
   title: 'O Universo — Myst Ki Warriors',
   description:
-    'Conheça as cinco raças de Myst Ki Warriors, seus bônus, os mestres que ensinam técnicas lendárias e a eterna busca pelas Chaves do Horizonte.',
+    'Conheça o Setor Caelum, suas cinco linhagens jogáveis, os mundos de Aethel Prime, Pyros, Sylva e Nexus-9, além das Chaves do Horizonte e da ameaça de Kronar.',
   alternates: { canonical: '/universo' },
 };
 
@@ -20,12 +20,34 @@ export default function UniversoPage() {
           O Universo
         </h1>
         <p className="text-amber-200/60 text-sm leading-relaxed mb-10 max-w-2xl">
-          Um universo de guerreiros místicos onde o treino supera talento, esferas lendárias concedem
-          desejos e o poder de luta define a hierarquia. Cinco povos disputam o topo — e o seu guerreiro
-          pode virar a próxima lenda.
+          O Setor Caelum é atravessado por correntes de Aether e portais de salto quântico. Aethel Prime concentra as arenas e guildas; Pyros testa guerreiros sob gravidade brutal; Sylva abriga uma biosfera colossal; e Nexus-9 transforma ciência em poder. Cinco linhagens disputam prestígio enquanto as Chaves do Horizonte reaparecem pelo setor e Kronar, o Devorador de Mundos, ameaça despertar.
         </p>
 
-        {/* Raças */}
+        <section className="mb-12 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            ['Aethel Prime', '🏙️', 'Metrópole central do setor: Arena, comércio, guildas e rotas diplomáticas.'],
+            ['Pyros', '🌋', 'Mundo árido de gravidade extrema e campos de treinamento sob sóis binários.'],
+            ['Sylva', '🌿', 'Planeta-santuário de florestas titânicas e alta concentração natural de Aether.'],
+            ['Nexus-9', '🛰️', 'Complexo orbital dedicado a engenharia, nanomáquinas, robótica e pesquisa energética.'],
+          ].map(([name, icon, text]) => (
+            <div key={name} className="bg-[#1e1710]/90 border border-amber-900/40 rounded-xl p-5">
+              <div className="text-2xl mb-2" aria-hidden>{icon}</div>
+              <h2 className="font-heading text-lg text-amber-100">{name}</h2>
+              <p className="text-sm text-amber-200/55 mt-1 leading-relaxed">{text}</p>
+            </div>
+          ))}
+        </section>
+
+        <section className="mb-12 rounded-xl border border-violet-900/40 bg-gradient-to-br from-violet-950/30 to-black/20 p-6">
+          <h2 className="font-display text-2xl text-violet-200">Kronar, o Devorador de Mundos</h2>
+          <p className="text-sm text-amber-200/60 mt-2 leading-relaxed">
+            Uma anomalia de entropia criada pelos antigos Arquitetos Primordiais. Kronar absorve Aether de sistemas inteiros
+            e serve como a grande Ameaça Universal de Myst Ki Warriors. A Frota Imperial de Varth e o Culto do Vazio
+            exploram o caos deixado por sua passagem.
+          </p>
+        </section>
+
+        {/* Linhagens */}
         <div className="space-y-5 mb-14">
           {RACE_LIST.map((race) => (
             <section key={race.id} className="bg-[#1e1710]/90 border border-amber-900/40 rounded-xl p-5 flex flex-col sm:flex-row gap-5">
@@ -63,7 +85,7 @@ export default function UniversoPage() {
         </h2>
         <p className="text-amber-200/60 text-sm mb-6 max-w-2xl leading-relaxed">
           Grandes mestres do universo ensinam técnicas que usam Força ou Ki. Procure-os na Sala de Treino,
-          pague o treinamento em Créditos e domine golpes lendários.
+          pague o treinamento em Créditos e domine técnicas próprias das escolas do Setor Caelum.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {TRAINING_MASTERS.map((m) => (
