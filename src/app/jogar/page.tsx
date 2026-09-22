@@ -836,14 +836,14 @@ export default function PlayPage() {
       setPlayer((prev) =>
         prev
           ? applyOptimisticDelta(prev, {
-              zeni: a.rewardCréditos,
+              zeni: a.rewardZeni,
               xp: a.rewardXp,
               crystals: a.rewardCrystals,
             })
           : prev
       );
       const parts = [
-        a.rewardCréditos > 0 ? `+${a.rewardCréditos.toLocaleString('pt-BR')} Créditos` : '',
+        a.rewardZeni > 0 ? `+${a.rewardZeni.toLocaleString('pt-BR')} Créditos` : '',
         a.rewardXp > 0 ? `+${a.rewardXp.toLocaleString('pt-BR')} XP` : '',
         a.rewardCrystals > 0 ? `+${a.rewardCrystals.toLocaleString('pt-BR')} 💎` : '',
       ].filter(Boolean);
