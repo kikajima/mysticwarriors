@@ -117,7 +117,7 @@ export default function LandingPage() {
             <Feature
               icon={<Sparkles className="w-6 h-6" />}
               title={`${TECHNIQUES.length} técnicas lendárias`}
-              text={`Aprenda com ${TRAINING_MASTERS.length} mestres icônicos — do Punho do Lobo à Genki Dama. Técnicas supremas ocupam um slot exclusivo do loadout.`}
+              text={`Aprenda com ${TRAINING_MASTERS.length} mestres icônicos — do Punho do Lobo à Convergência do Aether. Técnicas supremas ocupam um slot exclusivo do loadout.`}
             />
             <Feature
               icon={<Map className="w-6 h-6" />}
