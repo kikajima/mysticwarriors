@@ -101,7 +101,7 @@ export async function manageGuild(tx: Tx, actor: Player, type: string, args: Rec
     await tx.guild.update({ where: { id: guild.id }, data: { xp: { increment: acceptedAmount }, totalDonated: { increment: acceptedAmount }, level } });
     await tx.player.update({ where: { id: actor.id }, data: { guildDonated: { increment: acceptedAmount }, stateVersion: { increment: 1 } } });
     await tx.guildDonation.create({ data: { guildId: guild.id, playerId: actor.id, amount: acceptedAmount } });
-    return done(`Doação de ${acceptedAmount} Zeni registrada.${acceptedAmount < amount ? ` O excedente de ${amount - acceptedAmount} Zeni não foi cobrado.` : ''}${level > guild.level ? ` Guilda no nível ${level}!` : ''}`);
+    return done(`Doação de ${acceptedAmount} Créditos registrada.${acceptedAmount < amount ? ` O excedente de ${amount - acceptedAmount} Créditos não foi cobrado.` : ''}${level > guild.level ? ` Guilda no nível ${level}!` : ''}`);
   }
   if (type === 'guild_description' || type === 'guild_motd') {
     permit(type === 'guild_description' ? 'alterar_descricao' : 'mensagem_do_dia');
