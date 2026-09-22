@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
   '/manifest.webmanifest',
-  '/images/banner.png',
+  '/images/banner-mystki.svg',
 ];
 
 self.addEventListener('install', (event) => {
