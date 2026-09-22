@@ -20,9 +20,7 @@ export default function UniversoPage() {
           O Universo
         </h1>
         <p className="text-amber-200/60 text-sm leading-relaxed mb-10 max-w-2xl">
-          Um universo de guerreiros místicos onde o treino supera talento, esferas lendárias concedem
-          desejos e o poder de luta define a hierarquia. Cinco povos disputam o topo — e o seu guerreiro
-          pode virar a próxima lenda.
+          O Setor Caelum é atravessado por correntes de Ki e portais de salto quântico. Aethel Prime concentra arenas e guildas; Pyros testa guerreiros sob gravidade brutal; Sylva abriga florestas titânicas; e Nexus-9 transforma ciência em poder. Cinco linhagens disputam prestígio enquanto as Chaves do Horizonte reaparecem pelo setor.
         </p>
 
         {/* Raças */}
