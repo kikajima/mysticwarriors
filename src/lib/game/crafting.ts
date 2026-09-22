@@ -406,6 +406,6 @@ export async function cancelCraft(tx: Tx, player: Player): Promise<{ message: st
   }, tx);
 
   return {
-    message: `↩️ Fabricação cancelada: materiais e ${refundZeni.toLocaleString('pt-BR')} Zeni devolvidos.`,
+    message: `↩️ Fabricação cancelada: materiais e ${refundZeni.toLocaleString('pt-BR')} Créditos devolvidos.`,
   };
 }
