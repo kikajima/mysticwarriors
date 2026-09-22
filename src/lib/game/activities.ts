@@ -2,7 +2,7 @@ import type { Prisma, Player, Activity } from '@prisma/client';
 import { db } from '@/lib/db';
 import { ApiError } from '@/lib/api';
 import { ACTIVITY_BLOCKED_ACTIONS, addStat, type StatKey } from './rules';
-import { grantRewards, transferZeniPvp } from '@/lib/economy';
+import { grantRewards, transferCréditosPvp } from '@/lib/economy';
 import { bumpQuests } from '@/lib/progression';
 import { scoreSeasonVictory } from '@/lib/seasons';
 import { trackEvent } from '@/lib/analytics';
@@ -89,7 +89,7 @@ export interface BattleActivityResult {
       /** Chance de roubo: uma esfera do defensor por vitória PvP. */
       dragonBallStealChance: number;
     };
-    /** v0.9.18 — luta do Torneio de Artes Marciais (chave de 8). */
+    /** v0.9.18 — luta do Grande Arena de Caelum (chave de 8). */
     tournament?: {
       round: number;
       won: boolean;
@@ -151,7 +151,7 @@ export async function assertNoRunningActivityTx(tx: Tx, playerId: string, action
       running.kind === 'train'
         ? `Seu guerreiro ainda está treinando (${remain}s). Aguarde o fim da sessão.`
         : running.kind === 'dragon_ball_search'
-          ? `Seu guerreiro ainda está procurando Esferas do Dragão (${remain}s). Pare a busca antes de iniciar outra atividade.`
+          ? `Seu guerreiro ainda está procurando Chaves do Horizonte (${remain}s). Pare a busca antes de iniciar outra atividade.`
           : `Seu guerreiro ainda está lutando (${remain}s). Aguarde o desfecho da batalha.`
     );
   }
@@ -304,7 +304,7 @@ async function applyPveResult(
   const data = payload.apply.pve!;
   const reward = { xp: data.xp, zeni: data.won ? data.zeni : 0 };
 
-  // XP + Zeni (autoritativo — levelsGained REAL calculado aqui)
+  // XP + Créditos (autoritativo — levelsGained REAL calculado aqui)
   const grant = await grantRewards(tx, player, reward, {
     type: 'reward',
     source: 'pve',
@@ -371,7 +371,7 @@ async function applyPveResult(
   };
 
   const message = data.won
-    ? `Vitória contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP.`
+    ? `Vitória contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Créditos, +${data.xp} XP.`
     : data.playerEndHp <= 0
       ? `Derrota para ${payload.display.battle.enemyName}... Você foi resgatado com 1 de vida.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`
       : `Derrota para ${payload.display.battle.enemyName} por decisão dos jurados... Você deixou a arena com ${data.playerEndHp} de vida e leva +${data.xp} XP de aprendizado.`;
@@ -395,12 +395,12 @@ async function applyPvpResult(
 
   // reabastece bot drenado (injeção de moeda REGISTRADA no ledger)
   if (target && data.targetIsBot) {
-    const minZeni = 150 * target.level;
-    if (target.zeni < minZeni) {
-      const inject = minZeni - target.zeni;
+    const minCréditos = 150 * target.level;
+    if (target.zeni < minCréditos) {
+      const inject = minCréditos - target.zeni;
       await tx.player.update({
         where: { id: target.id },
-        data: { zeni: minZeni, hp: 80 + target.level * 15 + target.defense * 5 },
+        data: { zeni: minCréditos, hp: 80 + target.level * 15 + target.defense * 5 },
       });
       await tx.walletTransaction.create({
         data: {
@@ -411,10 +411,10 @@ async function applyPvpResult(
           type: 'grant',
           source: 'bot_topup',
           balanceBefore: target.zeni,
-          balanceAfter: minZeni,
+          balanceAfter: minCréditos,
         },
       });
-      target.zeni = minZeni;
+      target.zeni = minCréditos;
     }
   }
 
@@ -470,7 +470,7 @@ async function applyPvpResult(
     // roubo atômico com ledger de DUAS pontas (transferência entre jogadores)
     if (target) {
       const stealAttempt = Math.min(target.zeni, Math.max(100, Math.floor(target.zeni * 0.08)));
-      const transfer = await transferZeniPvp(tx, {
+      const transfer = await transferCréditosPvp(tx, {
         fromPlayerId: target.id,
         fromAccountId: target.accountId,
         toPlayerId: player.id,
@@ -506,10 +506,10 @@ async function applyPvpResult(
     await bumpQuests(tx, player.id, 'battle_win', 1);
     await trackEvent('pvp_win', { playerId: player.id, accountId: player.accountId, metadata: { targetId: data.targetId } }, tx);
   } else {
-    // derrota: 5% do próprio Zeni transferido ao vencedor
+    // derrota: 5% do próprio Créditos transferido ao vencedor
     const lossAttempt = Math.min(player.zeni, Math.floor(player.zeni * 0.05));
     if (target && lossAttempt > 0) {
-      const transfer = await transferZeniPvp(tx, {
+      const transfer = await transferCréditosPvp(tx, {
         fromPlayerId: player.id,
         fromAccountId: player.accountId,
         toPlayerId: target.id,
@@ -575,8 +575,8 @@ async function applyPvpResult(
   };
 
   const message = data.won
-    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Zeni${dragonBallStolen ? ` e a Esfera de ${dragonBallStolenStar} estrela${dragonBallStolenStar === 1 ? '' : 's'}` : ''}!`
-    : `${payload.display.battle.enemyName} te derrotou... ${zeniLost > 0 ? `Você perdeu ${zeniLost.toLocaleString('pt-BR')} Zeni ` : ''}mas ganhou experiência.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`;
+    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Créditos${dragonBallStolen ? ` e a Esfera de ${dragonBallStolenStar} estrela${dragonBallStolenStar === 1 ? '' : 's'}` : ''}!`
+    : `${payload.display.battle.enemyName} te derrotou... ${zeniLost > 0 ? `Você perdeu ${zeniLost.toLocaleString('pt-BR')} Créditos ` : ''}mas ganhou experiência.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`;
 
   return { message, levelsGained, battle: finalBattle };
 }
@@ -600,7 +600,7 @@ async function applyTournamentResult(
   const data = payload.apply.tournament!;
   const now = new Date();
 
-  // premiação: Zeni só do vencedor; o rejeitado leva METADE do XP da
+  // premiação: Créditos só do vencedor; o rejeitado leva METADE do XP da
   // rodada (a luta ensina — coerente com o diálogo de derrota).
   // O torneio não concede mais cristais.
   const reward = data.won
@@ -670,9 +670,9 @@ async function applyTournamentResult(
 
   const roundName = roundDef(data.round).name;
   const message = data.title
-    ? `🏆 CAMPEÃO! Você venceu a GRANDE FINAL contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP — o cinturão é SEU!`
+    ? `🏆 CAMPEÃO! Você venceu a GRANDE FINAL contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Créditos, +${data.xp} XP — o cinturão é SEU!`
     : data.won
-      ? `Vitória na ${roundName} contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP.`
+      ? `Vitória na ${roundName} contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Créditos, +${data.xp} XP.`
       : data.playerEndHp <= 0
         ? `Eliminado na ${roundName} por ${payload.display.battle.enemyName}... Você foi resgatado com 1 de vida (+${data.xp} XP de aprendizado) — o comitê reorganiza a chave para a próxima inscrição.`
         : `Eliminado na ${roundName} por decisão dos jurados contra ${payload.display.battle.enemyName}... Você deixou o ringue com ${data.playerEndHp} de vida (+${data.xp} XP de aprendizado) — o comitê reorganiza a chave para a próxima inscrição.`;
