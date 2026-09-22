@@ -328,7 +328,7 @@ export function Dashboard({
             <span>🔮 Chaves: {player.dragonBalls}/7</span>
             {player.dragonBalls >= 7 && (
               <button onClick={() => onNavigate('shenron')} className="text-yellow-300 underline hover:text-yellow-200">
-                invocar Aethelgard!
+                abrir a Convergência!
               </button>
             )}
           </div>
