@@ -32,7 +32,7 @@ export default function LandingPage() {
             Guerreiros<br />Místicos
           </h1>
           <p className="font-heading text-amber-200/90 text-base sm:text-xl mt-6 max-w-2xl mx-auto leading-relaxed">
-            Treine. Lute. Trabalhe. Colete as <span className="text-yellow-300">7 Esferas do Dragão</span> e
+            Treine. Lute. Trabalhe. Colete as <span className="text-yellow-300">7 Chaves do Horizonte</span> e
             torne-se o guerreiro mais poderoso do universo — direto do navegador, de graça.
           </p>
 
@@ -171,7 +171,7 @@ export default function LandingPage() {
             Seu treino começa agora
           </h2>
           <p className="text-amber-200/60 mb-8">
-            Crie seu guerreiro em segundos — sem cadastro. Junte as Esferas do Dragão, invoque Shenlon e
+            Crie seu guerreiro em segundos — sem cadastro. Junte as Chaves do Horizonte, desperte Aethelgard e
             desafie o universo.
           </p>
           <Link
