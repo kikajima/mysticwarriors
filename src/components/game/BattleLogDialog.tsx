@@ -348,7 +348,7 @@ function BattleContent({
                 {battle.crystalsGain ? ` • +${battle.crystalsGain} 💎` : ''}
                 {battle.zeniStolen ? ` • roubou ${battle.zeniStolen.toLocaleString('pt-BR')} Zeni` : ''}
                 {battle.dragonBallStolen
-                  ? ` • roubou ${battle.dragonBallStolenStar ? `a Esfera de ${battle.dragonBallStolenStar} estrela${battle.dragonBallStolenStar === 1 ? '' : 's'}` : `${battle.dragonBallStolen} Esfera do Dragão`}`
+                  ? ` • roubou ${battle.dragonBallStolenStar ? `a Esfera de ${battle.dragonBallStolenStar} estrela${battle.dragonBallStolenStar === 1 ? '' : 's'}` : `${battle.dragonBallStolen} Chave do Horizonte`}`
                   : ''}
               </p>
             </div>
