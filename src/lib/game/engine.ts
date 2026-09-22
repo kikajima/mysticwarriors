@@ -281,7 +281,7 @@ export function parseCosmeticsOwned(raw: string | null | undefined): string[] {
   }
 }
 
-/** v0.9.18 — visão do Torneio de Artes Marciais para o cliente. */
+/** v0.9.18 — visão do Grande Arena de Caelum para o cliente. */
 function tournamentPlayerView(player: Player): TournamentView {
   const state = parseTournament(player.tournament);
   const cooldownMs = tournamentCooldownRemainingMs(state, new Date());
@@ -378,7 +378,7 @@ export function playerToView(
     },
     // v0.9.15 — talentos de Ímpeto (Cap. 7) dominados
     talents: parseTalents(player.talents),
-    // v0.9.18 — Torneio de Artes Marciais: campanha + palmarés (colunas
+    // v0.9.18 — Grande Arena de Caelum: campanha + palmarés (colunas
     // contáveis vêm direto do registro; o cooldown é derivado do estado)
     tournament: tournamentPlayerView(player),
     derived,
@@ -498,7 +498,7 @@ export function buildPlayerCombatant(player: Player & GuildContext): Combatant {
     kiPower: d.kiPower,
     defPower: d.defPower,
     resPower: d.resPower,
-    // poder de luta do scouter — alimenta a Armadura de Escala (5.1)
+    // poder de luta do visor de fluxo — alimenta a Armadura de Escala (5.1)
     power: d.power,
     raceCombat: rc,
     techniques: loadoutTechniques(player),
@@ -530,7 +530,7 @@ export function buildNpcCombatant(enemyIdx: number): Combatant {
     kiPower,
     defPower: Math.round(e.defense * 1.8),
     resPower: Math.round(e.defense * 1.1 + e.ki * 0.9),
-    // poder de luta do scouter — alimenta a Armadura de Escala (5.1)
+    // poder de luta do visor de fluxo — alimenta a Armadura de Escala (5.1)
     power: npcCombatPower(e),
     raceCombat: neutral,
     techniques: [],
@@ -1535,15 +1535,15 @@ export async function ensureSeed(): Promise<void> {
   }
 }
 
-// Reabastece Zeni de bots drenados (para PvP continuar atraente)
+// Reabastece Créditos de bots drenados (para PvP continuar atraente)
 export async function topUpBots(): Promise<void> {
   const bots = await db.player.findMany({ where: { isBot: true } });
   for (const bot of bots) {
-    const minZeni = 150 * bot.level;
-    if (bot.zeni < minZeni) {
+    const minCréditos = 150 * bot.level;
+    if (bot.zeni < minCréditos) {
       await db.player.update({
         where: { id: bot.id },
-        data: { zeni: minZeni, hp: 80 + bot.level * 15 + bot.defense * 5 },
+        data: { zeni: minCréditos, hp: 80 + bot.level * 15 + bot.defense * 5 },
       });
     }
   }
