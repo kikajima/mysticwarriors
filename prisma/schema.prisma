@@ -228,6 +228,8 @@ model Player {
   requestDedups    RequestDedup[]
   activities       Activity[]
   inventoryStacks  InventoryStack[]
+  marketListings   MarketListing[] @relation("MarketSeller")
+  marketPurchases  MarketListing[] @relation("MarketBuyer")
   craftJob         CraftJob?
   notifications    PlayerNotification[]
   dragonBallPossessions DragonBallPossession[]
@@ -263,6 +265,36 @@ model InventoryStack {
 
   @@id([playerId, itemId])
   @@index([itemId])
+}
+
+// ===== Mercado P2P (itens ficam em escrow no anúncio) =====
+
+model MarketListing {
+  id                String   @id @default(cuid())
+  sellerId          String
+  seller             Player   @relation("MarketSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyerId           String?
+  buyer              Player?  @relation("MarketBuyer", fields: [buyerId], references: [id], onDelete: SetNull)
+  kind               String   // "material" | "equipment"
+  itemId             String
+  itemName           String
+  itemIcon           String
+  currency           String   // "zeni" | "crystal"
+  unitPrice          Int
+  quantity           Int
+  quantityRemaining  Int
+  status             String   @default("active") // active | sold | cancelled
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  soldAt             DateTime?
+  cancelledAt        DateTime?
+
+  @@index([status, createdAt])
+  @@index([kind, status, unitPrice])
+  @@index([currency, status, unitPrice])
+  @@index([sellerId, status, createdAt])
+  @@index([buyerId, soldAt])
+  @@index([itemId, status, unitPrice])
 }
 
 // ===== Fabricação persistente (uma fila por personagem) =====
