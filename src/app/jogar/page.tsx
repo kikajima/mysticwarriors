@@ -451,7 +451,7 @@ export default function PlayPage() {
           void acknowledge(notification.id);
         };
 
-        // Quem roubou a Esfera só descobre DEPOIS de terminar de assistir
+        // Quem roubou a Chave só descobre DEPOIS de terminar de assistir
         // à batalha; a vítima offline recebe no primeiro estado ao voltar.
         if (battleOpenRef.current) deferredToastsRef.current.push(show);
         else show();
