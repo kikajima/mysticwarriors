@@ -593,7 +593,7 @@ export interface BattleRound {
   /** v0.9.12 — Armadura de Escala (regras 5.1/5.3): evento narrativo
    * do round para a UI destacar (cor/ícone) no log de batalha. */
   scaleEvent?: 'armor' | 'advantage' | 'crushing' | 'abertura' | 'breakthrough';
-  /** v0.9.13 — Ímpeto (Cap. 7 do ASCENSÃO Z): instante do Ímpeto de
+  /** v0.9.13 — Ímpeto (Cap. 7 do ESCALAS DE CAELUM): instante do Ímpeto de
    * cada lado ao final do round (0–6) para o medidor do log animado. */
   playerImpeto?: number;
   enemyImpeto?: number;
