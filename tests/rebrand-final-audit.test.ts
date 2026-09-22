@@ -103,6 +103,14 @@ describe('Rebrand etapa 9 — auditoria final de identidade', () => {
     expect(findings).toEqual([]);
   });
 
+  test('Wiki não reintroduz Zenkai em texto JSX visível', async () => {
+    const wikiView = await Bun.file(path.join(ROOT, 'src/components/wiki/WikiView.tsx')).text();
+
+    // Identificadores internos legados podem continuar existindo por compatibilidade,
+    // mas a cópia renderizada para o jogador não pode reintroduzir o nome antigo.
+    expect(wikiView).not.toMatch(/>[^<>{}]*\\bzenkai\\b[^<>{}]*</i);
+  });
+
   test('novos pilares de identidade permanecem presentes', async () => {
     const [races, techniques, transformations, wiki] = await Promise.all([
       Bun.file(path.join(ROOT, 'src/lib/game/content/races.ts')).text(),
