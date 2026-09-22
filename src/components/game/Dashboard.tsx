@@ -78,7 +78,7 @@ export function Dashboard({
   const remaining = active ? new Date(active.endsAt).getTime() - now : 0;
   const strategy = getStrategy(player.strategy);
   const nextEnergyIn = secondsToNextEnergy(player, now);
-  // ===== Escala de Poder (ASCENSÃO Z, Cap. 5) =====
+  // ===== Escala de Poder (ESCALAS DE CAELUM, Cap. 5) =====
   const scaleInfo = getPowerScale(player.derived.power);
 
   // ===== ASCENSÃO DE ESCALA: celebra quando o guerreiro sobe de escala =====
@@ -263,7 +263,7 @@ export function Dashboard({
               </span>
             </div>
 
-            {/* Escala de Poder — ASCENSÃO Z (Cap. 5) */}
+            {/* Escala de Poder — ESCALAS DE CAELUM (Cap. 5) */}
             <div className="flex justify-center sm:justify-start">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-heading tracking-wide ${scaleInfo.scale.badge}`}
@@ -377,7 +377,7 @@ export function Dashboard({
         )}
       </GameCard>
 
-      {/* ===== ESCALA DE PODER (ASCENSÃO Z, Cap. 5) ===== */}
+      {/* ===== ESCALA DE PODER (ESCALAS DE CAELUM, Cap. 5) ===== */}
       <GameCard className="p-5">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="min-w-0">
