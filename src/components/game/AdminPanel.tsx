@@ -101,7 +101,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
   const [threatWorking, setThreatWorking] = useState(false);
   const [threatResult, setThreatResult] = useState<string | null>(null);
   // campos de formulário
-  const [fCréditos, setFCréditos] = useState('');
+  const [fZeni, setFZeni] = useState('');
   const [fCrys, setFCrys] = useState('');
   const [fXp, setFXp] = useState('');
   const [sStr, setSStr] = useState('');
@@ -267,7 +267,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
           return;
         }
         setStatus({ kind: 'ok', text: data.message });
-        setFCréditos('');
+        setFZeni('');
         setFCrys('');
         setFXp('');
         setPXp('');
@@ -765,7 +765,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                     <div className="flex flex-wrap items-end gap-3">
                       <label className="text-xs text-amber-200/60">
                         Créditos
-                        <input value={fCréditos} onChange={(e) => setFCréditos(e.target.value)} inputMode="numeric" placeholder="+5000" className={`${inputClass} block mt-1`} />
+                        <input value={fZeni} onChange={(e) => setFZeni(e.target.value)} inputMode="numeric" placeholder="+5000" className={`${inputClass} block mt-1`} />
                       </label>
                       <label className="text-xs text-amber-200/60">
                         Diamantes
@@ -779,12 +779,12 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                         onClick={() =>
                           runAction({
                             action: 'grant',
-                            zeniDelta: num(fCréditos),
+                            zeniDelta: num(fZeni),
                             crystalDelta: num(fCrys),
                             xpGain: num(fXp),
                           })
                         }
-                        disabled={working || (!fCréditos && !fCrys && !fXp)}
+                        disabled={working || (!fZeni && !fCrys && !fXp)}
                         className="px-4 py-2 rounded-lg bg-gradient-to-b from-orange-500 to-amber-700 text-white text-sm font-heading disabled:opacity-40"
                       >
                         Conceder
