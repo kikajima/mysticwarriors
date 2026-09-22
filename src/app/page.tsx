@@ -17,8 +17,8 @@ export default function LandingPage() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/images/banner.png"
-            alt="Myst Ki Warriors carregando energia ao pôr do sol"
+            src="/images/banner-mystki.svg"
+            alt="Setor Caelum e o símbolo do Horizonte"
             className="w-full h-full object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-[#14100b]/60 to-[#14100b]" />
