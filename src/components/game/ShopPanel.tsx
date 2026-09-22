@@ -85,7 +85,7 @@ function priceLabel(item: ShopItem, qty: number): string {
   if (item.currency === 'crystal') {
     return `${total} 💎 ${total === 1 ? 'diamante' : 'diamantes'}`;
   }
-  return `${total.toLocaleString('pt-BR')} Zeni`;
+  return `${total.toLocaleString('pt-BR')} Créditos`;
 }
 
 /** Botão −/qtd/+ compacto (seletor de quantidade da loja). */
@@ -178,7 +178,7 @@ export function ShopPanel({
 
         <div className="flex gap-2">
           <Chip className="bg-yellow-950/50 text-yellow-300 border-yellow-700/50 text-sm px-3 py-1">
-            <Coins className="w-4 h-4" /> {player.zeni.toLocaleString('pt-BR')} Zeni
+            <Coins className="w-4 h-4" /> {player.zeni.toLocaleString('pt-BR')} Créditos
           </Chip>
           <Chip className="bg-sky-950/50 text-sky-300 border-sky-700/50 text-sm px-3 py-1">
             <Gem className="w-4 h-4" /> {player.crystals} diamantes
@@ -283,7 +283,7 @@ export function ShopPanel({
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span
                     className={`font-heading text-sm flex items-center gap-1 tabular-nums ${crystalItem ? 'text-sky-300' : 'text-yellow-400'}`}
-                    title={crystalItem ? 'Diamantes' : 'Zeni'}
+                    title={crystalItem ? 'Diamantes' : 'Créditos'}
                   >
                     {crystalItem ? <Gem className="w-4 h-4" /> : <Coins className="w-4 h-4" />}
                     {q > 1 ? (
@@ -443,10 +443,10 @@ function TalentCard({
                   : 'bg-red-950/40 text-red-300 border-red-900/50'
               }`}
             >
-              <Coins className="w-4 h-4" /> {talent.price.toLocaleString('pt-BR')} Zeni
+              <Coins className="w-4 h-4" /> {talent.price.toLocaleString('pt-BR')} Créditos
             </Chip>
             <GameButton onClick={onBuy} disabled={!canBuy} variant="primary" className="text-xs">
-              {canAfford ? 'Dominar talento' : 'Zeni insuficiente'}
+              {canAfford ? 'Dominar talento' : 'Créditos insuficiente'}
             </GameButton>
           </div>
         )}
