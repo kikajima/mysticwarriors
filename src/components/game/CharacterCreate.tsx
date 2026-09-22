@@ -180,7 +180,7 @@ export function CharacterCreate({
           <p className="text-amber-200/50 text-xs max-w-xs text-center sm:text-left">
             {onBack
               ? 'O personagem ficará salvo na sua conta — troque de guerreiro quando quiser.'
-              : 'Jogue como convidado e use “Salvar meu guerreiro” depois para garantir o progresso. Você ganha 500 Zeni para começar.'}
+              : 'Jogue como convidado e use “Salvar meu guerreiro” depois para garantir o progresso. Você ganha 500 Créditos para começar.'}
           </p>
         </div>
       </div>
