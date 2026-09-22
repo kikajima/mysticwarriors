@@ -5,12 +5,18 @@ import { ApiError, ok, toErrorResponse } from '@/lib/api';
 import { requireAuth, requirePlayer } from '@/lib/auth';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import {
+  MARKET_ACTIVE_BUY_ORDER_LIMIT,
   MARKET_ACTIVE_LISTING_LIMIT,
   buyMarketListing,
+  cancelMarketBuyOrder,
   cancelMarketListing,
+  createMarketBuyOrder,
   createMarketListing,
+  fulfillMarketBuyOrder,
+  marketBuyOrderToView,
   marketListingToView,
   marketSellableAssets,
+  marketTradableAssets,
 } from '@/lib/game/marketplace';
 import type {
   MarketCurrency,
@@ -43,11 +49,46 @@ const mutationSchema = z.discriminatedUnion('action', [
     requestId: z.string().uuid(),
     listingId: z.string().min(1),
   }),
+  z.object({
+    action: z.literal('create_buy_order'),
+    playerId: z.string().min(1),
+    requestId: z.string().uuid(),
+    itemId: z.string().min(1).max(120),
+    quantity: z.number().int().min(1).max(999),
+    currency: z.enum(['zeni', 'crystal']),
+    unitPrice: z.number().int().min(1).max(100_000_000),
+  }),
+  z.object({
+    action: z.literal('fulfill_buy_order'),
+    playerId: z.string().min(1),
+    requestId: z.string().uuid(),
+    orderId: z.string().min(1),
+    quantity: z.number().int().min(1).max(999),
+  }),
+  z.object({
+    action: z.literal('cancel_buy_order'),
+    playerId: z.string().min(1),
+    requestId: z.string().uuid(),
+    orderId: z.string().min(1),
+  }),
 ]);
 
 function listingInclude() {
   return {
     seller: {
+      select: {
+        name: true,
+        race: true,
+        avatarUrl: true,
+        cosmeticsEquipped: true,
+      },
+    },
+  } as const;
+}
+
+function buyOrderInclude() {
+  return {
+    buyer: {
       select: {
         name: true,
         race: true,
@@ -93,9 +134,22 @@ export async function GET(request: Request) {
         : sort === 'price_desc'
           ? [{ unitPrice: 'desc' }, { createdAt: 'desc' }]
           : [{ createdAt: 'desc' }];
+    const buyOrderWhere: Prisma.MarketBuyOrderWhereInput = {
+      status: 'active',
+      quantityRemaining: { gt: 0 },
+      ...(kind ? { kind } : {}),
+      ...(currency ? { currency } : {}),
+    };
+    const buyOrderOrderBy: Prisma.MarketBuyOrderOrderByWithRelationInput[] =
+      sort === 'price_asc'
+        ? [{ unitPrice: 'asc' }, { createdAt: 'desc' }]
+        : sort === 'price_desc'
+          ? [{ unitPrice: 'desc' }, { createdAt: 'desc' }]
+          : [{ createdAt: 'desc' }];
 
+    const catalog = marketTradableAssets();
     const market = await db.$transaction(async (tx) => {
-      const [total, rows, mine, sellable] = await Promise.all([
+      const [total, rows, mine, sellable, buyOrderTotal, buyOrders, myBuyOrders] = await Promise.all([
         tx.marketListing.count({ where }),
         tx.marketListing.findMany({
           where,
@@ -111,16 +165,35 @@ export async function GET(request: Request) {
           take: 30,
         }),
         marketSellableAssets(tx, player.id),
+        tx.marketBuyOrder.count({ where: buyOrderWhere }),
+        tx.marketBuyOrder.findMany({
+          where: buyOrderWhere,
+          include: buyOrderInclude(),
+          orderBy: buyOrderOrderBy,
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        tx.marketBuyOrder.findMany({
+          where: { buyerId: player.id },
+          include: buyOrderInclude(),
+          orderBy: [{ createdAt: 'desc' }],
+          take: 30,
+        }),
       ]);
 
       const result: MarketPage = {
         listings: rows.map((row) => marketListingToView(row, player.id)),
         myListings: mine.map((row) => marketListingToView(row, player.id)),
+        buyOrders: buyOrders.map((row) => marketBuyOrderToView(row, player.id)),
+        myBuyOrders: myBuyOrders.map((row) => marketBuyOrderToView(row, player.id)),
         sellable,
+        catalog,
         total,
+        buyOrderTotal,
         page,
         pageSize,
         activeLimit: MARKET_ACTIVE_LISTING_LIMIT,
+        buyOrderActiveLimit: MARKET_ACTIVE_BUY_ORDER_LIMIT,
       };
       return result;
     });
@@ -211,8 +284,49 @@ export async function POST(request: Request) {
           return;
         }
 
-        await cancelMarketListing(tx, input.playerId, input.listingId);
-        message = 'Anúncio cancelado. Os itens restantes voltaram ao seu inventário.';
+        if (input.action === 'cancel') {
+          await cancelMarketListing(tx, input.playerId, input.listingId);
+          message = 'Anúncio cancelado. Os itens restantes voltaram ao seu inventário.';
+          return;
+        }
+
+        if (input.action === 'create_buy_order') {
+          const order = await createMarketBuyOrder(tx, input.playerId, {
+            itemId: input.itemId,
+            quantity: input.quantity,
+            currency: input.currency,
+            unitPrice: input.unitPrice,
+          });
+          const total = input.unitPrice * input.quantity;
+          const price =
+            input.currency === 'crystal'
+              ? `${total} 💎`
+              : `${total.toLocaleString('pt-BR')} Zeni`;
+          message = `Proposta criada: você quer ${input.quantity}× ${order.itemName} por ${price} no total. O valor ficou reservado.`;
+          return;
+        }
+
+        if (input.action === 'fulfill_buy_order') {
+          const result = await fulfillMarketBuyOrder(
+            tx,
+            input.playerId,
+            input.orderId,
+            input.quantity
+          );
+          const price =
+            result.currency === 'crystal'
+              ? `${result.totalPrice} 💎`
+              : `${result.totalPrice.toLocaleString('pt-BR')} Zeni`;
+          message = `Venda rápida concluída: ${input.quantity}× ${result.itemName} por ${price}.`;
+          return;
+        }
+
+        const cancelled = await cancelMarketBuyOrder(tx, input.playerId, input.orderId);
+        const refund =
+          cancelled.currency === 'crystal'
+            ? `${cancelled.refunded} 💎`
+            : `${cancelled.refunded.toLocaleString('pt-BR')} Zeni`;
+        message = `Proposta cancelada. ${refund} do escrow voltaram ao seu saldo.`;
       },
       { timeout: 20_000, maxWait: 10_000 }
     );
