@@ -171,7 +171,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'tech_8', category: 'technique', name: 'Mestre das Artes', description: 'Aprenda 8 técnicas com os mestres.', metric: 'techniquesLearned', target: 8, rewardZeni: 8000, rewardXp: 2500, rewardCrystals: 8, icon: '🧙' },
   // Guilda
   { id: 'guild_member', category: 'guild', name: 'Irmão de Armas', description: 'Faça parte de uma guilda.', metric: 'guildMembership', target: 1, rewardZeni: 800, rewardXp: 200, rewardCrystals: 1, icon: '🛡️' },
-  { id: 'guild_donator', category: 'guild', name: 'Mecenas', description: 'Doe 50.000 Zeni para guildas (total).', metric: 'guildDonated', target: 50000, rewardZeni: 10000, rewardXp: 3000, rewardCrystals: 10, icon: '💰' },
+  { id: 'guild_donator', category: 'guild', name: 'Mecenas', description: 'Doe 50.000 Créditos para guildas (total).', metric: 'guildDonated', target: 50000, rewardZeni: 10000, rewardXp: 3000, rewardCrystals: 10, icon: '💰' },
   // Coleção
   { id: 'items_10', category: 'collection', name: 'Colecionador', description: 'Tenha 10 itens diferentes no inventário.', metric: 'itemsOwned', target: 10, rewardZeni: 2000, rewardXp: 600, rewardCrystals: 3, icon: '🎒' },
   { id: 'dragao_7', category: 'collection', name: 'Guardião das Chaves', description: 'Tenha as 7 Chaves do Horizonte ao mesmo tempo.', metric: 'dragonBalls', target: 7, rewardZeni: 7000, rewardXp: 2000, rewardCrystals: 15, icon: '🔮' },
