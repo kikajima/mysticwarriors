@@ -1805,7 +1805,7 @@ function parseCosmeticsOwnedList(raw: string | null): string[] {
   }
 }
 
-// ===== v0.9.15: TALENTOS DE ÍMPETO (Cap. 7 do ASCENSÃO Z) =====
+// ===== v0.9.15: TALENTOS DE ÍMPETO (Cap. 7 do ESCALAS DE CAELUM) =====
 // Os dois gastos restantes de 1 Ímpeto ("Repetir um d10" e
 // "Reposicionamento dramático") comprados na Loja com Créditos. A posse é
 // do PERSONAGEM (como cosméticos v0.9.6); a validação pura vive em
