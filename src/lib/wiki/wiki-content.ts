@@ -407,7 +407,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
   },
 
   // ================================================================
-  // ESCALA DE PODER / SCOUTER
+  // ESCALAS DE CAELUM / VISOR DE FLUXO
   // ================================================================
   {
     id: 'escala-poder',
