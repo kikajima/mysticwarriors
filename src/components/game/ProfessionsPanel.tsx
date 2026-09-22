@@ -516,7 +516,7 @@ function DragonBallSearchTab({
                   : 'border-yellow-700/50 bg-yellow-950/25'
               }`}>
                 <p className={`font-heading ${noFreeBalls ? 'text-red-200' : 'text-yellow-200'}`}>
-                  🌍 {freeBalls}/7 {freeBalls === 1 ? 'Chave espalhada' : 'Chaves espalhadas'} pelo mundo
+                  🌍 {freeBalls}/7 {freeBalls === 1 ? 'Chave livre' : 'Chaves livres'} pelo mundo
                 </p>
                 <p className="text-[11px] text-amber-200/55 mt-1">
                   {noFreeBalls
