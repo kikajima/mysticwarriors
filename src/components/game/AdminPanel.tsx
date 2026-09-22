@@ -856,7 +856,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                   {/* Esferas globais: a estrela é única no mundo */}
                   <section className="bg-black/20 rounded-xl border border-amber-900/40 p-4">
                     <h3 className="font-heading text-sm text-amber-100 mb-2 flex items-center gap-1.5">
-                      <CircleDot className="w-4 h-4 text-orange-300" /> Conceder Esfera do Dragão
+                      <CircleDot className="w-4 h-4 text-orange-300" /> Conceder Chave do Horizonte
                     </h3>
                     <p className="text-[11px] text-amber-200/45 mb-3">
                       Cada estrela existe uma única vez no mundo. Estrelas já possuídas por outro guerreiro aparecem bloqueadas.
@@ -1062,7 +1062,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                       </button>
                     </div>
                     <p className="text-[11px] text-sky-200/45">
-                      Acelera imediatamente trabalho, batalha/PvP/torneio, Busca pelas Esferas e fabricação em andamento. Recompensas continuam sendo resolvidas/coletadas pelo fluxo normal.
+                      Acelera imediatamente trabalho, batalha/PvP/torneio, Busca pelas Chaves e fabricação em andamento. Recompensas continuam sendo resolvidas/coletadas pelo fluxo normal.
                     </p>
                   </section>
 
