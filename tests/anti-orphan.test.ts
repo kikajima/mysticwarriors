@@ -110,6 +110,32 @@ describe('anti-orfão · camada hermética (cascates do schema sob o reset)', ()
           currency: 'zeni',
         },
       });
+      const marketBuyOrder = await client.marketBuyOrder.create({
+        data: {
+          buyerId: marketBuyer.id,
+          kind: 'material',
+          itemId: 'erva_medicinal',
+          itemName: 'Erva Medicinal',
+          itemIcon: '🌿',
+          currency: 'zeni',
+          unitPrice: 10,
+          quantity: 1,
+          quantityRemaining: 0,
+          status: 'filled',
+          filledAt: new Date(),
+        },
+      });
+      await client.marketBuyOrderTrade.create({
+        data: {
+          orderId: marketBuyOrder.id,
+          buyerId: marketBuyer.id,
+          sellerId: player.id,
+          quantity: 1,
+          unitPrice: 10,
+          totalPrice: 10,
+          currency: 'zeni',
+        },
+      });
       await client.craftJob.create({
         data: {
           playerId: player.id,
@@ -136,6 +162,7 @@ describe('anti-orfão · camada hermética (cascates do schema sob o reset)', ()
         client.cosmeticOwned.count(), client.requestDedup.count(), client.activity.count(),
         client.guildDonation.count(), client.worldBossDamage.count(),
         client.marketListing.count(), client.marketTrade.count(),
+        client.marketBuyOrder.count(), client.marketBuyOrderTrade.count(),
       ]);
       expect(liveCounts.every((c) => c > 0)).toBe(true);
 
@@ -171,6 +198,8 @@ describe('anti-orfão · camada hermética (cascates do schema sob o reset)', ()
       expect(await client.activity.count()).toBe(0);
       expect(await client.marketListing.count()).toBe(0);
       expect(await client.marketTrade.count()).toBe(0);
+      expect(await client.marketBuyOrder.count()).toBe(0);
+      expect(await client.marketBuyOrderTrade.count()).toBe(0);
       // Season é estrutura do sistema: fica (a entrada de ranking dela caiu com o player)
       expect(await client.season.count()).toBe(1);
       expect(await client.seasonRankEntry.count()).toBe(0);

@@ -68,6 +68,8 @@ async function countAll(): Promise<Record<string, number>> {
     craftJobs,
     marketListings,
     marketTrades,
+    marketBuyOrders,
+    marketBuyOrderTrades,
     analytics,
     dedups,
     chatFriends,
@@ -93,6 +95,8 @@ async function countAll(): Promise<Record<string, number>> {
     db.craftJob.count(),
     db.marketListing.count(),
     db.marketTrade.count(),
+    db.marketBuyOrder.count(),
+    db.marketBuyOrderTrade.count(),
     db.analyticsEvent.count(),
     db.requestDedup.count(),
     db.chatFriend.count(),
@@ -119,6 +123,8 @@ async function countAll(): Promise<Record<string, number>> {
     fabricacoes: craftJobs,
     anuncios_mercado: marketListings,
     negociacoes_mercado: marketTrades,
+    propostas_compra_mercado: marketBuyOrders,
+    vendas_para_propostas_mercado: marketBuyOrderTrades,
     eventos_analytics: analytics,
     dedups: dedups,
     amigos_chat: chatFriends,
@@ -220,6 +226,8 @@ export async function performServerReset(confirm: string): Promise<ServerResetRe
       await tx.activity.deleteMany({});
       await tx.marketTrade.deleteMany({});
       await tx.marketListing.deleteMany({});
+      await tx.marketBuyOrderTrade.deleteMany({});
+      await tx.marketBuyOrder.deleteMany({});
       await tx.craftJob.deleteMany({});
       await tx.inventoryStack.deleteMany({});
       await tx.questProgress.deleteMany({});

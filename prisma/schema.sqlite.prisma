@@ -233,6 +233,9 @@ model Player {
   marketListings   MarketListing[] @relation("MarketSeller")
   marketPurchases  MarketTrade[]   @relation("MarketTradeBuyer")
   marketSales      MarketTrade[]   @relation("MarketTradeSeller")
+  marketBuyOrders       MarketBuyOrder[]      @relation("MarketBuyOrderBuyer")
+  marketBuyOrderBuys    MarketBuyOrderTrade[] @relation("MarketBuyOrderTradeBuyer")
+  marketBuyOrderSales   MarketBuyOrderTrade[] @relation("MarketBuyOrderTradeSeller")
   craftJob         CraftJob?
   notifications    PlayerNotification[]
   dragonBallPossessions DragonBallPossession[]
@@ -312,6 +315,53 @@ model MarketTrade {
   createdAt  DateTime @default(now())
 
   @@index([listingId, createdAt])
+  @@index([buyerId, createdAt])
+  @@index([sellerId, createdAt])
+}
+
+// ===== Ordens de compra P2P (moeda fica em escrow na proposta) =====
+
+model MarketBuyOrder {
+  id                String   @id @default(cuid())
+  buyerId           String
+  buyer              Player   @relation("MarketBuyOrderBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  kind               String   // "material" | "equipment"
+  itemId             String
+  itemName           String
+  itemIcon           String
+  currency           String   // "zeni" | "crystal"
+  unitPrice          Int
+  quantity           Int
+  quantityRemaining  Int
+  status             String   @default("active") // active | filled | cancelled
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  filledAt           DateTime?
+  cancelledAt        DateTime?
+  trades             MarketBuyOrderTrade[]
+
+  @@index([status, createdAt])
+  @@index([kind, status, unitPrice])
+  @@index([currency, status, unitPrice])
+  @@index([buyerId, status, createdAt])
+  @@index([itemId, status, unitPrice])
+}
+
+model MarketBuyOrderTrade {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      MarketBuyOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  buyerId    String
+  buyer      Player   @relation("MarketBuyOrderTradeBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId   String
+  seller     Player   @relation("MarketBuyOrderTradeSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  quantity   Int
+  unitPrice  Int
+  totalPrice Int
+  currency   String
+  createdAt  DateTime @default(now())
+
+  @@index([orderId, createdAt])
   @@index([buyerId, createdAt])
   @@index([sellerId, createdAt])
 }

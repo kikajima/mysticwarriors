@@ -23,8 +23,9 @@ import type {
 import { Chip, GameButton, GameCard } from './Bits';
 import { PublicPlayerIdentity } from './PublicPlayerIdentity';
 import { LoadFail, RankingSkeleton } from './PanelLoad';
+import { MarketBuyOrdersTab, MyMarketBuyOrders } from './MarketBuyOrders';
 
-type Tab = 'browse' | 'sell' | 'mine';
+type Tab = 'browse' | 'offers' | 'sell' | 'mine';
 type KindFilter = 'all' | MarketListingKind;
 type CurrencyFilter = 'all' | MarketCurrency;
 type SortMode = 'recent' | 'price_asc' | 'price_desc';
@@ -152,6 +153,8 @@ export function MarketPanel({
   const totalPages = market ? Math.max(1, Math.ceil(market.total / market.pageSize)) : 1;
   const activeMine =
     market?.myListings.filter((listing) => listing.status === 'active').length ?? 0;
+  const activeBuyOrders =
+    market?.myBuyOrders.filter((order) => order.status === 'active').length ?? 0;
 
   return (
     <div className="space-y-5">
@@ -175,15 +178,22 @@ export function MarketPanel({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <TabButton active={tab === 'browse'} onClick={() => setTab('browse')}>
+        <TabButton active={tab === 'browse'} onClick={() => { setTab('browse'); setPage(1); }}>
           <ShoppingCart className="h-4 w-4" /> Comprar
+        </TabButton>
+        <TabButton active={tab === 'offers'} onClick={() => { setTab('offers'); setPage(1); }}>
+          🤝 Propostas de compra
         </TabButton>
         <TabButton active={tab === 'sell'} onClick={() => setTab('sell')}>
           <PackagePlus className="h-4 w-4" /> Vender
         </TabButton>
         <TabButton active={tab === 'mine'} onClick={() => setTab('mine')}>
           📜 Meus anúncios
-          {market ? <span className="opacity-65">({activeMine}/{market.activeLimit})</span> : null}
+          {market ? (
+            <span className="opacity-65">
+              ({activeMine} vendas · {activeBuyOrders} propostas)
+            </span>
+          ) : null}
         </TabButton>
         <GameButton size="sm" variant="ghost" onClick={() => void load()} disabled={loading}>
           <RefreshCw className={'h-3.5 w-3.5 ' + (loading ? 'animate-spin' : '')} /> Atualizar
@@ -364,6 +374,21 @@ export function MarketPanel({
             </div>
           ) : null}
         </>
+      ) : tab === 'offers' && market ? (
+        <MarketBuyOrdersTab
+          market={market}
+          player={player}
+          busy={mutating}
+          kind={kind}
+          currency={currency}
+          sort={sort}
+          setKind={setKind}
+          setCurrency={setCurrency}
+          setSort={setSort}
+          page={page}
+          setPage={setPage}
+          onMutate={mutate}
+        />
       ) : tab === 'sell' ? (
         <SellTab
           assets={market?.sellable ?? []}
@@ -383,11 +408,21 @@ export function MarketPanel({
           }
         />
       ) : (
-        <MyListings
-          listings={market?.myListings ?? []}
-          busy={mutating}
-          onCancel={(listingId) => mutate({ action: 'cancel', listingId })}
-        />
+        <div className="space-y-6">
+          <section className="space-y-3">
+            <h3 className="font-heading text-amber-100">🏷️ Meus anúncios de venda</h3>
+            <MyListings
+              listings={market?.myListings ?? []}
+              busy={mutating}
+              onCancel={(listingId) => mutate({ action: 'cancel', listingId })}
+            />
+          </section>
+          <MyMarketBuyOrders
+            orders={market?.myBuyOrders ?? []}
+            busy={mutating}
+            onCancel={(orderId) => mutate({ action: 'cancel_buy_order', orderId })}
+          />
+        </div>
       )}
     </div>
   );
