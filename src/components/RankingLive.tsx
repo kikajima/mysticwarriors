@@ -27,11 +27,11 @@ const RACE_EMOJI: Record<string, string> = {
 };
 
 const RACE_NAME: Record<string, string> = {
-  saiyajin: 'Saiyajin',
+  saiyajin: 'Solaris',
   humano: 'Humano',
-  namekuseijin: 'Namekuseijin',
+  namekuseijin: 'Verdant',
   androide: 'Androide',
-  majin: 'Majin',
+  majin: 'Amorph',
 };
 
 export function RankingLive({ initial }: { initial: PublicRanking }) {
