@@ -1,4 +1,4 @@
-# Mystic Warriors
+# Myst Ki Warriors
 
 Jogo de navegador com Next.js, React, Bun, Prisma e Supabase PostgreSQL.
 
