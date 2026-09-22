@@ -232,7 +232,7 @@ export function WorkshopPanel({
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               <Chip className="bg-yellow-950/40 text-yellow-300 border-yellow-800/40">
-                <Coins className="w-3.5 h-3.5" /> {totalCost.toLocaleString('pt-BR')} Zeni
+                <Coins className="w-3.5 h-3.5" /> {totalCost.toLocaleString('pt-BR')} Créditos
               </Chip>
               <Chip className="bg-black/30 text-amber-200/70 border-amber-900/40">
                 <Clock3 className="w-3.5 h-3.5" /> {durationLabel(effectiveMin)}
@@ -351,7 +351,7 @@ export function WorkshopPanel({
       <GameCard className="p-4">
         <p className="text-sm text-amber-100/80">
           A Oficina funciona em paralelo ao trabalho, treino, PvP, Ameaça Universal e guildas.
-          Ingredientes e Zeni são consumidos ao iniciar; o item é entregue somente na coleta.
+          Ingredientes e Créditos são consumidos ao iniciar; o item é entregue somente na coleta.
         </p>
         <p className="text-xs text-amber-200/50 mt-2">
           🎓 Mestria Acadêmica reduz o tempo de fabricação em 1% por nível, até 10%.
@@ -433,7 +433,7 @@ export function WorkshopPanel({
                     variant="ghost"
                     disabled={busy}
                     onClick={() => {
-                      if (window.confirm('Cancelar a fabricação? Todos os materiais e o Zeni serão devolvidos.')) {
+                      if (window.confirm('Cancelar a fabricação? Todos os materiais e o Créditos serão devolvidos.')) {
                         void runAction({ type: 'craft_cancel' });
                       }
                     }}
@@ -441,7 +441,7 @@ export function WorkshopPanel({
                     ↩️ Cancelar e reembolsar
                   </GameButton>
                   <p className="text-[10px] text-amber-200/40 mt-1">
-                    O cancelamento devolve integralmente os materiais e o Zeni consumidos.
+                    O cancelamento devolve integralmente os materiais e o Créditos consumidos.
                   </p>
                 </div>
               )}
