@@ -8,11 +8,11 @@ import type { RaceId } from '@/lib/game/types';
 
 // ===== Mapas visuais de raça =====
 export const RACE_EMOJI: Record<string, string> = {
-  saiyajin: '🔥',
-  humano: '🥋',
-  namekuseijin: '🐲',
-  androide: '⚡',
-  majin: '🍬',
+  saiyajin: '🐺',
+  humano: '🛡️',
+  namekuseijin: '🌿',
+  androide: '🤖',
+  majin: '🧬',
 };
 
 // v0.16 — RACE_EMOJI_GENDER / GENDER_LABEL / GENDER_SYMBOL / GenderBadge
