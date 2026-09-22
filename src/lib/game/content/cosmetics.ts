@@ -692,7 +692,7 @@ export const PRODUCTS: ProductDef[] = [
 
 /**
  * Política anti pay-to-win (documentada no código de propósito):
- * - NUNCA vender atributos, XP, Zeni ou vantagem de combate;
+ * - NUNCA vender atributos, XP, Créditos ou vantagem de combate;
  * - Cristais comprados (futuro) só compram COSMÉTICOS;
  * - VIP é conveniente, nunca mais forte.
  */
