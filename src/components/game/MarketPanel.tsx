@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import {
   Coins,
   Gem,
@@ -403,7 +404,7 @@ function SellTab({
 }: {
   assets: MarketSellableAsset[];
   drafts: Record<string, SellDraft>;
-  setDrafts: React.Dispatch<React.SetStateAction<Record<string, SellDraft>>>;
+  setDrafts: Dispatch<SetStateAction<Record<string, SellDraft>>>;
   busy: boolean;
   activeCount: number;
   activeLimit: number;
@@ -630,7 +631,7 @@ function TabButton({
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
