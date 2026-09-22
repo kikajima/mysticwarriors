@@ -419,6 +419,56 @@ export interface AchievementView {
   claimed: boolean;
 }
 
+// ===== Mercado entre jogadores =====
+
+export type MarketCurrency = 'zeni' | 'crystal';
+export type MarketListingKind = 'material' | 'equipment';
+export type MarketListingStatus = 'active' | 'sold' | 'cancelled';
+
+export interface MarketListingView {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  sellerRace: RaceId;
+  sellerAvatarUrl: string | null;
+  sellerCosmetics: PublicCosmeticsView;
+  kind: MarketListingKind;
+  itemId: string;
+  itemName: string;
+  itemIcon: string;
+  currency: MarketCurrency;
+  unitPrice: number;
+  quantity: number;
+  quantityRemaining: number;
+  status: MarketListingStatus;
+  createdAt: string;
+  soldAt: string | null;
+  cancelledAt: string | null;
+  isMine: boolean;
+}
+
+export interface MarketSellableAsset {
+  kind: MarketListingKind;
+  itemId: string;
+  name: string;
+  icon: string;
+  quantity: number;
+  description?: string;
+  category?: string;
+  rarity?: string;
+  tier?: number;
+}
+
+export interface MarketPage {
+  listings: MarketListingView[];
+  myListings: MarketListingView[];
+  sellable: MarketSellableAsset[];
+  total: number;
+  page: number;
+  pageSize: number;
+  activeLimit: number;
+}
+
 // ===== Guildas =====
 
 export interface GuildSummary {
@@ -620,7 +670,7 @@ export interface ClaimableMission {
  */
 export interface PlayerNotificationView {
   id: string;
-  kind: 'dragon_ball_stolen' | 'dragon_ball_lost' | 'admin';
+  kind: 'dragon_ball_stolen' | 'dragon_ball_lost' | 'market_sold' | 'admin';
   title: string;
   message: string;
   createdAt: string;
