@@ -13,13 +13,13 @@ import { WikiView } from '@/components/wiki/WikiView';
 export const metadata: Metadata = {
   title: 'Wiki de Mecânicas',
   description:
-    'Manual completo de Guerreiros Místicos: combate com Ímpeto, Escalas de Poder, desempate por Decisão, atributos e fórmulas, raças, técnicas, transformações, torneio, profissões, PvP, conquistas e Chaves do Horizonte — com os números reais do jogo.',
+    'Manual completo de Myst Ki Warriors: combate com Ímpeto, Escalas de Poder, desempate por Decisão, atributos e fórmulas, raças, técnicas, transformações, torneio, profissões, PvP, conquistas e Chaves do Horizonte — com os números reais do jogo.',
   alternates: { canonical: '/wiki' },
   openGraph: {
-    title: 'Wiki de Mecânicas — Guerreiros Místicos',
+    title: 'Wiki de Mecânicas — Myst Ki Warriors',
     description:
       'Todas as mecânicas do jogo documentadas com transparência total: fórmulas, custos, recompensas e probabilidades reais.',
-    images: ['/images/banner.png'],
+    images: ['/images/banner-mystki.svg'],
   },
   robots: { index: true, follow: true },
 };
