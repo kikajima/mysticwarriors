@@ -19,19 +19,19 @@ import { getPowerScale } from '@/lib/game/powerScale';
 const REFRESH_MS = 60_000;
 
 const RACE_EMOJI: Record<string, string> = {
-  saiyajin: '🔥',
-  humano: '🥋',
-  namekuseijin: '🐲',
-  androide: '⚡',
-  majin: '🍬',
+  saiyajin: '🐺',
+  humano: '🛡️',
+  namekuseijin: '🌿',
+  androide: '🤖',
+  majin: '🌀',
 };
 
 const RACE_NAME: Record<string, string> = {
-  saiyajin: 'Saiyajin',
-  humano: 'Humano',
-  namekuseijin: 'Namekuseijin',
-  androide: 'Androide',
-  majin: 'Majin',
+  saiyajin: 'Solaris',
+  humano: 'Vanguardiano',
+  namekuseijin: 'Verdant',
+  androide: 'Sintético',
+  majin: 'Amorph',
 };
 
 export function RankingLive({ initial }: { initial: PublicRanking }) {
