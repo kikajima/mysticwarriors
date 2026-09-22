@@ -13,7 +13,7 @@ import { WikiView } from '@/components/wiki/WikiView';
 export const metadata: Metadata = {
   title: 'Wiki de Mecânicas',
   description:
-    'Manual completo de Guerreiros Místicos: combate com Ímpeto, Escalas de Poder, desempate por Decisão, atributos e fórmulas, raças, técnicas, transformações, torneio, profissões, PvP, conquistas e Esferas do Dragão — com os números reais do jogo.',
+    'Manual completo de Guerreiros Místicos: combate com Ímpeto, Escalas de Poder, desempate por Decisão, atributos e fórmulas, raças, técnicas, transformações, torneio, profissões, PvP, conquistas e Chaves do Horizonte — com os números reais do jogo.',
   alternates: { canonical: '/wiki' },
   openGraph: {
     title: 'Wiki de Mecânicas — Guerreiros Místicos',

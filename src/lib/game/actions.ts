@@ -184,9 +184,9 @@ export async function executeGameAction(
     // ===== BLOQUEIO CENTRAL: personagem em missão ativa =====
     // O frontend só DESABILITA botões — quem decide é o servidor.
     // v0.16 — MATRIZ DEFINITIVA (3ª ordem): durante trabalho ativo
-    // PvE, torneio e iniciar Busca de Esferas são negados (MISSION_BLOCKED_ACTIONS).
+    // PvE, torneio e iniciar Busca de Chaves são negados (MISSION_BLOCKED_ACTIONS).
     // Tudo mais passa: treino, Oficina, loja, guilda, coletas, PvP, chefe
-    // mundial, equipamento, perfil, Shenron, cosméticos, talentos…
+    // mundial, equipamento, perfil, Aethelgard, cosméticos, talentos…
     assertPlayerAvailableForAction(player, type);
 
     // ===== BLOQUEIO CENTRAL: atividade em andamento (luta com duração) =====
@@ -411,19 +411,19 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
     player.dragonBalls = ownedCount;
   }
   if (ownedCount >= 7) {
-    throw new ApiError('VALIDATION_ERROR', 'Você já reuniu as 7 Esferas do Dragão. Faça um desejo antes de procurar mais.');
+    throw new ApiError('VALIDATION_ERROR', 'Você já reuniu as 7 Chaves do Horizonte. Receba uma Bênção Primordial antes de procurar mais.');
   }
   const hours = Number(rawHours);
   const shift = dragonBallSearchShift(hours);
   if (!shift) throw new ApiError('VALIDATION_ERROR', 'Duração de busca inválida.');
 
-  // Não cobra energia nem inicia timer quando todas as sete estrelas já
+  // Não cobra energia nem inicia timer quando todas as sete Chaves já
   // estão em posse de alguém. A tabela global é a fonte autoritativa.
   const freeStars = await tx.dragonBallPossession.count({ where: { playerId: null } });
   if (freeStars <= 0) {
     throw new ApiError(
       'DRAGON_BALL_NONE_AVAILABLE',
-      'Nenhuma Esfera do Dragão está espalhada pelo mundo agora. As 7 estão em posse de guerreiros — tente recuperá-las pelo PvP ou aguarde um desejo dispersá-las.'
+      'Nenhuma Chave do Horizonte está livre no mundo agora. As 7 estão em posse de guerreiros — tente recuperá-las pelo PvP ou aguarde uma Convergência dispersá-las.'
     );
   }
 
@@ -436,7 +436,7 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
   const payload: DragonBallSearchActivityResult = {
     kind: 'dragon_ball_search',
     display: {
-      message: `Busca iniciada por ${hours}h. Há ${freeStars} ${freeStars === 1 ? 'esfera espalhada' : 'esferas espalhadas'} no mundo. Chance de encontrar 1: ${Math.round(chance * 100)}%.`,
+      message: `Busca iniciada por ${hours}h. Há ${freeStars} ${freeStars === 1 ? 'Chave livre' : 'Chaves livres'} no mundo. Chance de encontrar 1: ${Math.round(chance * 100)}%.`,
       levelsGained: 0,
     },
     apply: { found: rng() < chance, chance },
@@ -471,7 +471,7 @@ async function actionCancelDragonBallSearch(tx: Tx, player: Player): Promise<Act
   if (canceled.count === 0) throw new ApiError('CONFLICT', 'A busca já foi encerrada.');
 
   return {
-    message: 'Busca pelas Esferas interrompida. Nenhuma esfera foi encontrada.',
+    message: 'Busca pelas Chaves interrompida. Nenhuma Chave foi encontrada.',
     levelsGained: 0,
   };
 }
@@ -1504,7 +1504,7 @@ async function actionUnequip(tx: Tx, player: Player, slot: string): Promise<Acti
 }
 
 
-// ===== SHENRON (desejos) =====
+// ===== AETHELGARD (Bênçãos Primordiais) =====
 
 async function actionWish(tx: Tx, player: Player, wishType: string): Promise<ActionResult> {
   if (!['riqueza', 'poder', 'vitalidade', 'sabedoria'].includes(wishType)) {
@@ -1537,7 +1537,7 @@ async function actionWish(tx: Tx, player: Player, wishType: string): Promise<Act
   if (wishType === 'riqueza') {
     await addCurrency(tx, player.id, 'zeni', 8000, { type: 'grant', source: 'wish', accountId: player.accountId });
     player.zeni += 8000;
-    message = 'Shenlon concedeu seu desejo: +8.000 Zeni caíram do céu!';
+    message = 'Aethelgard concedeu a Bênção da Riqueza: +8.000 Zeni!';
   } else if (wishType === 'poder') {
     // +3 em todos os atributos — SEMPRE com limite central
     (['strength', 'defense', 'speed', 'ki'] as const).forEach((s) => addStat(player, s, 3));
@@ -1545,17 +1545,17 @@ async function actionWish(tx: Tx, player: Player, wishType: string): Promise<Act
       where: { id: player.id },
       data: { strength: player.strength, defense: player.defense, speed: player.speed, ki: player.ki },
     });
-    message = 'Shenlon concedeu seu desejo: +3 em todos os atributos!';
+    message = 'Aethelgard concedeu o Despertar de Poder: +3 em todos os atributos!';
   } else if (wishType === 'vitalidade') {
     const derived = computeDerived(player);
     await tx.player.update({ where: { id: player.id }, data: { hp: derived.maxHp, energy: derived.maxEnergy } });
     player.hp = derived.maxHp;
     player.energy = derived.maxEnergy;
-    message = 'Shenlon restaurou completamente sua vida e energia!';
+    message = 'Aethelgard concedeu Renovação Vital: vida e energia restauradas!';
   } else {
     const grant = await grantRewards(tx, player, { xp: 1500 }, { type: 'reward', source: 'wish', accountId: player.accountId });
     levelsGained = grant.levelsGained;
-    message = 'Shenlon concedeu seu desejo: +1.500 XP de sabedoria de batalha!';
+    message = 'Aethelgard concedeu Sabedoria Ancestral: +1.500 XP!';
   }
   return { message, levelsGained };
 }

@@ -505,9 +505,9 @@ function DragonBallSearchTab({
         <div className="flex flex-col md:flex-row md:items-center gap-5">
           <div className="text-6xl shrink-0 text-center" aria-hidden>🔮</div>
           <div className="flex-1">
-            <h3 className="font-heading text-xl text-amber-100">Busca pelas Esferas</h3>
+            <h3 className="font-heading text-xl text-amber-100">Busca pelas Chaves</h3>
             <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">
-              Escolha quanto tempo seu radar ficará procurando. A busca não gasta energia. A chance base cresce até 20%; bônus dos dois espaços de acessório podem elevar a chance total até 50%. Cada busca encontra no máximo uma esfera e só pode começar se existir uma estrela sem dono no mundo.
+              Escolha quanto tempo seu radar ficará procurando. A busca não gasta energia. A chance base cresce até 20%; bônus dos dois espaços de acessório podem elevar a chance total até 50%. Cada busca encontra no máximo uma Chave e só pode começar se existir uma Chave sem dono no mundo.
             </p>
             {freeBalls !== undefined && (
               <div className={`mt-3 rounded-lg border p-3 ${
@@ -516,12 +516,12 @@ function DragonBallSearchTab({
                   : 'border-yellow-700/50 bg-yellow-950/25'
               }`}>
                 <p className={`font-heading ${noFreeBalls ? 'text-red-200' : 'text-yellow-200'}`}>
-                  🌍 {freeBalls}/7 {freeBalls === 1 ? 'Esfera espalhada' : 'Esferas espalhadas'} pelo mundo
+                  🌍 {freeBalls}/7 {freeBalls === 1 ? 'Chave livre' : 'Chaves livres'} pelo mundo
                 </p>
                 <p className="text-[11px] text-amber-200/55 mt-1">
                   {noFreeBalls
-                    ? 'As 7 Esferas estão em posse de guerreiros. A busca está indisponível; dispute uma no PvP ou aguarde alguém invocar Shenlon.'
-                    : `Ainda existem ${freeBalls} ${freeBalls === 1 ? 'estrela sem dono que pode ser encontrada' : 'estrelas sem dono que podem ser encontradas'} pela busca.`}
+                    ? 'As 7 Chaves estão em posse de guerreiros. A busca está indisponível; dispute uma no PvP ou aguarde alguém abrir a Convergência do Horizonte.'
+                    : `Ainda existem ${freeBalls} ${freeBalls === 1 ? 'Chave sem dono que pode ser encontrada' : 'Chaves sem dono que podem ser encontradas'} pela busca.`}
                 </p>
               </div>
             )}
@@ -529,7 +529,7 @@ function DragonBallSearchTab({
               <div className="mt-3 rounded-lg border border-orange-700/50 bg-orange-950/30 p-3">
                 <p className="font-heading text-orange-200">Busca em andamento: {totalHours}h</p>
                 <p className="text-2xl text-amber-100 tabular-nums mt-1">⏳ {countdown}</p>
-                <p className="text-xs text-amber-200/50">A esfera será aplicada apenas quando a busca terminar.</p>
+                <p className="text-xs text-amber-200/50">A Chave será concedida apenas quando a busca terminar.</p>
                 <GameButton
                   size="sm"
                   variant="ghost"
@@ -558,10 +558,10 @@ function DragonBallSearchTab({
               </div>
             )}
             <div className="flex flex-wrap gap-2 mt-3">
-              <Chip className="bg-yellow-950/50 text-yellow-300 border-yellow-800/50">🔮 {player.dragonBalls}/7 coletadas</Chip>
+              <Chip className="bg-yellow-950/50 text-yellow-300 border-yellow-800/50">◇ {player.dragonBalls}/7 Chaves reunidas</Chip>
               {freeBalls !== undefined && (
                 <Chip className={noFreeBalls ? 'bg-red-950/50 text-red-300 border-red-800/50' : 'bg-emerald-950/50 text-emerald-300 border-emerald-800/50'}>
-                  🌍 {freeBalls}/7 espalhadas
+                  🌍 {freeBalls}/7 Chaves livres
                 </Chip>
               )}
               <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">🎯 {Math.round(chance * 100)}% de chance</Chip>
@@ -574,13 +574,13 @@ function DragonBallSearchTab({
             disabled={busy || complete || noFreeBalls || !!search}
             onClick={() => void onAction({ type: 'search_dragon_ball', hours: selectedHours })}
           >
-            {complete ? 'Conjunto completo' : noFreeBalls ? 'Nenhuma esfera espalhada' : search ? 'Busca em andamento' : `Iniciar busca (${selectedHours}h)`}
+            {complete ? 'Conjunto completo' : noFreeBalls ? 'Nenhuma Chave livre' : search ? 'Busca em andamento' : `Iniciar busca (${selectedHours}h)`}
           </GameButton>
         </div>
       </GameCard>
       <GameCard className="p-4">
         <p className="text-xs text-amber-200/55 leading-relaxed">
-          ⚔️ Uma vitória no PvP também pode roubar 1 Esfera do Dragão do adversário. Proteja sua coleção escolhendo bem seus duelos.
+          ⚔️ Uma vitória no PvP também pode roubar 1 Chave do Horizonte do adversário. Proteja sua coleção escolhendo bem seus duelos.
         </p>
       </GameCard>
     </div>

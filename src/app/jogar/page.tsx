@@ -106,7 +106,7 @@ const NAV: Array<{ key: View; label: string; icon: React.ReactNode; short: strin
   { key: 'market', label: 'Mercado', short: 'Mercado', icon: <Handshake className="w-4 h-4" /> },
   { key: 'ranking', label: 'Ranking', short: 'Ranking', icon: <Trophy className="w-4 h-4" /> },
   { key: 'guilds', label: 'Guildas', short: 'Guildas', icon: <Users className="w-4 h-4" /> },
-  { key: 'shenron', label: 'Shenlon', short: 'Shenlon', icon: <Sparkle className="w-4 h-4" /> },
+  { key: 'shenron', label: 'Aethelgard', short: 'Aethelgard', icon: <Sparkle className="w-4 h-4" /> },
   { key: 'achievements', label: 'Conquistas', short: 'Conquistas', icon: <Award className="w-4 h-4" /> },
 ];
 
@@ -1365,7 +1365,7 @@ export default function PlayPage() {
                 ⭐ {player.xp}/{player.xpToNext}
               </span>
               {player.dragonBalls > 0 && (
-                <span className="text-orange-300" title="Esferas do Dragão">
+                <span className="text-orange-300" title="Chaves do Horizonte">
                   🔮 {player.dragonBalls}/7
                 </span>
               )}

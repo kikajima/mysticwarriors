@@ -290,7 +290,7 @@ export function AuthGate({
             Myst Ki Warriors
           </h1>
           <p className="font-heading text-amber-200/90 text-sm sm:text-base mt-2 max-w-xl">
-            Treine. Lute. Trabalhe. Colete as 7 Esferas do Dragão e domine o universo!
+            Treine. Lute. Trabalhe. Colete as 7 Chaves do Horizonte e domine o universo!
           </p>
         </div>
       </div>
@@ -564,7 +564,7 @@ export function AuthGate({
                 className="w-full mt-3"
               >
                 {loading
-                  ? 'Invocando Shenlon...'
+                  ? 'Abrindo a Convergência...'
                   : cooldown > 0
                   ? `Aguarde ${cooldown}s para tentar de novo`
                   : mode === 'login'

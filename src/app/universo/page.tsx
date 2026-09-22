@@ -5,7 +5,7 @@ import { TRAINING_MASTERS } from '@/lib/game/content/techniques';
 export const metadata = {
   title: 'O Universo — Guerreiros Místicos',
   description:
-    'Conheça as cinco raças de Guerreiros Místicos, seus bônus, os mestres que ensinam técnicas lendárias e a eterna busca pelas Esferas do Dragão.',
+    'Conheça as cinco raças de Guerreiros Místicos, seus bônus, os mestres que ensinam técnicas lendárias e a eterna busca pelas Chaves do Horizonte.',
   alternates: { canonical: '/universo' },
 };
 

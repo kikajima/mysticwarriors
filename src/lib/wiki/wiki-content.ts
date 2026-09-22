@@ -188,7 +188,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           '**Treine o atributo da sua build** ([[atributos|Atributos]]) — Força para golpes físicos, Ki para ondas de energia.',
           '**Lute contra os capangas** ([[pve|Batalhas PvE]]) — comece pelo Arruaceiro do Ermo e avance até inimigos de escala Transcendente conforme seu [[escala-poder|Poder de Luta]] cresce.',
           '**Compre equipamento** ([[loja|Loja]]) — Luvas de Treino (300 Zeni) e Gi de Batalha (250 Zeni) custam pouco e já fazem diferença.',
-          'A partir daí: [[torneio|Torneio]], [[world-boss|Ameaça Universal]], [[esferas-dragao|Esferas do Dragão]] e [[guildas|Guilda]].',
+          'A partir daí: [[torneio|Torneio]], [[world-boss|Ameaça Universal]], [[esferas-dragao|Chaves do Horizonte]] e [[guildas|Guilda]].',
         ],
       },
       {
@@ -745,7 +745,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           rows: [
             [
               '🪙 Zeni',
-              'Profissões, vitórias PvE/PvP, [[torneio|torneio]], [[world-boss|Ameaça Universal]], quests, conquistas, [[esferas-dragao|desejo de riqueza]]',
+              'Profissões, vitórias PvE/PvP, [[torneio|torneio]], [[world-boss|Ameaça Universal]], quests, conquistas, [[esferas-dragao|Bênção de Riqueza]]',
               'Equipamentos, técnicas, [[transformacoes|transformações]], [[talentos|talentos]], guilda, cura, treino',
             ],
             [
@@ -798,7 +798,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           },
           {
             kind: 'text',
-            text: 'Teto de Zeni: 2 bilhões (guarda de valor Int32). Energia nunca é recuperada ao subir de nível — só por tempo, Cápsula de Energia (loja) ou desejo de Vitalidade.',
+            text: 'Teto de Zeni: 2 bilhões (guarda de valor Int32). Energia nunca é recuperada ao subir de nível — só por tempo, Cápsula de Energia (loja) ou Bênção de Renovação Vital.',
           },
         ],
       },
@@ -815,7 +815,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Progressão',
     summary: 'Quanto custa cada ação em energia/tempo e a matriz completa de ocupação (o que fica bloqueado durante o trabalho).',
     resumo: [
-      '**Trabalhar e buscar Esferas não gastam energia** — essas ações cobram apenas tempo real.',
+      '**Trabalhar e buscar Chaves não gastam energia** — essas ações cobram apenas tempo real.',
       '**Treinar e lutar** custam 3 ⚡ cada; **Ameaça Universal** custa 10 ⚡.',
       'No trabalho SÓ PvE/torneio travam — **tudo mais liberado, coleta inclusive**.',
     ],
@@ -829,7 +829,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Treino de atributo', `${TRAIN_ENERGY_COST} ⚡`, 'Instantâneo'],
             ['Batalha PvE / PvP / [[torneio|torneio]]', `${BATTLE_ENERGY_COST} ⚡`, 'Replay animado de ~2 a 20 s (conforme as rodadas)'],
             ['Turno de [[profissoes|profissão]]', '**0 ⚡** (não gasta energia)', '60 min reais'],
-            ['[[esferas-dragao|Busca pelas Esferas]]', '**0 ⚡** (não gasta energia)', '1h, 2h, 4h, 8h ou 12h'],
+            ['[[esferas-dragao|Busca pelas Chaves]]', '**0 ⚡** (não gasta energia)', '1h, 2h, 4h, 8h ou 12h'],
             ['Ataque ao [[world-boss|Ameaça Universal]]', `${BOSS.attackEnergyCost} ⚡`, `Cooldown de ${BOSS.attackCooldownSec} s entre ataques`],
           ],
         },
@@ -842,7 +842,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'callout',
         tone: 'warn',
         title: 'Matriz de ocupação (v0.16 — definitiva)',
-        text: '**TRABALHANDO bloqueia APENAS 3 ações:** combate PvE contra inimigos, torneio e iniciar uma nova Busca pelas Esferas. **TUDO mais fica liberado durante o turno:** treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), equipamento/inventário, perfil e Shenron. **Em luta em andamento:** não iniciar outra luta/treino/trabalho/Busca pelas Esferas até o desfecho — mas coletas seguem liberadas.',
+        text: '**TRABALHANDO bloqueia APENAS 3 ações:** combate PvE contra inimigos, torneio e iniciar uma nova Busca pelas Chaves. **TUDO mais fica liberado durante o turno:** treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), equipamento/inventário, perfil e Aethelgard. **Em luta em andamento:** não iniciar outra luta/treino/trabalho/Busca pelas Chaves até o desfecho — mas coletas seguem liberadas.',
       },
       {
         kind: 'table',
@@ -853,13 +853,13 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Treino de atributo', '✅', '❌ Bloqueado', '✅'],
             ['Batalha PvE (inimigos)', '❌ Bloqueado', '❌ Bloqueado', '✅'],
             ['Torneio', '❌ Bloqueado', '❌ Bloqueado', '✅'],
-            ['Busca pelas Esferas', '❌ Bloqueado', '❌ Bloqueado', '✅'],
+            ['Busca pelas Chaves', '❌ Bloqueado', '❌ Bloqueado', '✅'],
             ['PvP (atacar jogador)', '✅ Liberado', '❌ (uma luta por vez)', '✅'],
             ['Ameaça Universal', '✅ Liberado', '✅ Liberado (ataque instantâneo)', '✅'],
             ['Loja (comprar/vender/usar/equipar)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Guilda (fundar/entrar/sair/doar)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Coletar recompensa (qualquer tipo)', '✅ Liberado', '✅ Liberado', '✅'],
-            ['Shenron (desejos)', '✅ Liberado', '✅ Liberado', '✅'],
+            ['Aethelgard (desejos)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Perfil / inventário / visualizações', '✅ Liberado', '✅ Liberado', '✅'],
           ],
         },
@@ -1063,7 +1063,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           'O ganho de atributo é sempre um **número inteiro** e **não possui teto máximo de gameplay**; carreiras podem continuar fortalecendo o personagem indefinidamente.',
           'O XP de trabalho é **linear com o nível do personagem**: dobrar o nível dobra o XP base por hora na mesma carreira e duração.',
           'A chance de material raro é testada **uma vez por hora** e recebe o bônus da duração do turno. O material comum nunca deixa de vir: **1–2 unidades por hora**.',
-          'A Busca pelas Esferas é uma atividade separada das profissões, com duração de **1h a 12h** e **não gasta energia**. A chance base cresce até **20%**; bônus de equipamento podem elevar o total até o teto mundial de **50%**. Cada busca pode encontrar no máximo uma esfera.',
+          'A Busca pelas Chaves é uma atividade separada das profissões, com duração de **1h a 12h** e **não gasta energia**. A chance base cresce até **20%**; bônus de equipamento podem elevar o total até o teto mundial de **50%**. Cada busca pode encontrar no máximo uma Chave.',
           'Cancelar um turno em andamento não concede recompensa parcial.',
           '**Androide:** o bônus racial de Zeni de trabalho continua valendo.',
         ],
@@ -1374,41 +1374,41 @@ export const WIKI_SECTIONS: WikiSection[] = [
   },
 
   // ================================================================
-  // ESFERAS DO DRAGÃO
+  // CHAVES DO HORIZONTE
   // ================================================================
   {
     id: 'esferas-dragao',
-    title: 'Esferas do Dragão e Shenlon',
-    icon: '🔮',
+    title: 'Chaves do Horizonte e Aethelgard',
+    icon: '◇',
     group: 'Coleção e Social',
-    summary: 'Como coletar as 7 esferas e os 4 desejos do dragão.',
+    summary: 'Como encontrar as 7 Chaves do Horizonte e receber uma Bênção Primordial de Aethelgard.',
     resumo: [
-      'A Busca dura de **1h a 12h** e mostra quantas das 7 estrelas estão **espalhadas/sem dono**; com 0 disponíveis, a busca nem pode começar.',
-      'Com as **7**, invoque Shenlon e escolha UM desejo — elas se dispersam.',
-      'Colete a conquista *Colecionador de Esferas* **antes** de pedir o desejo.',
+      'A Busca dura de **1h a 12h** e mostra quantas das 7 Chaves estão **livres/sem dono**; com 0 disponíveis, a busca nem pode começar.',
+      'Com as **7**, abra a **Convergência do Horizonte** e escolha UMA Bênção Primordial — depois as Chaves se dispersam.',
+      'Colete a conquista *Guardião das Chaves* **antes** de abrir a Convergência.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: 'A aba **Busca** em [[profissoes|Atividades]] mostra em tempo real quantas Esferas estão **espalhadas pelo mundo** (sem dono) e permite procurar por 1h, 2h, 4h, 8h ou 12h. Se o contador chegar a **0/7 espalhadas**, a busca é bloqueada **antes de iniciar o timer**: todas as estrelas já pertencem a guerreiros, então a alternativa é PvP ou aguardar um desejo dispersá-las. **Buscar não gasta energia.** A chance base vai até 20%; o **Radar das Esferas** pode ser equipado em Acessório I ou II e adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais**, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Quando isso acontece, **os dois jogadores são avisados**: o vencedor vê o alerta ao terminar a batalha e a vítima recebe o aviso mesmo se estava offline, no próximo acesso. Junte as **7 esferas**, invoque Shenlon e escolha:',
+        text: 'A aba **Busca** em [[profissoes|Atividades]] mostra em tempo real quantas Chaves estão **livres pelo mundo** e permite rastrear por 1h, 2h, 4h, 8h ou 12h. Se o contador chegar a **0/7 livres**, a busca é bloqueada **antes de iniciar o timer**: todas as Chaves já pertencem a guerreiros, então a alternativa é PvP ou aguardar uma Convergência dispersá-las. **Buscar não gasta energia.** A chance base vai até 20%; o **Rastreador do Horizonte** pode ser equipado em Acessório I ou II e adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 Chaves globais**, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 Chave do adversário. Quando isso acontece, **os dois jogadores são avisados**: o vencedor vê o alerta ao terminar a batalha e a vítima recebe o aviso mesmo se estava offline, no próximo acesso. Junte as **7 Chaves** para despertar Aethelgard.',
       },
       {
         kind: 'table',
         table: {
-          caption: 'Desejos (ORIGEM: actions.ts — actionWish)',
-          headers: ['Desejo', 'Efeito'],
+          caption: 'Bênçãos Primordiais (ORIGEM: actions.ts — actionWish)',
+          headers: ['Bênção', 'Efeito'],
           rows: [
-            ['💰 Riqueza', '+8.000 Zeni'],
-            ['💪 Poder', '+3 em TODOS os atributos, sem teto máximo'],
-            ['❤️ Vitalidade', 'Vida e energia restauradas a 100%'],
-            ['📚 Sabedoria', '+1.500 XP'],
+            ['💰 Riqueza Cósmica', '+8.000 Zeni'],
+            ['💪 Despertar de Poder', '+3 em TODOS os atributos, sem teto máximo'],
+            ['❤️ Renovação Vital', 'Vida e energia restauradas a 100%'],
+            ['📚 Sabedoria Ancestral', '+1.500 XP'],
           ],
         },
       },
       {
         kind: 'callout',
         tone: 'tip',
-        text: 'A conquista *Colecionador de Esferas* pede as 7 ao mesmo tempo — o desejo zera a coleção, então colete a recompensa antes de pedir riqueza.',
+        text: 'A conquista *Guardião das Chaves* pede as 7 ao mesmo tempo — a Bênção dispersa a coleção, então colete a recompensa antes de abrir a Convergência.',
       },
     ],
   },
@@ -1424,7 +1424,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       { kind: 'text', text: 'Cada Zeni doado vira um ponto de progresso. Aceitamos inteiros positivos, até o restante necessário para o nível 10. No nível máximo, doações são recusadas sem débito. O ranking preserva doações históricas de membros que saíram. Níveis e histórico anteriores à atualização são preservados; guildas acima da nova lotação mantêm seus membros, sem admitir novos até haver vagas.' },
       { kind: 'table', table: { caption: 'Custos de cada upgrade (Zeni adicionais)', headers: ['Nível', 'Custo'], rows: GUILD_UPGRADE_COSTS.map((cost, i) => [String(i + 2), br(cost)]) } },
       { kind: 'table', table: { caption: 'Bônus cumulativos', headers: ['Nível', 'Benefício', 'Valor'], rows: GUILD_BONUS_TABLE.map(([level, label, value]) => [String(level), label, `${value}%`]) } },
-      { kind: 'text', text: 'XP de combate aplica-se a PvE, PvP, torneio e Ameaça Universal, inclusive aprendizado em derrota e recompensas de participação. No nível 10, os dois bônus de XP somam 10%. Trabalho recebe +5% XP e +5% Zeni (inclusive promoção). Aplicamos multiplicadores após os bônus raciais, arredondando ao inteiro mais próximo. Quests, conquistas e desejos não recebem XP extra de guilda.' },
+      { kind: 'text', text: 'XP de combate aplica-se a PvE, PvP, torneio e Ameaça Universal, inclusive aprendizado em derrota e recompensas de participação. No nível 10, os dois bônus de XP somam 10%. Trabalho recebe +5% XP e +5% Zeni (inclusive promoção). Aplicamos multiplicadores após os bônus raciais, arredondando ao inteiro mais próximo. Quests, conquistas e Bênçãos Primordiais não recebem XP extra de guilda.' },
       { kind: 'text', text: 'Regeneração aumenta a TAXA: energia passa de 300 para 285,714 segundos; vida de 12 para 11,429 segundos, antes dos bônus raciais. O teto de energia continua 100. A troca de guilda ou nível liquida a regeneração anterior e inicia o novo intervalo. Crítico adiciona 2 pontos percentuais à abertura contra diferenças esmagadoras; nos outros golpes, dá 2% de chance de dano ×1,75. Dano da Ameaça Universal multiplica por 1,05. Perdas PvP multiplicam por 0,95 antes da transferência: o vencedor recebe exatamente o que foi debitado.' },
       { kind: 'list', items: [
         'Só o líder cria, edita ou exclui até cinco cargos personalizados. Membro tem hierarquia 0 e nenhuma permissão; líder tem hierarquia 100 e todos os poderes. Cargos usam hierarquia de 1 a 99.',

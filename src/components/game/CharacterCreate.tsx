@@ -87,7 +87,7 @@ export function CharacterCreate({
             Myst Ki Warriors
           </h1>
           <p className="font-heading text-amber-200/90 text-sm sm:text-base mt-2 max-w-xl">
-            Treine. Lute. Trabalhe. Colete as 7 Esferas do Dragão e domine o universo!
+            Treine. Lute. Trabalhe. Colete as 7 Chaves do Horizonte e domine o universo!
           </p>
         </div>
       </div>

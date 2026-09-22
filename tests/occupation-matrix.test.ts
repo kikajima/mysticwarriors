@@ -163,7 +163,7 @@ describe('v0.16 anti-drift — TRABALHANDO: tudo liberado EXCETO os 2 negados', 
     expect(() => assertPlayerAvailableForAction(working, 'attack_player')).not.toThrow();
   });
 
-  test('trabalhando → Shenron ok · perfil ok · cosméticos/talentos ok', () => {
+  test('trabalhando → Aethelgard ok · perfil ok · cosméticos/talentos ok', () => {
     expect(() => assertPlayerAvailableForAction(working, 'wish')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'select_player')).not.toThrow();
     expect(() => assertPlayerAvailableForAction(working, 'buy_cosmetic')).not.toThrow();
