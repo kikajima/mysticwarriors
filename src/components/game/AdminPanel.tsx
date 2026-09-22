@@ -10,8 +10,8 @@
 //
 // v0.9.6 (Mudança 4): o painel lista PERSONAGENS (nome, raça, nível,
 // poder) — o e-mail da conta dona aparece apenas como informação. TODAS
-// as ações agem sobre o personagem escolhido: dar zenni/diamantes/
-// esferas, editar atributos, dar XP/nível, restaurar energia, completar
+// as ações agem sobre o personagem escolhido: dar Créditos/diamantes/
+// Chaves, editar atributos, dar XP/nível, restaurar energia, completar
 // profissão/treinamento, dar itens/auras/cosméticos/transformações e
 // resetar o progresso (DAQUELE personagem).
 //
