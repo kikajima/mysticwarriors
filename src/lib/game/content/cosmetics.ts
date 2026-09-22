@@ -227,8 +227,8 @@ export const COSMETICS: CosmeticDef[] = [
     id: 'frame_dragao',
     setId: 'heranca_dragao',
     slot: 'frame',
-    name: 'Moldura do Dragão',
-    description: 'Entalhada nas escamas de Shenlon.',
+    name: 'Moldura do Horizonte',
+    description: 'Entalhada com os padrões orbitais da Convergência.',
     price: 45,
     rarity: 'épico',
     icon: '🐲',
@@ -251,7 +251,7 @@ export const COSMETICS: CosmeticDef[] = [
     id: 'bg_planeta_namek',
     setId: 'heranca_dragao',
     slot: 'background',
-    name: 'Fundo: Namekusei',
+    name: 'Fundo: Sylva',
     description: 'Céus verdes e dois sóis no horizonte.',
     price: 20,
     rarity: 'raro',
@@ -327,7 +327,7 @@ export const COSMETICS: CosmeticDef[] = [
     id: 'nameplate_dragao_eterno',
     setId: 'heranca_dragao',
     slot: 'nameplate',
-    name: 'Nameplate do Dragão Eterno',
+    name: 'Nameplate de Aethelgard',
     description: 'Seu nome aparece em uma placa esmeralda com brilho de escamas.',
     price: 42,
     rarity: 'épico',
@@ -453,9 +453,9 @@ export const COSMETIC_SETS: CosmeticSetDef[] = [
   },
   {
     id: 'heranca_dragao',
-    name: 'Herança do Dragão',
+    name: 'Herança do Horizonte',
     icon: '🐉',
-    description: 'Escamas, Namekusei e a assinatura ancestral do dragão.',
+    description: 'Símbolos de Sylva, cristais do Horizonte e a assinatura primordial de Aethelgard.',
     pieceIds: ['frame_dragao', 'bg_planeta_namek', 'nameplate_dragao_eterno'],
     milestones: [
       {
@@ -469,7 +469,7 @@ export const COSMETIC_SETS: CosmeticSetDef[] = [
       {
         pieces: 3,
         name: 'Legado Eterno',
-        description: 'Conjunto completo: ficha e mensagens carregam a presença do Dragão Eterno.',
+        description: 'Conjunto completo: ficha e mensagens carregam a presença do Guardião Primordial.',
         badgeCss: 'border-emerald-500/65 bg-emerald-950/75 text-emerald-100 shadow-[0_0_12px_rgba(16,185,129,0.16)]',
         identityCss: 'border-emerald-500/55 bg-gradient-to-r from-emerald-950/45 via-teal-950/35 to-green-950/45 shadow-[0_0_24px_rgba(16,185,129,0.16)]',
         avatarCss: 'shadow-[0_0_30px_rgba(52,211,153,0.42)]',
@@ -684,7 +684,7 @@ export const PRODUCTS: ProductDef[] = [
     description: 'Trilha de recompensas gratuita + premium por temporada. Em breve.',
     available: false,
     passBenefits: {
-      free: ['Zeni e cristais por nível do passe', 'Cosmético comum ao final'],
+      free: ['Créditos e cristais por nível do passe', 'Cosmético comum ao final'],
       premium: ['Cristais extras em cada nível', 'Cosmético lendário exclusivo', 'Moldura de temporada'],
     },
   },
