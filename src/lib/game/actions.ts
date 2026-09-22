@@ -417,7 +417,7 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
   const shift = dragonBallSearchShift(hours);
   if (!shift) throw new ApiError('VALIDATION_ERROR', 'Duração de busca inválida.');
 
-  // Não cobra energia nem inicia timer quando todas as sete estrelas já
+  // Não cobra energia nem inicia timer quando todas as sete Chaves já
   // estão em posse de alguém. A tabela global é a fonte autoritativa.
   const freeStars = await tx.dragonBallPossession.count({ where: { playerId: null } });
   if (freeStars <= 0) {
@@ -436,7 +436,7 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
   const payload: DragonBallSearchActivityResult = {
     kind: 'dragon_ball_search',
     display: {
-      message: `Busca iniciada por ${hours}h. Há ${freeStars} ${freeStars === 1 ? 'esfera espalhada' : 'esferas espalhadas'} no mundo. Chance de encontrar 1: ${Math.round(chance * 100)}%.`,
+      message: `Busca iniciada por ${hours}h. Há ${freeStars} ${freeStars === 1 ? 'Chave livre' : 'Chaves livres'} no mundo. Chance de encontrar 1: ${Math.round(chance * 100)}%.`,
       levelsGained: 0,
     },
     apply: { found: rng() < chance, chance },
