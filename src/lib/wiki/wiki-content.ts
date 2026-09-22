@@ -21,7 +21,7 @@ import { UNIVERSAL_THREAT } from '@/lib/game/universalThreat';
 //
 // ESTRUTURA DE LEITURA (UX v0.9.23):
 //  * Cada seção abre com `resumo` (2-3 bullets simples — "Em resumo");
-//  * O corpo fala com o JOGADOR (2ª pessoa, vocabulário Dragon Ball);
+//  * O corpo fala com o JOGADOR (2ª pessoa, vocabulário Chaves do Horizonte);
 //  * Fórmulas exatas e tabelas completas vivem em blocos `details`
 //    ("Detalhes para curiosos") — ficam no DOM e são indexados pela
 //    busca, sem entupir a leitura.
@@ -42,7 +42,7 @@ import {
   FINAL_FIGHTERS,
   TOURNAMENT_COOLDOWN_MS,
   TOURNAMENT_ENTRY_FEE,
-  tournamentZeniReward,
+  tournamentCréditosReward,
 } from '@/lib/game/content/tournament';
 import { ACHIEVEMENTS, DAILY_QUESTS, WEEKLY_QUESTS } from '@/lib/game/content/quests';
 import { TALENTS } from '@/lib/game/content/talents';
@@ -176,19 +176,19 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: 'Seu guerreiro nasce **nível 1**, com 500 Zeni no bolso, atributos 10/10/10/10, 145 de vida e energia cheia. A energia volta devagar — dê uma olhada em [[recursos|Recursos]] para entender o ritmo. A rotina que funciona é a clássica: **trabalhar → treinar → lutar**.',
+        text: 'Seu guerreiro nasce **nível 1**, com 500 Créditos no bolso, atributos 10/10/10/10, 145 de vida e energia cheia. A energia volta devagar — dê uma olhada em [[recursos|Recursos]] para entender o ritmo. A rotina que funciona é a clássica: **trabalhar → treinar → lutar**.',
       },
       {
         kind: 'list',
         ordered: true,
         items: [
           '**Crie o personagem** ([[racas|Raças]]) — a raça define seus bônus permanentes. É para sempre!',
-          '**Comece um turno de trabalho** ([[profissoes|Profissões]]) — dura 1 hora real, **não gasta energia** e rende Zeni + XP mesmo com o jogo fechado. Durante o turno só lutas contra inimigos e torneio esperam — PvP, Ameaça Universal, loja, guilda e coletas seguem liberados.',
-          '**Aprenda sua primeira técnica** ([[tecnicas|Técnicas]]) — o Rogafufuken (600 Zeni) já deixa seus golpes físicos 25% mais fortes.',
+          '**Comece um turno de trabalho** ([[profissoes|Profissões]]) — dura 1 hora real, **não gasta energia** e rende Créditos + XP mesmo com o jogo fechado. Durante o turno só lutas contra inimigos e torneio esperam — PvP, Ameaça Universal, loja, guilda e coletas seguem liberados.',
+          '**Aprenda sua primeira técnica** ([[tecnicas|Técnicas]]) — o Garras do Lobo Astral (600 Créditos) já deixa seus golpes físicos 25% mais fortes.',
           '**Treine o atributo da sua build** ([[atributos|Atributos]]) — Força para golpes físicos, Ki para ondas de energia.',
           '**Lute contra os capangas** ([[pve|Batalhas PvE]]) — comece pelo Arruaceiro do Ermo e avance até inimigos de escala Transcendente conforme seu [[escala-poder|Poder de Luta]] cresce.',
-          '**Compre equipamento** ([[loja|Loja]]) — Luvas de Treino (300 Zeni) e Gi de Batalha (250 Zeni) custam pouco e já fazem diferença.',
-          'A partir daí: [[torneio|Torneio]], [[world-boss|Ameaça Universal]], [[esferas-dragao|Esferas do Dragão]] e [[guildas|Guilda]].',
+          '**Compre equipamento** ([[loja|Loja]]) — Luvas de Treino (300 Créditos) e Gi de Batalha (250 Créditos) custam pouco e já fazem diferença.',
+          'A partir daí: [[torneio|Torneio]], [[world-boss|Ameaça Universal]], [[esferas-dragao|Chaves do Horizonte]] e [[guildas|Guilda]].',
         ],
       },
       {
@@ -305,11 +305,11 @@ export const WIKI_SECTIONS: WikiSection[] = [
           },
           {
             kind: 'text',
-            text: '**Esquiva:** base `5% + 0,5% por ponto de velocidade a favor do defensor` (entre 3% e 30%), somada a bônus de raça e [[estrategias|estratégia]] e ajustada pela precisão da técnica — piso final de 2%, teto de 40%. Técnicas com precisão negativa (ex.: Kienzan **−5%**) são mais fáceis de desviar; com valor positivo (Dodonpa **+5%**) acertam mais.',
+            text: '**Esquiva:** base `5% + 0,5% por ponto de velocidade a favor do defensor` (entre 3% e 30%), somada a bônus de raça e [[estrategias|estratégia]] e ajustada pela precisão da técnica — piso final de 2%, teto de 40%. Técnicas com precisão negativa (ex.: Disco de Ruptura **−5%**) são mais fáceis de desviar; com valor positivo (Lança Fotônica **+5%**) acertam mais.',
           },
           {
             kind: 'text',
-            text: '**Perfuração:** técnicas com `defensePierce` (ex.: Kienzan 35%) reduzem a defesa efetiva do alvo antes do soft cap — o caminho contra tanques. Multiplicadores de [[estrategias|estratégia]] e [[escala-poder|Escala de Poder]] entram por último, no líquido.',
+            text: '**Perfuração:** técnicas com `defensePierce` (ex.: Disco de Ruptura 35%) reduzem a defesa efetiva do alvo antes do soft cap — o caminho contra tanques. Multiplicadores de [[estrategias|estratégia]] e [[escala-poder|Escala de Poder]] entram por último, no líquido.',
           },
         ],
       },
@@ -411,12 +411,12 @@ export const WIKI_SECTIONS: WikiSection[] = [
   // ================================================================
   {
     id: 'escala-poder',
-    title: 'Escala de Poder e Scouter',
+    title: 'Escala de Poder e Visor de Fluxo',
     icon: '🔍',
     group: 'Combate',
-    summary: 'As 10 escalas de ASCENSÃO Z, o poder do scouter, Armadura de Escala e Aberturas.',
+    summary: 'As 10 escalas de ASCENSÃO Z, o poder do visor de fluxo, Armadura de Escala e Aberturas.',
     resumo: [
-      'O scouter soma tudo que você tem num **Poder de Luta** — a linguagem de potência do jogo.',
+      'O visor de fluxo soma tudo que você tem num **Poder de Luta** — a linguagem de potência do jogo.',
       'São **10 Escalas**, de Mortal Comum a Transcendente.',
       'Escala acima do rival = **mais dano**; abaixo = **Armadura de Escala** segurando você.',
     ],
@@ -449,7 +449,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           },
           {
             kind: 'text',
-            text: `**Poder de Luta do scouter:** \`15 × nível + ataque + 0,9 × poder de Ki + defesa + 0,6 × resistência + 2 × velocidade\` (com equipamentos e bônus raciais contando). **Crítico de Abertura:** chance de 6% + 0,3% por ponto de velocidade a favor (entre 3% e 9%); dano ampliado ×${String(SCALE_COMBAT.aberturaCritMult).replace('.', ',')}. Golpe esmagado: ×${String(SCALE_COMBAT.crushingMult).replace('.', ',')}.`,
+            text: `**Poder de Luta do visor de fluxo:** \`15 × nível + ataque + 0,9 × poder de Ki + defesa + 0,6 × resistência + 2 × velocidade\` (com equipamentos e bônus raciais contando). **Crítico de Abertura:** chance de 6% + 0,3% por ponto de velocidade a favor (entre 3% e 9%); dano ampliado ×${String(SCALE_COMBAT.aberturaCritMult).replace('.', ',')}. Golpe esmagado: ×${String(SCALE_COMBAT.crushingMult).replace('.', ',')}.`,
           },
         ],
       },
@@ -497,7 +497,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           caption: 'O que acontece com a vida depois da luta',
           headers: ['Situação', 'Vida final'],
           rows: [
-            ['Vitória', 'A vida final do log (Majin ainda **absorve +4% do máximo** ao vencer)'],
+            ['Vitória', 'A vida final do log (Amorph ainda **absorve +4% do máximo** ao vencer)'],
             ['Derrota por NOCAUTE', 'Você é **resgatado com 1 de vida** — aguarde a regeneração natural ou use um item de cura antes de voltar ao combate.'],
             ['Derrota por Decisão', 'Você sai do ringue com a vida final exibida no log — sem resgate para 1 HP.'],
             ['Subiu de nível na luta', 'Vida restaurada à CHEIA após o resultado (vitória ou derrota)'],
@@ -557,14 +557,14 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Combate',
     summary: 'As 11 técnicas, mestres que ensinam, loadout de 4 slots e custos reais.',
     resumo: [
-      'Técnicas são **golpes especiais** aprendidos com mestres (Zeni + nível).',
+      'Técnicas são **golpes especiais** aprendidos com mestres (Créditos + nível).',
       'Cada uma **multiplica o poder** do golpe e gasta Ki de batalha por uso.',
       'Loadout: **3 slots comuns + 1 Supremo** — só o equipado luta.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: 'A primeira compra de qualquer guerreiro costuma ser o **Rogafufuken** (600 Zeni, nível 1): golpes físicos **25% mais fortes**. Lá no fim da jornada, a suprema **Genki Dama** multiplica por **1,75×** e perfura 30% da defesa — o golpe que apaga horizontes.',
+        text: 'A primeira compra de qualquer guerreiro costuma ser o **Garras do Lobo Astral** (600 Créditos, nível 1): golpes físicos **25% mais fortes**. Lá no fim da jornada, a suprema **Convergência do Aether** multiplica por **1,75×** e perfura 30% da defesa — o golpe que apaga horizontes.',
       },
       {
         kind: 'text',
@@ -580,7 +580,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'callout',
         tone: 'info',
         title: 'O caminho contra tanques',
-        text: 'A perfuração ignora parte da defesa: **Kienzan** corta 35%, **Makankosappo** e **Genki Dama** ignoram 30%. Contras e precisões estão na tabela de detalhes.',
+        text: 'A perfuração ignora parte da defesa: **Disco de Ruptura** corta 35%, **Espiral Penetrante** e **Convergência do Aether** ignoram 30%. Contras e precisões estão na tabela de detalhes.',
       },
       {
         kind: 'details',
@@ -599,7 +599,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
                 String(t.kiCost),
                 t.accuracy === 0 ? '—' : t.accuracy > 0 ? `+${Math.round(t.accuracy * 100)}%` : `${Math.round(t.accuracy * 100)}%`,
                 String(t.minLevel),
-                `${br(t.price)} Zeni`,
+                `${br(t.price)} Créditos`,
               ]),
             },
           },
@@ -626,7 +626,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Combate',
     summary: 'Os 3 privilégios compráveis que ampliam o uso de Ímpeto em combate.',
     resumo: [
-      'Três **privilégios permanentes** comprados na [[loja|loja]] com Zeni.',
+      'Três **privilégios permanentes** comprados na [[loja|loja]] com Créditos.',
       'Eles disparam **sozinhos** em combate, quando o gatilho acontece.',
       'Repetir acerto, esquiva extra e cancelar a exaustão.',
     ],
@@ -641,7 +641,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             t.effect,
             `${t.impetoCost} Ímpeto${t.impetoCost > 1 ? 's' : ''}`,
             String(t.minLevel),
-            `${br(t.price)} Zeni`,
+            `${br(t.price)} Créditos`,
           ]),
         },
       },
@@ -668,7 +668,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     resumo: [
       '**Força** = golpes físicos · **Ki** = ondas de energia (sem aumentar a energia de ações).',
       '**Defesa** = vida máxima e resistência · **Velocidade** = iniciativa e esquiva.',
-      'Treino custa **3 ⚡ + Zeni** e é **instantâneo**; os quatro atributos podem continuar crescendo sem teto máximo de gameplay, e a ficha mostra **base + equipamento = total**.',
+      'Treino custa **3 ⚡ + Créditos** e é **instantâneo**; os quatro atributos podem continuar crescendo sem teto máximo de gameplay, e a ficha mostra **base + equipamento = total**.',
     ],
     blocks: [
       {
@@ -682,13 +682,13 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'text',
-        text: `**Treinar é instantâneo:** clique no "+", o ponto entra na hora. Cada sessão custa **${TRAIN_ENERGY_COST} de energia** e Zeni que cresce conforme o atributo **base** sobe (Humano paga 10% menos). O ganho é +1 ponto — mais os bônus dos [[loja|equipamentos de treino]] que você possui. Na ficha, cada atributo aparece como **Total = Base + Equipamento**; por exemplo, Força 40 com +12 ATQ equipado aparece como Total 52, sem esconder o valor base.`,
+        text: `**Treinar é instantâneo:** clique no "+", o ponto entra na hora. Cada sessão custa **${TRAIN_ENERGY_COST} de energia** e Créditos que cresce conforme o atributo **base** sobe (Humano paga 10% menos). O ganho é +1 ponto — mais os bônus dos [[loja|equipamentos de treino]] que você possui. Na ficha, cada atributo aparece como **Total = Base + Equipamento**; por exemplo, Força 40 com +12 ATQ equipado aparece como Total 52, sem esconder o valor base.`,
       },
       {
         kind: 'callout',
         tone: 'info',
-        title: 'Zenkai (Saiyajin)',
-        text: `Ao PERDER para um adversário relevante, Saiyajins ganham **+1 de Força permanente**. As regras anti-farm: o oponente precisa ter nível ≥ ${Math.round(ZENKAI.relevanceFactor * 100)}% do seu, não repete contra o mesmo oponente em ${ZENKAI.sameOpponentCooldownHours} h e é preciso ENTRAR na luta com ≥ ${Math.round(ZENKAI.zenkaiRequiresHpPct * 100)}% de vida — perder de propósito não ativa nada.`,
+        title: 'Resiliência Estelar (Solaris)',
+        text: `Ao PERDER para um adversário relevante, Solaris ganham **+1 de Força permanente**. As regras anti-farm: o oponente precisa ter nível ≥ ${Math.round(ZENKAI.relevanceFactor * 100)}% do seu, não repete contra o mesmo oponente em ${ZENKAI.sameOpponentCooldownHours} h e é preciso ENTRAR na luta com ≥ ${Math.round(ZENKAI.zenkaiRequiresHpPct * 100)}% de vida — perder de propósito não ativa nada.`,
       },
       {
         kind: 'details',
@@ -702,7 +702,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
               rows: [
                 ['Vida máxima', '`80 + 15 × nível + 5 × Defesa`'],
                 ['Energia máxima', '`100 (fixa)`'],
-                ['Poder de Luta (scouter)', '`15 × nível + ataque + 0,9×poder de Ki + defesa + 0,6×resistência + 2 × velocidade`'],
+                ['Poder de Luta (visor de fluxo)', '`15 × nível + ataque + 0,9×poder de Ki + defesa + 0,6×resistência + 2 × velocidade`'],
                 ['Poder físico', '`2,2 × Força base` + ATQ de todos os equipamentos'],
                 ['Poder de Ki', '`2,4 × Ki base` + KI de todos os equipamentos'],
               ],
@@ -712,7 +712,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'table',
             table: {
               caption: 'Curva de custo de treino (ORIGEM: content/world.ts — baseTrainingCost; ×1,05 por ponto até 150, ×1,035 depois; sem teto máximo de atributo)',
-              headers: ['Atributo em', 'Custo por ponto (Zeni)'],
+              headers: ['Atributo em', 'Custo por ponto (Créditos)'],
               rows: [10, 25, 50, 100, 150, 200, 300].map((v) => [String(v), br(baseTrainingCost(v))]),
             },
           },
@@ -729,11 +729,11 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Recursos e Economia',
     icon: '💰',
     group: 'Progressão',
-    summary: 'Zeni, cristais, energia, XP e níveis: regeneração, curvas e conversões.',
+    summary: 'Créditos, cristais, energia, XP e níveis: regeneração, curvas e conversões.',
     resumo: [
-      '**Zeni** compra quase tudo; **💎 cristais** vêm de quests, conquistas e Ameaça Universal.',
+      '**Créditos** compra quase tudo; **💎 cristais** vêm de quests, conquistas e Ameaça Universal.',
       'Energia volta **1 ponto a cada 5 min** (Humano: mais rápido).',
-      'Vida volta **1 ponto a cada 12 s** (Namekuseijin: mais rápido).',
+      'Vida volta **1 ponto a cada 12 s** (Verdant: mais rápido).',
     ],
     blocks: [
       { kind: 'text', text: 'A ficha mostra o tempo até o próximo ponto de vida e até a recuperação completa. Os contadores usam o relógio do servidor e o intervalo da sua raça; a recuperação continua com o jogo fechado.' },
@@ -744,7 +744,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           headers: ['Moeda', 'Como se ganha', 'O que compra'],
           rows: [
             [
-              '🪙 Zeni',
+              '🪙 Créditos',
               'Profissões, vitórias PvE/PvP, [[torneio|torneio]], [[world-boss|Ameaça Universal]], quests, conquistas, [[esferas-dragao|desejo de riqueza]]',
               'Equipamentos, técnicas, [[transformacoes|transformações]], [[talentos|talentos]], guilda, cura, treino',
             ],
@@ -763,8 +763,8 @@ export const WIKI_SECTIONS: WikiSection[] = [
       {
         kind: 'list',
         items: [
-          '**Recuperação de vida:** o HP regenera com o tempo; itens de cura podem acelerar a recuperação e o Feijão Senzu restaura 100% na hora.',
-          `**Venda de itens:** ${Math.round(SELL_PRICE_RATIO * 100)}% do preço de compra, na mesma moeda (Zeni→Zeni, 💎→💎).`,
+          '**Recuperação de vida:** o HP regenera com o tempo; itens de cura podem acelerar a recuperação e o Fruto de Sylva restaura 100% na hora.',
+          `**Venda de itens:** ${Math.round(SELL_PRICE_RATIO * 100)}% do preço de compra, na mesma moeda (Créditos→Créditos, 💎→💎).`,
           'Subir de nível restaura a vida à cheia — mas nunca a energia.',
         ],
       },
@@ -792,13 +792,13 @@ export const WIKI_SECTIONS: WikiSection[] = [
               headers: ['Recurso', 'Taxa base', 'Modificadores raciais'],
               rows: [
                 ['⚡ Energia', `1 ponto / ${REGEN.energySeconds / 60} min`, 'Humano +10% mais rápido (≈ 4min33s)'],
-                ['❤️ Vida', `1 HP / ${REGEN.hpSeconds} s`, 'Namekuseijin +15% mais rápido (≈ 10s)'],
+                ['❤️ Vida', `1 HP / ${REGEN.hpSeconds} s`, 'Verdant +15% mais rápido (≈ 10s)'],
               ],
             },
           },
           {
             kind: 'text',
-            text: 'Teto de Zeni: 2 bilhões (guarda de valor Int32). Energia nunca é recuperada ao subir de nível — só por tempo, Cápsula de Energia (loja) ou desejo de Vitalidade.',
+            text: 'Teto de Créditos: 2 bilhões (guarda de valor Int32). Energia nunca é recuperada ao subir de nível — só por tempo, Cápsula de Energia (loja) ou desejo de Vitalidade.',
           },
         ],
       },
@@ -829,7 +829,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Treino de atributo', `${TRAIN_ENERGY_COST} ⚡`, 'Instantâneo'],
             ['Batalha PvE / PvP / [[torneio|torneio]]', `${BATTLE_ENERGY_COST} ⚡`, 'Replay animado de ~2 a 20 s (conforme as rodadas)'],
             ['Turno de [[profissoes|profissão]]', '**0 ⚡** (não gasta energia)', '60 min reais'],
-            ['[[esferas-dragao|Busca pelas Esferas]]', '**0 ⚡** (não gasta energia)', '1h, 2h, 4h, 8h ou 12h'],
+            ['[[esferas-dragao|Busca pelas Chaves]]', '**0 ⚡** (não gasta energia)', '1h, 2h, 4h, 8h ou 12h'],
             ['Ataque ao [[world-boss|Ameaça Universal]]', `${BOSS.attackEnergyCost} ⚡`, `Cooldown de ${BOSS.attackCooldownSec} s entre ataques`],
           ],
         },
@@ -842,7 +842,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'callout',
         tone: 'warn',
         title: 'Matriz de ocupação (v0.16 — definitiva)',
-        text: '**TRABALHANDO bloqueia APENAS 3 ações:** combate PvE contra inimigos, torneio e iniciar uma nova Busca pelas Esferas. **TUDO mais fica liberado durante o turno:** treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), equipamento/inventário, perfil e Shenron. **Em luta em andamento:** não iniciar outra luta/treino/trabalho/Busca pelas Esferas até o desfecho — mas coletas seguem liberadas.',
+        text: '**TRABALHANDO bloqueia APENAS 3 ações:** combate PvE contra inimigos, torneio e iniciar uma nova Busca pelas Chaves. **TUDO mais fica liberado durante o turno:** treino, PvP, Ameaça Universal, loja (comprar/vender/usar), gestão completa de guilda (doar, fundar, entrar, sair), coleta de recompensas (conquistas, diárias, missões, torneio), equipamento/inventário, perfil e Aethelgard. **Em luta em andamento:** não iniciar outra luta/treino/trabalho/Busca pelas Chaves até o desfecho — mas coletas seguem liberadas.',
       },
       {
         kind: 'table',
@@ -853,13 +853,13 @@ export const WIKI_SECTIONS: WikiSection[] = [
             ['Treino de atributo', '✅', '❌ Bloqueado', '✅'],
             ['Batalha PvE (inimigos)', '❌ Bloqueado', '❌ Bloqueado', '✅'],
             ['Torneio', '❌ Bloqueado', '❌ Bloqueado', '✅'],
-            ['Busca pelas Esferas', '❌ Bloqueado', '❌ Bloqueado', '✅'],
+            ['Busca pelas Chaves', '❌ Bloqueado', '❌ Bloqueado', '✅'],
             ['PvP (atacar jogador)', '✅ Liberado', '❌ (uma luta por vez)', '✅'],
             ['Ameaça Universal', '✅ Liberado', '✅ Liberado (ataque instantâneo)', '✅'],
             ['Loja (comprar/vender/usar/equipar)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Guilda (fundar/entrar/sair/doar)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Coletar recompensa (qualquer tipo)', '✅ Liberado', '✅ Liberado', '✅'],
-            ['Shenron (desejos)', '✅ Liberado', '✅ Liberado', '✅'],
+            ['Aethelgard (desejos)', '✅ Liberado', '✅ Liberado', '✅'],
             ['Perfil / inventário / visualizações', '✅ Liberado', '✅ Liberado', '✅'],
           ],
         },
@@ -914,11 +914,11 @@ export const WIKI_SECTIONS: WikiSection[] = [
           caption: 'Bônus raciais (ORIGEM: content/races.ts — RACES)',
           headers: ['Raça', 'Combate', 'Economia'],
           rows: [
-            ['🟠 Saiyajin', '+8% dano físico; +10% XP de batalha; **Zenkai** (+1 Força ao perder para adversário relevante)', '—'],
-            ['🟡 Humano', '+7% defesa; +2% dano de Ki', 'Energia regenera 10% mais rápido; treinos −10% de Zeni'],
-            ['🟢 Namekuseijin', '+5% dano de Ki; +4,5% esquiva', 'Vida regenera 15% mais rápido'],
-            ['⚙️ Androide', '+3,5% velocidade e +4,5% esquiva; +6% chance de atacar com Ki', '+5% de Zeni em trabalhos'],
-            ['💗 Majin', '+2% em TUDO (físico, Ki, defesa, velocidade); absorve 4% do HP máximo ao vencer', '—'],
+            ['🟠 Solaris', '+8% dano físico; +10% XP de batalha; **Resiliência Estelar** (+1 Força ao perder para adversário relevante)', '—'],
+            ['🟡 Humano', '+7% defesa; +2% dano de Ki', 'Energia regenera 10% mais rápido; treinos −10% de Créditos'],
+            ['🟢 Verdant', '+5% dano de Ki; +4,5% esquiva', 'Vida regenera 15% mais rápido'],
+            ['⚙️ Androide', '+3,5% velocidade e +4,5% esquiva; +6% chance de atacar com Ki', '+5% de Créditos em trabalhos'],
+            ['💗 Amorph', '+2% em TUDO (físico, Ki, defesa, velocidade); absorve 4% do HP máximo ao vencer', '—'],
           ],
         },
       },
@@ -926,7 +926,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'callout',
         tone: 'tip',
         title: 'Qual escolher?',
-        text: 'Saiyajin para agressão e progressão por risco; Humano para treino eficiente; Namekuseijin para resistir a longo prazo; Androide para trabalho constante e ondas de Ki; Majin para a build equilibrada sem pontos fracos.',
+        text: 'Solaris para agressão e progressão por risco; Humano para treino eficiente; Verdant para resistir a longo prazo; Androide para trabalho constante e ondas de Ki; Amorph para a build equilibrada sem pontos fracos.',
       },
     ],
   },
@@ -948,20 +948,20 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: 'A árvore clássica: **Forma Base → Transformação I → Transformação II → três ramos finais** — você escolhe UM (A: físico, B: equilibrado, C: Ki). Desbloquear cada degrau exige nível (5 / 12 / 20), atributos e, em alguns casos, uma técnica específica ou um turno de profissão concluído (ex.: o Potencial Desbloqueado do Humano pede 1 trabalho de Acadêmico; o Caos Desencadeado do Majin, 1 de Atleta).',
+        text: 'A árvore clássica: **Forma Base → Transformação I → Transformação II → três ramos finais** — você escolhe UM (A: físico, B: equilibrado, C: Ki). Desbloquear cada degrau exige nível (5 / 12 / 20), atributos e, em alguns casos, uma técnica específica ou um turno de profissão concluído (ex.: o Potencial Desbloqueado do Humano pede 1 trabalho de Acadêmico; o Caos Desencadeado do Amorph, 1 de Atleta).',
       },
       {
         kind: 'text',
-        text: `O Super Saiyajin, por exemplo, exige nível 12, Força 40 e Ki 30, a técnica Kamehameha e a forma anterior (Oozaru). Ao desbloquear, você ganha **+2 Força e +2 Ki permanentes** — e a forma ativa multiplica tudo: físico e Ki ×1,15, defesa ×1,08, velocidade ×1,05.`,
+        text: `O Super Solaris, por exemplo, exige nível 12, Força 40 e Ki 30, a técnica Onda de Aether e a forma anterior (Fera Lupina). Ao desbloquear, você ganha **+2 Força e +2 Ki permanentes** — e a forma ativa multiplica tudo: físico e Ki ×1,15, defesa ×1,08, velocidade ×1,05.`,
       },
       {
         kind: 'details',
-        summary: '🔍 Detalhes para curiosos — árvore Saiyajin completa',
+        summary: '🔍 Detalhes para curiosos — árvore Solaris completa',
         blocks: [
           {
             kind: 'table',
             table: {
-              caption: `Exemplo — árvore Saiyajin (ORIGEM: content/transformations.ts; as outras raças seguem a mesma estrutura — ${TRANSFORMATIONS.length} formas no total)`,
+              caption: `Exemplo — árvore Solaris (ORIGEM: content/transformations.ts; as outras raças seguem a mesma estrutura — ${TRANSFORMATIONS.length} formas no total)`,
               headers: ['Forma', 'Nível', 'Requisitos', 'Bônus permanente', 'Multiplicadores ativos'],
               rows: TRANSFORMATIONS.filter((t) => t.race === 'saiyajin').map((t) => [
                 `${t.icon} ${t.name}`,
@@ -1007,13 +1007,13 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `O trabalho continua contando com o jogo fechado. O **XP é proporcional ao nível do personagem**: cada nível da carreira define quantos pontos de XP você recebe por nível do personagem a cada hora. Ex.: no Nível 1 da profissão são 4 × seu nível por hora; um personagem nível 20 recebe 80 XP/h antes dos bônus. **Quanto maior o turno, maior o bônus de XP e de chance de material raro**; Zeni, atributo, horas de carreira e material comum seguem a regra da profissão. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
+        text: `O trabalho continua contando com o jogo fechado. O **XP é proporcional ao nível do personagem**: cada nível da carreira define quantos pontos de XP você recebe por nível do personagem a cada hora. Ex.: no Nível 1 da profissão são 4 × seu nível por hora; um personagem nível 20 recebe 80 XP/h antes dos bônus. **Quanto maior o turno, maior o bônus de XP e de chance de material raro**; Créditos, atributo, horas de carreira e material comum seguem a regra da profissão. Profissões: ${PROFESSIONS.map((p) => `${p.icon} ${p.name}`).join(', ')}.`,
       },
       {
         kind: 'table',
         table: {
           caption: 'Turnos flexíveis (ORIGEM: content/world.ts — PROFESSION_SHIFTS)',
-          headers: ['Turno', 'Bônus de XP e raros', 'Zeni / atributo / comuns'],
+          headers: ['Turno', 'Bônus de XP e raros', 'Créditos / atributo / comuns'],
           rows: PROFESSION_SHIFTS.map((s) => [
             `${s.hours}h`,
             s.efficiency <= 1 ? 'Base' : `+${Math.round((s.efficiency - 1) * 100)}%`,
@@ -1025,7 +1025,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'table',
         table: {
           caption: 'Carreira Nível 1–10 (ORIGEM: content/world.ts — PROFESSION_LEVELS)',
-            headers: ['Nível', 'Horas no nível', 'Acumulado', 'Zeni/h', 'Atributo/h', 'XP/h', 'Raro/h'],
+            headers: ['Nível', 'Horas no nível', 'Acumulado', 'Créditos/h', 'Atributo/h', 'XP/h', 'Raro/h'],
           rows: PROFESSION_LEVELS.map((r) => [
             String(r.level),
             `${br(r.hoursInLevel)}h`,
@@ -1063,9 +1063,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
           'O ganho de atributo é sempre um **número inteiro** e **não possui teto máximo de gameplay**; carreiras podem continuar fortalecendo o personagem indefinidamente.',
           'O XP de trabalho é **linear com o nível do personagem**: dobrar o nível dobra o XP base por hora na mesma carreira e duração.',
           'A chance de material raro é testada **uma vez por hora** e recebe o bônus da duração do turno. O material comum nunca deixa de vir: **1–2 unidades por hora**.',
-          'A Busca pelas Esferas é uma atividade separada das profissões, com duração de **1h a 12h** e **não gasta energia**. A chance base cresce até **20%**; bônus de equipamento podem elevar o total até o teto mundial de **50%**. Cada busca pode encontrar no máximo uma esfera.',
+          'A Busca pelas Chaves é uma atividade separada das profissões, com duração de **1h a 12h** e **não gasta energia**. A chance base cresce até **20%**; bônus de equipamento podem elevar o total até o teto mundial de **50%**. Cada busca pode encontrar no máximo uma esfera.',
           'Cancelar um turno em andamento não concede recompensa parcial.',
-          '**Androide:** o bônus racial de Zeni de trabalho continua valendo.',
+          '**Androide:** o bônus racial de Créditos de trabalho continua valendo.',
         ],
       },
       {
@@ -1097,7 +1097,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         blocks: [
           {
             kind: 'text',
-            text: `A Oficina fabrica um trabalho por vez e continua contando offline. Os ingredientes e o Zeni são consumidos **ao iniciar** e o resultado entra no inventário na coleta. Fabricações ainda em andamento podem ser **canceladas com reembolso integral** de materiais e Zeni. Receitas de consumíveis e projetos podem aceitar lotes; custo, materiais e tempo escalam pela quantidade. Trabalhar não bloqueia a Oficina. O Acadêmico reduz o tempo em **1% por nível** (até **10%** no Nível 10). A progressão base usa Tier 2/carreira Nível ${CRAFT_TIER_PROFESSION_LEVEL[2]}, Tier 3/Nível ${CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4/Nível ${CRAFT_TIER_PROFESSION_LEVEL[4]} e Tier 5/Nível ${CRAFT_TIER_PROFESSION_LEVEL[5]}. O endgame continua classificado como Tier 5, mas acrescenta obras-primas para guerreiros de **nível 30, 50, 75 e 100**, exigindo carreiras avançadas entre **Nível 8 e 10**; em cada faixa, o craft é deliberadamente superior ao equipamento comercial equivalente.`,
+            text: `A Oficina fabrica um trabalho por vez e continua contando offline. Os ingredientes e o Créditos são consumidos **ao iniciar** e o resultado entra no inventário na coleta. Fabricações ainda em andamento podem ser **canceladas com reembolso integral** de materiais e Créditos. Receitas de consumíveis e projetos podem aceitar lotes; custo, materiais e tempo escalam pela quantidade. Trabalhar não bloqueia a Oficina. O Acadêmico reduz o tempo em **1% por nível** (até **10%** no Nível 10). A progressão base usa Tier 2/carreira Nível ${CRAFT_TIER_PROFESSION_LEVEL[2]}, Tier 3/Nível ${CRAFT_TIER_PROFESSION_LEVEL[3]}, Tier 4/Nível ${CRAFT_TIER_PROFESSION_LEVEL[4]} e Tier 5/Nível ${CRAFT_TIER_PROFESSION_LEVEL[5]}. O endgame continua classificado como Tier 5, mas acrescenta obras-primas para guerreiros de **nível 30, 50, 75 e 100**, exigindo carreiras avançadas entre **Nível 8 e 10**; em cada faixa, o craft é deliberadamente superior ao equipamento comercial equivalente.`,
           },
           {
             kind: 'table',
@@ -1116,7 +1116,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
                       .join(' + ')
                   : 'Livre',
                 r.maxBatch && r.maxBatch > 1 ? `1–${r.maxBatch}×` : '1×',
-                `${br(r.costZeni)} Zeni`,
+                `${br(r.costCréditos)} Créditos`,
                 r.baseDurationMin >= 60
                   ? `${Math.floor(r.baseDurationMin / 60)}h${r.baseDurationMin % 60 ? ` ${r.baseDurationMin % 60}min` : ''}`
                   : `${r.baseDurationMin}min`,
@@ -1140,7 +1140,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
               'O equipamento tem **8 espaços equipáveis em 7 categorias**: Cabeça, Punhos, Torso, Acessório I, Acessório II, Arma, Pernas e Botas. Você pode usar no máximo **2 acessórios** ao mesmo tempo; os bônus dos dois entram no cálculo.',
               'A Oficina é a progressão superior de equipamento: os itens craftados de alto Tier superam os melhores equivalentes compráveis na loja, recompensando materiais, profissões e tempo de fabricação.',
               'Itens fabricados não são revendidos para a loja NPC; eles permanecem no inventário do jogador para uso.',
-              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+38 DEF e +8 KI** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
+              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Fruto de Sylva Processado cura **100%**; a Armadura de Combate Solaris dá **+38 DEF e +8 KI** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
             ],
           },
         ],
@@ -1170,18 +1170,18 @@ export const WIKI_SECTIONS: WikiSection[] = [
     resumo: [
       '**30 capangas genéricos**: três em cada Escala de Poder, subdivididos somente no PvE em **I, II e III**.',
       'O painel mostra stats e recompensas de cada um antes de você aceitar.',
-      'Vencer paga Zeni + XP; perder rende uma fração do XP e um KO exige recuperação antes da próxima luta.',
+      'Vencer paga Créditos + XP; perder rende uma fração do XP e um KO exige recuperação antes da próxima luta.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: `A sequência começa no **${ENEMIES[0].name}** (nível ${ENEMIES[0].level}, escala ${POWER_SCALES[0].nome}), que paga ~${br(ENEMIES[0].zeniReward)} Zeni e ~${br(ENEMIES[0].xpReward)} XP, e termina no **${ENEMIES[ENEMIES.length - 1].name}** (nível ${ENEMIES[ENEMIES.length - 1].level}, escala ${POWER_SCALES[POWER_SCALES.length - 1].nome}), com ~${br(ENEMIES[ENEMIES.length - 1].zeniReward)} Zeni e ~${br(ENEMIES[ENEMIES.length - 1].xpReward)} XP por vitória. São ${ENEMIES.length} capangas ao todo — três por escala. As subdivisões I/II/III existem somente para inimigos; o guerreiro continua usando as 10 escalas principais. Cada capanga também mostra sua intenção no mundo, além dos atributos, recompensas e da comparação de [[escala-poder|escala]] com o seu poder atual.`,
+        text: `A sequência começa no **${ENEMIES[0].name}** (nível ${ENEMIES[0].level}, escala ${POWER_SCALES[0].nome}), que paga ~${br(ENEMIES[0].zeniReward)} Créditos e ~${br(ENEMIES[0].xpReward)} XP, e termina no **${ENEMIES[ENEMIES.length - 1].name}** (nível ${ENEMIES[ENEMIES.length - 1].level}, escala ${POWER_SCALES[POWER_SCALES.length - 1].nome}), com ~${br(ENEMIES[ENEMIES.length - 1].zeniReward)} Créditos e ~${br(ENEMIES[ENEMIES.length - 1].xpReward)} XP por vitória. São ${ENEMIES.length} capangas ao todo — três por escala. As subdivisões I/II/III existem somente para inimigos; o guerreiro continua usando as 10 escalas principais. Cada capanga também mostra sua intenção no mundo, além dos atributos, recompensas e da comparação de [[escala-poder|escala]] com o seu poder atual.`,
       },
       {
         kind: 'list',
         items: [
-          '**Recompensa de vitória:** Zeni varia ±(10–15%) por luta; XP ±10%. Saiyajin ganha +10% XP.',
-          '**Derrota:** você leva uma fração do XP do inimigo como aprendizado (Zeni só na vitória). Em KO, volta com 1 HP e precisa se recuperar antes da próxima luta.',
+          '**Recompensa de vitória:** Créditos varia ±(10–15%) por luta; XP ±10%. Solaris ganha +10% XP.',
+          '**Derrota:** você leva uma fração do XP do inimigo como aprendizado (Créditos só na vitória). Em KO, volta com 1 HP e precisa se recuperar antes da próxima luta.',
           'Não existe penalidade diária de farm: cada vitória paga o valor cheio, sempre.',
         ],
       },
@@ -1193,7 +1193,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'table',
             table: {
               caption: 'Vilões (ORIGEM: content/world.ts — ENEMIES; HP = 80 + 15×nível + 5×defesa)',
-              headers: ['Vilão', 'Nível', 'HP', 'Zeni (vitória)', 'XP (vitória)'],
+              headers: ['Vilão', 'Nível', 'HP', 'Créditos (vitória)', 'XP (vitória)'],
               rows: ENEMIES.map((e) => [`${e.emoji} ${e.name}`, String(e.level), br(enemyMaxHp(e)), `~${br(e.zeniReward)}`, `~${br(e.xpReward)}`]),
             },
           },
@@ -1210,10 +1210,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'PvP (Duelos)',
     icon: '🎯',
     group: 'Progressão',
-    summary: 'Regras de ataque, roubo de Zeni, política de vida e o Zenkai.',
+    summary: 'Regras de ataque, roubo de Créditos, política de vida e o Resiliência Estelar.',
     resumo: [
       'Ataque qualquer guerreiro real ou bot pelo Ranking, sem limite de nível.',
-      'Vencer **rouba 8% do Zeni** e pode roubar uma esfera da vítima; perder paga 5% do seu.',
+      'Vencer **rouba 8% do Créditos** e pode roubar uma esfera da vítima; perder paga 5% do seu.',
       'A vítima é **sempre atacável**; o atacante pode atacar **durante o próprio trabalho** — só não pode estar em luta em andamento.',
     ],
     blocks: [
@@ -1226,11 +1226,11 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'table',
         table: {
           caption: 'Consequências do duelo (ORIGEM: actions.ts e activities.ts)',
-          headers: ['Resultado', 'Zeni', 'XP'],
+          headers: ['Resultado', 'Créditos', 'XP'],
           rows: [
-            ['Vitória (atacante)', 'Rouba **8%** do Zeni da vítima (mín. 100)', 'Generosa — cresce com o nível do alvo'],
-            ['Derrota (atacante)', 'Paga **5%** do próprio Zeni ao vencedor', 'Aprendizado: máx(5; 25 × nível do oponente × 0,4)'],
-            ['Vítima', 'Perde o valor roubado (se for derrotada)', 'Nada muda para ela além do Zeni'],
+            ['Vitória (atacante)', 'Rouba **8%** do Créditos da vítima (mín. 100)', 'Generosa — cresce com o nível do alvo'],
+            ['Derrota (atacante)', 'Paga **5%** do próprio Créditos ao vencedor', 'Aprendizado: máx(5; 25 × nível do oponente × 0,4)'],
+            ['Vítima', 'Perde o valor roubado (se for derrotada)', 'Nada muda para ela além do Créditos'],
           ],
         },
       },
@@ -1273,17 +1273,17 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `O Torneio é uma campanha de eliminação direta. Cada luta custa energia como qualquer batalha e a **vida carrega entre as lutas** — chegar machucado na final é o preço do caminho (cure com Zeni no meio). O adversário é **elástico**: construído a partir do SEU combatente atual (equipamentos e [[transformacoes|transformação]] contam) — quartas contra ~82% do seu poder, semifinal contra ~95%, final contra um par. A inscrição da campanha custa **${br(TOURNAMENT_ENTRY_FEE)} Zeni** (taxa do comitê, cobrada na luta de abertura).`,
+        text: `O Torneio é uma campanha de eliminação direta. Cada luta custa energia como qualquer batalha e a **vida carrega entre as lutas** — chegar machucado na final é o preço do caminho (cure com Créditos no meio). O adversário é **elástico**: construído a partir do SEU combatente atual (equipamentos e [[transformacoes|transformação]] contam) — quartas contra ~82% do seu poder, semifinal contra ~95%, final contra um par. A inscrição da campanha custa **${br(TOURNAMENT_ENTRY_FEE)} Créditos** (taxa do comitê, cobrada na luta de abertura).`,
       },
       {
         kind: 'table',
         table: {
           caption: 'Rodadas e premiação (ORIGEM: content/tournament.ts — TOURNAMENT_ROUNDS)',
-          headers: ['Rodada', 'Poder do adversário', 'Zeni escalável', 'XP'],
+          headers: ['Rodada', 'Poder do adversário', 'Créditos escalável', 'XP'],
           rows: TOURNAMENT_ROUNDS.map((r) => [
             r.name,
             `${Math.round(r.powerMult * 100)}% do seu poder`,
-            `Nv. 10: ${br(tournamentZeniReward(r.round, 10))} · Nv. 50: ${br(tournamentZeniReward(r.round, 50))} · Nv. 100: ${br(tournamentZeniReward(r.round, 100))}`,
+            `Nv. 10: ${br(tournamentCréditosReward(r.round, 10))} · Nv. 50: ${br(tournamentCréditosReward(r.round, 50))} · Nv. 100: ${br(tournamentCréditosReward(r.round, 100))}`,
             `${Math.round(r.xpPct * 100)}% do XP necessário para o próximo nível`,
           ]),
         },
@@ -1291,7 +1291,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       {
         kind: 'list',
         items: [
-          '**Recompensas:** Zeni e XP escalam com o nível do personagem. O torneio não concede cristais/diamantes diretamente.',
+          '**Recompensas:** Créditos e XP escalam com o nível do personagem. O torneio não concede cristais/diamantes diretamente.',
           '**Cinturão do Campeão:** vencer a GRANDE FINAL soma 1 título (conquistas *Campeão Mundial* e *Dinastia do Ringue*).',
           `**Eliminação:** 1 derrota encerra a campanha; o rejeitado leva METADE do XP da rodada (a taxa de inscrição não é devolvida — o comitê tem despesas) — e o comitê reorganiza a chave por **${minutes(TOURNAMENT_COOLDOWN_MS)}** antes da próxima inscrição.`,
           'O painel do Torneio mostra o desafiante da rodada com apelido e provocação — lutadores de elite SEM técnicas/talentos: a vantagem de recursos é sua, a numérica é deles.',
@@ -1350,7 +1350,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'table',
         table: {
           caption: `Premiação quando o chefe cai (participação: dano ≥ ${br(BOSS.minParticipationDamage)})`,
-          headers: ['Posição no ranking de dano', 'Zeni', 'Cristais'],
+          headers: ['Posição no ranking de dano', 'Créditos', 'Cristais'],
           rows: [
             ['Participação', '300', '1'],
             ['Top 50', '+200', '—'],
@@ -1378,19 +1378,19 @@ export const WIKI_SECTIONS: WikiSection[] = [
   // ================================================================
   {
     id: 'esferas-dragao',
-    title: 'Esferas do Dragão e Shenlon',
+    title: 'Chaves do Horizonte e Aethelgard',
     icon: '🔮',
     group: 'Coleção e Social',
     summary: 'Como coletar as 7 esferas e os 4 desejos do dragão.',
     resumo: [
       'A Busca dura de **1h a 12h** e mostra quantas das 7 estrelas estão **espalhadas/sem dono**; com 0 disponíveis, a busca nem pode começar.',
-      'Com as **7**, invoque Shenlon e escolha UM desejo — elas se dispersam.',
+      'Com as **7**, invoque Aethelgard e escolha UM desejo — elas se dispersam.',
       'Colete a conquista *Colecionador de Esferas* **antes** de pedir o desejo.',
     ],
     blocks: [
       {
         kind: 'text',
-        text: 'A aba **Busca** em [[profissoes|Atividades]] mostra em tempo real quantas Esferas estão **espalhadas pelo mundo** (sem dono) e permite procurar por 1h, 2h, 4h, 8h ou 12h. Se o contador chegar a **0/7 espalhadas**, a busca é bloqueada **antes de iniciar o timer**: todas as estrelas já pertencem a guerreiros, então a alternativa é PvP ou aguardar um desejo dispersá-las. **Buscar não gasta energia.** A chance base vai até 20%; o **Radar das Esferas** pode ser equipado em Acessório I ou II e adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais**, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Quando isso acontece, **os dois jogadores são avisados**: o vencedor vê o alerta ao terminar a batalha e a vítima recebe o aviso mesmo se estava offline, no próximo acesso. Junte as **7 esferas**, invoque Shenlon e escolha:',
+        text: 'A aba **Busca** em [[profissoes|Atividades]] mostra em tempo real quantas Esferas estão **espalhadas pelo mundo** (sem dono) e permite procurar por 1h, 2h, 4h, 8h ou 12h. Se o contador chegar a **0/7 espalhadas**, a busca é bloqueada **antes de iniciar o timer**: todas as estrelas já pertencem a guerreiros, então a alternativa é PvP ou aguardar um desejo dispersá-las. **Buscar não gasta energia.** A chance base vai até 20%; o **Radar das Esferas** pode ser equipado em Acessório I ou II e adiciona bônus sem ultrapassar o teto mundial de 50%. Existem somente **7 estrelas globais**, cada uma com um único dono por vez. Uma vitória no PvP pode roubar 1 esfera do adversário. Quando isso acontece, **os dois jogadores são avisados**: o vencedor vê o alerta ao terminar a batalha e a vítima recebe o aviso mesmo se estava offline, no próximo acesso. Junte as **7 esferas**, invoque Aethelgard e escolha:',
       },
       {
         kind: 'table',
@@ -1398,7 +1398,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           caption: 'Desejos (ORIGEM: actions.ts — actionWish)',
           headers: ['Desejo', 'Efeito'],
           rows: [
-            ['💰 Riqueza', '+8.000 Zeni'],
+            ['💰 Riqueza', '+8.000 Créditos'],
             ['💪 Poder', '+3 em TODOS os atributos, sem teto máximo'],
             ['❤️ Vitalidade', 'Vida e energia restauradas a 100%'],
             ['📚 Sabedoria', '+1.500 XP'],
@@ -1419,12 +1419,12 @@ export const WIKI_SECTIONS: WikiSection[] = [
   {
     id: 'guildas', title: 'Guildas e Temporadas', icon: '🛡️', group: 'Coleção e Social',
     summary: 'Fundação, convites, cargos, doações e bônus coletivos.',
-    resumo: ['Fundar custa **5.000 Zeni**. O mundo começa com **ZERO guildas** prontas.', 'São 5 vagas no nível 1 e mais uma por nível, até 14 no nível 10.', 'Doações são irreversíveis; benefícios dependem da sua associação atual.'],
+    resumo: ['Fundar custa **5.000 Créditos**. O mundo começa com **ZERO guildas** prontas.', 'São 5 vagas no nível 1 e mais uma por nível, até 14 no nível 10.', 'Doações são irreversíveis; benefícios dependem da sua associação atual.'],
     blocks: [
-      { kind: 'text', text: 'Cada Zeni doado vira um ponto de progresso. Aceitamos inteiros positivos, até o restante necessário para o nível 10. No nível máximo, doações são recusadas sem débito. O ranking preserva doações históricas de membros que saíram. Níveis e histórico anteriores à atualização são preservados; guildas acima da nova lotação mantêm seus membros, sem admitir novos até haver vagas.' },
-      { kind: 'table', table: { caption: 'Custos de cada upgrade (Zeni adicionais)', headers: ['Nível', 'Custo'], rows: GUILD_UPGRADE_COSTS.map((cost, i) => [String(i + 2), br(cost)]) } },
+      { kind: 'text', text: 'Cada Créditos doado vira um ponto de progresso. Aceitamos inteiros positivos, até o restante necessário para o nível 10. No nível máximo, doações são recusadas sem débito. O ranking preserva doações históricas de membros que saíram. Níveis e histórico anteriores à atualização são preservados; guildas acima da nova lotação mantêm seus membros, sem admitir novos até haver vagas.' },
+      { kind: 'table', table: { caption: 'Custos de cada upgrade (Créditos adicionais)', headers: ['Nível', 'Custo'], rows: GUILD_UPGRADE_COSTS.map((cost, i) => [String(i + 2), br(cost)]) } },
       { kind: 'table', table: { caption: 'Bônus cumulativos', headers: ['Nível', 'Benefício', 'Valor'], rows: GUILD_BONUS_TABLE.map(([level, label, value]) => [String(level), label, `${value}%`]) } },
-      { kind: 'text', text: 'XP de combate aplica-se a PvE, PvP, torneio e Ameaça Universal, inclusive aprendizado em derrota e recompensas de participação. No nível 10, os dois bônus de XP somam 10%. Trabalho recebe +5% XP e +5% Zeni (inclusive promoção). Aplicamos multiplicadores após os bônus raciais, arredondando ao inteiro mais próximo. Quests, conquistas e desejos não recebem XP extra de guilda.' },
+      { kind: 'text', text: 'XP de combate aplica-se a PvE, PvP, torneio e Ameaça Universal, inclusive aprendizado em derrota e recompensas de participação. No nível 10, os dois bônus de XP somam 10%. Trabalho recebe +5% XP e +5% Créditos (inclusive promoção). Aplicamos multiplicadores após os bônus raciais, arredondando ao inteiro mais próximo. Quests, conquistas e desejos não recebem XP extra de guilda.' },
       { kind: 'text', text: 'Regeneração aumenta a TAXA: energia passa de 300 para 285,714 segundos; vida de 12 para 11,429 segundos, antes dos bônus raciais. O teto de energia continua 100. A troca de guilda ou nível liquida a regeneração anterior e inicia o novo intervalo. Crítico adiciona 2 pontos percentuais à abertura contra diferenças esmagadoras; nos outros golpes, dá 2% de chance de dano ×1,75. Dano da Ameaça Universal multiplica por 1,05. Perdas PvP multiplicam por 0,95 antes da transferência: o vencedor recebe exatamente o que foi debitado.' },
       { kind: 'list', items: [
         'Só o líder cria, edita ou exclui até cinco cargos personalizados. Membro tem hierarquia 0 e nenhuma permissão; líder tem hierarquia 100 e todos os poderes. Cargos usam hierarquia de 1 a 99.',
@@ -1470,16 +1470,16 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'table',
             table: {
               caption: 'Missões diárias possíveis (ORIGEM: content/quests.ts — DAILY_QUESTS)',
-              headers: ['Missão', 'Objetivo', 'Zeni', 'XP', '💎'],
-              rows: DAILY_QUESTS.map((q) => [`${q.icon} ${q.name}`, q.description, br(q.rewardZeni), br(q.rewardXp), String(q.rewardCrystals)]),
+              headers: ['Missão', 'Objetivo', 'Créditos', 'XP', '💎'],
+              rows: DAILY_QUESTS.map((q) => [`${q.icon} ${q.name}`, q.description, br(q.rewardCréditos), br(q.rewardXp), String(q.rewardCrystals)]),
             },
           },
           {
             kind: 'table',
             table: {
               caption: 'Missões semanais possíveis (ORIGEM: content/quests.ts — WEEKLY_QUESTS)',
-              headers: ['Missão', 'Objetivo', 'Zeni', 'XP', '💎'],
-              rows: WEEKLY_QUESTS.map((q) => [`${q.icon} ${q.name}`, q.description, br(q.rewardZeni), br(q.rewardXp), String(q.rewardCrystals)]),
+              headers: ['Missão', 'Objetivo', 'Créditos', 'XP', '💎'],
+              rows: WEEKLY_QUESTS.map((q) => [`${q.icon} ${q.name}`, q.description, br(q.rewardCréditos), br(q.rewardXp), String(q.rewardCrystals)]),
             },
           },
           {
@@ -1517,7 +1517,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `A Loja cuida apenas das compras. Equipamentos aparecem nas categorias corretas — **Arma, Cabeça, Punhos, Torso, Pernas, Botas e Acessórios** — e cada card informa explicitamente o slot. Depois de comprar, abra **Inventário → Equipamento** para equipar. Há **Acessório I e Acessório II**, no máximo dois simultâneos. As opções iniciais continuam acessíveis: Bastão de Treino (180 Zeni), Gi de Batalha (250 Zeni) e Luvas de Treino para Punhos (300 Zeni). Vender pelo Inventário devolve ${Math.round(SELL_PRICE_RATIO * 100)}% do preço na mesma moeda. A progressão comercial é útil, mas os equipamentos fabricados na **Oficina** são deliberadamente superiores no topo de cada categoria.`,
+        text: `A Loja cuida apenas das compras. Equipamentos aparecem nas categorias corretas — **Arma, Cabeça, Punhos, Torso, Pernas, Botas e Acessórios** — e cada card informa explicitamente o slot. Depois de comprar, abra **Inventário → Equipamento** para equipar. Há **Acessório I e Acessório II**, no máximo dois simultâneos. As opções iniciais continuam acessíveis: Bastão de Treino (180 Créditos), Gi de Batalha (250 Créditos) e Luvas de Treino para Punhos (300 Créditos). Vender pelo Inventário devolve ${Math.round(SELL_PRICE_RATIO * 100)}% do preço na mesma moeda. A progressão comercial é útil, mas os equipamentos fabricados na **Oficina** são deliberadamente superiores no topo de cada categoria.`,
       },
       {
         kind: 'text',
@@ -1526,7 +1526,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       {
         kind: 'list',
         items: [
-          'Consumíveis: **Cápsula de Energia** (6 💎) enche a energia; **Feijão Senzu** (10 💎) enche a vida.',
+          'Consumíveis: **Cápsula de Energia** (6 💎) enche a energia; **Fruto de Sylva** (10 💎) enche a vida.',
           '**Cosméticos** não alteram atributos — auras, títulos, poses e molduras por cristais; nenhum item vende poder.',
         ],
       },
@@ -1556,7 +1556,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
                   .filter(Boolean)
                   .join(' ') || '—',
                 String(i.minLevel),
-                i.currency === 'crystal' ? `${br(i.price)} 💎` : `${br(i.price)} Zeni`,
+                i.currency === 'crystal' ? `${br(i.price)} 💎` : `${br(i.price)} Créditos`,
               ]),
             },
           },
