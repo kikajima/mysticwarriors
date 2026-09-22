@@ -118,15 +118,15 @@ export async function grantAdminDragonBallStar(
     include: { player: { select: { id: true, name: true } } },
   });
   if (!possession) {
-    throw new ApiError('VALIDATION_ERROR', `A Esfera de ${star} estrela${star === 1 ? '' : 's'} não existe no mundo.`);
+    throw new ApiError('VALIDATION_ERROR', `A Chave do Horizonte nº ${star} não existe no mundo.`);
   }
   if (possession.playerId === player.id) {
-    return `${player.name} já possui a Esfera de ${star} estrela${star === 1 ? '' : 's'}.`;
+    return `${player.name} já possui a Chave do Horizonte nº ${star}.`;
   }
   if (possession.playerId) {
     throw new ApiError(
       'CONFLICT',
-      `A Esfera de ${star} estrela${star === 1 ? '' : 's'} já pertence a ${possession.player?.name ?? 'outro guerreiro'}.`
+      `A Chave do Horizonte nº ${star} já pertence a ${possession.player?.name ?? 'outro guerreiro'}.`
     );
   }
 
@@ -135,7 +135,7 @@ export async function grantAdminDragonBallStar(
     data: { playerId: player.id, acquiredAt: new Date() },
   });
   if (claimed.count !== 1) {
-    throw new ApiError('CONFLICT', 'Essa Esfera acabou de mudar de dono. Atualize o painel e tente novamente.');
+    throw new ApiError('CONFLICT', 'Essa Chave acabou de mudar de dono. Atualize o painel e tente novamente.');
   }
 
   const count = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
@@ -143,11 +143,11 @@ export async function grantAdminDragonBallStar(
   await createPlayerNotification(tx, {
     playerId: player.id,
     kind: 'admin',
-    title: '🐉 Esfera concedida!',
-    message: `A administração concedeu a você a Esfera de ${star} estrela${star === 1 ? '' : 's'}.`,
+    title: '◇ Chave concedida!',
+    message: `A administração concedeu a você a Chave do Horizonte nº ${star}.`,
     metadata: { star, source: 'admin' },
   });
-  return `Esfera de ${star} estrela${star === 1 ? '' : 's'} concedida a ${player.name} (${count}/7).`;
+  return `Chave do Horizonte nº ${star} concedida a ${player.name} (${count}/7).`;
 }
 
 // ===== Tipos compartilhados com a UI =====
@@ -462,7 +462,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
             parts.push(
               after === desired
                 ? `Chaves do Horizonte: ${after}/7`
-                : `Chaves do Horizonte: ${after}/7 (não há mais esferas globais livres)`
+                : `Chaves do Horizonte: ${after}/7 (não há mais Chaves globais livres)`
             );
           }
           if (input.xpGain && input.xpGain > 0) {
@@ -774,7 +774,7 @@ export function patchCloudCharacterState(raw: unknown, patch: CloudCharacterPatc
 
   if (patch.zeniDelta) after.zeni = clampAdminInt((before.zeni ?? 0) + patch.zeniDelta, 0, ADMIN_LIMITS.zeni);
   if (patch.crystalDelta) after.crystals = clampAdminInt((before.crystals ?? 0) + patch.crystalDelta, 0, ADMIN_LIMITS.crystals);
-  // Esferas não são restauráveis/editáveis pelo snapshot: a fonte de verdade
+  // Chaves não são restauráveis/editáveis pelo snapshot: a fonte de verdade
   // é DragonBallPossession no mundo global.
   if (patch.xpGain && patch.xpGain > 0) after.xp = clampAdminInt((before.xp ?? 0) + Math.floor(patch.xpGain), 0, ADMIN_LIMITS.xp);
   if (patch.strength !== undefined) after.strength = clampAdminInt(patch.strength, 0, ADMIN_LIMITS.stat);
