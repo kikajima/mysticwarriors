@@ -18,7 +18,7 @@ import { TournamentPanel } from '@/components/game/TournamentPanel';
 import { ShopPanel } from '@/components/game/ShopPanel';
 import { MarketPanel } from '@/components/game/MarketPanel';
 import { RankingPanel } from '@/components/game/RankingPanel';
-import { ShenronPanel } from '@/components/game/ShenronPanel';
+import { AethelgardPanel } from '@/components/game/AethelgardPanel';
 import { GuildsPanel } from '@/components/game/GuildsPanel';
 import { AchievementsPanel, type ClaimableAchievement } from '@/components/game/AchievementsPanel';
 import { PlayerAvatar, GameButton } from '@/components/game/Bits';
@@ -106,7 +106,7 @@ const NAV: Array<{ key: View; label: string; icon: React.ReactNode; short: strin
   { key: 'market', label: 'Mercado', short: 'Mercado', icon: <Handshake className="w-4 h-4" /> },
   { key: 'ranking', label: 'Ranking', short: 'Ranking', icon: <Trophy className="w-4 h-4" /> },
   { key: 'guilds', label: 'Guildas', short: 'Guildas', icon: <Users className="w-4 h-4" /> },
-  { key: 'shenron', label: 'Shenlon', short: 'Shenlon', icon: <Sparkle className="w-4 h-4" /> },
+  { key: 'shenron', label: 'Aethelgard', short: 'Aethelgard', icon: <Sparkle className="w-4 h-4" /> },
   { key: 'achievements', label: 'Conquistas', short: 'Conquistas', icon: <Award className="w-4 h-4" /> },
 ];
 
@@ -836,14 +836,14 @@ export default function PlayPage() {
       setPlayer((prev) =>
         prev
           ? applyOptimisticDelta(prev, {
-              zeni: a.rewardZeni,
+              zeni: a.rewardCréditos,
               xp: a.rewardXp,
               crystals: a.rewardCrystals,
             })
           : prev
       );
       const parts = [
-        a.rewardZeni > 0 ? `+${a.rewardZeni.toLocaleString('pt-BR')} Zeni` : '',
+        a.rewardCréditos > 0 ? `+${a.rewardCréditos.toLocaleString('pt-BR')} Créditos` : '',
         a.rewardXp > 0 ? `+${a.rewardXp.toLocaleString('pt-BR')} XP` : '',
         a.rewardCrystals > 0 ? `+${a.rewardCrystals.toLocaleString('pt-BR')} 💎` : '',
       ].filter(Boolean);
@@ -1003,7 +1003,7 @@ export default function PlayPage() {
 
   // ===== v0.9.6 — AUTO-SAVE na nuvem (tabela `personagens`) =====
   // Dispara sempre que algo importante muda (subiu de nível, ganhou XP/
-  // Zeni, comprou, treinou, iniciou/cancelou/coletou turno...): o servidor
+  // Créditos, comprou, treinou, iniciou/cancelou/coletou turno...): o servidor
   // produz UMA LINHA POR PERSONAGEM (/api/game/cloud-snapshot) e o cliente
   // grava cada uma com a sessão do próprio usuário (RLS). Depois de um
   // save bem-sucedido, linhas antigas que não existem mais no servidor
@@ -1206,7 +1206,7 @@ export default function PlayPage() {
       return;
     }
 
-    // qualquer outra mudança (energia regenerando, XP, Zeni...) → salva
+    // qualquer outra mudança (energia regenerando, XP, Créditos...) → salva
     // com pequeno atraso (agrupa rajadas)
     const timer = setTimeout(() => {
       if (cloudFingerprint === lastSavedCloudRef.current) return;
@@ -1336,16 +1336,16 @@ export default function PlayPage() {
             <a
               href="/"
               className="font-display text-xl sm:text-3xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600 shrink-0 tracking-wide"
-              title="Guerreiros Místicos — página inicial"
+              title="Myst Ki Warriors — página inicial"
             >
-              Guerreiros Místicos
+              Myst Ki Warriors
             </a>
 
             <div className="flex-1" />
 
             {/* Recursos rápidos */}
             <div className="hidden sm:flex items-center gap-4 text-xs font-heading">
-              <span className="text-yellow-400" title="Zeni">
+              <span className="text-yellow-400" title="Créditos">
                 🪙 {player.zeni.toLocaleString('pt-BR')}
               </span>
               <span className="text-sky-300" title="Cristais">
@@ -1365,7 +1365,7 @@ export default function PlayPage() {
                 ⭐ {player.xp}/{player.xpToNext}
               </span>
               {player.dragonBalls > 0 && (
-                <span className="text-orange-300" title="Esferas do Dragão">
+                <span className="text-orange-300" title="Chaves do Horizonte">
                   🔮 {player.dragonBalls}/7
                 </span>
               )}
@@ -1549,7 +1549,7 @@ export default function PlayPage() {
           <GuildsPanel player={player} onAction={doAction} busy={busy} />
         )}
         {view === 'shenron' && (
-          <ShenronPanel
+          <AethelgardPanel
             player={player}
             onWish={(wishType) => doAction({ type: 'wish', wishType })}
             busy={busy}
@@ -1562,7 +1562,7 @@ export default function PlayPage() {
 
       {/* Rodapé (desktop) */}
       <footer className="hidden lg:block mt-auto border-t border-amber-900/30 py-4 text-center text-[11px] text-amber-200/30 px-4">
-        Guerreiros Místicos — jogo de fã inspirado nos clássicos browser games de gerenciamento.{' '}
+        Myst Ki Warriors — jogo de fã inspirado nos clássicos browser games de gerenciamento.{' '}
         {auth && !auth.isGuest
           ? `Progresso de ${auth.username} salvo na nuvem — sobrevive a qualquer atualização.`
           : 'Progresso de convidado — use "Salvar meu guerreiro" no menu para criar sua conta na nuvem sem perder nada.'}
