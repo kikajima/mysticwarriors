@@ -20,7 +20,7 @@ type SortMode = 'recent' | 'price_asc' | 'price_desc';
 function currencyText(currency: MarketCurrency, amount: number) {
   return currency === 'crystal'
     ? amount.toLocaleString('pt-BR') + ' 💎'
-    : amount.toLocaleString('pt-BR') + ' Zeni';
+    : amount.toLocaleString('pt-BR') + ' Créditos';
 }
 
 function Empty({ text }: { text: string }) {
@@ -143,7 +143,7 @@ export function MarketBuyOrdersTab({
               onChange={(event) => setDraftCurrency(event.target.value as MarketCurrency)}
               className="mt-1 w-full rounded-lg border border-amber-900/50 bg-[#160f08] px-2 py-2 text-xs text-amber-100"
             >
-              <option value="zeni">Zeni</option>
+              <option value="zeni">Créditos</option>
               <option value="crystal">Diamantes 💎</option>
             </select>
           </label>
@@ -201,8 +201,8 @@ export function MarketBuyOrdersTab({
             }}
             className="rounded-lg border border-amber-900/50 bg-[#160f08] px-3 py-2 text-xs text-amber-100"
           >
-            <option value="all">Zeni + Diamantes</option>
-            <option value="zeni">Somente Zeni</option>
+            <option value="all">Créditos + Diamantes</option>
+            <option value="zeni">Somente Créditos</option>
             <option value="crystal">Somente Diamantes</option>
           </select>
           <select
