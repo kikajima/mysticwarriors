@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Aethelgard, Guardião Primordial">
+<defs><radialGradient id="g"><stop stop-color="#dbeafe"/><stop offset=".35" stop-color="#a78bfa"/><stop offset="1" stop-color="#111827"/></radialGradient><linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e0f2fe"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#312e81"/></linearGradient></defs>
+<rect width="320" height="320" rx="32" fill="#090b18"/><circle cx="160" cy="160" r="128" fill="url(#g)" opacity=".38"/>
+<g fill="none" stroke-linecap="round"><ellipse cx="160" cy="160" rx="118" ry="48" stroke="#67e8f9" stroke-width="5" transform="rotate(-18 160 160)"/><ellipse cx="160" cy="160" rx="102" ry="35" stroke="#c4b5fd" stroke-width="3" transform="rotate(28 160 160)"/></g>
+<path d="M160 58 205 103 192 154 225 214 160 272 95 214 128 154 115 103Z" fill="url(#m)" stroke="#e0e7ff" stroke-width="4"/>
+<path d="M160 82 181 113 171 144 160 156 149 144 139 113Z" fill="#08111e"/><circle cx="151" cy="118" r="4" fill="#67e8f9"/><circle cx="169" cy="118" r="4" fill="#67e8f9"/>
+<path d="M128 154 92 179 74 225 118 206 145 182ZM192 154 228 179 246 225 202 206 175 182Z" fill="#6366f1" stroke="#c4b5fd" stroke-width="3"/>
+<circle cx="160" cy="183" r="18" fill="#67e8f9"/><circle cx="160" cy="183" r="9" fill="#fff"/>
+</svg>
