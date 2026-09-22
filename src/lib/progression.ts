@@ -232,7 +232,7 @@ export function achievementMetrics(player: Player & { guild?: unknown }): Record
     pvpWins: player.pvpWins,
     guildDonated: player.guildDonated,
     trainingDone: player.trainingsDone,
-    // v0.9.17 — narrativas do ASCENSÃO Z (Cap. 7/29)
+    // v0.9.17 — narrativas do ESCALAS DE CAELUM (Cap. 7/29)
     miracleWins: player.miracleWins,
     davidWins: player.davidWins,
     // v0.9.18 — Torneio de Artes Marciais (chave de 8)
