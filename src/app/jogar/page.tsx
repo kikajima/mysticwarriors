@@ -16,6 +16,7 @@ import { BattlePanel } from '@/components/game/BattlePanel';
 import { BattleLogDialog } from '@/components/game/BattleLogDialog';
 import { TournamentPanel } from '@/components/game/TournamentPanel';
 import { ShopPanel } from '@/components/game/ShopPanel';
+import { MarketPanel } from '@/components/game/MarketPanel';
 import { RankingPanel } from '@/components/game/RankingPanel';
 import { ShenronPanel } from '@/components/game/ShenronPanel';
 import { GuildsPanel } from '@/components/game/GuildsPanel';
@@ -64,6 +65,7 @@ import {
   Briefcase,
   Swords,
   Store,
+  Handshake,
   Trophy,
   Sparkle,
   Users,
@@ -87,6 +89,7 @@ type View =
   | 'battle'
   | 'tournament'
   | 'shop'
+  | 'market'
   | 'ranking'
   | 'guilds'
   | 'shenron'
@@ -100,6 +103,7 @@ const NAV: Array<{ key: View; label: string; icon: React.ReactNode; short: strin
   { key: 'battle', label: 'Batalha', short: 'Lutar', icon: <Swords className="w-4 h-4" /> },
   { key: 'tournament', label: 'Torneio', short: 'Torneio', icon: <Medal className="w-4 h-4" /> },
   { key: 'shop', label: 'Loja', short: 'Loja', icon: <Store className="w-4 h-4" /> },
+  { key: 'market', label: 'Mercado', short: 'Mercado', icon: <Handshake className="w-4 h-4" /> },
   { key: 'ranking', label: 'Ranking', short: 'Ranking', icon: <Trophy className="w-4 h-4" /> },
   { key: 'guilds', label: 'Guildas', short: 'Guildas', icon: <Users className="w-4 h-4" /> },
   { key: 'shenron', label: 'Shenlon', short: 'Shenlon', icon: <Sparkle className="w-4 h-4" /> },
@@ -1531,6 +1535,9 @@ export default function PlayPage() {
         {view === 'shop' && (
           <ShopPanel player={player} onAction={(payload) => doAction(payload)} busy={busy} />
         )}
+        {view === 'market' && (
+          <MarketPanel player={player} onRefresh={refreshGameState} />
+        )}
         {view === 'ranking' && (
           <RankingPanel
             player={player}
@@ -1595,7 +1602,7 @@ export default function PlayPage() {
           <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
             <SheetTrigger
               className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-heading transition-colors ${
-                ['inventory', 'shop', 'ranking', 'guilds', 'shenron', 'achievements', 'tournament'].includes(view)
+                ['inventory', 'shop', 'market', 'ranking', 'guilds', 'shenron', 'achievements', 'tournament'].includes(view)
                   ? 'text-orange-300'
                   : 'text-amber-200/50'
               }`}
@@ -1610,7 +1617,7 @@ export default function PlayPage() {
                 <SheetTitle className="font-heading text-amber-100 text-left">Mais seções</SheetTitle>
               </SheetHeader>
               <div className="grid grid-cols-3 gap-3 pb-6">
-                {(['inventory', 'shop', 'ranking', 'guilds', 'shenron', 'achievements', 'tournament'] as View[]).map((key) => {
+                {(['inventory', 'shop', 'market', 'ranking', 'guilds', 'shenron', 'achievements', 'tournament'] as View[]).map((key) => {
                   const item = NAV.find((n) => n.key === key)!;
                   return (
                     <button

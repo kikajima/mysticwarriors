@@ -86,7 +86,7 @@ export async function spendCurrency(
 }
 
 /** Teto de Zeni/cristais — Int32 seguro com folga (nenhuma fonte ultrapassa). */
-const CURRENCY_CAP = 2_000_000_000;
+export const CURRENCY_CAP = 2_000_000_000;
 
 /** Credita moeda na carteira de forma atômica (sempre registra no ledger). */
 export async function addCurrency(

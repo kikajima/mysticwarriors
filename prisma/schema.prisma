@@ -228,6 +228,9 @@ model Player {
   requestDedups    RequestDedup[]
   activities       Activity[]
   inventoryStacks  InventoryStack[]
+  marketListings   MarketListing[] @relation("MarketSeller")
+  marketPurchases  MarketTrade[]   @relation("MarketTradeBuyer")
+  marketSales      MarketTrade[]   @relation("MarketTradeSeller")
   craftJob         CraftJob?
   notifications    PlayerNotification[]
   dragonBallPossessions DragonBallPossession[]
@@ -263,6 +266,53 @@ model InventoryStack {
 
   @@id([playerId, itemId])
   @@index([itemId])
+}
+
+// ===== Mercado P2P (itens ficam em escrow no anúncio) =====
+
+model MarketListing {
+  id                String   @id @default(cuid())
+  sellerId          String
+  seller             Player   @relation("MarketSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  kind               String   // "material" | "equipment"
+  itemId             String
+  itemName           String
+  itemIcon           String
+  currency           String   // "zeni" | "crystal"
+  unitPrice          Int
+  quantity           Int
+  quantityRemaining  Int
+  status             String   @default("active") // active | sold | cancelled
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  soldAt             DateTime?
+  cancelledAt        DateTime?
+  trades             MarketTrade[]
+
+  @@index([status, createdAt])
+  @@index([kind, status, unitPrice])
+  @@index([currency, status, unitPrice])
+  @@index([sellerId, status, createdAt])
+  @@index([itemId, status, unitPrice])
+}
+
+model MarketTrade {
+  id         String   @id @default(cuid())
+  listingId  String
+  listing    MarketListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId    String
+  buyer      Player   @relation("MarketTradeBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId   String
+  seller     Player   @relation("MarketTradeSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  quantity   Int
+  unitPrice  Int
+  totalPrice Int
+  currency   String
+  createdAt  DateTime @default(now())
+
+  @@index([listingId, createdAt])
+  @@index([buyerId, createdAt])
+  @@index([sellerId, createdAt])
 }
 
 // ===== Fabricação persistente (uma fila por personagem) =====
