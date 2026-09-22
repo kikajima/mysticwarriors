@@ -278,8 +278,8 @@ export function AuthGate({
           </div>
         ) : (
           <img
-            src="/images/banner.png"
-            alt="Myst Ki Warriors carregando energia ao pôr do sol"
+            src="/images/banner-mystki.svg"
+            alt="Setor Caelum e o símbolo do Horizonte"
             className="absolute inset-0 w-full h-full object-cover opacity-80"
             onError={() => setBannerFailed(true)}
           />
