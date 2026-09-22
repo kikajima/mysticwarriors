@@ -109,7 +109,7 @@ export function isHeavyBlow(damage: number, receiverMaxHp: number): boolean {
 /**
  * Quebra de Limite — poder efetivo para a ESCALA durante o efeito:
  * +1 Escala significa lutar no PATAMAR MÍNIMO da escala seguinte
- * (a escala é uma função degrau do poder do scouter).
+ * (a escala é uma função degrau do poder do visor de fluxo).
  */
 export function effectiveScalePower(power: number, quebraActive: boolean): number {
   if (!quebraActive) return power;
