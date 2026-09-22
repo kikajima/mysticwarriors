@@ -31,7 +31,7 @@ export const BALANCE_VERSION = 6;
  * TRABALHANDO bloqueia APENAS as 2 ações abaixo. TUDO mais é LIBERADO:
  * Treino, PvP, Ameaça Universal, Oficina/Crafting, loja (comprar/vender/usar), gestão completa de
  * guilda, coleta de recompensas (conquista/diária/missão/torneio),
- * equipamento/inventário, Oficina/Crafting, perfil e visualizações, Shenron,
+ * equipamento/inventário, Oficina/Crafting, perfil e visualizações, Aethelgard,
  * cosméticos, talentos, técnicas, transformações, estratégia.
  *
  * REGRA DE COLETA (parte 2 da 3ª ordem): coleta de recompensa de
@@ -286,7 +286,7 @@ export function registerZenkai(ctx: ZenkaiContext, opponentId: string, now = new
  * ANTI-FARM PvE — REMOVIDO INTEGRALMENTE (v0.4)
  * ---------------------------------------------------------------------
  * O antigo sistema (FARM.tiers 50%/25%/10% + sameEnemyRepeatMult +
- * farmMultiplierLegacy) foi eliminado: nenhuma redução de XP/Zeni por
+ * farmMultiplierLegacy) foi eliminado: nenhuma redução de XP/Créditos por
  * volume de batalhas no dia. Os contadores pveBattleDay/pveBattleCount
  * permanecem no schema APENAS como estatística/histórico — nunca
  * alteram recompensas. Consulte a tabela de balanceamento para a
@@ -312,7 +312,7 @@ export function weekKey(date = new Date()): string {
 
 // ===== Guardas de valor =====
 
-/** Teto absoluto de Zeni (Int32 seguro com folga — nenhuma fonte ultrapassa). */
+/** Teto absoluto de Créditos (Int32 seguro com folga — nenhuma fonte ultrapassa). */
 export const ZENI_CAP = 2_000_000_000;
 
 export function assertValidAmount(amount: number): void {
