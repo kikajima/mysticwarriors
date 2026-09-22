@@ -14,7 +14,7 @@ describe('Chaves do Horizonte — consistência global', () => {
     expect(actions).not.toContain('dragonBallStealChance: 0.25');
   });
 
-  test('roubo de esfera está dentro do ramo de vitória do PvP', async () => {
+  test('roubo de Chave está dentro do ramo de vitória do PvP', async () => {
     const activities = await Bun.file(`${import.meta.dir}/../src/lib/game/activities.ts`).text();
     const start = activities.indexOf('async function applyPvpResult');
     const win = activities.indexOf('if (data.won) {', start);
@@ -44,7 +44,7 @@ describe('Chaves do Horizonte — consistência global', () => {
     ).toBe(0.5);
   });
 
-  test('Busca mostra estrelas livres e não consome energia', async () => {
+  test('Busca mostra Chaves livres e não consome energia', async () => {
     const actions = await Bun.file(`${import.meta.dir}/../src/lib/game/actions.ts`).text();
     const start = actions.indexOf('async function actionSearchDragonBall');
     const end = actions.indexOf('async function actionCancelDragonBallSearch', start);
@@ -58,21 +58,21 @@ describe('Chaves do Horizonte — consistência global', () => {
     expect(body).not.toContain('energy: { decrement');
     expect(body).not.toContain("'energy_spent'");
     expect(body).toContain('Há ${freeStars}');
-    expect(body).toContain('esferas espalhadas');
+    expect(body).toContain('Chaves livres');
 
     const state = await Bun.file(`${import.meta.dir}/../src/app/api/game/state/route.ts`).text();
     expect(state).toContain("db.dragonBallPossession.count({ where: { playerId: null } })");
     expect(state).toContain('playerView.dragonBallsAvailable = dragonBallsAvailable');
 
     const panel = await Bun.file(`${import.meta.dir}/../src/components/game/ProfessionsPanel.tsx`).text();
-    expect(panel).toContain('Esferas espalhadas');
+    expect(panel).toContain('Chaves livres');
     expect(panel).toContain('noFreeBalls');
-    expect(panel).toContain('Nenhuma esfera espalhada');
+    expect(panel).toContain('Nenhuma Chave');
     expect(panel).toContain('A busca não gasta energia');
     expect(panel).not.toContain('DRAGON_BALL_SEARCH_ENERGY_COST');
   });
 
-  test('restore de nuvem não recria posse global de esfera', async () => {
+  test('restore de nuvem não recria posse global de Chave', async () => {
     const restore = await Bun.file(`${import.meta.dir}/../src/app/api/game/cloud-restore/route.ts`).text();
     expect(restore).toContain('Esferas são recurso GLOBAL do mundo');
     expect(restore.match(/dragonBalls: 0/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
