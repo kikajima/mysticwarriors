@@ -6,7 +6,7 @@ import {
   getItem,
 } from '../src/lib/game/content/world';
 
-describe('Esferas do Dragão — consistência global', () => {
+describe('Chaves do Horizonte — consistência global', () => {
   test('chance de roubo PvP usa a constante central de 50%', async () => {
     expect(DRAGON_BALL_PVP_STEAL_CHANCE).toBe(0.5);
     const actions = await Bun.file(`${import.meta.dir}/../src/lib/game/actions.ts`).text();
