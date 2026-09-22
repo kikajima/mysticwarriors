@@ -43,19 +43,19 @@ export function randomWarriorName(): string {
 // ===== Bots do ranking (PvP) — nomes originais =====
 
 export const BOTS = [
-  { name: 'Kael Voran', race: 'Solaris' as RaceId, level: 32 },
-  { name: 'Rhyss da Matilha', race: 'Solaris' as RaceId, level: 29 },
+  { name: 'Kael Voran', race: 'saiyajin' as RaceId, level: 32 },
+  { name: 'Rhyss da Matilha', race: 'saiyajin' as RaceId, level: 29 },
   { name: 'Moroq do Vazio', race: 'majin' as RaceId, level: 27 },
-  { name: 'Vaelor Syl', race: 'Verdant' as RaceId, level: 25 },
+  { name: 'Vaelor Syl', race: 'namekuseijin' as RaceId, level: 25 },
   { name: 'Nexus-87', race: 'androide' as RaceId, level: 24 },
-  { name: 'Sorin Escarlate', race: 'Solaris' as RaceId, level: 23 },
+  { name: 'Sorin Escarlate', race: 'saiyajin' as RaceId, level: 23 },
   { name: 'Tarek do Horizonte', race: 'humano' as RaceId, level: 21 },
   { name: 'Sahir Venn', race: 'humano' as RaceId, level: 19 },
   { name: 'Ravel Lobo', race: 'humano' as RaceId, level: 17 },
   { name: 'Tarin Sol', race: 'humano' as RaceId, level: 15 },
   { name: 'Maelis', race: 'humano' as RaceId, level: 12 },
-  { name: 'Sylven-47', race: 'Verdant' as RaceId, level: 8 },
+  { name: 'Sylven-47', race: 'namekuseijin' as RaceId, level: 8 },
   { name: 'Mercenário Kovar', race: 'humano' as RaceId, level: 5 },
-  { name: 'Auron Renegado', race: 'Solaris' as RaceId, level: 4 },
+  { name: 'Auron Renegado', race: 'saiyajin' as RaceId, level: 4 },
   { name: 'Mestre Orun', race: 'humano' as RaceId, level: 2 },
 ];
