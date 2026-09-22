@@ -2,9 +2,9 @@ import Link from 'next/link';
 import { TECHNIQUES } from '@/lib/game/content/techniques';
 
 export const metadata = {
-  title: 'Técnicas Lendárias — Guerreiros Místicos',
+  title: 'Técnicas Lendárias — Myst Ki Warriors',
   description:
-    'Catálogo completo das técnicas de Guerreiros Místicos: Rogafufuken, Kamehameha, Kienzan, Final Flash, Genki Dama e mais — poder, custo de Ki e mestres que as ensinam.',
+    'Catálogo completo das técnicas de Myst Ki Warriors: Rogafufuken, Kamehameha, Kienzan, Final Flash, Genki Dama e mais — poder, custo de Ki e mestres que as ensinam.',
   alternates: { canonical: '/tecnicas' },
 };
 
@@ -18,7 +18,7 @@ export default function TecnicasPage() {
     <main className="min-h-screen bg-[#14100b] text-amber-100">
       <div className="max-w-4xl mx-auto px-4 py-12">
         <Link href="/" className="text-xs text-amber-200/40 hover:text-amber-200/70">
-          ← Guerreiros Místicos
+          ← Myst Ki Warriors
         </Link>
         <h1 className="font-display text-4xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600 mt-2 mb-3">
           Técnicas Lendárias
@@ -66,7 +66,7 @@ export default function TecnicasPage() {
                       Nv {t.minLevel}+
                     </span>
                     <span className="rounded-full border border-yellow-800/50 bg-yellow-950/40 text-yellow-300 px-2 py-0.5 text-[11px]">
-                      {t.price.toLocaleString('pt-BR')} Zeni
+                      {t.price.toLocaleString('pt-BR')} Créditos
                     </span>
                   </div>
                 </div>
