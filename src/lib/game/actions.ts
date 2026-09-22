@@ -605,11 +605,11 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
   // Raça continua afetando Créditos de trabalho. Guilda e Acadêmico são
   // aplicados na camada central grantRewards.
   const econ = raceEconomy(player.race);
-  const raceCréditos = Math.max(1, Math.round(turn.zeni * econ.zeniMissionMult));
+  const raceZeni = Math.max(1, Math.round(turn.zeni * econ.zeniMissionMult));
   const granted = await grantRewards(
     tx,
     player,
-    { zeni: raceCréditos, xp: turn.xp },
+    { zeni: raceZeni, xp: turn.xp },
     {
       type: 'reward',
       source: 'mission',
