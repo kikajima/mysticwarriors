@@ -10,7 +10,7 @@ import {
   assertPlayerAvailableForAction,
   dayKey,
   raceEconomy,
-  shouldGrantZenkai,
+  shouldGrantResiliência Estelar,
   statName,
   trainingCost,
   ZENKAI,
@@ -175,7 +175,7 @@ export async function executeGameAction(
     // (resultado pendente é concedido no primeiro toque após o término)
     const appliedResults = await resolveDueActivities(tx, player);
     if (appliedResults.length > 0) {
-      // A resolução pode alterar HP, XP, nível, Zeni e, no torneio, a rodada
+      // A resolução pode alterar HP, XP, nível, Créditos e, no torneio, a rodada
       // atual. Qualquer ação feita imediatamente após o fim da luta precisa
       // enxergar o estado PÓS-resultado, não o objeto carregado antes do apply.
       player = await requirePlayer(auth, playerId, tx);
@@ -186,7 +186,7 @@ export async function executeGameAction(
     // v0.16 — MATRIZ DEFINITIVA (3ª ordem): durante trabalho ativo
     // PvE, torneio e iniciar Busca de Esferas são negados (MISSION_BLOCKED_ACTIONS).
     // Tudo mais passa: treino, Oficina, loja, guilda, coletas, PvP, chefe
-    // mundial, equipamento, perfil, Shenron, cosméticos, talentos…
+    // mundial, equipamento, perfil, Aethelgard, cosméticos, talentos…
     assertPlayerAvailableForAction(player, type);
 
     // ===== BLOQUEIO CENTRAL: atividade em andamento (luta com duração) =====
@@ -351,7 +351,7 @@ type Tx = Prisma.TransactionClient;
  * TREINO INSTANTÂNEO (v0.9): valida, DEBITA custos (atômico) e aplica o
  * ganho de atributo NA HORA — sem atividade temporizada e sem animação
  * longa. O cliente apenas faz uma micro-animação (~300ms) no botão "+".
- * Energia e Zeni continuam custando normalmente.
+ * Energia e Créditos continuam custando normalmente.
  */
 async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<ActionResult> {
   if (!['strength', 'defense', 'speed', 'ki'].includes(stat)) {
@@ -364,7 +364,7 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
     throw new ApiError('INSUFFICIENT_ENERGY', 'Energia insuficiente! Descanse um pouco (a energia regenera com o tempo).');
   }
 
-  // gasto atômico de Zeni (limite garantido) + energia condicional
+  // gasto atômico de Créditos (limite garantido) + energia condicional
   await spendCurrency(tx, player.id, 'zeni', cost, { type: 'spend', source: 'training', accountId: player.accountId, metadata: { stat } });
   const energyRes = await tx.player.updateMany({
     where: { id: player.id, energy: { gte: TRAIN_ENERGY_COST } },
@@ -397,7 +397,7 @@ async function actionStartTrain(tx: Tx, player: Player, stat: string): Promise<A
   if (player.trainingsDone === 0) await trackEvent('first_training', { playerId: player.id, accountId: player.accountId }, tx);
 
   return {
-    message: `${applied.message} (-${cost.toLocaleString('pt-BR')} Zeni, -${TRAIN_ENERGY_COST} energia)`,
+    message: `${applied.message} (-${cost.toLocaleString('pt-BR')} Créditos, -${TRAIN_ENERGY_COST} energia)`,
     levelsGained: 0,
   };
 }
@@ -411,7 +411,7 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
     player.dragonBalls = ownedCount;
   }
   if (ownedCount >= 7) {
-    throw new ApiError('VALIDATION_ERROR', 'Você já reuniu as 7 Esferas do Dragão. Faça um desejo antes de procurar mais.');
+    throw new ApiError('VALIDATION_ERROR', 'Você já reuniu as 7 Chaves do Horizonte. Faça um desejo antes de procurar mais.');
   }
   const hours = Number(rawHours);
   const shift = dragonBallSearchShift(hours);
@@ -423,7 +423,7 @@ async function actionSearchDragonBall(tx: Tx, player: Player, rawHours: unknown)
   if (freeStars <= 0) {
     throw new ApiError(
       'DRAGON_BALL_NONE_AVAILABLE',
-      'Nenhuma Esfera do Dragão está espalhada pelo mundo agora. As 7 estão em posse de guerreiros — tente recuperá-las pelo PvP ou aguarde um desejo dispersá-las.'
+      'Nenhuma Chave do Horizonte está espalhada pelo mundo agora. As 7 estão em posse de guerreiros — tente recuperá-las pelo PvP ou aguarde um desejo dispersá-las.'
     );
   }
 
@@ -471,7 +471,7 @@ async function actionCancelDragonBallSearch(tx: Tx, player: Player): Promise<Act
   if (canceled.count === 0) throw new ApiError('CONFLICT', 'A busca já foi encerrada.');
 
   return {
-    message: 'Busca pelas Esferas interrompida. Nenhuma esfera foi encontrada.',
+    message: 'Busca pelas Chaves interrompida. Nenhuma esfera foi encontrada.',
     levelsGained: 0,
   };
 }
@@ -602,14 +602,14 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
   const levelBefore = professionLevel(cur);
   const turn = professionShiftRewards(cur.hours, hours, player.level);
 
-  // Raça continua afetando Zeni de trabalho. Guilda e Acadêmico são
+  // Raça continua afetando Créditos de trabalho. Guilda e Acadêmico são
   // aplicados na camada central grantRewards.
   const econ = raceEconomy(player.race);
-  const raceZeni = Math.max(1, Math.round(turn.zeni * econ.zeniMissionMult));
+  const raceCréditos = Math.max(1, Math.round(turn.zeni * econ.zeniMissionMult));
   const granted = await grantRewards(
     tx,
     player,
-    { zeni: raceZeni, xp: turn.xp },
+    { zeni: raceCréditos, xp: turn.xp },
     {
       type: 'reward',
       source: 'mission',
@@ -692,7 +692,7 @@ async function actionClaimProfession(tx: Tx, player: Player): Promise<ActionResu
     .join(', ');
 
   let message =
-    `${flavor} ${hours}h concluídas: +${granted.zeniGranted.toLocaleString('pt-BR')} Zeni, +${granted.xpGranted.toLocaleString('pt-BR')} XP.`;
+    `${flavor} ${hours}h concluídas: +${granted.zeniGranted.toLocaleString('pt-BR')} Créditos, +${granted.xpGranted.toLocaleString('pt-BR')} XP.`;
   if (statGain > 0 && def.attribute) {
     message += ` +${statGain} ${statName(def.attribute)}.`;
   }
@@ -825,23 +825,23 @@ async function actionStartBattle(tx: Tx, player: Player, enemyId: string): Promi
 
   const rewards = npcRewards(idx, player.race, sim.won);
 
-  // Zenkai decidido AQUI pelos critérios de risco (sem cota diária):
+  // Resiliência Estelar decidido AQUI pelos critérios de risco (sem cota diária):
   // derrota + adversário relevante + entrada com vida >= 50%
   let zenkai = false;
   if (!sim.won && player.hp >= derived.maxHp * ZENKAI.zenkaiRequiresHpPct) {
-    zenkai = shouldGrantZenkai(
+    zenkai = shouldGrantResiliência Estelar(
       {
         race: player.race,
         level: player.level,
-        lastZenkaiAt: player.lastZenkaiAt,
-        lastZenkaiOpponentId: player.lastZenkaiOpponentId,
+        lastResiliência EstelarAt: player.lastResiliência EstelarAt,
+        lastResiliência EstelarOpponentId: player.lastResiliência EstelarOpponentId,
       },
       enemy.level,
       `enemy:${enemy.id}`
     ).granted;
   }
 
-  // Majin: absorção de vida ao vencer já embutida no HP final previsto
+  // Amorph: absorção de vida ao vencer já embutida no HP final previsto
   let playerEndHp = sim.playerEndHp;
   if (sim.won && playerCombatant.raceCombat.absorbOnWinPct > 0) {
     playerEndHp = Math.min(sim.playerMaxHp, playerEndHp + Math.floor(sim.playerMaxHp * playerCombatant.raceCombat.absorbOnWinPct));
@@ -854,7 +854,7 @@ async function actionStartBattle(tx: Tx, player: Player, enemyId: string): Promi
     mode: 'pve',
     display: {
       message: sim.won
-        ? `Vitória contra ${enemy.name}! +${rewards.zeni.toLocaleString('pt-BR')} Zeni, +${rewards.xp} XP.`
+        ? `Vitória contra ${enemy.name}! +${rewards.zeni.toLocaleString('pt-BR')} Créditos, +${rewards.xp} XP.`
         : `Derrota para ${enemy.name}... Você foi resgatado com 1 de vida.`,
       levelsGained: levelsEstimate,
       battle: {
@@ -968,7 +968,7 @@ async function actionStartTournamentFight(tx: Tx, player: Player): Promise<Actio
   // v0.9.24 (C1) — TAXA DE INSCRIÇÃO: cobrada UMA vez por campanha, na
   // luta de ABERTURA (estado pré-validação round === 0 identifica a
   // estreia; luta 2/3 de uma campanha em andamento não paga nada).
-  // spendCurrency é condicional atômico — sem Zeni suficiente lança
+  // spendCurrency é condicional atômico — sem Créditos suficiente lança
   // INSUFFICIENT_ZENI e a transação inteira (estado + energia) volta.
   if (state.round === 0) {
     await spendCurrency(tx, player.id, 'zeni', TOURNAMENT_ENTRY_FEE, {
@@ -991,7 +991,7 @@ async function actionStartTournamentFight(tx: Tx, player: Player): Promise<Actio
   const levelsEstimate = estimateLevelsGained(player, rewards.xp);
 
   // consolação do rejeitado: METADE do XP da rodada (a luta ensina; o
-  // Zeni/cinturão são só do vencedor) — coerente com o texto
+  // Créditos/cinturão são só do vencedor) — coerente com o texto
   // "Ainda ganhou X XP" do diálogo de derrota
   const xpGain = sim.won ? rewards.xp : Math.max(1, Math.floor(rewards.xp / 2));
 
@@ -1114,22 +1114,22 @@ export async function actionStartPvp(tx: Tx, player: Player, targetId: string): 
 
   const xpGain = pvpRewards(target.level, player.level, player.race);
 
-  // Zenkai decidido AQUI (derrota + adversário relevante + vida de entrada)
+  // Resiliência Estelar decidido AQUI (derrota + adversário relevante + vida de entrada)
   let zenkai = false;
   if (!sim.won && player.hp >= derived.maxHp * ZENKAI.zenkaiRequiresHpPct) {
-    zenkai = shouldGrantZenkai(
+    zenkai = shouldGrantResiliência Estelar(
       {
         race: player.race,
         level: player.level,
-        lastZenkaiAt: player.lastZenkaiAt,
-        lastZenkaiOpponentId: player.lastZenkaiOpponentId,
+        lastResiliência EstelarAt: player.lastResiliência EstelarAt,
+        lastResiliência EstelarOpponentId: player.lastResiliência EstelarOpponentId,
       },
       target.level,
       `player:${target.id}`
     ).granted;
   }
 
-  // Majin: absorção de vida ao vencer
+  // Amorph: absorção de vida ao vencer
   let playerEndHp = sim.playerEndHp;
   if (sim.won && playerCombatant.raceCombat.absorbOnWinPct > 0) {
     playerEndHp = Math.min(sim.playerMaxHp, playerEndHp + Math.floor(sim.playerMaxHp * playerCombatant.raceCombat.absorbOnWinPct));
@@ -1143,7 +1143,7 @@ export async function actionStartPvp(tx: Tx, player: Player, targetId: string): 
     display: {
       message: sim.won
         ? `Você derrotou ${target.name} no PvP!`
-        : `${target.name} te derrotou... Você perdeu 5% do seu Zeni mas ganhou experiência.`,
+        : `${target.name} te derrotou... Você perdeu 5% do seu Créditos mas ganhou experiência.`,
       levelsGained: levelsEstimate,
       battle: {
         ...sim,
@@ -1213,7 +1213,7 @@ export function sellUnitPrice(item: ShopItem): number {
 }
 
 function currencyLabel(currency: 'zeni' | 'crystal', value: number): string {
-  return currency === 'crystal' ? `${value} 💎 ${value === 1 ? 'diamante' : 'diamantes'}` : `${value.toLocaleString('pt-BR')} Zeni`;
+  return currency === 'crystal' ? `${value} 💎 ${value === 1 ? 'diamante' : 'diamantes'}` : `${value.toLocaleString('pt-BR')} Créditos`;
 }
 
 /**
@@ -1239,7 +1239,7 @@ async function actionBuy(tx: Tx, player: Player, itemId: string, quantity: numbe
   }
 
   // v0.9.2 — MOEDA DO ITEM: equipamentos de treino e consumíveis custam
-  // DIAMANTES (currency: 'crystal'); o restante continua em Zeni.
+  // DIAMANTES (currency: 'crystal'); o restante continua em Créditos.
   const currency = item.currency === 'crystal' ? ('crystal' as const) : ('zeni' as const);
   const unitPrice = item.price;
   const totalPrice = unitPrice * quantity; // SEMPRE calculado no servidor
@@ -1407,7 +1407,7 @@ async function actionUseItem(tx: Tx, player: Player, itemId: string): Promise<Ac
   } else if (item.effect === 'full_hp') {
     await tx.player.update({ where: { id: player.id }, data: { hp: derived.maxHp } });
     player.hp = derived.maxHp;
-    message = `Você comeu um Feijão Senzu! Vida totalmente restaurada (${derived.maxHp} HP).`;
+    message = `Você comeu um Fruto de Sylva! Vida totalmente restaurada (${derived.maxHp} HP).`;
   } else if (item.effect === 'full_energy') {
     await tx.player.update({ where: { id: player.id }, data: { energy: derived.maxEnergy } });
     player.energy = derived.maxEnergy;
@@ -1537,7 +1537,7 @@ async function actionWish(tx: Tx, player: Player, wishType: string): Promise<Act
   if (wishType === 'riqueza') {
     await addCurrency(tx, player.id, 'zeni', 8000, { type: 'grant', source: 'wish', accountId: player.accountId });
     player.zeni += 8000;
-    message = 'Shenlon concedeu seu desejo: +8.000 Zeni caíram do céu!';
+    message = 'Aethelgard concedeu seu desejo: +8.000 Créditos caíram do céu!';
   } else if (wishType === 'poder') {
     // +3 em todos os atributos — SEMPRE com limite central
     (['strength', 'defense', 'speed', 'ki'] as const).forEach((s) => addStat(player, s, 3));
@@ -1545,17 +1545,17 @@ async function actionWish(tx: Tx, player: Player, wishType: string): Promise<Act
       where: { id: player.id },
       data: { strength: player.strength, defense: player.defense, speed: player.speed, ki: player.ki },
     });
-    message = 'Shenlon concedeu seu desejo: +3 em todos os atributos!';
+    message = 'Aethelgard concedeu seu desejo: +3 em todos os atributos!';
   } else if (wishType === 'vitalidade') {
     const derived = computeDerived(player);
     await tx.player.update({ where: { id: player.id }, data: { hp: derived.maxHp, energy: derived.maxEnergy } });
     player.hp = derived.maxHp;
     player.energy = derived.maxEnergy;
-    message = 'Shenlon restaurou completamente sua vida e energia!';
+    message = 'Aethelgard restaurou completamente sua vida e energia!';
   } else {
     const grant = await grantRewards(tx, player, { xp: 1500 }, { type: 'reward', source: 'wish', accountId: player.accountId });
     levelsGained = grant.levelsGained;
-    message = 'Shenlon concedeu seu desejo: +1.500 XP de sabedoria de batalha!';
+    message = 'Aethelgard concedeu seu desejo: +1.500 XP de sabedoria de batalha!';
   }
   return { message, levelsGained };
 }
@@ -1747,7 +1747,7 @@ export const guildXpToNext = (level: number) => guildThreshold(Math.min(10, leve
 async function actionClaimQuest(tx: Tx, player: Player, questId: string): Promise<ActionResult> {
   const { levelsGained, rewards } = await claimQuest(tx, player, questId);
   const parts = [
-    rewards.zeni > 0 ? `+${rewards.zeni.toLocaleString('pt-BR')} Zeni` : '',
+    rewards.zeni > 0 ? `+${rewards.zeni.toLocaleString('pt-BR')} Créditos` : '',
     rewards.xp > 0 ? `+${rewards.xp} XP` : '',
     rewards.crystals > 0 ? `+${rewards.crystals} 💎` : '',
   ].filter(Boolean);
@@ -1757,7 +1757,7 @@ async function actionClaimQuest(tx: Tx, player: Player, questId: string): Promis
 async function actionClaimAchievement(tx: Tx, player: Player, achievementId: string): Promise<ActionResult> {
   const { levelsGained, rewards } = await claimAchievement(tx, player, achievementId);
   const parts = [
-    rewards.zeni > 0 ? `+${rewards.zeni.toLocaleString('pt-BR')} Zeni` : '',
+    rewards.zeni > 0 ? `+${rewards.zeni.toLocaleString('pt-BR')} Créditos` : '',
     rewards.xp > 0 ? `+${rewards.xp} XP` : '',
     rewards.crystals > 0 ? `+${rewards.crystals} 💎` : '',
   ].filter(Boolean);
@@ -1807,7 +1807,7 @@ function parseCosmeticsOwnedList(raw: string | null): string[] {
 
 // ===== v0.9.15: TALENTOS DE ÍMPETO (Cap. 7 do ASCENSÃO Z) =====
 // Os dois gastos restantes de 1 Ímpeto ("Repetir um d10" e
-// "Reposicionamento dramático") comprados na Loja com Zeni. A posse é
+// "Reposicionamento dramático") comprados na Loja com Créditos. A posse é
 // do PERSONAGEM (como cosméticos v0.9.6); a validação pura vive em
 // content/talents.ts (validateTalentPurchase) e é reaproveitada pelos
 // testes — a action só orquestra transação + ledger + persistência.
