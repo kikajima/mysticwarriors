@@ -747,7 +747,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                       <p className="text-sky-300 font-heading text-base tabular-nums">{selected.crystals.toLocaleString('pt-BR')}</p>
                     </div>
                     <div className="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2">
-                      <p className="text-amber-200/40 flex items-center gap-1"><CircleDot className="w-3 h-3" /> Esferas</p>
+                      <p className="text-amber-200/40 flex items-center gap-1"><CircleDot className="w-3 h-3" /> Chaves</p>
                       <p className="text-orange-300 font-heading text-base tabular-nums">{selected.dragonBalls}/7</p>
                     </div>
                     <div className="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2">
@@ -853,7 +853,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                     </div>
                   </section>
 
-                  {/* Esferas globais: a estrela é única no mundo */}
+                  {/* Chaves globais: a estrela é única no mundo */}
                   <section className="bg-black/20 rounded-xl border border-amber-900/40 p-4">
                     <h3 className="font-heading text-sm text-amber-100 mb-2 flex items-center gap-1.5">
                       <CircleDot className="w-4 h-4 text-orange-300" /> Conceder Chave do Horizonte
@@ -892,7 +892,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                     </div>
                     {selected.source !== 'local' && (
                       <p className="text-[11px] text-orange-200/55 mt-2">
-                        Este personagem está apenas na nuvem. Esferas globais só podem ser atribuídas quando ele estiver carregado no servidor atual.
+                        Este personagem está apenas na nuvem. Chaves globais só podem ser atribuídas quando ele estiver carregado no servidor atual.
                       </p>
                     )}
                   </section>
