@@ -701,7 +701,7 @@ export interface ClaimableMission {
  */
 export interface PlayerNotificationView {
   id: string;
-  kind: 'dragon_ball_stolen' | 'dragon_ball_lost' | 'market_sold' | 'admin';
+  kind: 'dragon_ball_stolen' | 'dragon_ball_lost' | 'market_sold' | 'market_buy_order_filled' | 'admin';
   title: string;
   message: string;
   createdAt: string;
