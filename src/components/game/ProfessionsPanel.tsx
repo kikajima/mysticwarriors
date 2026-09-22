@@ -505,9 +505,9 @@ function DragonBallSearchTab({
         <div className="flex flex-col md:flex-row md:items-center gap-5">
           <div className="text-6xl shrink-0 text-center" aria-hidden>🔮</div>
           <div className="flex-1">
-            <h3 className="font-heading text-xl text-amber-100">Busca pelas Esferas</h3>
+            <h3 className="font-heading text-xl text-amber-100">Busca pelas Chaves</h3>
             <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">
-              Escolha quanto tempo seu radar ficará procurando. A busca não gasta energia. A chance base cresce até 20%; bônus dos dois espaços de acessório podem elevar a chance total até 50%. Cada busca encontra no máximo uma esfera e só pode começar se existir uma estrela sem dono no mundo.
+              Escolha quanto tempo seu radar ficará procurando. A busca não gasta energia. A chance base cresce até 20%; bônus dos dois espaços de acessório podem elevar a chance total até 50%. Cada busca encontra no máximo uma esfera e só pode começar se existir uma Chave sem dono no mundo.
             </p>
             {freeBalls !== undefined && (
               <div className={`mt-3 rounded-lg border p-3 ${
@@ -520,8 +520,8 @@ function DragonBallSearchTab({
                 </p>
                 <p className="text-[11px] text-amber-200/55 mt-1">
                   {noFreeBalls
-                    ? 'As 7 Esferas estão em posse de guerreiros. A busca está indisponível; dispute uma no PvP ou aguarde alguém invocar Shenlon.'
-                    : `Ainda existem ${freeBalls} ${freeBalls === 1 ? 'estrela sem dono que pode ser encontrada' : 'estrelas sem dono que podem ser encontradas'} pela busca.`}
+                    ? 'As 7 Esferas estão em posse de guerreiros. A busca está indisponível; dispute uma no PvP ou aguarde alguém invocar Aethelgard.'
+                    : `Ainda existem ${freeBalls} ${freeBalls === 1 ? 'Chave sem dono que pode ser encontrada' : 'Chaves sem dono que podem ser encontradas'} pela busca.`}
                 </p>
               </div>
             )}
@@ -580,7 +580,7 @@ function DragonBallSearchTab({
       </GameCard>
       <GameCard className="p-4">
         <p className="text-xs text-amber-200/55 leading-relaxed">
-          ⚔️ Uma vitória no PvP também pode roubar 1 Esfera do Dragão do adversário. Proteja sua coleção escolhendo bem seus duelos.
+          ⚔️ Uma vitória no PvP também pode roubar 1 Chave do Horizonte do adversário. Proteja sua coleção escolhendo bem seus duelos.
         </p>
       </GameCard>
     </div>
