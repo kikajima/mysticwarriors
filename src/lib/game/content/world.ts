@@ -411,7 +411,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'armadura_freeza', name: 'Blindagem Imperial de Varth', description: 'Slot: Torso. Blindagem militar reforçada. Bônus: +18 DEF.', category: 'armor', price: 2400, minLevel: 6, def: 18, icon: '🦺' },
   { id: 'traje_ponderado', name: 'Traje Ponderado', description: 'Slot: Torso. Proteção pesada sem eliminar a mobilidade. Bônus: +28 DEF e +3 VEL.', category: 'armor', price: 6500, minLevel: 10, def: 28, spd: 3, icon: '🥋' },
   { id: 'armadura_kaio', name: 'Armadura do Horizonte', description: 'Slot: Torso. Proteção divina comercial de alto nível. Bônus: +42 DEF e +5 KI.', category: 'armor', price: 15000, minLevel: 15, def: 42, ki: 5, icon: '🛡️' },
-  { id: 'manto_kaioshin', name: 'Manto do Kaioshin', description: 'Slot: Torso. Melhor proteção vendida pronta na loja. Bônus: +60 DEF e +8 KI.', category: 'armor', price: 34000, minLevel: 22, def: 60, ki: 8, icon: '🦺' },
+  { id: 'manto_kaioshin', name: 'Manto do Arconte', description: 'Slot: Torso. Proteção cerimonial avançada dos Arcontes do Horizonte. Bônus: +60 DEF e +8 KI.', category: 'armor', price: 34000, minLevel: 22, def: 60, ki: 8, icon: '🦺' },
 
   // Pernas
   { id: 'calca_gi_loja', name: 'Calça de Gi', description: 'Slot: Pernas. Tecido leve para treino e combate. Bônus: +4 DEF e +2 VEL.', category: 'legs', price: 350, minLevel: 1, def: 4, spd: 2, icon: '👖' },
