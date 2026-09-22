@@ -141,7 +141,7 @@ export function BattlePanel({
                     <Zap className="w-3 h-3" /> {BATTLE_ENERGY_COST}
                   </Chip>
                 </div>
-                {/* Escala de Poder do oponente vs a sua (ASCENSÃO Z — regra 5.1) */}
+                {/* Escala de Poder do oponente vs a sua (ESCALAS DE CAELUM — regra 5.1) */}
                 <div
                   className="flex flex-wrap items-center justify-center gap-2 mb-3"
                   title={`Poder de luta do oponente: ${power.toLocaleString('pt-BR')}`}
