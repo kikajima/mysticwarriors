@@ -461,8 +461,8 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
             const after = await setAdminDragonBallCount(tx, fresh.id, desired);
             parts.push(
               after === desired
-                ? `Esferas do Dragão: ${after}/7`
-                : `Esferas do Dragão: ${after}/7 (não há mais esferas globais livres)`
+                ? `Chaves do Horizonte: ${after}/7`
+                : `Chaves do Horizonte: ${after}/7 (não há mais esferas globais livres)`
             );
           }
           if (input.xpGain && input.xpGain > 0) {
@@ -555,7 +555,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
 
         } else if (input.action === 'grant_dragon_ball') {
           if (input.dragonBallStar === undefined) {
-            throw new ApiError('VALIDATION_ERROR', 'Escolha qual Esfera do Dragão deseja conceder.');
+            throw new ApiError('VALIDATION_ERROR', 'Escolha qual Chave do Horizonte deseja conceder.');
           }
           const message = await grantAdminDragonBallStar(tx, fresh, input.dragonBallStar);
           await trackEvent('admin_grant_dragon_ball', {
