@@ -29,7 +29,7 @@ export default function LandingPage() {
             O RPG de gerenciamento dos clássicos browser games
           </p>
           <h1 className="font-display text-6xl sm:text-8xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-orange-400 to-amber-600 drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)] tracking-wide leading-none">
-            Guerreiros<br />Místicos
+            Myst Ki<br />Warriors
           </h1>
           <p className="font-heading text-amber-200/90 text-base sm:text-xl mt-6 max-w-2xl mx-auto leading-relaxed">
             Treine. Lute. Trabalhe. Colete as <span className="text-yellow-300">7 Chaves do Horizonte</span> e
@@ -117,7 +117,7 @@ export default function LandingPage() {
             <Feature
               icon={<Sparkles className="w-6 h-6" />}
               title={`${TECHNIQUES.length} técnicas lendárias`}
-              text={`Aprenda com ${TRAINING_MASTERS.length} mestres icônicos — do Punho do Lobo à Convergência do Aether. Técnicas supremas ocupam um slot exclusivo do loadout.`}
+              text={`Aprenda com ${TRAINING_MASTERS.length} mestres do Setor Caelum — das Garras do Lobo Astral à Convergência do Aether. Técnicas supremas ocupam um slot exclusivo do loadout.`}
             />
             <Feature
               icon={<Map className="w-6 h-6" />}
