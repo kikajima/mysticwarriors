@@ -411,7 +411,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
   // ================================================================
   {
     id: 'escala-poder',
-    title: 'Escala de Poder e Scouter',
+    title: 'Escala de Poder e Visor de Fluxo',
     icon: '🔍',
     group: 'Combate',
     summary: 'As 10 escalas de ASCENSÃO Z, o poder do scouter, Armadura de Escala e Aberturas.',
@@ -557,7 +557,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     group: 'Combate',
     summary: 'As 11 técnicas, mestres que ensinam, loadout de 4 slots e custos reais.',
     resumo: [
-      'Técnicas são **golpes especiais** aprendidos com mestres (Zeni + nível).',
+      'Técnicas são **golpes especiais** aprendidos com mestres (Créditos + nível).',
       'Cada uma **multiplica o poder** do golpe e gasta Ki de batalha por uso.',
       'Loadout: **3 slots comuns + 1 Supremo** — só o equipado luta.',
     ],
@@ -712,7 +712,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'table',
             table: {
               caption: 'Curva de custo de treino (ORIGEM: content/world.ts — baseTrainingCost; ×1,05 por ponto até 150, ×1,035 depois; sem teto máximo de atributo)',
-              headers: ['Atributo em', 'Custo por ponto (Zeni)'],
+              headers: ['Atributo em', 'Custo por ponto (Créditos)'],
               rows: [10, 25, 50, 100, 150, 200, 300].map((v) => [String(v), br(baseTrainingCost(v))]),
             },
           },
@@ -729,9 +729,9 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Recursos e Economia',
     icon: '💰',
     group: 'Progressão',
-    summary: 'Zeni, cristais, energia, XP e níveis: regeneração, curvas e conversões.',
+    summary: 'Créditos, cristais, energia, XP e níveis: regeneração, curvas e conversões.',
     resumo: [
-      '**Zeni** compra quase tudo; **💎 cristais** vêm de quests, conquistas e Ameaça Universal.',
+      '**Créditos** compra quase tudo; **💎 cristais** vêm de quests, conquistas e Ameaça Universal.',
       'Energia volta **1 ponto a cada 5 min** (Humano: mais rápido).',
       'Vida volta **1 ponto a cada 12 s** (Namekuseijin: mais rápido).',
     ],
@@ -763,8 +763,8 @@ export const WIKI_SECTIONS: WikiSection[] = [
       {
         kind: 'list',
         items: [
-          '**Recuperação de vida:** o HP regenera com o tempo; itens de cura podem acelerar a recuperação e o Feijão Senzu restaura 100% na hora.',
-          `**Venda de itens:** ${Math.round(SELL_PRICE_RATIO * 100)}% do preço de compra, na mesma moeda (Zeni→Zeni, 💎→💎).`,
+          '**Recuperação de vida:** o HP regenera com o tempo; itens de cura podem acelerar a recuperação e o Fruto de Sylva restaura 100% na hora.',
+          `**Venda de itens:** ${Math.round(SELL_PRICE_RATIO * 100)}% do preço de compra, na mesma moeda (Créditos→Créditos, 💎→💎).`,
           'Subir de nível restaura a vida à cheia — mas nunca a energia.',
         ],
       },
@@ -798,7 +798,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           },
           {
             kind: 'text',
-            text: 'Teto de Créditos: 2 bilhões (guarda de valor Int32). Energia nunca é recuperada ao subir de nível — só por tempo, Cápsula de Energia (loja) ou Bênção de Renovação Vital.',
+            text: 'Teto de Créditos: 2 bilhões (guarda de valor Int32). Energia nunca é recuperada ao subir de nível — só por tempo, Módulo de Energia (loja) ou Bênção de Renovação Vital.',
           },
         ],
       },
@@ -1013,7 +1013,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'table',
         table: {
           caption: 'Turnos flexíveis (ORIGEM: content/world.ts — PROFESSION_SHIFTS)',
-          headers: ['Turno', 'Bônus de XP e raros', 'Zeni / atributo / comuns'],
+          headers: ['Turno', 'Bônus de XP e raros', 'Créditos / atributo / comuns'],
           rows: PROFESSION_SHIFTS.map((s) => [
             `${s.hours}h`,
             s.efficiency <= 1 ? 'Base' : `+${Math.round((s.efficiency - 1) * 100)}%`,
@@ -1025,7 +1025,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'table',
         table: {
           caption: 'Carreira Nível 1–10 (ORIGEM: content/world.ts — PROFESSION_LEVELS)',
-            headers: ['Nível', 'Horas no nível', 'Acumulado', 'Zeni/h', 'Atributo/h', 'XP/h', 'Raro/h'],
+            headers: ['Nível', 'Horas no nível', 'Acumulado', 'Créditos/h', 'Atributo/h', 'XP/h', 'Raro/h'],
           rows: PROFESSION_LEVELS.map((r) => [
             String(r.level),
             `${br(r.hoursInLevel)}h`,
@@ -1140,7 +1140,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
               'O equipamento tem **8 espaços equipáveis em 7 categorias**: Cabeça, Punhos, Torso, Acessório I, Acessório II, Arma, Pernas e Botas. Você pode usar no máximo **2 acessórios** ao mesmo tempo; os bônus dos dois entram no cálculo.',
               'A Oficina é a progressão superior de equipamento: os itens craftados de alto Tier superam os melhores equivalentes compráveis na loja, recompensando materiais, profissões e tempo de fabricação.',
               'Itens fabricados não são revendidos para a loja NPC; eles permanecem no inventário do jogador para uso.',
-              'A Cápsula de Recuperação Simples cura **30% da vida máxima**; o Feijão Senzu Processado cura **100%**; a Armadura de Combate Saiyajin dá **+38 DEF e +8 KI** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
+              'A Módulo de Recuperação Simples cura **30% da vida máxima**; o Fruto de Sylva Processado cura **100%**; a Armadura de Combate Solaris dá **+38 DEF e +8 KI** equipada; a Sala de Gravidade Pessoal 100x concede **+3 pontos extras por treino**.',
             ],
           },
         ],
@@ -1181,7 +1181,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'list',
         items: [
           '**Recompensa de vitória:** Créditos varia ±(10–15%) por luta; XP ±10%. Saiyajin ganha +10% XP.',
-          '**Derrota:** você leva uma fração do XP do inimigo como aprendizado (Zeni só na vitória). Em KO, volta com 1 HP e precisa se recuperar antes da próxima luta.',
+          '**Derrota:** você leva uma fração do XP do inimigo como aprendizado (Créditos só na vitória). Em KO, volta com 1 HP e precisa se recuperar antes da próxima luta.',
           'Não existe penalidade diária de farm: cada vitória paga o valor cheio, sempre.',
         ],
       },
@@ -1193,7 +1193,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
             kind: 'table',
             table: {
               caption: 'Vilões (ORIGEM: content/world.ts — ENEMIES; HP = 80 + 15×nível + 5×defesa)',
-              headers: ['Vilão', 'Nível', 'HP', 'Zeni (vitória)', 'XP (vitória)'],
+              headers: ['Vilão', 'Nível', 'HP', 'Créditos (vitória)', 'XP (vitória)'],
               rows: ENEMIES.map((e) => [`${e.emoji} ${e.name}`, String(e.level), br(enemyMaxHp(e)), `~${br(e.zeniReward)}`, `~${br(e.xpReward)}`]),
             },
           },
@@ -1279,7 +1279,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'table',
         table: {
           caption: 'Rodadas e premiação (ORIGEM: content/tournament.ts — TOURNAMENT_ROUNDS)',
-          headers: ['Rodada', 'Poder do adversário', 'Zeni escalável', 'XP'],
+          headers: ['Rodada', 'Poder do adversário', 'Créditos escalável', 'XP'],
           rows: TOURNAMENT_ROUNDS.map((r) => [
             r.name,
             `${Math.round(r.powerMult * 100)}% do seu poder`,
@@ -1526,7 +1526,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       {
         kind: 'list',
         items: [
-          'Consumíveis: **Cápsula de Energia** (6 💎) enche a energia; **Feijão Senzu** (10 💎) enche a vida.',
+          'Consumíveis: **Módulo de Energia** (6 💎) enche a energia; **Fruto de Sylva** (10 💎) enche a vida.',
           '**Cosméticos** não alteram atributos — auras, títulos, poses e molduras por cristais; nenhum item vende poder.',
         ],
       },
