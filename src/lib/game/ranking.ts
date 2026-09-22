@@ -7,7 +7,7 @@ export const WARRIOR_RANKING_CATEGORIES: ReadonlyArray<{
   description: string;
 }> = [
   { id: 'level', label: 'Nível', icon: '📈', description: 'Maior nível de personagem.' },
-  { id: 'power', label: 'Nível de Poder', icon: '⚡', description: 'Poder atual do scouter, incluindo equipamentos e efeitos ativos.' },
+  { id: 'power', label: 'Nível de Poder', icon: '⚡', description: 'Poder atual medido pelo Visor de Fluxo, incluindo equipamentos e efeitos ativos.' },
   { id: 'tournament', label: 'Vitórias no Torneio', icon: '🏆', description: 'Total histórico de lutas vencidas no Torneio de Artes Marciais.' },
   { id: 'boss_damage', label: 'Dano em Ameaças', icon: '☄️', description: 'Dano histórico somado em todas as Ameaças Globais registradas.' },
 ];
