@@ -37,7 +37,7 @@ const russoOne = localFont({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://guerreiros-misticos.exemplo.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mysticwarriors-ohio.onrender.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -60,11 +60,7 @@ export const metadata: Metadata = {
   applicationName: "Myst Ki Warriors",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [
-      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/icon.svg", type: "image/svg+xml" },
-    ],
-    apple: "/icons/apple-touch-icon.png",
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
     type: "website",
