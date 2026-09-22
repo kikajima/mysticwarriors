@@ -21,16 +21,16 @@ import type { RaceId, RaceInfo } from '../types';
 export const RACES: Record<RaceId, RaceInfo> = {
   saiyajin: {
     id: 'saiyajin',
-    name: 'Saiyajin',
-    tagline: 'Guerreiros natos com sede de batalha',
+    name: 'Solaris',
+    tagline: 'A Matilha Estelar',
     description:
-      'Uma raça de guerreiros orgulhosos e implacáveis. Quanto mais próximos da morte, mais fortes ficam — o lendário Zenkai corre nas suas veias.',
+      'Humanoides lupinos de mundos de alta energia. Instinto, disciplina de alcateia e adaptação extrema fazem dos Solaris combatentes ferozes do Setor Caelum.',
     color: 'orange',
     avatar: '/images/race-saiyajin.png',
     perks: [
       '+8% de dano em ataques físicos',
       '+10% de XP em batalhas',
-      'Zenkai: +1 de Força ao perder batalha contra adversário relevante',
+      'Resiliência Estelar: +1 de Força ao perder batalha contra adversário relevante',
     ],
     combat: {
       physicalDamageMult: 1.08,
@@ -54,10 +54,10 @@ export const RACES: Record<RaceId, RaceInfo> = {
   },
   humano: {
     id: 'humano',
-    name: 'Humano',
-    tagline: 'Determinação que supera limites',
+    name: 'Vanguardiano',
+    tagline: 'Os Mortais de Ferro',
     description:
-      'Sem poderes natos, os humanos compensam com trabalho duro e engenhosidade. Aguentam o castigo, recuperam fôlego rápido e treinam de forma mais eficiente.',
+      'Povos mortais que compensam a ausência de mutações extremas com disciplina, tecnologia tática adaptativa e domínio preciso da energia vital.',
     color: 'amber',
     avatar: '/images/race-humano.png',
     perks: [
@@ -88,10 +88,10 @@ export const RACES: Record<RaceId, RaceInfo> = {
   },
   namekuseijin: {
     id: 'namekuseijin',
-    name: 'Namekuseijin',
-    tagline: 'Sábios dragões de Namekusei',
+    name: 'Verdant',
+    tagline: 'Os Sábios de Sylva',
     description:
-      'Guerreiros-verdes com capacidade sobre-humana de regeneração. Seu Ki sereno castiga quem tenta vencê-los no longo prazo.',
+      'Seres de matriz vegetal e cristalina ligados à rede viva de Sylva. Seus corpos regenerativos sustentam combates longos e conduzem energia com grande estabilidade.',
     color: 'emerald',
     avatar: '/images/race-namekuseijin.png',
     perks: [
@@ -121,10 +121,10 @@ export const RACES: Record<RaceId, RaceInfo> = {
   },
   androide: {
     id: 'androide',
-    name: 'Androide',
-    tagline: 'Máquinas de destruição perfeitas',
+    name: 'Sintético',
+    tagline: 'Herdeiros de Nexus-9',
     description:
-      'Criados para lutar, os androides não sentem fadiga. Seus reatores internos disparam rajadas de energia sem descanso e lhes dão vantagem em longas jornadas.',
+      'Seres artificiais e organismos aprimorados em Nexus-9. Núcleos de fluxo, chassis evasivos e módulos adaptativos sustentam combate prolongado.',
     color: 'slate',
     avatar: '/images/race-androide.png',
     perks: [
@@ -155,10 +155,10 @@ export const RACES: Record<RaceId, RaceInfo> = {
   },
   majin: {
     id: 'majin',
-    name: 'Majin',
-    tagline: 'Magia antiga e caos puro',
+    name: 'Amorph',
+    tagline: 'Filhos do Caos Estelar',
     description:
-      'Seres mágicos milenares movidos por caos e diversão. Sem excelência em nada, bons em TUDO — vire doce ou morra.',
+      'Entidades maleáveis surgidas em fendas de nebulosas escuras. Sua biomassa energética se reorganiza após cada confronto e absorve energia residual.',
     color: 'rose',
     avatar: '/images/race-majin.png',
     perks: [
