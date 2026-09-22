@@ -596,9 +596,9 @@ function filterClass(active: boolean): string {
 }
 
 const RACE_EMOJI: Record<string, string> = {
-  saiyajin: '🔥',
-  humano: '🥋',
-  namekuseijin: '🐲',
-  androide: '⚡',
-  majin: '🍬',
+  saiyajin: '🐺',
+  humano: '🛡️',
+  namekuseijin: '🌿',
+  androide: '🤖',
+  majin: '🌀',
 };
