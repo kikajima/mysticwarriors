@@ -12,7 +12,7 @@ import { xpToNextLevel } from './world';
 // REGRAS CENTRAIS:
 //  * eliminação direta: 1 derrota encerra a campanha;
 //  * a VIDA CARREGA entre as lutas (drama do mangá: chegar machucado
-//    na final é o preço de curar com Zeni no meio do caminho);
+//    na final é o preço de curar com Créditos no meio do caminho);
 //  * cada luta custa energia como qualquer batalha;
 //  * após o fim da campanha (título ou eliminação) começa um COOLDOWN
 //    — a premiação é alta e não pode ser triturada em spam.
@@ -27,7 +27,7 @@ import { xpToNextLevel } from './world';
  * Duração do cooldown entre campanhas (ms).
  *
  * v0.9.24 (C1) — 15min → 30min para controlar a frequência econômica.
- * v0.9.25 — o torneio deixa de conceder cristais e passa a escalar Zeni
+ * v0.9.25 — o torneio deixa de conceder cristais e passa a escalar Créditos
  * com o nível do guerreiro; o cooldown continua sendo a trava de frequência.
  */
 export const TOURNAMENT_COOLDOWN_MS = 30 * 60_000;
@@ -163,7 +163,7 @@ export interface TournamentRoundDef {
   name: string;
   /** multiplicador do PODER DO ADVERSÁRIO sobre o poder atual do jogador */
   powerMult: number;
-  /** Zeni-base da rodada no patamar de referência (Nv. 10). */
+  /** Créditos-base da rodada no patamar de referência (Nv. 10). */
   zeniBase: number;
   /** fração do XP exigido pelo nível ATUAL do jogador. */
   xpPct: number;
@@ -172,7 +172,7 @@ export interface TournamentRoundDef {
 export const TOURNAMENT_REWARD_REFERENCE_LEVEL = 10;
 
 export const TOURNAMENT_ROUNDS: TournamentRoundDef[] = [
-  // v0.9.25 — os valores de Zeni abaixo são a BASE no nível 10.
+  // v0.9.25 — os valores de Créditos abaixo são a BASE no nível 10.
   // A recompensa real cresce com o nível pela função tournamentZeniReward.
   // Cristais foram removidos completamente da premiação direta do torneio.
   { round: 1, short: 'Quartas', name: 'Quartas de Final', powerMult: 0.82, zeniBase: 150, xpPct: 0.12 },
@@ -188,7 +188,7 @@ export function roundDef(round: number): TournamentRoundDef {
 }
 
 /**
- * Zeni exato da rodada no nível atual.
+ * Créditos exato da rodada no nível atual.
  *
  * O patamar Nv. 10 preserva o balanceamento anterior (150/400/800).
  * Acima dele, a renda cresce de forma moderada (expoente 1,25):

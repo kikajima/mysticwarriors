@@ -20,7 +20,7 @@ import { getSupabaseSession, supabaseSignUp, supabaseSignIn } from '@/lib/supaba
  * O personagem do convidado JÁ pertence à conta de convidado da sessão.
  * Ao criar a conta por e-mail, a PONTE /api/auth/supabase PROMOVE esta
  * mesma conta (vincula ao id Supabase) — nada é duplicado ou movido:
- * nível, XP, Zeni, cristais, itens, técnicas, profissões e cosméticos
+ * nível, XP, Créditos, cristais, itens, técnicas, profissões e cosméticos
  * permanecem exatamente como estão. A partir daí o progresso também é
  * sincronizado para a nuvem automaticamente.
  */
@@ -166,7 +166,7 @@ export function SaveWarriorDialog({
             Crie sua conta com <span className="text-amber-200/90">e-mail e senha</span> para garantir seu
             progresso <span className="text-emerald-300">para sempre, na nuvem</span>.{' '}
             <span className="text-emerald-300">
-              Nível, XP, Zeni, cristais, atributos, itens, técnicas, profissões e cosméticos — tudo é
+              Nível, XP, Créditos, cristais, atributos, itens, técnicas, profissões e cosméticos — tudo é
               preservado
             </span>{' '}
             e passa a sobreviver a qualquer atualização do jogo.

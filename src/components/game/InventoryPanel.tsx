@@ -29,7 +29,7 @@ function sellPriceLabel(item: ShopItem, qty: number): string {
   if (item.currency === 'crystal') {
     return `${total} 💎 ${total === 1 ? 'diamante' : 'diamantes'}`;
   }
-  return `${total.toLocaleString('pt-BR')} Zeni`;
+  return `${total.toLocaleString('pt-BR')} Créditos`;
 }
 
 function QtyStepper({

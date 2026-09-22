@@ -41,7 +41,7 @@ const PAGE_SIZE = 20;
 function currencyText(currency: MarketCurrency, amount: number) {
   return currency === 'crystal'
     ? amount.toLocaleString('pt-BR') + ' 💎'
-    : amount.toLocaleString('pt-BR') + ' Zeni';
+    : amount.toLocaleString('pt-BR') + ' Créditos';
 }
 
 function statusText(status: string) {
@@ -169,7 +169,7 @@ export function MarketPanel({
         </div>
         <div className="flex flex-wrap gap-2">
           <Chip className="border-amber-800/50 bg-amber-950/40 text-amber-300">
-            <Coins className="mr-1 h-3 w-3" /> {player.zeni.toLocaleString('pt-BR')} Zeni
+            <Coins className="mr-1 h-3 w-3" /> {player.zeni.toLocaleString('pt-BR')} Créditos
           </Chip>
           <Chip className="border-sky-800/50 bg-sky-950/40 text-sky-300">
             <Gem className="mr-1 h-3 w-3" /> {player.crystals.toLocaleString('pt-BR')} 💎
@@ -228,8 +228,8 @@ export function MarketPanel({
                 }}
                 className="rounded-lg border border-amber-900/50 bg-[#160f08] px-3 py-2 text-xs text-amber-100"
               >
-                <option value="all">Zeni + Diamantes</option>
-                <option value="zeni">Somente Zeni</option>
+                <option value="all">Créditos + Diamantes</option>
+                <option value="zeni">Somente Créditos</option>
                 <option value="crystal">Somente Diamantes</option>
               </select>
               <select
@@ -563,7 +563,7 @@ function SellTab({
                           }
                           className="mt-1 w-full rounded-lg border border-amber-900/50 bg-[#160f08] px-2 py-2 text-sm text-amber-100"
                         >
-                          <option value="zeni">Zeni</option>
+                          <option value="zeni">Créditos</option>
                           <option value="crystal">Diamantes 💎</option>
                         </select>
                       </label>

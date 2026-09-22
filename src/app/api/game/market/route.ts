@@ -264,7 +264,7 @@ export async function POST(request: Request) {
           const price =
             input.currency === 'crystal'
               ? `${total} 💎`
-              : `${total.toLocaleString('pt-BR')} Zeni`;
+              : `${total.toLocaleString('pt-BR')} Créditos`;
           message = `Anúncio criado: ${input.quantity}× ${listing.itemName} por ${price} no total.`;
           return;
         }
@@ -279,7 +279,7 @@ export async function POST(request: Request) {
           const price =
             result.currency === 'crystal'
               ? `${result.totalPrice} 💎`
-              : `${result.totalPrice.toLocaleString('pt-BR')} Zeni`;
+              : `${result.totalPrice.toLocaleString('pt-BR')} Créditos`;
           message = `Compra concluída: ${input.quantity}× ${result.itemName} por ${price}.`;
           return;
         }
@@ -301,7 +301,7 @@ export async function POST(request: Request) {
           const price =
             input.currency === 'crystal'
               ? `${total} 💎`
-              : `${total.toLocaleString('pt-BR')} Zeni`;
+              : `${total.toLocaleString('pt-BR')} Créditos`;
           message = `Proposta criada: você quer ${input.quantity}× ${order.itemName} por ${price} no total. O valor ficou reservado.`;
           return;
         }
@@ -316,7 +316,7 @@ export async function POST(request: Request) {
           const price =
             result.currency === 'crystal'
               ? `${result.totalPrice} 💎`
-              : `${result.totalPrice.toLocaleString('pt-BR')} Zeni`;
+              : `${result.totalPrice.toLocaleString('pt-BR')} Créditos`;
           message = `Venda rápida concluída: ${input.quantity}× ${result.itemName} por ${price}.`;
           return;
         }
@@ -325,7 +325,7 @@ export async function POST(request: Request) {
         const refund =
           cancelled.currency === 'crystal'
             ? `${cancelled.refunded} 💎`
-            : `${cancelled.refunded.toLocaleString('pt-BR')} Zeni`;
+            : `${cancelled.refunded.toLocaleString('pt-BR')} Créditos`;
         message = `Proposta cancelada. ${refund} do escrow voltaram ao seu saldo.`;
       },
       { timeout: 20_000, maxWait: 10_000 }

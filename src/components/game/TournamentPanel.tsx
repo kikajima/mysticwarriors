@@ -145,7 +145,7 @@ export function TournamentPanel({
           : noEnergy
             ? { why: `Energia insuficiente (${BATTLE_ENERGY_COST} por luta)`, icon: <Zap className="w-4 h-4" /> }
             : noFee
-              ? { why: `Inscrição custa ${TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR')} Zeni — você tem ${player.zeni.toLocaleString('pt-BR')}`, icon: <Coins className="w-4 h-4" /> }
+              ? { why: `Inscrição custa ${TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR')} Créditos — você tem ${player.zeni.toLocaleString('pt-BR')}`, icon: <Coins className="w-4 h-4" /> }
               : null;
 
   const canFight = !busy && !block;
@@ -374,7 +374,7 @@ export function TournamentPanel({
                   </span>{' '}
                   · Premiação:{' '}
                   <span className="text-amber-300 font-heading">
-                    +{tournamentZeniReward(round, player.level).toLocaleString('pt-BR')} Zeni
+                    +{tournamentZeniReward(round, player.level).toLocaleString('pt-BR')} Créditos
                   </span>
                   {' · '}
                   <span className="text-amber-300 font-heading">
@@ -395,7 +395,7 @@ export function TournamentPanel({
               ) : (
                 <>
                   Inscrição aberta! Taxa do comitê:{' '}
-                  <span className="text-amber-300 font-heading">{TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR')} Zeni</span>{' '}
+                  <span className="text-amber-300 font-heading">{TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR')} Créditos</span>{' '}
                   (cobrada na estreia). A chave fecha com você nas{' '}
                   <span className="text-amber-300 font-heading">Quartas de Final</span> contra {fighter.emoji}{' '}
                   {fighter.name}.
@@ -453,7 +453,7 @@ export function TournamentPanel({
                   {r.name}
                 </span>
                 <div className="flex items-center gap-2 text-xs shrink-0">
-                  <span className="text-amber-300 font-heading">{r.zeni.toLocaleString('pt-BR')} Zeni</span>
+                  <span className="text-amber-300 font-heading">{r.zeni.toLocaleString('pt-BR')} Créditos</span>
                   <span className="text-amber-200/40">·</span>
                   <span className="text-amber-300 font-heading">{r.xp} XP</span>
                   {champion && (

@@ -66,7 +66,7 @@ export default function TecnicasPage() {
                       Nv {t.minLevel}+
                     </span>
                     <span className="rounded-full border border-yellow-800/50 bg-yellow-950/40 text-yellow-300 px-2 py-0.5 text-[11px]">
-                      {t.price.toLocaleString('pt-BR')} Zeni
+                      {t.price.toLocaleString('pt-BR')} Créditos
                     </span>
                   </div>
                 </div>

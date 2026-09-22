@@ -10,7 +10,7 @@ const WISHES = [
     type: 'riqueza' as const,
     title: 'Riqueza Cósmica',
     icon: '💰',
-    description: '+8.000 Zeni são transferidos para sua carteira.',
+    description: '+8.000 Créditos são transferidos para sua carteira.',
     chip: <Coins className="w-4 h-4 text-yellow-400" />,
   },
   {

@@ -843,7 +843,7 @@ export default function PlayPage() {
           : prev
       );
       const parts = [
-        a.rewardZeni > 0 ? `+${a.rewardZeni.toLocaleString('pt-BR')} Zeni` : '',
+        a.rewardZeni > 0 ? `+${a.rewardZeni.toLocaleString('pt-BR')} Créditos` : '',
         a.rewardXp > 0 ? `+${a.rewardXp.toLocaleString('pt-BR')} XP` : '',
         a.rewardCrystals > 0 ? `+${a.rewardCrystals.toLocaleString('pt-BR')} 💎` : '',
       ].filter(Boolean);
@@ -1003,7 +1003,7 @@ export default function PlayPage() {
 
   // ===== v0.9.6 — AUTO-SAVE na nuvem (tabela `personagens`) =====
   // Dispara sempre que algo importante muda (subiu de nível, ganhou XP/
-  // Zeni, comprou, treinou, iniciou/cancelou/coletou turno...): o servidor
+  // Créditos, comprou, treinou, iniciou/cancelou/coletou turno...): o servidor
   // produz UMA LINHA POR PERSONAGEM (/api/game/cloud-snapshot) e o cliente
   // grava cada uma com a sessão do próprio usuário (RLS). Depois de um
   // save bem-sucedido, linhas antigas que não existem mais no servidor
@@ -1206,7 +1206,7 @@ export default function PlayPage() {
       return;
     }
 
-    // qualquer outra mudança (energia regenerando, XP, Zeni...) → salva
+    // qualquer outra mudança (energia regenerando, XP, Créditos...) → salva
     // com pequeno atraso (agrupa rajadas)
     const timer = setTimeout(() => {
       if (cloudFingerprint === lastSavedCloudRef.current) return;
@@ -1345,7 +1345,7 @@ export default function PlayPage() {
 
             {/* Recursos rápidos */}
             <div className="hidden sm:flex items-center gap-4 text-xs font-heading">
-              <span className="text-yellow-400" title="Zeni">
+              <span className="text-yellow-400" title="Créditos">
                 🪙 {player.zeni.toLocaleString('pt-BR')}
               </span>
               <span className="text-sky-300" title="Cristais">

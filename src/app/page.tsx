@@ -122,12 +122,12 @@ export default function LandingPage() {
             <Feature
               icon={<Map className="w-6 h-6" />}
               title="Profissões com promoções"
-              text={`${PROFESSIONS.length} profissões com turnos de 1 hora — Agricultor, Cientista, Acadêmico, Policial e Atleta. Cada promoção aumenta o salário em até 5x e paga bônus de até 30.000 Zeni.`}
+              text={`${PROFESSIONS.length} profissões com turnos de 1 hora — Agricultor, Cientista, Acadêmico, Policial e Atleta. Cada promoção aumenta o salário em até 5x e paga bônus de até 30.000 Créditos.`}
             />
             <Feature
               icon={<Users className="w-6 h-6" />}
               title="Guildas e ranking ao vivo"
-              text="Funde sua guilda por 5.000 Zeni, receba doações, suba o nível coletivo e dispute o ranking dos guerreiros com PvP por faixa de nível."
+              text="Funde sua guilda por 5.000 Créditos, receba doações, suba o nível coletivo e dispute o ranking dos guerreiros com PvP por faixa de nível."
             />
             <Feature
               icon={<Trophy className="w-6 h-6" />}
@@ -144,7 +144,7 @@ export default function LandingPage() {
           <ShieldCheck className="w-10 h-10 text-emerald-400 mx-auto mb-4" />
           <h3 className="font-heading text-xl text-amber-100 mb-2">Zero pay-to-win. Para sempre.</h3>
           <p className="text-sm text-amber-200/60 leading-relaxed max-w-2xl mx-auto">
-            Todo o conteúdo é conquistado jogando: Zeni vem de profissões e batalhas, e{' '}
+            Todo o conteúdo é conquistado jogando: Créditos vem de profissões e batalhas, e{' '}
             <span className="text-sky-300">cristais</span> — a moeda dos cosméticos — caem das missões
             diárias, conquistas e do Ameaça Universal. Cosméticos nunca alteram atributos. VIP e Passe de
             Temporada trarão apenas conveniência e estilo quando chegarem.

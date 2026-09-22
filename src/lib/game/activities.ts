@@ -304,7 +304,7 @@ async function applyPveResult(
   const data = payload.apply.pve!;
   const reward = { xp: data.xp, zeni: data.won ? data.zeni : 0 };
 
-  // XP + Zeni (autoritativo — levelsGained REAL calculado aqui)
+  // XP + Créditos (autoritativo — levelsGained REAL calculado aqui)
   const grant = await grantRewards(tx, player, reward, {
     type: 'reward',
     source: 'pve',
@@ -371,7 +371,7 @@ async function applyPveResult(
   };
 
   const message = data.won
-    ? `Vitória contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP.`
+    ? `Vitória contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Créditos, +${data.xp} XP.`
     : data.playerEndHp <= 0
       ? `Derrota para ${payload.display.battle.enemyName}... Você foi resgatado com 1 de vida.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`
       : `Derrota para ${payload.display.battle.enemyName} por decisão dos jurados... Você deixou a arena com ${data.playerEndHp} de vida e leva +${data.xp} XP de aprendizado.`;
@@ -506,7 +506,7 @@ async function applyPvpResult(
     await bumpQuests(tx, player.id, 'battle_win', 1);
     await trackEvent('pvp_win', { playerId: player.id, accountId: player.accountId, metadata: { targetId: data.targetId } }, tx);
   } else {
-    // derrota: 5% do próprio Zeni transferido ao vencedor
+    // derrota: 5% do próprio Créditos transferido ao vencedor
     const lossAttempt = Math.min(player.zeni, Math.floor(player.zeni * 0.05));
     if (target && lossAttempt > 0) {
       const transfer = await transferZeniPvp(tx, {
@@ -575,8 +575,8 @@ async function applyPvpResult(
   };
 
   const message = data.won
-    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Zeni${dragonBallStolen ? ` e a Esfera de ${dragonBallStolenStar} estrela${dragonBallStolenStar === 1 ? '' : 's'}` : ''}!`
-    : `${payload.display.battle.enemyName} te derrotou... ${zeniLost > 0 ? `Você perdeu ${zeniLost.toLocaleString('pt-BR')} Zeni ` : ''}mas ganhou experiência.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`;
+    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Créditos${dragonBallStolen ? ` e a Esfera de ${dragonBallStolenStar} estrela${dragonBallStolenStar === 1 ? '' : 's'}` : ''}!`
+    : `${payload.display.battle.enemyName} te derrotou... ${zeniLost > 0 ? `Você perdeu ${zeniLost.toLocaleString('pt-BR')} Créditos ` : ''}mas ganhou experiência.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`;
 
   return { message, levelsGained, battle: finalBattle };
 }
@@ -600,7 +600,7 @@ async function applyTournamentResult(
   const data = payload.apply.tournament!;
   const now = new Date();
 
-  // premiação: Zeni só do vencedor; o rejeitado leva METADE do XP da
+  // premiação: Créditos só do vencedor; o rejeitado leva METADE do XP da
   // rodada (a luta ensina — coerente com o diálogo de derrota).
   // O torneio não concede mais cristais.
   const reward = data.won
@@ -670,9 +670,9 @@ async function applyTournamentResult(
 
   const roundName = roundDef(data.round).name;
   const message = data.title
-    ? `🏆 CAMPEÃO! Você venceu a GRANDE FINAL contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP — o cinturão é SEU!`
+    ? `🏆 CAMPEÃO! Você venceu a GRANDE FINAL contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Créditos, +${data.xp} XP — o cinturão é SEU!`
     : data.won
-      ? `Vitória na ${roundName} contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Zeni, +${data.xp} XP.`
+      ? `Vitória na ${roundName} contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Créditos, +${data.xp} XP.`
       : data.playerEndHp <= 0
         ? `Eliminado na ${roundName} por ${payload.display.battle.enemyName}... Você foi resgatado com 1 de vida (+${data.xp} XP de aprendizado) — o comitê reorganiza a chave para a próxima inscrição.`
         : `Eliminado na ${roundName} por decisão dos jurados contra ${payload.display.battle.enemyName}... Você deixou o ringue com ${data.playerEndHp} de vida (+${data.xp} XP de aprendizado) — o comitê reorganiza a chave para a próxima inscrição.`;

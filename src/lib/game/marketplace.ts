@@ -448,7 +448,7 @@ export async function buyMarketListing(
   const currencyText =
     currency === 'crystal'
       ? `${totalPrice} 💎`
-      : `${totalPrice.toLocaleString('pt-BR')} Zeni`;
+      : `${totalPrice.toLocaleString('pt-BR')} Créditos`;
   await createPlayerNotification(tx, {
     playerId: listing.sellerId,
     kind: 'market_sold',
@@ -718,7 +718,7 @@ export async function fulfillMarketBuyOrder(
   const priceText =
     currency === 'crystal'
       ? `${totalPrice} 💎`
-      : `${totalPrice.toLocaleString('pt-BR')} Zeni`;
+      : `${totalPrice.toLocaleString('pt-BR')} Créditos`;
   await createPlayerNotification(tx, {
     playerId: order.buyerId,
     kind: 'market_buy_order_filled',

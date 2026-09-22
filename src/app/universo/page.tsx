@@ -63,7 +63,7 @@ export default function UniversoPage() {
         </h2>
         <p className="text-amber-200/60 text-sm mb-6 max-w-2xl leading-relaxed">
           Grandes mestres do universo ensinam técnicas que usam Força ou Ki. Procure-os na Sala de Treino,
-          pague o treinamento em Zeni e domine golpes lendários.
+          pague o treinamento em Créditos e domine golpes lendários.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {TRAINING_MASTERS.map((m) => (

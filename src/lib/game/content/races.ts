@@ -64,7 +64,7 @@ export const RACES: Record<RaceId, RaceInfo> = {
       '+7% de Defesa em combate (físico e energia)',
       '+2% de dano em ataques de Ki',
       'Regeneração de energia 10% mais rápida',
-      'Treinos com 10% de desconto em Zeni',
+      'Treinos com 10% de desconto em Créditos',
     ],
     combat: {
       physicalDamageMult: 1.0,
@@ -131,7 +131,7 @@ export const RACES: Record<RaceId, RaceInfo> = {
       '+3,5% de velocidade total (iniciativa e esquiva)',
       'Chassi evasivo: +4,5% de chance de esquiva',
       'Reator de energia: +6% de chance de atacar com Ki',
-      'Trabalhos rendem +5% de Zeni', // LEGADO — não usa, ver wiki-audit v0.9.23: profissões não gastam energia desde a v0.9 (o antigo "custam 15% menos energia" foi removido da exibição)
+      'Trabalhos rendem +5% de Créditos', // LEGADO — não usa, ver wiki-audit v0.9.23: profissões não gastam energia desde a v0.9 (o antigo "custam 15% menos energia" foi removido da exibição)
     ],
     combat: {
       physicalDamageMult: 1.0,

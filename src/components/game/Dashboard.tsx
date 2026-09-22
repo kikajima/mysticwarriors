@@ -322,7 +322,7 @@ export function Dashboard({
             </span>
           </div>
           <p className="font-heading text-2xl text-yellow-400">
-            {player.zeni.toLocaleString('pt-BR')} <span className="text-sm text-amber-200/50">Zeni</span>
+            {player.zeni.toLocaleString('pt-BR')} <span className="text-sm text-amber-200/50">Créditos</span>
           </p>
           <div className="mt-auto pt-2 flex items-center gap-2 text-[11px] text-amber-200/40">
             <span>🔮 Esferas: {player.dragonBalls}/7</span>
@@ -504,7 +504,7 @@ export function Dashboard({
                   onClick={() => onNavigate('training')}
                   className="text-[10px] text-amber-200/30 mt-2 hover:text-orange-300 transition-colors"
                 >
-                  treinar base por {trainingCost(base, player.race).toLocaleString('pt-BR')} Zeni →
+                  treinar base por {trainingCost(base, player.race).toLocaleString('pt-BR')} Créditos →
                 </button>
               </GameCard>
             );

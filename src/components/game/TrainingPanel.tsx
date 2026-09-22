@@ -191,7 +191,7 @@ function TrainTab({
                 <div className="text-xs text-amber-200/60">
                   <p className="flex items-center gap-1">
                     <Coins className="w-3.5 h-3.5 text-yellow-500" />
-                    {cost.toLocaleString('pt-BR')} Zeni
+                    {cost.toLocaleString('pt-BR')} Créditos
                   </p>
                   <p className="flex items-center gap-1 mt-0.5">
                     <Zap className="w-3.5 h-3.5 text-amber-400" /> {TRAIN_ENERGY_COST} energia
@@ -324,7 +324,7 @@ function TrainTab({
                             onClick={() => onAction({ type: 'learn_technique', techniqueId: tech.id })}
                             disabled={!canLearn || busy}
                           >
-                            <GraduationCap className="w-4 h-4" /> {tech.price.toLocaleString('pt-BR')} Zeni
+                            <GraduationCap className="w-4 h-4" /> {tech.price.toLocaleString('pt-BR')} Créditos
                           </GameButton>
                         )}
                       </div>
