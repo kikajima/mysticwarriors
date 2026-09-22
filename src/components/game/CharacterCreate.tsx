@@ -76,7 +76,7 @@ export function CharacterCreate({
         ) : (
           <img
             src="/images/banner.png"
-            alt="Guerreiros místicos carregando energia ao pôr do sol"
+            alt="Myst Ki Warriors carregando energia ao pôr do sol"
             className="absolute inset-0 w-full h-full object-cover opacity-80"
             onError={() => setBannerFailed(true)}
           />
@@ -84,7 +84,7 @@ export function CharacterCreate({
         <div className="absolute inset-0 bg-gradient-to-t from-[#14100b] via-transparent to-black/30" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
           <h1 className="font-display text-5xl sm:text-7xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-orange-400 to-amber-600 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] tracking-wide">
-            Guerreiros Místicos
+            Myst Ki Warriors
           </h1>
           <p className="font-heading text-amber-200/90 text-sm sm:text-base mt-2 max-w-xl">
             Treine. Lute. Trabalhe. Colete as 7 Esferas do Dragão e domine o universo!
@@ -186,7 +186,7 @@ export function CharacterCreate({
       </div>
 
       <footer className="mt-auto py-4 text-center text-amber-200/30 text-xs">
-        Guerreiros Místicos — um jogo de gerenciamento inspirado nos clássicos browsers games
+        Myst Ki Warriors — um jogo de gerenciamento inspirado nos clássicos browsers games
       </footer>
     </div>
   );

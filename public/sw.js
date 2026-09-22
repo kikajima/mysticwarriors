@@ -1,4 +1,4 @@
-// Service Worker — Guerreiros Místicos
+// Service Worker — Myst Ki Warriors
 // Estratégia: cache-first para estáticos, network-only para APIs do jogo.
 const CACHE = 'gm-cache-v1';
 const STATIC_ASSETS = [
