@@ -497,7 +497,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           caption: 'O que acontece com a vida depois da luta',
           headers: ['Situação', 'Vida final'],
           rows: [
-            ['Vitória', 'A vida final do log (Majin ainda **absorve +4% do máximo** ao vencer)'],
+            ['Vitória', 'A vida final do log (Amorph ainda **absorve +4% do máximo** ao vencer)'],
             ['Derrota por NOCAUTE', 'Você é **resgatado com 1 de vida** — aguarde a regeneração natural ou use um item de cura antes de voltar ao combate.'],
             ['Derrota por Decisão', 'Você sai do ringue com a vida final exibida no log — sem resgate para 1 HP.'],
             ['Subiu de nível na luta', 'Vida restaurada à CHEIA após o resultado (vitória ou derrota)'],
@@ -687,8 +687,8 @@ export const WIKI_SECTIONS: WikiSection[] = [
       {
         kind: 'callout',
         tone: 'info',
-        title: 'Zenkai (Saiyajin)',
-        text: `Ao PERDER para um adversário relevante, Saiyajins ganham **+1 de Força permanente**. As regras anti-farm: o oponente precisa ter nível ≥ ${Math.round(ZENKAI.relevanceFactor * 100)}% do seu, não repete contra o mesmo oponente em ${ZENKAI.sameOpponentCooldownHours} h e é preciso ENTRAR na luta com ≥ ${Math.round(ZENKAI.zenkaiRequiresHpPct * 100)}% de vida — perder de propósito não ativa nada.`,
+        title: 'Resiliência Estelar (Solaris)',
+        text: `Ao PERDER para um adversário relevante, Solaris ganham **+1 de Força permanente**. As regras anti-farm: o oponente precisa ter nível ≥ ${Math.round(ZENKAI.relevanceFactor * 100)}% do seu, não repete contra o mesmo oponente em ${ZENKAI.sameOpponentCooldownHours} h e é preciso ENTRAR na luta com ≥ ${Math.round(ZENKAI.zenkaiRequiresHpPct * 100)}% de vida — perder de propósito não ativa nada.`,
       },
       {
         kind: 'details',
@@ -732,8 +732,8 @@ export const WIKI_SECTIONS: WikiSection[] = [
     summary: 'Créditos, cristais, energia, XP e níveis: regeneração, curvas e conversões.',
     resumo: [
       '**Créditos** compra quase tudo; **💎 cristais** vêm de quests, conquistas e Ameaça Universal.',
-      'Energia volta **1 ponto a cada 5 min** (Humano: mais rápido).',
-      'Vida volta **1 ponto a cada 12 s** (Namekuseijin: mais rápido).',
+      'Energia volta **1 ponto a cada 5 min** (Vanguardiano: mais rápido).',
+      'Vida volta **1 ponto a cada 12 s** (Verdant: mais rápido).',
     ],
     blocks: [
       { kind: 'text', text: 'A ficha mostra o tempo até o próximo ponto de vida e até a recuperação completa. Os contadores usam o relógio do servidor e o intervalo da sua raça; a recuperação continua com o jogo fechado.' },
@@ -791,8 +791,8 @@ export const WIKI_SECTIONS: WikiSection[] = [
               caption: 'Regeneração com modificadores raciais (ORIGEM: content/world.ts — REGEN)',
               headers: ['Recurso', 'Taxa base', 'Modificadores raciais'],
               rows: [
-                ['⚡ Energia', `1 ponto / ${REGEN.energySeconds / 60} min`, 'Humano +10% mais rápido (≈ 4min33s)'],
-                ['❤️ Vida', `1 HP / ${REGEN.hpSeconds} s`, 'Namekuseijin +15% mais rápido (≈ 10s)'],
+                ['⚡ Energia', `1 ponto / ${REGEN.energySeconds / 60} min`, 'Vanguardiano +10% mais rápido (≈ 4min33s)'],
+                ['❤️ Vida', `1 HP / ${REGEN.hpSeconds} s`, 'Verdant +15% mais rápido (≈ 10s)'],
               ],
             },
           },
@@ -914,11 +914,11 @@ export const WIKI_SECTIONS: WikiSection[] = [
           caption: 'Bônus raciais (ORIGEM: content/races.ts — RACES)',
           headers: ['Raça', 'Combate', 'Economia'],
           rows: [
-            ['🟠 Saiyajin', '+8% dano físico; +10% XP de batalha; **Zenkai** (+1 Força ao perder para adversário relevante)', '—'],
-            ['🟡 Humano', '+7% defesa; +2% dano de Ki', 'Energia regenera 10% mais rápido; treinos −10% de Créditos'],
-            ['🟢 Namekuseijin', '+5% dano de Ki; +4,5% esquiva', 'Vida regenera 15% mais rápido'],
-            ['⚙️ Androide', '+3,5% velocidade e +4,5% esquiva; +6% chance de atacar com Ki', '+5% de Créditos em trabalhos'],
-            ['💗 Majin', '+2% em TUDO (físico, Ki, defesa, velocidade); absorve 4% do HP máximo ao vencer', '—'],
+            ['🐺 Solaris', '+8% dano físico; +10% XP de batalha; **Resiliência Estelar** (+1 Força ao perder para adversário relevante)', '—'],
+            ['🛡️ Vanguardiano', '+7% defesa; +2% dano de Ki', 'Energia regenera 10% mais rápido; treinos −10% de Créditos'],
+            ['🌿 Verdant', '+5% dano de Ki; +4,5% esquiva', 'Vida regenera 15% mais rápido'],
+            ['🤖 Sintético', '+3,5% velocidade e +4,5% esquiva; +6% chance de atacar com Ki', '+5% de Créditos em trabalhos'],
+            ['🌀 Amorph', '+2% em TUDO (físico, Ki, defesa, velocidade); absorve 4% do HP máximo ao vencer', '—'],
           ],
         },
       },
@@ -926,7 +926,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
         kind: 'callout',
         tone: 'tip',
         title: 'Qual escolher?',
-        text: 'Saiyajin para agressão e progressão por risco; Humano para treino eficiente; Namekuseijin para resistir a longo prazo; Androide para trabalho constante e ondas de Ki; Majin para a build equilibrada sem pontos fracos.',
+        text: 'Solaris para agressão e progressão por risco; Vanguardiano para treino eficiente; Verdant para resistir a longo prazo; Sintético para trabalho constante e ondas de Ki; Amorph para a build equilibrada sem pontos fracos.',
       },
     ],
   },
@@ -948,7 +948,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: 'A árvore clássica: **Forma Base → Transformação I → Transformação II → três ramos finais** — você escolhe UM (A: físico, B: equilibrado, C: Ki). Desbloquear cada degrau exige nível (5 / 12 / 20), atributos e, em alguns casos, uma técnica específica ou um turno de profissão concluído (ex.: o Potencial Desbloqueado do Humano pede 1 trabalho de Acadêmico; o Caos Desencadeado do Majin, 1 de Atleta).',
+        text: 'A árvore clássica: **Forma Base → Transformação I → Transformação II → três ramos finais** — você escolhe UM (A: físico, B: equilibrado, C: Ki). Desbloquear cada degrau exige nível (5 / 12 / 20), atributos e, em alguns casos, uma técnica específica ou um turno de profissão concluído (ex.: o Potencial Vanguardiano pede 1 trabalho de Acadêmico; o Caos Desencadeado do Amorph, 1 de Atleta).',
       },
       {
         kind: 'text',
@@ -956,12 +956,12 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'details',
-        summary: '🔍 Detalhes para curiosos — árvore Saiyajin completa',
+        summary: '🔍 Detalhes para curiosos — árvore Solaris completa',
         blocks: [
           {
             kind: 'table',
             table: {
-              caption: `Exemplo — árvore Saiyajin (ORIGEM: content/transformations.ts; as outras raças seguem a mesma estrutura — ${TRANSFORMATIONS.length} formas no total)`,
+              caption: `Exemplo — árvore Solaris (ORIGEM: content/transformations.ts; as outras linhagens seguem a mesma estrutura — ${TRANSFORMATIONS.length} formas no total)`,
               headers: ['Forma', 'Nível', 'Requisitos', 'Bônus permanente', 'Multiplicadores ativos'],
               rows: TRANSFORMATIONS.filter((t) => t.race === 'saiyajin').map((t) => [
                 `${t.icon} ${t.name}`,
@@ -1180,7 +1180,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       {
         kind: 'list',
         items: [
-          '**Recompensa de vitória:** Créditos varia ±(10–15%) por luta; XP ±10%. Saiyajin ganha +10% XP.',
+          '**Recompensa de vitória:** Créditos varia ±(10–15%) por luta; XP ±10%. Solaris ganha +10% XP.',
           '**Derrota:** você leva uma fração do XP do inimigo como aprendizado (Créditos só na vitória). Em KO, volta com 1 HP e precisa se recuperar antes da próxima luta.',
           'Não existe penalidade diária de farm: cada vitória paga o valor cheio, sempre.',
         ],
@@ -1521,7 +1521,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
       },
       {
         kind: 'text',
-        text: 'Os itens de 💎 cristal fazem o treino render mais: a **Bandana de Treino** (+1 Força por treino) custa 15 💎; a **Sala do Tempo Pessoal** (+3 em todos por treino) custa 450 💎. O **Elixir do Dragão** (75 💎) dá +2 em TODOS os atributos na hora — sem gastar energia.',
+        text: 'Os itens de 💎 cristal fazem o treino render mais: a **Bandana de Treino** (+1 Força por treino) custa 15 💎; a **Câmara de Dilatação Temporal** (+3 em todos por treino) custa 450 💎. O **Elixir Primordial** (75 💎) dá +2 em TODOS os atributos na hora — sem gastar energia.',
       },
       {
         kind: 'list',
