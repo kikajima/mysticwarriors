@@ -1,6 +1,6 @@
-// Service Worker — Guerreiros Místicos
+// Service Worker — Myst Ki Warriors
 // Estratégia: cache-first para estáticos, network-only para APIs do jogo.
-const CACHE = 'gm-cache-v1';
+const CACHE = 'mkw-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/jogar',
@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
   '/manifest.webmanifest',
-  '/images/banner.png',
+  '/images/banner-mystki.svg',
 ];
 
 self.addEventListener('install', (event) => {
