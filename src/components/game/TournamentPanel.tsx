@@ -7,7 +7,7 @@ import {
   TOURNAMENT_ENTRY_FEE,
   fighterForRound,
   roundDef,
-  tournamentZeniReward,
+  tournamentCréditosReward,
   tournamentXpReward,
   fightersForRound,
   type TournamentFighter,
@@ -116,7 +116,7 @@ export function TournamentPanel({
   );
 
   // poder estimado do adversário (espelha o cálculo do servidor — o
-  // scouter do card mostra a MESMA ordem de grandeza que a engine usa)
+  // visor de fluxo do card mostra a MESMA ordem de grandeza que a engine usa)
   const oppPower = Math.round(player.derived.power * roundDef(inRun ? round : 1).powerMult);
   const oppScale = getPowerScale(oppPower);
 
@@ -145,20 +145,20 @@ export function TournamentPanel({
           : noEnergy
             ? { why: `Energia insuficiente (${BATTLE_ENERGY_COST} por luta)`, icon: <Zap className="w-4 h-4" /> }
             : noFee
-              ? { why: `Inscrição custa ${TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR')} Zeni — você tem ${player.zeni.toLocaleString('pt-BR')}`, icon: <Coins className="w-4 h-4" /> }
+              ? { why: `Inscrição custa ${TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR')} Créditos — você tem ${player.zeni.toLocaleString('pt-BR')}`, icon: <Coins className="w-4 h-4" /> }
               : null;
 
   const canFight = !busy && !block;
 
   const rewards = TOURNAMENT_ROUNDS.map((r) => ({
     ...r,
-    zeni: tournamentZeniReward(r.round, player.level),
+    zeni: tournamentCréditosReward(r.round, player.level),
     xp: tournamentXpReward(r.round, player.level),
   }));
 
   return (
     <div className="space-y-6">
-      <SectionTitle icon="🏟️">Torneio de Artes Marciais</SectionTitle>
+      <SectionTitle icon="🏟️">Grande Arena de Caelum</SectionTitle>
 
       {/* ===== CARD DA ARENA (apresentação + palmarés) ===== */}
       <GameCard className="relative overflow-hidden">
@@ -349,7 +349,7 @@ export function TournamentPanel({
               <p className="text-xs text-amber-200/60 italic mt-2 leading-relaxed">{fighter.taunt}</p>
 
               <div className="flex items-center gap-2 mt-3 text-xs">
-                <span className="text-amber-200/50">Poder de scouter:</span>
+                <span className="text-amber-200/50">Poder de visor de fluxo:</span>
                 <span className="font-heading text-amber-300">{oppPower.toLocaleString('pt-BR')}</span>
                 <span className="text-amber-200/40">·</span>
                 <span className="text-amber-200/70">
@@ -374,7 +374,7 @@ export function TournamentPanel({
                   </span>{' '}
                   · Premiação:{' '}
                   <span className="text-amber-300 font-heading">
-                    +{tournamentZeniReward(round, player.level).toLocaleString('pt-BR')} Zeni
+                    +{tournamentCréditosReward(round, player.level).toLocaleString('pt-BR')} Créditos
                   </span>
                   {' · '}
                   <span className="text-amber-300 font-heading">
@@ -395,7 +395,7 @@ export function TournamentPanel({
               ) : (
                 <>
                   Inscrição aberta! Taxa do comitê:{' '}
-                  <span className="text-amber-300 font-heading">{TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR')} Zeni</span>{' '}
+                  <span className="text-amber-300 font-heading">{TOURNAMENT_ENTRY_FEE.toLocaleString('pt-BR')} Créditos</span>{' '}
                   (cobrada na estreia). A chave fecha com você nas{' '}
                   <span className="text-amber-300 font-heading">Quartas de Final</span> contra {fighter.emoji}{' '}
                   {fighter.name}.
@@ -453,7 +453,7 @@ export function TournamentPanel({
                   {r.name}
                 </span>
                 <div className="flex items-center gap-2 text-xs shrink-0">
-                  <span className="text-amber-300 font-heading">{r.zeni.toLocaleString('pt-BR')} Zeni</span>
+                  <span className="text-amber-300 font-heading">{r.zeni.toLocaleString('pt-BR')} Créditos</span>
                   <span className="text-amber-200/40">·</span>
                   <span className="text-amber-300 font-heading">{r.xp} XP</span>
                   {champion && (
