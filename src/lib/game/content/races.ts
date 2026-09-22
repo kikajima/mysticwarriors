@@ -1,188 +1,128 @@
 import type { RaceId, RaceInfo } from '../types';
 
 // =====================================================================
-// RAÇAS — fonte única de verdade (dados + mecânica + texto da UI)
+// LINHAGENS — fonte única de verdade (dados + mecânica + texto da UI)
 // ---------------------------------------------------------------------
-// Os "perks" exibidos refletem EXATAMENTE os números aplicados pela
-// engine. Alterou aqui, alterou em todo o jogo (combate, economia, UI).
-//
-// BALANCEAMENTO v0.4 (calibrado por simulação — ver scripts/sim-balance.ts):
-//  * motor novo: mitigação com SOFT CAP (defesa nunca zera um golpe),
-//    técnica multiplica o poder bruto, Ki gasto no lançamento;
-//  * a defesa deixou de ser superdimensionada: mults de defesa/ataque
-//    ficaram próximos em valor de vitória (na v0.3, +10% def ≈ 67% de
-//    vitória média, +10% atk físico ≈ 46%);
-//  * velocidade vale mais (esquiva 0,005/ponto + iniciativa);
-//  * cada raça mantém IDENTIDADE (arquétipo + economia própria), com
-//    média alvo de 45–55% por faixa de progressão comparável;
-//  * bônus aplicados SIMETRICAMENTE (atacando ou defendendo).
+// IDs internos legados são mantidos para compatibilidade com personagens
+// e snapshots existentes. A identidade pública pertence ao universo
+// original de Myst Ki Warriors / Setor Caelum.
 // =====================================================================
 
 export const RACES: Record<RaceId, RaceInfo> = {
   saiyajin: {
     id: 'saiyajin',
-    name: 'Saiyajin',
-    tagline: 'Guerreiros natos com sede de batalha',
+    name: 'Solaris',
+    tagline: 'A Matilha Estelar',
     description:
-      'Uma raça de guerreiros orgulhosos e implacáveis. Quanto mais próximos da morte, mais fortes ficam — o lendário Zenkai corre nas suas veias.',
+      'Humanoides lupinos de mundos de alta energia. Instinto, disciplina de alcateia e adaptação extrema tornam os Solaris combatentes ferozes do Setor Caelum.',
     color: 'orange',
-    avatar: '/images/race-saiyajin.png',
+    avatar: '/images/race-solaris.svg',
     perks: [
       '+8% de dano em ataques físicos',
       '+10% de XP em batalhas',
-      'Zenkai: +1 de Força ao perder batalha contra adversário relevante',
+      'Resiliência Estelar: +1 de Força ao sobreviver a derrota contra adversário relevante',
     ],
     combat: {
-      physicalDamageMult: 1.08,
-      kiDamageMult: 1.0,
-      defenseMult: 1.0,
-      dodgeBonus: 0,
-      speedMult: 1.0,
-      kiAttackChanceBonus: 0,
-      absorbOnWinPct: 0,
+      physicalDamageMult: 1.08, kiDamageMult: 1.0, defenseMult: 1.0,
+      dodgeBonus: 0, speedMult: 1.0, kiAttackChanceBonus: 0, absorbOnWinPct: 0,
     },
     economy: {
-      xpBattleMult: 1.1,
-      zeniMissionMult: 1.0,
-      zeniBattleMult: 1.0,
-      missionEnergyMult: 1.0,
-      trainCostMult: 1.0,
-      energyRegenMult: 1.0,
-      hpRegenMult: 1.0,
-      zenkai: true,
+      xpBattleMult: 1.1, zeniMissionMult: 1.0, zeniBattleMult: 1.0,
+      missionEnergyMult: 1.0, trainCostMult: 1.0, energyRegenMult: 1.0,
+      hpRegenMult: 1.0, zenkai: true,
     },
   },
   humano: {
     id: 'humano',
-    name: 'Humano',
-    tagline: 'Determinação que supera limites',
+    name: 'Vanguardiano',
+    tagline: 'Os Mortais de Ferro',
     description:
-      'Sem poderes natos, os humanos compensam com trabalho duro e engenhosidade. Aguentam o castigo, recuperam fôlego rápido e treinam de forma mais eficiente.',
+      'Povos mortais que compensam a ausência de mutações extremas com disciplina, tecnologia tática adaptativa e domínio preciso do Aether.',
     color: 'amber',
-    avatar: '/images/race-humano.png',
+    avatar: '/images/race-vanguardiano.svg',
     perks: [
-      '+7% de Defesa em combate (físico e energia)',
-      '+2% de dano em ataques de Ki',
+      '+7% de Defesa em combate (físico e Aether)',
+      '+2% de dano em ataques de Aether',
       'Regeneração de energia 10% mais rápida',
-      'Treinos com 10% de desconto em Zeni',
+      'Treinos com 10% de desconto em Créditos',
     ],
     combat: {
-      physicalDamageMult: 1.0,
-      kiDamageMult: 1.02,
-      defenseMult: 1.07,
-      dodgeBonus: 0,
-      speedMult: 1.0,
-      kiAttackChanceBonus: 0,
-      absorbOnWinPct: 0,
+      physicalDamageMult: 1.0, kiDamageMult: 1.02, defenseMult: 1.07,
+      dodgeBonus: 0, speedMult: 1.0, kiAttackChanceBonus: 0, absorbOnWinPct: 0,
     },
     economy: {
-      xpBattleMult: 1.0,
-      zeniMissionMult: 1.0,
-      zeniBattleMult: 1.0,
-      missionEnergyMult: 1.0,
-      trainCostMult: 0.9,
-      energyRegenMult: 1.1,
-      hpRegenMult: 1.0,
-      zenkai: false,
+      xpBattleMult: 1.0, zeniMissionMult: 1.0, zeniBattleMult: 1.0,
+      missionEnergyMult: 1.0, trainCostMult: 0.9, energyRegenMult: 1.1,
+      hpRegenMult: 1.0, zenkai: false,
     },
   },
   namekuseijin: {
     id: 'namekuseijin',
-    name: 'Namekuseijin',
-    tagline: 'Sábios dragões de Namekusei',
+    name: 'Verdant',
+    tagline: 'Os Sábios de Sylva',
     description:
-      'Guerreiros-verdes com capacidade sobre-humana de regeneração. Seu Ki sereno castiga quem tenta vencê-los no longo prazo.',
+      'Seres de matriz vegetal e cristalina ligados à rede viva de Sylva. Seus corpos regenerativos conduzem Aether com estabilidade incomum.',
     color: 'emerald',
-    avatar: '/images/race-namekuseijin.png',
+    avatar: '/images/race-verdant.svg',
     perks: [
       'Regeneração de vida 15% mais rápida',
-      '+5% de dano em ataques de Ki',
+      '+5% de dano em ataques de Aether',
       '+4,5% de chance de esquiva',
     ],
     combat: {
-      physicalDamageMult: 1.0,
-      kiDamageMult: 1.05,
-      defenseMult: 1.0,
-      dodgeBonus: 0.045,
-      speedMult: 1.0,
-      kiAttackChanceBonus: 0,
-      absorbOnWinPct: 0,
+      physicalDamageMult: 1.0, kiDamageMult: 1.05, defenseMult: 1.0,
+      dodgeBonus: 0.045, speedMult: 1.0, kiAttackChanceBonus: 0, absorbOnWinPct: 0,
     },
     economy: {
-      xpBattleMult: 1.0,
-      zeniMissionMult: 1.0,
-      zeniBattleMult: 1.0,
-      missionEnergyMult: 1.0,
-      trainCostMult: 1.0,
-      energyRegenMult: 1.0,
-      hpRegenMult: 1.15,
-      zenkai: false,
+      xpBattleMult: 1.0, zeniMissionMult: 1.0, zeniBattleMult: 1.0,
+      missionEnergyMult: 1.0, trainCostMult: 1.0, energyRegenMult: 1.0,
+      hpRegenMult: 1.15, zenkai: false,
     },
   },
   androide: {
     id: 'androide',
-    name: 'Androide',
-    tagline: 'Máquinas de destruição perfeitas',
+    name: 'Sintético',
+    tagline: 'Herdeiros de Nexus-9',
     description:
-      'Criados para lutar, os androides não sentem fadiga. Seus reatores internos disparam rajadas de energia sem descanso e lhes dão vantagem em longas jornadas.',
+      'Seres artificiais e organismos aprimorados em Nexus-9. Núcleos de fluxo, chassis evasivos e módulos adaptativos sustentam combate prolongado.',
     color: 'slate',
-    avatar: '/images/race-androide.png',
+    avatar: '/images/race-sintetico.svg',
     perks: [
       '+3,5% de velocidade total (iniciativa e esquiva)',
       'Chassi evasivo: +4,5% de chance de esquiva',
-      'Reator de energia: +6% de chance de atacar com Ki',
-      'Trabalhos rendem +5% de Zeni', // LEGADO — não usa, ver wiki-audit v0.9.23: profissões não gastam energia desde a v0.9 (o antigo "custam 15% menos energia" foi removido da exibição)
+      'Reator de Aether: +6% de chance de atacar com energia',
+      'Trabalhos rendem +5% de Créditos',
     ],
     combat: {
-      physicalDamageMult: 1.0,
-      kiDamageMult: 1.0,
-      defenseMult: 1.0,
-      dodgeBonus: 0.045,
-      speedMult: 1.035,
-      kiAttackChanceBonus: 0.06,
-      absorbOnWinPct: 0,
+      physicalDamageMult: 1.0, kiDamageMult: 1.0, defenseMult: 1.0,
+      dodgeBonus: 0.045, speedMult: 1.035, kiAttackChanceBonus: 0.06, absorbOnWinPct: 0,
     },
     economy: {
-      xpBattleMult: 1.0,
-      zeniMissionMult: 1.05,
-      zeniBattleMult: 1.0,
-      missionEnergyMult: 0.85,
-      trainCostMult: 1.0,
-      energyRegenMult: 1.0,
-      hpRegenMult: 1.0,
-      zenkai: false,
+      xpBattleMult: 1.0, zeniMissionMult: 1.05, zeniBattleMult: 1.0,
+      missionEnergyMult: 0.85, trainCostMult: 1.0, energyRegenMult: 1.0,
+      hpRegenMult: 1.0, zenkai: false,
     },
   },
   majin: {
     id: 'majin',
-    name: 'Majin',
-    tagline: 'Magia antiga e caos puro',
+    name: 'Amorph',
+    tagline: 'Filhos do Caos Estelar',
     description:
-      'Seres mágicos milenares movidos por caos e diversão. Sem excelência em nada, bons em TUDO — vire doce ou morra.',
+      'Entidades maleáveis surgidas em fendas de nebulosas escuras. Sua biomassa de plasma se reorganiza após cada confronto e absorve energia residual.',
     color: 'rose',
-    avatar: '/images/race-majin.png',
+    avatar: '/images/race-amorph.svg',
     perks: [
-      '+2% em TODOS os atributos de combate (dano físico, Ki, defesa e velocidade)',
+      '+2% em TODOS os atributos de combate (dano físico, Aether, defesa e velocidade)',
       'Absorve 4% do HP máximo ao vencer',
     ],
     combat: {
-      physicalDamageMult: 1.02,
-      kiDamageMult: 1.02,
-      defenseMult: 1.02,
-      dodgeBonus: 0,
-      speedMult: 1.02,
-      kiAttackChanceBonus: 0,
-      absorbOnWinPct: 0.04,
+      physicalDamageMult: 1.02, kiDamageMult: 1.02, defenseMult: 1.02,
+      dodgeBonus: 0, speedMult: 1.02, kiAttackChanceBonus: 0, absorbOnWinPct: 0.04,
     },
     economy: {
-      xpBattleMult: 1.0,
-      zeniMissionMult: 1.0,
-      zeniBattleMult: 1.0,
-      missionEnergyMult: 1.0,
-      trainCostMult: 1.0,
-      energyRegenMult: 1.0,
-      hpRegenMult: 1.0,
-      zenkai: false,
+      xpBattleMult: 1.0, zeniMissionMult: 1.0, zeniBattleMult: 1.0,
+      missionEnergyMult: 1.0, trainCostMult: 1.0, energyRegenMult: 1.0,
+      hpRegenMult: 1.0, zenkai: false,
     },
   },
 };
