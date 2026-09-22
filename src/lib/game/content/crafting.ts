@@ -69,7 +69,7 @@ const SLOT_CRAFTED_ITEMS: ShopItem[] = [
   // Armas — a Oficina supera os equivalentes comerciais em cada faixa.
   { id: 'bastao_liga_leve', name: 'Bastão de Liga Leve', description: 'Slot: Arma. Fabricação Tier 1. Bônus: +7 ATQ.', category: 'weapon', price: 0, minLevel: 1, atk: 7, icon: '🦯' },
   { id: 'lamina_carbono', name: 'Lâmina de Carbono', description: 'Slot: Arma. Fabricação Tier 2. Bônus: +18 ATQ e +3 VEL.', category: 'weapon', price: 0, minLevel: 1, atk: 18, spd: 3, icon: '🗡️' },
-  { id: 'lanca_saiyajin', name: 'Lança Saiyajin', description: 'Slot: Arma. Fabricação Tier 3. Bônus: +36 ATQ e +8 KI.', category: 'weapon', price: 0, minLevel: 1, atk: 36, ki: 8, icon: '🔱' },
+  { id: 'lanca_saiyajin', name: 'Lança Solaris', description: 'Slot: Arma. Fabricação Tier 3. Bônus: +36 ATQ e +8 KI.', category: 'weapon', price: 0, minLevel: 1, atk: 36, ki: 8, icon: '🔱' },
   { id: 'lamina_ki_condensado', name: 'Lâmina de Ki Condensado', description: 'Slot: Arma. Fabricação Tier 4. Bônus: +55 ATQ e +14 KI.', category: 'weapon', price: 0, minLevel: 1, atk: 55, ki: 14, icon: '⚔️' },
   { id: 'espada_gravidade_100x', name: 'Espada de Gravidade 100x', description: 'Slot: Arma. Fabricação Tier 5, superior às armas da loja. Bônus: +85 ATQ e +24 KI.', category: 'weapon', price: 0, minLevel: 1, atk: 85, ki: 24, icon: '⚔️' },
 
@@ -87,8 +87,8 @@ const SLOT_CRAFTED_ITEMS: ShopItem[] = [
 
   // Cabeça
   { id: 'bandana_oficina', name: 'Bandana Reforçada', description: 'Slot: Cabeça. Fabricação Tier 1. Bônus: +4 DEF e +4 KI.', category: 'head', price: 0, minLevel: 1, def: 4, ki: 4, icon: '🎗️' },
-  { id: 'visor_scouter_tatico', name: 'Visor Scouter Tático', description: 'Slot: Cabeça. Fabricação Tier 2. Bônus: +10 KI e +4 VEL.', category: 'head', price: 0, minLevel: 1, ki: 10, spd: 4, icon: '🥽' },
-  { id: 'elmo_combate_saiyajin', name: 'Elmo de Combate Saiyajin', description: 'Slot: Cabeça. Fabricação Tier 3. Bônus: +15 DEF e +8 KI.', category: 'head', price: 0, minLevel: 1, def: 15, ki: 8, icon: '🪖' },
+  { id: 'visor_scouter_tatico', name: 'Visor de Fluxo Tático', description: 'Slot: Cabeça. Fabricação Tier 2. Bônus: +10 KI e +4 VEL.', category: 'head', price: 0, minLevel: 1, ki: 10, spd: 4, icon: '🥽' },
+  { id: 'elmo_combate_saiyajin', name: 'Elmo de Combate Solaris', description: 'Slot: Cabeça. Fabricação Tier 3. Bônus: +15 DEF e +8 KI.', category: 'head', price: 0, minLevel: 1, def: 15, ki: 8, icon: '🪖' },
   { id: 'visor_fluxo_ki', name: 'Visor de Fluxo de Ki', description: 'Slot: Cabeça. Fabricação Tier 4. Bônus: +18 KI e +8 VEL.', category: 'head', price: 0, minLevel: 1, ki: 18, spd: 8, icon: '🥽' },
   { id: 'elmo_gravidade_100x', name: 'Elmo de Gravidade 100x', description: 'Slot: Cabeça. Fabricação Tier 5, superior aos equipamentos de cabeça da loja. Bônus: +24 DEF, +18 KI e +8 VEL.', category: 'head', price: 0, minLevel: 1, def: 24, ki: 18, spd: 8, icon: '🪖' },
 
@@ -250,7 +250,7 @@ const ENDGAME_CRAFT_RECIPES: CraftRecipeDef[] = ENDGAME_CRAFT_BANDS.flatMap((ban
 export const CRAFTED_ITEMS: ShopItem[] = [
   {
     id: 'capsula_recuperacao_simples',
-    name: 'Cápsula de Recuperação Simples',
+    name: 'Módulo de Recuperação Simples',
     description: 'Consumível fabricado na Oficina. Recupera 30% da vida máxima.',
     category: 'consumable',
     price: 0,
@@ -282,8 +282,8 @@ export const CRAFTED_ITEMS: ShopItem[] = [
   },
   {
     id: 'senzu_processado',
-    name: 'Feijão Senzu Processado',
-    description: 'Consumível de alto nível. Recupera 100% da vida.',
+    name: 'Fruto de Sylva Processado',
+    description: 'Consumível medicinal de alto nível. Recupera 100% da vida.',
     category: 'consumable',
     price: 0,
     minLevel: 1,
@@ -309,7 +309,7 @@ const SLOT_CRAFT_RECIPES: CraftRecipeDef[] = [
   // Arma — Tiers 1–5
   { id: 'craft_bastao_liga_leve', name: 'Bastão de Liga Leve', description: 'Arma: +5 ATQ.', tier: 1, icon: '🔧', outputItemId: 'bastao_liga_leve', outputQuantity: 1, outputKind: 'player_item', costZeni: 180, baseDurationMin: 15, ingredients: [{ itemId: 'liga_metais_leves', quantity: 2 }, { itemId: 'faixa_pressao', quantity: 1 }] },
   { id: 'craft_lamina_carbono', name: 'Lâmina de Carbono', description: 'Arma: +10 ATQ e +2 VEL.', tier: 2, icon: '🗡️', outputItemId: 'lamina_carbono', outputQuantity: 1, outputKind: 'player_item', costZeni: 700, baseDurationMin: 45, professionRequirements: [{ professionId: 'policial', level: CRAFT_TIER_PROFESSION_LEVEL[2] }], ingredients: [{ itemId: 'algema_carbono', quantity: 2 }, { itemId: 'liga_metais_leves', quantity: 2 }, { itemId: 'faixa_pressao', quantity: 1 }] },
-  { id: 'craft_lanca_saiyajin', name: 'Lança Saiyajin', description: 'Arma: +18 ATQ e +4 KI.', tier: 3, icon: '🔱', outputItemId: 'lanca_saiyajin', outputQuantity: 1, outputKind: 'player_item', costZeni: 2600, baseDurationMin: 120, professionRequirements: [{ professionId: 'atleta', level: CRAFT_TIER_PROFESSION_LEVEL[3] }, { professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[3] }], ingredients: [{ itemId: 'pesos_gravidade_10x', quantity: 1 }, { itemId: 'capsula_vazia_tipo_b', quantity: 1 }, { itemId: 'liga_metais_leves', quantity: 4 }, { itemId: 'planta_blindagem_flexivel', quantity: 1 }] },
+  { id: 'craft_lanca_saiyajin', name: 'Lança Solaris', description: 'Arma: +18 ATQ e +4 KI.', tier: 3, icon: '🔱', outputItemId: 'lanca_saiyajin', outputQuantity: 1, outputKind: 'player_item', costZeni: 2600, baseDurationMin: 120, professionRequirements: [{ professionId: 'atleta', level: CRAFT_TIER_PROFESSION_LEVEL[3] }, { professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[3] }], ingredients: [{ itemId: 'pesos_gravidade_10x', quantity: 1 }, { itemId: 'capsula_vazia_tipo_b', quantity: 1 }, { itemId: 'liga_metais_leves', quantity: 4 }, { itemId: 'planta_blindagem_flexivel', quantity: 1 }] },
   { id: 'craft_lamina_ki_condensado', name: 'Lâmina de Ki Condensado', description: 'Arma: +26 ATQ e +8 KI.', tier: 4, icon: '⚔️', outputItemId: 'lamina_ki_condensado', outputQuantity: 1, outputKind: 'player_item', costZeni: 5600, baseDurationMin: 240, professionRequirements: [{ professionId: 'atleta', level: CRAFT_TIER_PROFESSION_LEVEL[4] }, { professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[4] }], ingredients: [{ itemId: 'pesos_gravidade_10x', quantity: 2 }, { itemId: 'microchip_controle', quantity: 3 }, { itemId: 'kevlar_alienigena', quantity: 2 }, { itemId: 'esquema_canalizacao_ki', quantity: 1 }] },
   { id: 'craft_espada_gravidade_100x', name: 'Espada de Gravidade 100x', description: 'Arma: +38 ATQ e +12 KI.', tier: 5, icon: '🌌', outputItemId: 'espada_gravidade_100x', outputQuantity: 1, outputKind: 'player_item', costZeni: 15000, baseDurationMin: 480, professionRequirements: [{ professionId: 'atleta', level: CRAFT_TIER_PROFESSION_LEVEL[5] }, { professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[5] }], ingredients: [{ itemId: 'fluido_recuperacao_extrema', quantity: 2 }, { itemId: 'cristal_energia_ki', quantity: 2 }, { itemId: 'essencia_arvore_poder', quantity: 1 }, { itemId: 'esquema_gravidade_alterada', quantity: 1 }] },
 
@@ -332,13 +332,13 @@ const SLOT_CRAFT_RECIPES: CraftRecipeDef[] = [
   { id: 'craft_botas_corrida_reforcadas', name: 'Botas de Corrida Reforçadas', description: 'Equipamento de botas: +3 VEL.', tier: 1, icon: '🥾', outputItemId: 'botas_corrida_reforcadas', outputQuantity: 1, outputKind: 'player_item', costZeni: 150, baseDurationMin: 12, ingredients: [{ itemId: 'faixa_pressao', quantity: 1 }, { itemId: 'liga_metais_leves', quantity: 1 }] },
 
   // Tier 2 — carreira Nv. 2
-  { id: 'craft_visor_scouter_tatico', name: 'Visor Scouter Tático', description: 'Cabeça: +5 KI e +2 VEL.', tier: 2, icon: '🕶️', outputItemId: 'visor_scouter_tatico', outputQuantity: 1, outputKind: 'player_item', costZeni: 450, baseDurationMin: 30, professionRequirements: [{ professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[2] }], ingredients: [{ itemId: 'microchip_controle', quantity: 2 }, { itemId: 'tinta_arcana', quantity: 1 }, { itemId: 'fibra_reforcada', quantity: 1 }] },
+  { id: 'craft_visor_scouter_tatico', name: 'Visor de Fluxo Tático', description: 'Cabeça: +5 KI e +2 VEL.', tier: 2, icon: '🕶️', outputItemId: 'visor_scouter_tatico', outputQuantity: 1, outputKind: 'player_item', costZeni: 450, baseDurationMin: 30, professionRequirements: [{ professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[2] }], ingredients: [{ itemId: 'microchip_controle', quantity: 2 }, { itemId: 'tinta_arcana', quantity: 1 }, { itemId: 'fibra_reforcada', quantity: 1 }] },
   { id: 'craft_luvas_impacto_carbono', name: 'Luvas de Impacto de Carbono', description: 'Punhos: +6 ATQ e +2 DEF.', tier: 2, icon: '🧤', outputItemId: 'luvas_impacto_carbono', outputQuantity: 1, outputKind: 'player_item', costZeni: 500, baseDurationMin: 35, professionRequirements: [{ professionId: 'policial', level: CRAFT_TIER_PROFESSION_LEVEL[2] }], ingredients: [{ itemId: 'algema_carbono', quantity: 1 }, { itemId: 'faixa_pressao', quantity: 2 }, { itemId: 'liga_metais_leves', quantity: 1 }] },
   { id: 'craft_calca_compressao_tatica', name: 'Calça de Compressão Tática', description: 'Pernas: +6 DEF e +2 VEL.', tier: 2, icon: '🥋', outputItemId: 'calca_compressao_tatica', outputQuantity: 1, outputKind: 'player_item', costZeni: 550, baseDurationMin: 35, professionRequirements: [{ professionId: 'atleta', level: CRAFT_TIER_PROFESSION_LEVEL[2] }], ingredients: [{ itemId: 'proteina_concentrada', quantity: 1 }, { itemId: 'fibra_reforcada', quantity: 2 }, { itemId: 'liga_metais_leves', quantity: 1 }] },
   { id: 'craft_botas_propulsao_tatica', name: 'Botas de Propulsão Tática', description: 'Botas: +6 VEL e +2 DEF.', tier: 2, icon: '👢', outputItemId: 'botas_propulsao_tatica', outputQuantity: 1, outputKind: 'player_item', costZeni: 600, baseDurationMin: 40, professionRequirements: [{ professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[2] }], ingredients: [{ itemId: 'microchip_controle', quantity: 1 }, { itemId: 'liga_metais_leves', quantity: 2 }, { itemId: 'faixa_pressao', quantity: 1 }] },
 
   // Tier 3 — duas carreiras Nv. 4 + blueprint
-  { id: 'craft_elmo_combate_saiyajin', name: 'Elmo de Combate Saiyajin', description: 'Cabeça: +8 DEF e +4 KI.', tier: 3, icon: '🪖', outputItemId: 'elmo_combate_saiyajin', outputQuantity: 1, outputKind: 'player_item', costZeni: 1800, baseDurationMin: 90, professionRequirements: [{ professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[3] }, { professionId: 'policial', level: CRAFT_TIER_PROFESSION_LEVEL[3] }], ingredients: [{ itemId: 'kevlar_alienigena', quantity: 2 }, { itemId: 'capsula_vazia_tipo_b', quantity: 1 }, { itemId: 'planta_blindagem_flexivel', quantity: 1 }] },
+  { id: 'craft_elmo_combate_saiyajin', name: 'Elmo de Combate Solaris', description: 'Cabeça: +8 DEF e +4 KI.', tier: 3, icon: '🪖', outputItemId: 'elmo_combate_saiyajin', outputQuantity: 1, outputKind: 'player_item', costZeni: 1800, baseDurationMin: 90, professionRequirements: [{ professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[3] }, { professionId: 'policial', level: CRAFT_TIER_PROFESSION_LEVEL[3] }], ingredients: [{ itemId: 'kevlar_alienigena', quantity: 2 }, { itemId: 'capsula_vazia_tipo_b', quantity: 1 }, { itemId: 'planta_blindagem_flexivel', quantity: 1 }] },
   { id: 'craft_braceletes_saiyajin', name: 'Braceletes Saiyajin', description: 'Punhos: +10 ATQ e +4 DEF.', tier: 3, icon: '💪', outputItemId: 'braceletes_saiyajin', outputQuantity: 1, outputKind: 'player_item', costZeni: 1900, baseDurationMin: 90, professionRequirements: [{ professionId: 'policial', level: CRAFT_TIER_PROFESSION_LEVEL[3] }, { professionId: 'atleta', level: CRAFT_TIER_PROFESSION_LEVEL[3] }], ingredients: [{ itemId: 'kevlar_alienigena', quantity: 2 }, { itemId: 'pesos_gravidade_10x', quantity: 1 }, { itemId: 'planta_blindagem_flexivel', quantity: 1 }] },
   { id: 'craft_grevas_saiyajin', name: 'Grevas Saiyajin', description: 'Pernas: +10 DEF e +4 VEL.', tier: 3, icon: '🦿', outputItemId: 'grevas_saiyajin', outputQuantity: 1, outputKind: 'player_item', costZeni: 2200, baseDurationMin: 105, professionRequirements: [{ professionId: 'policial', level: CRAFT_TIER_PROFESSION_LEVEL[3] }, { professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[3] }], ingredients: [{ itemId: 'kevlar_alienigena', quantity: 3 }, { itemId: 'capsula_vazia_tipo_b', quantity: 1 }, { itemId: 'planta_blindagem_flexivel', quantity: 1 }] },
   { id: 'craft_botas_saiyajin', name: 'Botas Saiyajin', description: 'Botas: +10 VEL e +4 DEF.', tier: 3, icon: '🥾', outputItemId: 'botas_saiyajin_craft', outputQuantity: 1, outputKind: 'player_item', costZeni: 2200, baseDurationMin: 105, professionRequirements: [{ professionId: 'atleta', level: CRAFT_TIER_PROFESSION_LEVEL[3] }, { professionId: 'cientista', level: CRAFT_TIER_PROFESSION_LEVEL[3] }], ingredients: [{ itemId: 'pesos_gravidade_10x', quantity: 2 }, { itemId: 'capsula_vazia_tipo_b', quantity: 1 }, { itemId: 'planta_blindagem_flexivel', quantity: 1 }] },
@@ -402,7 +402,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
   {
     id: 'blueprint_estabilizacao_organica',
     name: 'Fórmula de Estabilização Orgânica',
-    description: 'Projeto obrigatório do Feijão Senzu Processado.',
+    description: 'Projeto obrigatório do Fruto de Sylva Processado.',
     tier: 4,
     icon: '🧬',
     outputItemId: 'formula_estabilizacao_organica',
@@ -470,7 +470,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
   // ===== Itens principais =====
   {
     id: 'capsula_recuperacao_simples',
-    name: 'Cápsula de Recuperação Simples',
+    name: 'Módulo de Recuperação Simples',
     description: 'Recupera 30% da vida máxima.',
     tier: 1,
     icon: '🧴',
@@ -527,7 +527,7 @@ export const CRAFT_RECIPES: CraftRecipeDef[] = [
   },
   {
     id: 'senzu_processado',
-    name: 'Feijão Senzu Processado',
+    name: 'Fruto de Sylva Processado',
     description: 'Consumível que recupera 100% da vida.',
     tier: 4,
     icon: '🫘',
