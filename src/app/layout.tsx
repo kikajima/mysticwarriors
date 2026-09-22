@@ -37,27 +37,29 @@ const russoOne = localFont({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://guerreiros-misticos.exemplo.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mysticwarriors-ohio.onrender.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Guerreiros Místicos — RPG Online Grátis no Navegador",
-    template: "%s — Guerreiros Místicos",
+    default: "Myst Ki Warriors — RPG Online Grátis no Navegador",
+    template: "%s — Myst Ki Warriors",
   },
   description:
-    "Crie seu guerreiro místico, treine atributos, aprenda técnicas lendárias com mestres, cumpra missões, funde guildas, enfrente chefes mundiais e colete as 7 Esferas do Dragão neste RPG de gerenciamento estilo browser game clássico.",
+    "Crie seu guerreiro no Setor Caelum, domine o Aether, desenvolva técnicas, profissões e transformações, participe de guildas e dispute as Chaves do Horizonte em um RPG persistente de navegador.",
   keywords: [
     "RPG online",
     "browser game",
     "jogo de gerenciamento",
-    "guerreiros místicos",
+    "Myst Ki Warriors",
+    "Setor Caelum",
+    "Aether",
     "jogo grátis",
     "RPG no navegador",
     "browser game brasileiro",
   ],
-  authors: [{ name: "Guerreiros Místicos" }],
-  applicationName: "Guerreiros Místicos",
+  authors: [{ name: "Myst Ki Warriors" }],
+  applicationName: "Myst Ki Warriors",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -70,25 +72,25 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_BR",
     url: SITE_URL,
-    siteName: "Guerreiros Místicos",
-    title: "Guerreiros Místicos — RPG Online Grátis",
+    siteName: "Myst Ki Warriors",
+    title: "Myst Ki Warriors — RPG Online Grátis",
     description:
-      "Treine. Lute. Trabalhe. Colete as 7 Esferas do Dragão e domine o universo — RPG de gerenciamento no navegador, grátis.",
+      "Treine. Lute. Trabalhe. Encontre as Chaves do Horizonte e escreva sua lenda no Setor Caelum.",
     images: [
       {
-        url: "/images/banner.png",
+        url: "/images/banner-mystki.svg",
         width: 1024,
         height: 576,
-        alt: "Guerreiros místicos carregando energia ao pôr do sol",
+        alt: "Myst Ki Warriors — guerreiros do Setor Caelum diante do Guardião do Horizonte",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Guerreiros Místicos — RPG Online Grátis",
+    title: "Myst Ki Warriors — RPG Online Grátis",
     description:
-      "Treine. Lute. Trabalhe. Colete as 7 Esferas do Dragão e domine o universo.",
-    images: ["/images/banner.png"],
+      "Treine. Lute. Trabalhe. Encontre as Chaves do Horizonte e domine o Aether.",
+    images: ["/images/banner-mystki.svg"],
   },
   robots: {
     index: true,
