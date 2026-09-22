@@ -360,9 +360,9 @@ export function WikiView() {
               <List className="w-5 h-5" />
             </button>
 
-            <Link href="/" className="shrink-0 flex items-center gap-2 group" title="Guerreiros Místicos — página inicial">
+            <Link href="/" className="shrink-0 flex items-center gap-2 group" title="Myst Ki Warriors — página inicial">
               <span className="font-display text-xl sm:text-2xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600 tracking-wide">
-                Guerreiros Místicos
+                Myst Ki Warriors
               </span>
               <span className="hidden sm:inline font-heading text-[10px] uppercase tracking-[0.25em] text-amber-200/40 group-hover:text-amber-200/70 transition-colors">
                 Wiki
@@ -469,7 +469,7 @@ export function WikiView() {
 
       {/* ===== Footer (empurrado para o fim em páginas curtas) ===== */}
       <footer className="mt-auto py-4 text-center text-amber-200/30 text-xs">
-        Guerreiros Místicos — Wiki de Mecânicas · transparência total: números e fórmulas reais do jogo
+        Myst Ki Warriors — Wiki de Mecânicas · transparência total: números e fórmulas reais do jogo
       </footer>
 
       {/* ===== Drawer mobile do índice ===== */}

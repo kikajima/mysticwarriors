@@ -339,7 +339,7 @@ async function applyPveResult(
     },
   });
 
-  // Zenkai (já decidido no START pelos critérios de risco)
+  // Resiliência Estelar (contrato interno legado: zenkai)
   if (data.zenkai) {
     const fresh2 = await tx.player.findUniqueOrThrow({ where: { id: player.id } });
     addStat(fresh2, 'strength', 1);
@@ -373,7 +373,7 @@ async function applyPveResult(
   const message = data.won
     ? `Vitória contra ${payload.display.battle.enemyName}! +${data.zeni.toLocaleString('pt-BR')} Créditos, +${data.xp} XP.`
     : data.playerEndHp <= 0
-      ? `Derrota para ${payload.display.battle.enemyName}... Você foi resgatado com 1 de vida.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`
+      ? `Derrota para ${payload.display.battle.enemyName}... Você foi resgatado com 1 de vida.${data.zenkai ? ' Resiliência Estelar ativada: +1 Força!' : ''}`
       : `Derrota para ${payload.display.battle.enemyName} por decisão dos jurados... Você deixou a arena com ${data.playerEndHp} de vida e leva +${data.xp} XP de aprendizado.`;
 
   return { message, levelsGained: grant.levelsGained, battle: finalBattle };
@@ -419,7 +419,7 @@ async function applyPvpResult(
   }
 
   if (data.won) {
-    // Esfera só pode ser tomada pelo VENCEDOR. A tabela global é a fonte
+    // Chave só pode ser tomada pelo VENCEDOR. A tabela global é a fonte
     // de verdade; os contadores de Player são sincronizados após a transferência.
     if (target && data.dragonBallStealChance > 0) {
       const winnerBalls = await tx.dragonBallPossession.count({ where: { playerId: player.id } });
@@ -445,20 +445,20 @@ async function applyPvpResult(
             player.dragonBalls = winnerCount;
             target.dragonBalls = targetCount;
 
-            const starLabel = `${targetBall.star} estrela${targetBall.star === 1 ? '' : 's'}`;
+            const keyLabel = `Chave do Horizonte nº ${targetBall.star}`;
             await createPlayerNotification(tx, {
               playerId: player.id,
               kind: 'dragon_ball_stolen',
-              title: '🐉 Esfera roubada!',
-              message: `Você tomou a Esfera de ${starLabel} de ${target.name} ao vencer o duelo PvP.`,
+              title: '◇ Chave roubada!',
+              message: `Você tomou a ${keyLabel} de ${target.name} ao vencer o duelo PvP.`,
               metadata: { star: targetBall.star, targetId: target.id, targetName: target.name },
             });
             if (!target.isBot) {
               await createPlayerNotification(tx, {
                 playerId: target.id,
                 kind: 'dragon_ball_lost',
-                title: '🚨 Uma Esfera foi roubada!',
-                message: `${player.name} venceu você em um duelo PvP e levou sua Esfera de ${starLabel}.`,
+                title: '🚨 Uma Chave foi roubada!',
+                message: `${player.name} venceu você em um duelo PvP e levou sua ${keyLabel}.`,
                 metadata: { star: targetBall.star, attackerId: player.id, attackerName: player.name },
               });
             }
@@ -553,7 +553,7 @@ async function applyPvpResult(
   }
   if (data.firstBattle) await trackEvent('first_battle', { playerId: player.id, accountId: player.accountId }, tx);
 
-  // Zenkai PvP
+  // Resiliência Estelar no PvP (contrato interno legado: zenkai)
   if (data.zenkai) {
     const fresh2 = await tx.player.findUniqueOrThrow({ where: { id: player.id } });
     addStat(fresh2, 'strength', 1);
@@ -575,8 +575,8 @@ async function applyPvpResult(
   };
 
   const message = data.won
-    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Créditos${dragonBallStolen ? ` e a Esfera de ${dragonBallStolenStar} estrela${dragonBallStolenStar === 1 ? '' : 's'}` : ''}!`
-    : `${payload.display.battle.enemyName} te derrotou... ${zeniLost > 0 ? `Você perdeu ${zeniLost.toLocaleString('pt-BR')} Créditos ` : ''}mas ganhou experiência.${data.zenkai ? ' Zenkai ativado: +1 Força!' : ''}`;
+    ? `Você derrotou ${payload.display.battle.enemyName} no PvP e roubou ${zeniStolen.toLocaleString('pt-BR')} Créditos${dragonBallStolen ? ` e a Chave do Horizonte nº ${dragonBallStolenStar}` : ''}!`
+    : `${payload.display.battle.enemyName} te derrotou... ${zeniLost > 0 ? `Você perdeu ${zeniLost.toLocaleString('pt-BR')} Créditos ` : ''}mas ganhou experiência.${data.zenkai ? ' Resiliência Estelar ativada: +1 Força!' : ''}`;
 
   return { message, levelsGained, battle: finalBattle };
 }

@@ -205,7 +205,7 @@ export function ShopPanel({
         ))}
       </div>
 
-      {/* Talentos de Ímpeto (Cap. 7 — ASCENSÃO Z) */}
+      {/* Talentos de Ímpeto (Cap. 7 — ESCALAS DE CAELUM) */}
       {category === 'talents' ? (
         <TalentsSection
           player={player}
@@ -317,7 +317,7 @@ export function ShopPanel({
   );
 }
 
-// ===== v0.9.15: Seção de TALENTOS DE ÍMPETO (Cap. 7 — ASCENSÃO Z) =====
+// ===== v0.9.15: Seção de TALENTOS DE ÍMPETO (Cap. 7 — ESCALAS DE CAELUM) =====
 
 function TalentsSection({
   player,

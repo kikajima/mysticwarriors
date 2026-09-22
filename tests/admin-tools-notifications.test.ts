@@ -36,7 +36,7 @@ describe('Notificações persistentes de jogador', () => {
         createPlayerNotification(tx, {
           playerId: player.id,
           kind: 'dragon_ball_lost',
-          title: '🚨 Uma Esfera foi roubada!',
+          title: '🚨 Uma Chave foi roubada!',
           message: 'Teste persistente.',
           metadata: { star: 4 },
         })
@@ -69,7 +69,7 @@ describe('Notificações persistentes de jogador', () => {
   });
 });
 
-describe('Admin — Esferas globais', () => {
+describe('Admin — Chaves globais', () => {
   test('concede a estrela exata e recusa transferir estrela ocupada', async () => {
     const { db, dir } = await makeDb();
     try {
@@ -83,7 +83,7 @@ describe('Admin — Esferas globais', () => {
       const message = await db.$transaction((tx) =>
         grantAdminDragonBallStar(tx, owner, 4)
       );
-      expect(message).toContain('Esfera de 4 estrelas');
+      expect(message).toContain('Chave do Horizonte nº 4');
       expect(
         (await db.dragonBallPossession.findUniqueOrThrow({ where: { star: 4 } })).playerId
       ).toBe(owner.id);

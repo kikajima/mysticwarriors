@@ -348,7 +348,7 @@ function BattleContent({
                 {battle.crystalsGain ? ` • +${battle.crystalsGain} 💎` : ''}
                 {battle.zeniStolen ? ` • roubou ${battle.zeniStolen.toLocaleString('pt-BR')} Créditos` : ''}
                 {battle.dragonBallStolen
-                  ? ` • roubou ${battle.dragonBallStolenStar ? `a Esfera de ${battle.dragonBallStolenStar} estrela${battle.dragonBallStolenStar === 1 ? '' : 's'}` : `${battle.dragonBallStolen} Chave do Horizonte`}`
+                  ? ` • roubou ${battle.dragonBallStolenStar ? `a Chave do Horizonte nº ${battle.dragonBallStolenStar}` : `${battle.dragonBallStolen} Chave do Horizonte`}`
                   : ''}
               </p>
             </div>
@@ -365,7 +365,7 @@ function BattleContent({
                   <>
                     Você foi resgatado com 1 de vida. Ainda ganhou{' '}
                     {battle.xpGain.toLocaleString('pt-BR')} XP de experiência.
-                    {battle.zenkaiGranted ? ' Zenkai ativado: +1 Força!' : ''}
+                    {battle.zenkaiGranted ? ' Resiliência Estelar ativada: +1 Força!' : ''}
                   </>
                 ) : (
                   <>
@@ -373,7 +373,7 @@ function BattleContent({
                     nocaute — a decisão dos jurados foi contra você. Saiu do ringue com{' '}
                     <span className="text-amber-300 font-heading">{battle.playerEndHp} de vida</span> e
                     ainda ganhou {battle.xpGain.toLocaleString('pt-BR')} XP de experiência.
-                    {battle.zenkaiGranted ? ' Zenkai ativado: +1 Força!' : ''}
+                    {battle.zenkaiGranted ? ' Resiliência Estelar ativada: +1 Força!' : ''}
                   </>
                 )}
               </p>
@@ -429,7 +429,7 @@ function KiBar({ name, ki, max, color }: { name: string; ki: number; max: number
 }
 
 /**
- * v0.9.13 — Medidor de ÍMPETO (Cap. 7 do ASCENSÃO Z): chamas 0–6
+ * v0.9.13 — Medidor de ÍMPETO (Cap. 7 do ESCALAS DE CAELUM): chamas 0–6
  * alimentadas pelo instantâneo de cada round do servidor. A chama
  * "acesa" tem brilho dourado; a apagada é um traço escuro — a leitura
  * é instantânea mesmo sem ler números (acessibilidade: aria-label

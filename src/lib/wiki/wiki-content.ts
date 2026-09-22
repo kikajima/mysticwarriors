@@ -21,7 +21,7 @@ import { UNIVERSAL_THREAT } from '@/lib/game/universalThreat';
 //
 // ESTRUTURA DE LEITURA (UX v0.9.23):
 //  * Cada seção abre com `resumo` (2-3 bullets simples — "Em resumo");
-//  * O corpo fala com o JOGADOR (2ª pessoa, vocabulário Dragon Ball);
+//  * O corpo fala com o JOGADOR (2ª pessoa, vocabulário de Myst Ki Warriors);
 //  * Fórmulas exatas e tabelas completas vivem em blocos `details`
 //    ("Detalhes para curiosos") — ficam no DOM e são indexados pela
 //    busca, sem entupir a leitura.
@@ -187,7 +187,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           '**Aprenda sua primeira técnica** ([[tecnicas|Técnicas]]) — o Garras do Lobo Astral (600 Créditos) já deixa seus golpes físicos 25% mais fortes.',
           '**Treine o atributo da sua build** ([[atributos|Atributos]]) — Força para golpes físicos, Ki para ondas de energia.',
           '**Lute contra os capangas** ([[pve|Batalhas PvE]]) — comece pelo Arruaceiro do Ermo e avance até inimigos de escala Transcendente conforme seu [[escala-poder|Poder de Luta]] cresce.',
-          '**Compre equipamento** ([[loja|Loja]]) — Luvas de Treino (300 Créditos) e Gi de Batalha (250 Créditos) custam pouco e já fazem diferença.',
+          '**Compre equipamento** ([[loja|Loja]]) — Luvas de Treino (300 Créditos) e Traje de Arena Âmbar (250 Créditos) custam pouco e já fazem diferença.',
           'A partir daí: [[torneio|Torneio]], [[world-boss|Ameaça Universal]], [[esferas-dragao|Chaves do Horizonte]] e [[guildas|Guilda]].',
         ],
       },
@@ -407,16 +407,16 @@ export const WIKI_SECTIONS: WikiSection[] = [
   },
 
   // ================================================================
-  // ESCALA DE PODER / SCOUTER
+  // ESCALAS DE CAELUM / VISOR DE FLUXO
   // ================================================================
   {
     id: 'escala-poder',
     title: 'Escala de Poder e Visor de Fluxo',
     icon: '🔍',
     group: 'Combate',
-    summary: 'As 10 escalas de ASCENSÃO Z, o poder do scouter, Armadura de Escala e Aberturas.',
+    summary: 'As 10 escalas de ESCALAS DE CAELUM, o poder do Visor de Fluxo, Armadura de Escala e Aberturas.',
     resumo: [
-      'O scouter soma tudo que você tem num **Poder de Luta** — a linguagem de potência do jogo.',
+      'O Visor de Fluxo consolida tudo que você tem num **Poder de Luta** — a linguagem de potência do jogo.',
       'São **10 Escalas**, de Mortal Comum a Transcendente.',
       'Escala acima do rival = **mais dano**; abaixo = **Armadura de Escala** segurando você.',
     ],
@@ -449,7 +449,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
           },
           {
             kind: 'text',
-            text: `**Poder de Luta do scouter:** \`15 × nível + ataque + 0,9 × poder de Ki + defesa + 0,6 × resistência + 2 × velocidade\` (com equipamentos e bônus raciais contando). **Crítico de Abertura:** chance de 6% + 0,3% por ponto de velocidade a favor (entre 3% e 9%); dano ampliado ×${String(SCALE_COMBAT.aberturaCritMult).replace('.', ',')}. Golpe esmagado: ×${String(SCALE_COMBAT.crushingMult).replace('.', ',')}.`,
+            text: `**Poder de Luta do Visor de Fluxo:** \`15 × nível + ataque + 0,9 × poder de Ki + defesa + 0,6 × resistência + 2 × velocidade\` (com equipamentos e bônus raciais contando). **Crítico de Abertura:** chance de 6% + 0,3% por ponto de velocidade a favor (entre 3% e 9%); dano ampliado ×${String(SCALE_COMBAT.aberturaCritMult).replace('.', ',')}. Golpe esmagado: ×${String(SCALE_COMBAT.crushingMult).replace('.', ',')}.`,
           },
         ],
       },
@@ -702,7 +702,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
               rows: [
                 ['Vida máxima', '`80 + 15 × nível + 5 × Defesa`'],
                 ['Energia máxima', '`100 (fixa)`'],
-                ['Poder de Luta (scouter)', '`15 × nível + ataque + 0,9×poder de Ki + defesa + 0,6×resistência + 2 × velocidade`'],
+                ['Poder de Luta (Visor de Fluxo)', '`15 × nível + ataque + 0,9×poder de Ki + defesa + 0,6×resistência + 2 × velocidade`'],
                 ['Poder físico', '`2,2 × Força base` + ATQ de todos os equipamentos'],
                 ['Poder de Ki', '`2,4 × Ki base` + KI de todos os equipamentos'],
               ],
@@ -1210,10 +1210,10 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'PvP (Duelos)',
     icon: '🎯',
     group: 'Progressão',
-    summary: 'Regras de ataque, roubo de Créditos, política de vida e o Zenkai.',
+    summary: 'Regras de ataque, roubo de Créditos, política de vida e a Resiliência Estelar.',
     resumo: [
       'Ataque qualquer guerreiro real ou bot pelo Ranking, sem limite de nível.',
-      'Vencer **rouba 8% do Créditos** e pode roubar uma esfera da vítima; perder paga 5% do seu.',
+      'Vencer **rouba 8% dos Créditos** e pode roubar uma Chave do Horizonte da vítima; perder paga 5% do seu.',
       'A vítima é **sempre atacável**; o atacante pode atacar **durante o próprio trabalho** — só não pode estar em luta em andamento.',
     ],
     blocks: [
@@ -1517,7 +1517,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     blocks: [
       {
         kind: 'text',
-        text: `A Loja cuida apenas das compras. Equipamentos aparecem nas categorias corretas — **Arma, Cabeça, Punhos, Torso, Pernas, Botas e Acessórios** — e cada card informa explicitamente o slot. Depois de comprar, abra **Inventário → Equipamento** para equipar. Há **Acessório I e Acessório II**, no máximo dois simultâneos. As opções iniciais continuam acessíveis: Bastão de Treino (180 Créditos), Gi de Batalha (250 Créditos) e Luvas de Treino para Punhos (300 Créditos). Vender pelo Inventário devolve ${Math.round(SELL_PRICE_RATIO * 100)}% do preço na mesma moeda. A progressão comercial é útil, mas os equipamentos fabricados na **Oficina** são deliberadamente superiores no topo de cada categoria.`,
+        text: `A Loja cuida apenas das compras. Equipamentos aparecem nas categorias corretas — **Arma, Cabeça, Punhos, Torso, Pernas, Botas e Acessórios** — e cada card informa explicitamente o slot. Depois de comprar, abra **Inventário → Equipamento** para equipar. Há **Acessório I e Acessório II**, no máximo dois simultâneos. As opções iniciais continuam acessíveis: Bastão de Treino (180 Créditos), Traje de Arena Âmbar (250 Créditos) e Luvas de Treino para Punhos (300 Créditos). Vender pelo Inventário devolve ${Math.round(SELL_PRICE_RATIO * 100)}% do preço na mesma moeda. A progressão comercial é útil, mas os equipamentos fabricados na **Oficina** são deliberadamente superiores no topo de cada categoria.`,
       },
       {
         kind: 'text',

@@ -128,7 +128,7 @@ export function RankingLive({ initial }: { initial: PublicRanking }) {
                     {e.power.toLocaleString('pt-BR')}
                     <span
                       className={`ml-1.5 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-heading align-middle ${getPowerScale(e.power).scale.badge}`}
-                      title={`Escala ${getPowerScale(e.power).scale.index} — ${getPowerScale(e.power).scale.nome} (ASCENSÃO Z)`}
+                      title={`Escala ${getPowerScale(e.power).scale.index} — ${getPowerScale(e.power).scale.nome} (ESCALAS DE CAELUM)`}
                     >
                       <span aria-hidden>{getPowerScale(e.power).scale.emoji}</span>
                       <span className="sr-only">Escala: </span>E{getPowerScale(e.power).scale.index}

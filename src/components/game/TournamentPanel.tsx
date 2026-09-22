@@ -116,7 +116,7 @@ export function TournamentPanel({
   );
 
   // poder estimado do adversário (espelha o cálculo do servidor — o
-  // scouter do card mostra a MESMA ordem de grandeza que a engine usa)
+  // leitura do card mostra a MESMA ordem de grandeza que a engine usa)
   const oppPower = Math.round(player.derived.power * roundDef(inRun ? round : 1).powerMult);
   const oppScale = getPowerScale(oppPower);
 
@@ -349,7 +349,7 @@ export function TournamentPanel({
               <p className="text-xs text-amber-200/60 italic mt-2 leading-relaxed">{fighter.taunt}</p>
 
               <div className="flex items-center gap-2 mt-3 text-xs">
-                <span className="text-amber-200/50">Poder de scouter:</span>
+                <span className="text-amber-200/50">Poder do Visor:</span>
                 <span className="font-heading text-amber-300">{oppPower.toLocaleString('pt-BR')}</span>
                 <span className="text-amber-200/40">·</span>
                 <span className="text-amber-200/70">

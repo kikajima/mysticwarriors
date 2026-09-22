@@ -179,7 +179,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'missions_50', category: 'progression', name: 'Trabalhador Incansável', description: 'Conclua 50 turnos de trabalho.', metric: 'missionsDone', target: 50, rewardZeni: 4000, rewardXp: 1200, rewardCrystals: 4, icon: '📋' },
   { id: 'transform_1', category: 'progression', name: 'Além dos Limites', description: 'Desbloqueie sua primeira transformação.', metric: 'transformationsOwned', target: 1, rewardZeni: 5000, rewardXp: 1500, rewardCrystals: 5, icon: '⚡' },
   { id: 'transform_3', category: 'progression', name: 'Evolução Suprema', description: 'Desbloqueie 3 transformações.', metric: 'transformationsOwned', target: 3, rewardZeni: 20000, rewardXp: 6000, rewardCrystals: 15, icon: '🌈' },
-  // v0.9.17 — Narrativa (ASCENSÃO Z): os momentos dramáticos do sistema
+  // v0.9.17 — Narrativa (ESCALAS DE CAELUM): os momentos dramáticos do sistema
   // de Ímpeto/Quebra viram conquistas contáveis pela engine
   { id: 'milagre_limite', category: 'narrative', name: 'Milagre no Limite', description: 'Vença 3 batalhas nas quais você rompeu seus próprios limites (Quebra de Limite ativada) — e sobreviveu para contar.', metric: 'miracleWins', target: 3, rewardZeni: 6000, rewardXp: 2000, rewardCrystals: 6, icon: '⚡' },
   { id: 'david_golias', category: 'narrative', name: 'David vs Golias', description: 'Anule um golpe poderoso com o Reposicionamento Dramático contra um oponente 2 ou mais escalas de poder acima de você.', metric: 'davidWins', target: 1, rewardZeni: 4000, rewardXp: 1200, rewardCrystals: 4, icon: '🐜' },

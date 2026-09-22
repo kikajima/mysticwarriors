@@ -1,5 +1,5 @@
 // =====================================================================
-// TALENTOS DE ÍMPETO — ASCENSÃO Z, Cap. 7 (v0.9.15)
+// TALENTOS DE ÍMPETO — ESCALAS DE CAELUM, Cap. 7 (v0.9.15)
 // ---------------------------------------------------------------------
 // O Cap. 7 define a tabela de gastos de Ímpeto. Três entradas já vivem
 // no motor desde a v0.9.13: Estender Combo (1), Defesa Heroica (2) e

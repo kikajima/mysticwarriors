@@ -1,5 +1,5 @@
 // =====================================================================
-// ÍMPETO — ASCENSÃO Z (Capítulo 7) + QUEBRA DE LIMITE (Capítulo 29)
+// ÍMPETO — ESCALAS DE CAELUM (Capítulo 7) + QUEBRA DE LIMITE (Capítulo 29)
 // ---------------------------------------------------------------------
 // Ímpeto é o recurso dramático do combate: adrenalina, rivalidade,
 // determinação e viradas. No RPG de mesa o dono acumula/gasta à mão;
