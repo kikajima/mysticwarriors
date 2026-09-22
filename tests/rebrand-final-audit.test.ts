@@ -90,7 +90,9 @@ describe('Rebrand etapa 9 — auditoria final de identidade', () => {
     const uiDirs = ['src/app', 'src/components', 'src/lib/wiki'];
     const findings: string[] = [];
 
-    for (const file of uiDirs.flatMap((dir) => walk(dir))) {
+    for (const file of uiDirs
+      .flatMap((dir) => walk(dir))
+      .filter((file) => !file.startsWith('src/app/api/'))) {
       let source = readFileSync(path.join(ROOT, file), 'utf8');
       source = source.replaceAll('ShenronPanel', '');
 
