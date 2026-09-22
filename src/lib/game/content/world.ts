@@ -15,7 +15,7 @@ import type {
 //  * progressão por HORAS (nível derivado; 4.450h fecham o ciclo);
 //  * turnos válidos: 1h / 2h / 4h / 8h;
 //  * turnos longos concedem bônus progressivo de XP e chance de material raro;
-//  * Zeni, atributo, horas e material comum mantêm a regra base;
+//  * Créditos, atributo, horas e material comum mantêm a regra base;
 //  * atributo é sempre inteiro e não possui teto de gameplay;
 //  * Acadêmico não dá atributo: fornece bônus global de XP e, na PR de
 //    crafting, redução do tempo de fabricação.
@@ -111,13 +111,13 @@ export function professionMaterialRequiredLevel(tier: ProfessionMaterialDef['tie
 export const PROFESSION_MATERIALS: ProfessionMaterialDef[] = [
   { id: 'erva_medicinal', name: 'Erva Medicinal', professionId: 'agricultor', rarity: 'common', tier: 1, icon: '🌿' },
   { id: 'agua_purificada', name: 'Água Purificada', professionId: 'agricultor', rarity: 'common', tier: 2, icon: '💧' },
-  { id: 'semente_deuses_virgem', name: 'Semente dos Deuses Virgem', professionId: 'agricultor', rarity: 'rare', tier: 3, icon: '🌱' },
-  { id: 'essencia_arvore_poder', name: 'Essência da Árvore do Poder', professionId: 'agricultor', rarity: 'rare', tier: 5, icon: '🌳' },
+  { id: 'semente_deuses_virgem', name: 'Broto de Sylva', professionId: 'agricultor', rarity: 'rare', tier: 3, icon: '🌱' },
+  { id: 'essencia_arvore_poder', name: 'Seiva da Árvore-Matriz', professionId: 'agricultor', rarity: 'rare', tier: 5, icon: '🌳' },
 
   { id: 'liga_metais_leves', name: 'Liga de Metais Leves', professionId: 'cientista', rarity: 'common', tier: 1, icon: '🔩' },
   { id: 'microchip_controle', name: 'Microchip de Controle', professionId: 'cientista', rarity: 'common', tier: 2, icon: '💾' },
-  { id: 'capsula_vazia_tipo_b', name: 'Cápsula Vazia Tipo-B', professionId: 'cientista', rarity: 'rare', tier: 3, icon: '💊' },
-  { id: 'cristal_energia_ki', name: 'Cristal de Energia Ki', professionId: 'cientista', rarity: 'rare', tier: 5, icon: '💠' },
+  { id: 'capsula_vazia_tipo_b', name: 'Recipiente Nano-Selado Tipo-B', professionId: 'cientista', rarity: 'rare', tier: 3, icon: '💊' },
+  { id: 'cristal_energia_ki', name: 'Cristal de Aether', professionId: 'cientista', rarity: 'rare', tier: 5, icon: '💠' },
 
   { id: 'fibra_reforcada', name: 'Fibra Reforçada', professionId: 'policial', rarity: 'common', tier: 1, icon: '🧵' },
   { id: 'algema_carbono', name: 'Algema de Carbono', professionId: 'policial', rarity: 'common', tier: 2, icon: '⛓️' },
@@ -259,7 +259,7 @@ export function getEnemy(id: string): { enemy: Enemy; index: number } | null {
 }
 
 /**
- * Poder de scouter equivalente de um oponente PvE (v0.9.12).
+ * Poder de visor de fluxo equivalente de um oponente PvE (v0.9.12).
  * MESMA fórmula da ficha do jogador (computeDerived), sem equipamentos
  * — fonte ÚNICA: engine (Armadura de Escala, regra 5.1) e cartas de
  * oponente na UI leem daqui, nunca de uma cópia local.
@@ -390,25 +390,25 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'bastao', name: 'Bastão Sagrado', description: 'Slot: Arma. Alcance e equilíbrio para combate corpo a corpo. Bônus: +9 ATQ.', category: 'weapon', price: 900, minLevel: 3, atk: 9, icon: '🦯' },
   { id: 'katana', name: 'Katana do Gohan', description: 'Slot: Arma. Lâmina leve que favorece golpes rápidos. Bônus: +18 ATQ e +2 VEL.', category: 'weapon', price: 2600, minLevel: 6, atk: 18, spd: 2, icon: '🗡️' },
   { id: 'espada_z', name: 'Espada Z', description: 'Slot: Arma. Espada sagrada com boa condução de energia. Bônus: +30 ATQ e +4 KI.', category: 'weapon', price: 7000, minLevel: 10, atk: 30, ki: 4, icon: '⚔️' },
-  { id: 'lamina_capsula', name: 'Lâmina de Liga Capsule', description: 'Slot: Arma. Liga tecnológica leve e estável. Bônus: +45 ATQ e +5 VEL.', category: 'weapon', price: 16000, minLevel: 15, atk: 45, spd: 5, icon: '🗡️' },
+  { id: 'lamina_capsula', name: 'Lâmina de Liga Nexus', description: 'Slot: Arma. Liga de Nexus-9, leve, estável e resistente a sobrecarga. Bônus: +45 ATQ e +5 VEL.', category: 'weapon', price: 16000, minLevel: 15, atk: 45, spd: 5, icon: '🗡️' },
   { id: 'energia_infinita', name: 'Lâmina do Ki Puro', description: 'Slot: Arma. Melhor arma comercial da loja, ainda abaixo das criações de alto Tier da Oficina. Bônus: +65 ATQ e +10 KI.', category: 'weapon', price: 36000, minLevel: 22, atk: 65, ki: 10, icon: '⚔️' },
 
   // Cabeça
   { id: 'bandana', name: 'Bandana do Guerreiro', description: 'Slot: Cabeça. Proteção leve que ajuda a manter o foco. Bônus: +2 DEF e +3 KI.', category: 'head', price: 550, minLevel: 2, def: 2, ki: 3, icon: '🎗️' },
-  { id: 'scouter_basico', name: 'Scouter Básico', description: 'Slot: Cabeça. Visor comercial para leitura de energia e reação. Bônus: +5 KI e +2 VEL.', category: 'head', price: 1800, minLevel: 5, ki: 5, spd: 2, icon: '🥽' },
-  { id: 'capacete_saiyajin_loja', name: 'Capacete Saiyajin', description: 'Slot: Cabeça. Proteção militar alienígena de linha comercial. Bônus: +8 DEF e +4 KI.', category: 'head', price: 5200, minLevel: 10, def: 8, ki: 4, icon: '🪖' },
-  { id: 'coroa_kaio', name: 'Coroa de Treino do Kaio', description: 'Slot: Cabeça. Foco e proteção para guerreiros experientes. Bônus: +12 DEF, +8 KI e +3 VEL.', category: 'head', price: 14500, minLevel: 16, def: 12, ki: 8, spd: 3, icon: '👑' },
+  { id: 'visor de fluxo_basico', name: 'Visor de Fluxo Básico', description: 'Slot: Cabeça. Visor comercial para leitura de energia e reação. Bônus: +5 KI e +2 VEL.', category: 'head', price: 1800, minLevel: 5, ki: 5, spd: 2, icon: '🥽' },
+  { id: 'capacete_saiyajin_loja', name: 'Elmo Solaris', description: 'Slot: Cabeça. Proteção militar alienígena de linha comercial. Bônus: +8 DEF e +4 KI.', category: 'head', price: 5200, minLevel: 10, def: 8, ki: 4, icon: '🪖' },
+  { id: 'coroa_kaio', name: 'Coroa de Foco do Horizonte', description: 'Slot: Cabeça. Foco e proteção para guerreiros experientes. Bônus: +12 DEF, +8 KI e +3 VEL.', category: 'head', price: 14500, minLevel: 16, def: 12, ki: 8, spd: 3, icon: '👑' },
 
   // Punhos
   { id: 'luvas', name: 'Luvas de Treino', description: 'Slot: Punhos. Luvas acolchoadas para impacto físico. Bônus: +4 ATQ.', category: 'wrists', price: 300, minLevel: 1, atk: 4, icon: '🥊' },
-  { id: 'braceletes_tartaruga', name: 'Braceletes da Tartaruga', description: 'Slot: Punhos. Braceletes firmes para ataque e guarda. Bônus: +8 ATQ e +2 DEF.', category: 'wrists', price: 1100, minLevel: 4, atk: 8, def: 2, icon: '🧤' },
-  { id: 'manoplas_capsula', name: 'Manoplas Capsule', description: 'Slot: Punhos. Placas leves de impacto da Corporação Cápsula. Bônus: +14 ATQ e +4 DEF.', category: 'wrists', price: 3600, minLevel: 8, atk: 14, def: 4, icon: '🧤' },
-  { id: 'punho_dragao', name: 'Manoplas do Dragão', description: 'Slot: Punhos. Manoplas comerciais de alta potência inspiradas no Golpe do Dragão. Bônus: +24 ATQ e +5 KI.', category: 'wrists', price: 12000, minLevel: 15, atk: 24, ki: 5, icon: '🥊' },
+  { id: 'braceletes_tartaruga', name: 'Braceletes da Maré Astral', description: 'Slot: Punhos. Braceletes firmes para ataque e guarda. Bônus: +8 ATQ e +2 DEF.', category: 'wrists', price: 1100, minLevel: 4, atk: 8, def: 2, icon: '🧤' },
+  { id: 'manoplas_capsula', name: 'Manoplas Nexus', description: 'Slot: Punhos. Placas leves de impacto da Consórcio Nexus. Bônus: +14 ATQ e +4 DEF.', category: 'wrists', price: 3600, minLevel: 8, atk: 14, def: 4, icon: '🧤' },
+  { id: 'punho_dragao', name: 'Manoplas do Horizonte', description: 'Slot: Punhos. Manoplas comerciais de alta potência inspiradas em técnicas de ruptura orbital. Bônus: +24 ATQ e +5 KI.', category: 'wrists', price: 12000, minLevel: 15, atk: 24, ki: 5, icon: '🥊' },
 
   // Torso
-  { id: 'gi', name: 'Gi de Batalha Laranja', description: 'Slot: Torso. Uniforme leve da Escola da Tartaruga. Bônus: +4 DEF.', category: 'armor', price: 250, minLevel: 1, def: 4, icon: '🥋' },
-  { id: 'armadura_saiyajin', name: 'Armadura Saiyajin', description: 'Slot: Torso. Armadura flexível de combate. Bônus: +10 DEF.', category: 'armor', price: 800, minLevel: 3, def: 10, icon: '🛡️' },
-  { id: 'armadura_freeza', name: 'Armadura de Elite Freeza', description: 'Slot: Torso. Blindagem militar reforçada. Bônus: +18 DEF.', category: 'armor', price: 2400, minLevel: 6, def: 18, icon: '🦺' },
+  { id: 'gi', name: 'Traje de Arena Âmbar', description: 'Slot: Torso. Uniforme leve usado nas arenas de Aethel Prime. Bônus: +4 DEF.', category: 'armor', price: 250, minLevel: 1, def: 4, icon: '🥋' },
+  { id: 'armadura_saiyajin', name: 'Armadura Solaris', description: 'Slot: Torso. Armadura flexível de combate. Bônus: +10 DEF.', category: 'armor', price: 800, minLevel: 3, def: 10, icon: '🛡️' },
+  { id: 'armadura_freeza', name: 'Blindagem Imperial de Varth', description: 'Slot: Torso. Blindagem militar reforçada. Bônus: +18 DEF.', category: 'armor', price: 2400, minLevel: 6, def: 18, icon: '🦺' },
   { id: 'traje_ponderado', name: 'Traje Ponderado', description: 'Slot: Torso. Proteção pesada sem eliminar a mobilidade. Bônus: +28 DEF e +3 VEL.', category: 'armor', price: 6500, minLevel: 10, def: 28, spd: 3, icon: '🥋' },
   { id: 'armadura_kaio', name: 'Armadura do Grande Kaio', description: 'Slot: Torso. Proteção divina comercial de alto nível. Bônus: +42 DEF e +5 KI.', category: 'armor', price: 15000, minLevel: 15, def: 42, ki: 5, icon: '🛡️' },
   { id: 'manto_kaioshin', name: 'Manto do Kaioshin', description: 'Slot: Torso. Melhor proteção vendida pronta na loja. Bônus: +60 DEF e +8 KI.', category: 'armor', price: 34000, minLevel: 22, def: 60, ki: 8, icon: '🦺' },
@@ -430,7 +430,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'cristal_baba', name: 'Cristal de Uma Estrela', description: 'Slot: Acessório I ou II. Amuleto que amplifica o fluxo de Ki. Bônus: +8 KI.', category: 'accessory', price: 2400, minLevel: 6, ki: 8, icon: '🔮' },
   { id: 'potara', name: 'Brinco Potara', description: 'Slot: Acessório I ou II. Relíquia divina focada em Ki e reação. Bônus: +14 KI e +6 VEL.', category: 'accessory', price: 8000, minLevel: 12, ki: 14, spd: 6, icon: '💍' },
   { id: 'coracao_dourado', name: 'Coração do Dragão Eterno', description: 'Slot: Acessório I ou II. Melhor acessório de combate vendido pronto. Bônus: +10 ATQ, +10 DEF, +10 KI e +10 VEL.', category: 'accessory', price: 26000, minLevel: 20, atk: 10, def: 10, ki: 10, spd: 10, icon: '💎' },
-  { id: 'radar_esferas', name: 'Radar das Esferas', description: 'Slot: Acessório I ou II. Aumenta a chance da Busca pelas Esferas em +30 pontos percentuais, respeitando o teto mundial de 50%.', category: 'accessory', price: 500, currency: 'crystal', minLevel: 1, dragonBallSearchChanceBonus: 0.30, icon: '📡' },
+  { id: 'radar_esferas', name: 'Rastreador do Horizonte', description: 'Slot: Acessório I ou II. Aumenta a chance da Busca pelas Chaves em +30 pontos percentuais, respeitando o teto mundial de 50%.', category: 'accessory', price: 500, currency: 'crystal', minLevel: 1, dragonBallSearchChanceBonus: 0.30, icon: '📡' },
 
   // Endgame comercial — quatro novos degraus por slot (Nv. 30/50/75/100).
   ...ENDGAME_SHOP_ITEMS,
@@ -438,8 +438,8 @@ export const SHOP_ITEMS: ShopItem[] = [
   // usados sob demanda. Conveniência premium: energia/vida instantâneas
   // e atributos extras numa economia onde energia é escassa.)
   { id: 'capsula_ki', name: 'Cápsula de Energia', description: 'Reabastece instantaneamente toda a sua energia de batalha.', category: 'consumable', price: 6, currency: 'crystal', minLevel: 1, effect: 'full_energy', icon: '🔋' },
-  { id: 'senzu', name: 'Feijão Senzu', description: 'Um único grão recupera 100% da vida. Cultivado na Torre de Karin.', category: 'consumable', price: 10, currency: 'crystal', minLevel: 1, effect: 'full_hp', icon: '🫘' },
-  { id: 'elixir_dragao', name: 'Elixir do Dragão', description: 'Poção mágica que desperta seu potencial oculto: +2 em TODOS os atributos (respeita o limite máximo).', category: 'consumable', price: 75, currency: 'crystal', minLevel: 5, effect: 'stat_boost', icon: '⚗️' },
+  { id: 'senzu', name: 'Fruto de Sylva', description: 'Fruto medicinal cultivado nos santuários de Sylva. Recupera 100% da vida.', category: 'consumable', price: 10, currency: 'crystal', minLevel: 1, effect: 'full_hp', icon: '🫘' },
+  { id: 'elixir_dragao', name: 'Elixir Primordial', description: 'Catalisador de Aether que desperta reservas ocultas: +2 em TODOS os atributos.', category: 'consumable', price: 75, currency: 'crystal', minLevel: 5, effect: 'stat_boost', icon: '⚗️' },
   // Equipamentos de treino (v0.9.2 — custam DIAMANTES; bônus permanente
   // por treino. Progressão de longo prazo paga com a moeda premium do jogo,
   // que se ganha jogando: missões diárias, conquistas e Ameaça Universal.)
@@ -447,9 +447,9 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'pulseiras_chumbo', name: 'Pulseiras de Chumbo', description: 'Peso clássico de quem leva a sério. Ajudam a suportar qualquer golpe.', category: 'training', price: 20, currency: 'crystal', minLevel: 2, trainBonus: { defense: 1 }, icon: '⛓️' },
   { id: 'tenes_ponderados', name: 'Tênis Ponderados', description: 'Corra com esses pesos nos pés e o mundo parecerá lento depois.', category: 'training', price: 20, currency: 'crystal', minLevel: 2, trainBonus: { speed: 1 }, icon: '👟' },
   { id: 'rosario_mental', name: 'Rosário do Treino Mental', description: 'Foque a mente, sinta o Ki fluir. Meditar também é treinar.', category: 'training', price: 20, currency: 'crystal', minLevel: 2, trainBonus: { ki: 1 }, icon: '📿' },
-  { id: 'gi_ponderado', name: 'Gi Ponderado do Mestre Kame', description: 'A casca de tartaruga nas costas: o treino que forjou lendas.', category: 'training', price: 60, currency: 'crystal', minLevel: 6, trainBonus: { all: 1 }, icon: '🐢' },
-  { id: 'sala_gravidade', name: 'Sala de Gravidade (Cápsula)', description: 'Gravidade 100x da Terra dentro de uma cápsula da Corporação Cápsula.', category: 'training', price: 180, currency: 'crystal', minLevel: 12, trainBonus: { all: 2 }, icon: '🛸' },
-  { id: 'sala_tempo_capsula', name: 'Sala do Tempo Pessoal (Cápsula)', description: 'Um dia aqui, um ano lá dentro. O investimento definitivo do guerreiro.', category: 'training', price: 450, currency: 'crystal', minLevel: 18, trainBonus: { all: 3 }, icon: '⏳' },
+  { id: 'gi_ponderado', name: 'Traje Ponderado do Mestre Orun', description: 'Traje de resistência usado pelos discípulos da Escola da Maré Astral.', category: 'training', price: 60, currency: 'crystal', minLevel: 6, trainBonus: { all: 1 }, icon: '🐢' },
+  { id: 'sala_gravidade', name: 'Câmara Gravitacional Portátil', description: 'Módulo portátil capaz de simular até 100× a gravidade padrão de Aethel Prime.', category: 'training', price: 180, currency: 'crystal', minLevel: 12, trainBonus: { all: 2 }, icon: '🛸' },
+  { id: 'sala_tempo_capsula', name: 'Câmara de Dilatação Temporal', description: 'Um dia aqui, um ano lá dentro. O investimento definitivo do guerreiro.', category: 'training', price: 450, currency: 'crystal', minLevel: 18, trainBonus: { all: 3 }, icon: '⏳' },
 ];
 
 export function getItem(id: string): ShopItem | undefined {
@@ -525,7 +525,7 @@ export function xpToNextLevel(level: number): number {
 
 /**
  * Teto absoluto do custo de treino — cabe com folga no Int32 usado por
- * Zeni/balanceBefore/balanceAfter no banco e no código. Nenhuma operação
+ * Créditos/balanceBefore/balanceAfter no banco e no código. Nenhuma operação
  * de treino pode produzir um valor fora do range seguro.
  */
 export const TRAINING_COST_CEILING = 50_000_000;
@@ -536,7 +536,7 @@ export const TRAINING_COST_CEILING = 50_000_000;
  *    cada ponto custa ~5% mais que o anterior;
  *  * fase 2 (> 150): 1,035× — endgame mais suave (a curva antiga de
  *    1,065× explodia: 5.787 no atributo 100, 134.888 no 150 e
- *    3.143.804 no 200, tornando o Elixir de 5.000 Zeni infinitamente
+ *    3.143.804 no 200, tornando o Elixir de 5.000 Créditos infinitamente
  *    melhor que treinar);
  *  * teto absoluto em 50 milhões — segurança de tipo.
  *
@@ -561,7 +561,7 @@ export function baseTrainingCost(statValue: number): number {
  * treino. Nunca domina o treino (antes custava 5.000 fixo e era
  * disparadamente melhor a partir do atributo ~65).
  *
- * O preço acompanha a progressão: base mínima 4.000 Zeni no início.
+ * O preço acompanha a progressão: base mínima 4.000 Créditos no início.
  */
 export function elixirPrice(stats: { strength: number; defense: number; speed: number; ki: number }): number {
   const trainingEquivalent = (['strength', 'defense', 'speed', 'ki'] as const).reduce(
