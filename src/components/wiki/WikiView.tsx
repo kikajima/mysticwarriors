@@ -431,8 +431,8 @@ export function WikiView() {
                 <span aria-hidden className="text-5xl">🐉</span>
                 <h2 className="font-heading text-amber-100 text-lg mt-3">Nenhum resultado para &quot;{query.trim()}&quot;</h2>
                 <p className="text-sm text-amber-200/60 mt-1.5">
-                  Nem Shenlon encontrou essa mecânica. Tente outro termo — ex.: <em>ímpeto</em>, <em>zenkai</em>,{' '}
-                  <em>torneio</em>, <em>esferas</em> — ou{' '}
+                  Nem o Oráculo do Horizonte encontrou essa mecânica. Tente outro termo — ex.: <em>ímpeto</em>, <em>zenkai</em>,{' '}
+                  <em>torneio</em>, <em>chaves</em> — ou{' '}
                   <button type="button" onClick={() => setQuery('')} className="underline hover:text-amber-200">
                     veja o índice completo
                   </button>
