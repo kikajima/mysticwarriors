@@ -310,7 +310,8 @@ export async function cancelMarketListing(
     data: {
       status: 'cancelled',
       cancelledAt: new Date(),
-      quantityRemaining: 0,
+      // Mantém a quantidade não vendida no histórico; ela é devolvida
+      // ao inventário logo abaixo e o status impede novas compras.
     },
   });
   if (claimed.count === 0) {
