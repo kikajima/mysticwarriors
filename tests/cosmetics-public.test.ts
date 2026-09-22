@@ -21,7 +21,7 @@ describe('Cosméticos sociais e identidade pública', () => {
     expect(parsed.chat).toBe('chat_ki_dourado');
   });
 
-  test('Pose Suprema e Gi Branco Mestre agora possuem efeito visual substancial', () => {
+  test('Pose Suprema e Traje Branco do Mestre possuem efeito visual substancial', () => {
     const pose = getCosmetic('pose_suprema');
     const outfit = getCosmetic('roupa_gi_branco');
 

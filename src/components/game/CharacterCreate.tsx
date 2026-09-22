@@ -114,7 +114,7 @@ export function CharacterCreate({
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submit()}
               maxLength={20}
-              placeholder="Ex: Gotan, Príncipe Escarlate, Kurira do Deserto..."
+              placeholder="Ex: Kael Voran, Maelis, Tarek do Horizonte..."
               className="flex-1 min-w-0 bg-black/40 border border-amber-800/50 rounded-lg px-4 py-3 text-amber-100 placeholder:text-amber-200/30 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-900/50 font-heading"
             />
             <button

@@ -172,7 +172,7 @@ export function ShopPanel({
 
   return (
     <div className="space-y-6">
-      <SectionTitle icon="🏪">Loja do Mestre Kame</SectionTitle>
+      <SectionTitle icon="🏪">Mercado de Aethel Prime</SectionTitle>
 
       <GameCard className="p-4 flex flex-wrap items-center justify-between gap-3">
 
