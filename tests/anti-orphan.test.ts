@@ -81,6 +81,35 @@ describe('anti-orfão · camada hermética (cascates do schema sob o reset)', ()
       await client.requestDedup.create({ data: { playerId: player.id, requestId: 'req-orphan-1' } });
       await client.activity.create({ data: { playerId: player.id, kind: 'train', endsAt: new Date(Date.now() + 60_000) } });
       await client.inventoryStack.create({ data: { playerId: player.id, itemId: 'erva_medicinal', quantity: 2 } });
+      const marketBuyer = await client.player.create({
+        data: { name: 'QA Market Buyer', race: 'humano' },
+      });
+      const marketListing = await client.marketListing.create({
+        data: {
+          sellerId: player.id,
+          kind: 'material',
+          itemId: 'erva_medicinal',
+          itemName: 'Erva Medicinal',
+          itemIcon: '🌿',
+          currency: 'zeni',
+          unitPrice: 10,
+          quantity: 1,
+          quantityRemaining: 0,
+          status: 'sold',
+          soldAt: new Date(),
+        },
+      });
+      await client.marketTrade.create({
+        data: {
+          listingId: marketListing.id,
+          buyerId: marketBuyer.id,
+          sellerId: player.id,
+          quantity: 1,
+          unitPrice: 10,
+          totalPrice: 10,
+          currency: 'zeni',
+        },
+      });
       await client.craftJob.create({
         data: {
           playerId: player.id,
@@ -106,6 +135,7 @@ describe('anti-orfão · camada hermética (cascates do schema sob o reset)', ()
         client.achievementState.count(), client.seasonRankEntry.count(), client.purchase.count(),
         client.cosmeticOwned.count(), client.requestDedup.count(), client.activity.count(),
         client.guildDonation.count(), client.worldBossDamage.count(),
+        client.marketListing.count(), client.marketTrade.count(),
       ]);
       expect(liveCounts.every((c) => c > 0)).toBe(true);
 
@@ -139,6 +169,8 @@ describe('anti-orfão · camada hermética (cascates do schema sob o reset)', ()
       expect(await client.achievementState.count()).toBe(0);
       expect(await client.requestDedup.count()).toBe(0);
       expect(await client.activity.count()).toBe(0);
+      expect(await client.marketListing.count()).toBe(0);
+      expect(await client.marketTrade.count()).toBe(0);
       // Season é estrutura do sistema: fica (a entrada de ranking dela caiu com o player)
       expect(await client.season.count()).toBe(1);
       expect(await client.seasonRankEntry.count()).toBe(0);
