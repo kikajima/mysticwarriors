@@ -743,7 +743,7 @@ export function simulateBattle(
   let playerAberturas = 0;
   let enemyAberturas = 0;
 
-  // v0.9.13 — ÍMPETO (Cap. 7 do ASCENSÃO Z): começa em 1; Espírito de
+  // v0.9.13 — ÍMPETO (Cap. 7 do ESCALAS DE CAELUM): começa em 1; Espírito de
   // Superação dá +1 a quem enfrenta oponente ≥1 Escala acima; ganhos por
   // gatilho (golpe poderoso recebido, Abertura, metade da Vida); gastos
   // determinísticos (combo, defesa heroica, Quebra de Limite).
@@ -975,7 +975,7 @@ export function simulateBattle(
       }
     }
 
-    // ===== 6) ARMADURA DE ESCALA — regras 5.1/5.3 do ASCENSÃO Z =====
+    // ===== 6) ARMADURA DE ESCALA — regras 5.1/5.3 do ESCALAS DE CAELUM =====
     // Diferença de escala ajusta o dano: superior +7%/escala; inferior
     // atravessa Armadura de Escala (−12%/nível, máx. 3). Com 4+ escalas
     // de diferença os golpes do azarão são ESMAGADOS (×0.35) — MAS
@@ -1418,7 +1418,7 @@ export function simulateBattle(
     enemyMaxHp: enemy.maxHp,
     techniquesUsed: Array.from(playerTechniquesUsed),
     playerTechniquesUsed: Array.from(playerTechniquesUsed),
-    // v0.9.17 — conquistas narrativas (ASCENSÃO Z):
+    // v0.9.17 — conquistas narrativas (ESCALAS DE CAELUM):
     // Milagre no Limite = venceu com a Quebra de Limite ativada;
     // David vs Golias = Reposicionamento exitoso contra 2+ escalas acima
     miracleWin: won && playerQuebraUsed,
