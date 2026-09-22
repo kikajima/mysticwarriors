@@ -5,7 +5,7 @@
 // no motor desde a v0.9.13: Estender Combo (1), Defesa Heroica (2) e
 // Quebra de Limite (Cap. 29, 3). As duas entradas RESTANTES de 1 Ímpeto
 // chegam agora como TALENTOS COMPRÁVEIS — privilégios de combate que o
-// guerreiro desbloqueia na Loja com Zeni (o livro os trata como opções
+// guerreiro desbloqueia na Loja com Créditos (o livro os trata como opções
 // abertas a todos; aqui a progressão econômica os distribui):
 //
 //   • REPETIÇÃO DO DESTINO ("Repetir um d10"): quando seu golpe é
@@ -35,7 +35,7 @@ export interface TalentDef {
   description: string;
   /** Resumo curto do gatilho (UI: badge do card de batalha). */
   effect: string;
-  /** Custo em Zeni (Loja). */
+  /** Custo em Créditos (Loja). */
   price: number;
   /** Nível mínimo do guerreiro. */
   minLevel: number;
@@ -113,7 +113,7 @@ export function validateTalentPurchase(
     return { ok: false, reason: `Nível ${talent.minLevel} necessário para dominar ${talent.name}.` };
   }
   if (zeni < talent.price) {
-    return { ok: false, reason: `Zeni insuficiente — ${talent.name} custa ${talent.price.toLocaleString('pt-BR')} Zeni.` };
+    return { ok: false, reason: `Créditos insuficiente — ${talent.name} custa ${talent.price.toLocaleString('pt-BR')} Créditos.` };
   }
   return {
     ok: true,
