@@ -424,6 +424,7 @@ export interface AchievementView {
 export type MarketCurrency = 'zeni' | 'crystal';
 export type MarketListingKind = 'material' | 'equipment';
 export type MarketListingStatus = 'active' | 'sold' | 'cancelled';
+export type MarketBuyOrderStatus = 'active' | 'filled' | 'cancelled';
 
 export interface MarketListingView {
   id: string;
@@ -447,26 +448,56 @@ export interface MarketListingView {
   isMine: boolean;
 }
 
-export interface MarketSellableAsset {
+export interface MarketBuyOrderView {
+  id: string;
+  buyerId: string;
+  buyerName: string;
+  buyerRace: RaceId;
+  buyerAvatarUrl: string | null;
+  buyerCosmetics: PublicCosmeticsView;
+  kind: MarketListingKind;
+  itemId: string;
+  itemName: string;
+  itemIcon: string;
+  currency: MarketCurrency;
+  unitPrice: number;
+  quantity: number;
+  quantityRemaining: number;
+  status: MarketBuyOrderStatus;
+  createdAt: string;
+  filledAt: string | null;
+  cancelledAt: string | null;
+  isMine: boolean;
+}
+
+export interface MarketTradableAsset {
   kind: MarketListingKind;
   itemId: string;
   name: string;
   icon: string;
-  quantity: number;
   description?: string;
   category?: string;
   rarity?: string;
   tier?: number;
 }
 
+export interface MarketSellableAsset extends MarketTradableAsset {
+  quantity: number;
+}
+
 export interface MarketPage {
   listings: MarketListingView[];
   myListings: MarketListingView[];
+  buyOrders: MarketBuyOrderView[];
+  myBuyOrders: MarketBuyOrderView[];
   sellable: MarketSellableAsset[];
+  catalog: MarketTradableAsset[];
   total: number;
+  buyOrderTotal: number;
   page: number;
   pageSize: number;
   activeLimit: number;
+  buyOrderActiveLimit: number;
 }
 
 // ===== Guildas =====
