@@ -739,7 +739,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                     <div className="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2">
-                      <p className="text-amber-200/40 flex items-center gap-1"><Coins className="w-3 h-3" /> Zeni</p>
+                      <p className="text-amber-200/40 flex items-center gap-1"><Coins className="w-3 h-3" /> Créditos</p>
                       <p className="text-yellow-300 font-heading text-base tabular-nums">{selected.zeni.toLocaleString('pt-BR')}</p>
                     </div>
                     <div className="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2">
@@ -764,7 +764,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                     </h3>
                     <div className="flex flex-wrap items-end gap-3">
                       <label className="text-xs text-amber-200/60">
-                        Zeni
+                        Créditos
                         <input value={fZeni} onChange={(e) => setFZeni(e.target.value)} inputMode="numeric" placeholder="+5000" className={`${inputClass} block mt-1`} />
                       </label>
                       <label className="text-xs text-amber-200/60">
@@ -1412,7 +1412,7 @@ function GuildsTab({
               </div>
             </div>
             <div className="text-[11px] text-amber-200/60 leading-relaxed">
-              Doações históricas: <b className="text-yellow-300">{g.totalDonated.toLocaleString('pt-BR')} Zeni</b>{' '}
+              Doações históricas: <b className="text-yellow-300">{g.totalDonated.toLocaleString('pt-BR')} Créditos</b>{' '}
               ({g.donationCount} registro(s)) · convites pendentes: {g.pendingInvites} · solicitações pendentes:{' '}
               {g.pendingRequests}
             </div>
@@ -1754,7 +1754,7 @@ function DeleteGuildModal({
                 {target.memberNames.join(', ') || '—'} — todos ficam SEM guilda, estado íntegro, sem erro.
               </p>
               <p>
-                <b className="text-red-300">Doações históricas:</b> {target.totalDonated.toLocaleString('pt-BR')} Zeni
+                <b className="text-red-300">Doações históricas:</b> {target.totalDonated.toLocaleString('pt-BR')} Créditos
                 em {target.donationCount} registro(s) — TODO o histórico é apagado (erasure total).
               </p>
               <p>
