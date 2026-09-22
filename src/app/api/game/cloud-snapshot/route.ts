@@ -46,7 +46,7 @@ export async function GET(request: Request) {
         nome: p.name,
         raca: p.race,
         nivel: p.level,
-        // poder oficial do scouter (mesma fórmula da ficha do jogador)
+        // poder oficial do visor de fluxo (mesma fórmula da ficha do jogador)
         poder: derived.power,
         vitorias: p.battlesWon,
         derrotas: p.battlesLost,
