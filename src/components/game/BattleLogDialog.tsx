@@ -429,7 +429,7 @@ function KiBar({ name, ki, max, color }: { name: string; ki: number; max: number
 }
 
 /**
- * v0.9.13 — Medidor de ÍMPETO (Cap. 7 do ASCENSÃO Z): chamas 0–6
+ * v0.9.13 — Medidor de ÍMPETO (Cap. 7 do ESCALAS DE CAELUM): chamas 0–6
  * alimentadas pelo instantâneo de cada round do servidor. A chama
  * "acesa" tem brilho dourado; a apagada é um traço escuro — a leitura
  * é instantânea mesmo sem ler números (acessibilidade: aria-label
