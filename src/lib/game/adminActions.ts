@@ -360,7 +360,7 @@ export async function buildCloudCharacterRow(playerId: string): Promise<AdminClo
 
 type Tx = Prisma.TransactionClient;
 
-async function adjustCréditos(tx: Tx, playerId: string, delta: number, accountId: string | null): Promise<void> {
+async function adjustZeni(tx: Tx, playerId: string, delta: number, accountId: string | null): Promise<void> {
   const fresh = await tx.player.findUniqueOrThrow({ where: { id: playerId }, select: { zeni: true } });
   const after = clampAdminInt(fresh.zeni + delta, 0, ADMIN_LIMITS.zeni);
   if (after === fresh.zeni) return;
@@ -448,7 +448,7 @@ export async function applyAdminActionLocal(input: AdminActionInput): Promise<Ad
         if (input.action === 'grant') {
           const parts: string[] = [];
           if (input.zeniDelta) {
-            await adjustCréditos(tx, fresh.id, clampAdminInt(input.zeniDelta, -ADMIN_LIMITS.maxDelta, ADMIN_LIMITS.maxDelta), accountId);
+            await adjustZeni(tx, fresh.id, clampAdminInt(input.zeniDelta, -ADMIN_LIMITS.maxDelta, ADMIN_LIMITS.maxDelta), accountId);
             parts.push('Créditos ajustado');
           }
           if (input.crystalDelta) {
