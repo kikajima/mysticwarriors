@@ -344,11 +344,11 @@ function BattleContent({
                 </div>
               ) : null}
               <p className="text-sm text-amber-200/80 mb-3">
-                +{battle.zeniGain.toLocaleString('pt-BR')} Zeni • +{battle.xpGain.toLocaleString('pt-BR')} XP
+                +{battle.zeniGain.toLocaleString('pt-BR')} Créditos • +{battle.xpGain.toLocaleString('pt-BR')} XP
                 {battle.crystalsGain ? ` • +${battle.crystalsGain} 💎` : ''}
-                {battle.zeniStolen ? ` • roubou ${battle.zeniStolen.toLocaleString('pt-BR')} Zeni` : ''}
+                {battle.zeniStolen ? ` • roubou ${battle.zeniStolen.toLocaleString('pt-BR')} Créditos` : ''}
                 {battle.dragonBallStolen
-                  ? ` • roubou ${battle.dragonBallStolenStar ? `a Esfera de ${battle.dragonBallStolenStar} estrela${battle.dragonBallStolenStar === 1 ? '' : 's'}` : `${battle.dragonBallStolen} Esfera do Dragão`}`
+                  ? ` • roubou ${battle.dragonBallStolenStar ? `a Esfera de ${battle.dragonBallStolenStar} estrela${battle.dragonBallStolenStar === 1 ? '' : 's'}` : `${battle.dragonBallStolen} Chave do Horizonte`}`
                   : ''}
               </p>
             </div>
