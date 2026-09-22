@@ -12,22 +12,31 @@ import {
 import {
   EQUIPPED_SLOTS,
   EQUIPMENT_SLOTS,
+  type MarketBuyOrderView,
   type MarketCurrency,
   type MarketListingKind,
   type MarketListingView,
   type MarketSellableAsset,
+  type MarketTradableAsset,
 } from '@/lib/game/types';
 import {
   getItem,
   getProfessionMaterial,
+  PROFESSION_MATERIALS,
+  SHOP_ITEMS,
   SHOP_MAX_STACK,
 } from '@/lib/game/content/world';
-import { getCraftStackItem } from '@/lib/game/content/crafting';
+import {
+  CRAFTED_ITEMS,
+  CRAFT_STACK_ITEMS,
+  getCraftStackItem,
+} from '@/lib/game/content/crafting';
 import { publicCosmeticsFromRaw } from '@/lib/game/content/cosmetics';
 
 type Tx = Prisma.TransactionClient;
 
 export const MARKET_ACTIVE_LISTING_LIMIT = 20;
+export const MARKET_ACTIVE_BUY_ORDER_LIMIT = 20;
 export const MARKET_MAX_UNIT_PRICE = 100_000_000;
 export const MARKET_MAX_EQUIPMENT_QUANTITY = 99;
 export const MARKET_MAX_MATERIAL_QUANTITY = 999;
@@ -456,6 +465,324 @@ export async function buyMarketListing(
   });
 
   return { itemName: listing.itemName, totalPrice, currency };
+}
+
+export function marketTradableAssets(): MarketTradableAsset[] {
+  const ids = new Set<string>([
+    ...PROFESSION_MATERIALS.map((item) => item.id),
+    ...CRAFT_STACK_ITEMS.map((item) => item.id),
+    ...SHOP_ITEMS.map((item) => item.id),
+    ...CRAFTED_ITEMS.map((item) => item.id),
+  ]);
+
+  const assets: MarketTradableAsset[] = [];
+  for (const itemId of ids) {
+    const asset = resolveMarketAsset(itemId);
+    if (!asset) continue;
+    assets.push({
+      kind: asset.kind,
+      itemId: asset.itemId,
+      name: asset.name,
+      icon: asset.icon,
+      description: asset.description,
+      category: asset.category,
+      rarity: asset.rarity,
+      tier: asset.tier,
+    });
+  }
+
+  return assets.sort(
+    (a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name, 'pt-BR')
+  );
+}
+
+export async function createMarketBuyOrder(
+  tx: Tx,
+  buyerId: string,
+  input: {
+    itemId: string;
+    quantity: number;
+    currency: MarketCurrency;
+    unitPrice: number;
+  }
+) {
+  const buyer = await tx.player.findUniqueOrThrow({ where: { id: buyerId } });
+  if (buyer.isBot) throw new ApiError('VALIDATION_ERROR', 'Bots não podem usar o mercado.');
+
+  const asset = resolveMarketAsset(input.itemId);
+  if (!asset) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      'Só materiais de craft e equipamentos podem receber propostas de compra.'
+    );
+  }
+  validateListingInput(asset, input.quantity, input.currency, input.unitPrice);
+
+  const active = await tx.marketBuyOrder.count({
+    where: { buyerId, status: 'active' },
+  });
+  if (active >= MARKET_ACTIVE_BUY_ORDER_LIMIT) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      `Você já possui ${MARKET_ACTIVE_BUY_ORDER_LIMIT} propostas de compra ativas. Cancele ou aguarde uma venda.`
+    );
+  }
+
+  const totalPrice = input.unitPrice * input.quantity;
+  const order = await tx.marketBuyOrder.create({
+    data: {
+      buyerId,
+      kind: asset.kind,
+      itemId: asset.itemId,
+      itemName: asset.name,
+      itemIcon: asset.icon,
+      currency: input.currency,
+      unitPrice: input.unitPrice,
+      quantity: input.quantity,
+      quantityRemaining: input.quantity,
+      status: 'active',
+    },
+  });
+
+  // A moeda sai da carteira agora e fica economicamente reservada à ordem.
+  // Se a ordem for cancelada, apenas o saldo ainda não preenchido é devolvido.
+  await spendCurrency(tx, buyer.id, input.currency, totalPrice, {
+    type: 'spend',
+    source: 'market_buy_order_escrow',
+    accountId: buyer.accountId,
+    metadata: {
+      orderId: order.id,
+      itemId: asset.itemId,
+      quantity: input.quantity,
+      unitPrice: input.unitPrice,
+      totalPrice,
+    },
+  });
+
+  return order;
+}
+
+export async function cancelMarketBuyOrder(
+  tx: Tx,
+  buyerId: string,
+  orderId: string
+): Promise<{ refunded: number; currency: MarketCurrency }> {
+  const order = await tx.marketBuyOrder.findUnique({ where: { id: orderId } });
+  if (!order || order.buyerId !== buyerId) {
+    throw new ApiError('NOT_FOUND', 'Proposta de compra não encontrada.');
+  }
+  if (order.status !== 'active' || order.quantityRemaining <= 0) {
+    throw new ApiError('VALIDATION_ERROR', 'Esta proposta não está mais ativa.');
+  }
+
+  const buyer = await tx.player.findUniqueOrThrow({ where: { id: buyerId } });
+  const currency = order.currency as MarketCurrency;
+  const refund = order.unitPrice * order.quantityRemaining;
+  const currentBalance = currency === 'zeni' ? buyer.zeni : buyer.crystals;
+  if (currentBalance + refund > CURRENCY_CAP) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      'Seu saldo está próximo do limite. Gaste um pouco desta moeda antes de cancelar para receber o escrow integralmente.'
+    );
+  }
+
+  const remaining = order.quantityRemaining;
+  const claimed = await tx.marketBuyOrder.updateMany({
+    where: { id: order.id, buyerId, status: 'active', quantityRemaining: remaining },
+    data: { status: 'cancelled', cancelledAt: new Date() },
+  });
+  if (claimed.count === 0) {
+    throw new ApiError('CONFLICT', 'A proposta mudou enquanto você cancelava. Atualize o mercado.');
+  }
+
+  await addCurrency(tx, buyer.id, currency, refund, {
+    type: 'refund',
+    source: 'market_buy_order_refund',
+    accountId: buyer.accountId,
+    metadata: {
+      orderId: order.id,
+      itemId: order.itemId,
+      quantity: remaining,
+      unitPrice: order.unitPrice,
+      totalPrice: refund,
+    },
+  });
+
+  return { refunded: refund, currency };
+}
+
+export async function fulfillMarketBuyOrder(
+  tx: Tx,
+  sellerId: string,
+  orderId: string,
+  quantity: number
+): Promise<{ itemName: string; totalPrice: number; currency: MarketCurrency }> {
+  const order = await tx.marketBuyOrder.findUnique({
+    where: { id: orderId },
+    include: { buyer: true },
+  });
+  if (!order || order.status !== 'active') {
+    throw new ApiError('NOT_FOUND', 'Esta proposta de compra não está mais disponível.');
+  }
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > order.quantityRemaining) {
+    throw new ApiError('VALIDATION_ERROR', 'Quantidade inválida para esta proposta.');
+  }
+  if (sellerId === order.buyerId) {
+    throw new ApiError('VALIDATION_ERROR', 'Você não pode atender sua própria proposta.');
+  }
+
+  const seller = await tx.player.findUniqueOrThrow({ where: { id: sellerId } });
+  if (
+    seller.accountId &&
+    order.buyer.accountId &&
+    seller.accountId === order.buyer.accountId
+  ) {
+    throw new ApiError('VALIDATION_ERROR', 'Personagens da mesma conta não podem negociar entre si.');
+  }
+
+  const asset = resolveMarketAsset(order.itemId);
+  if (!asset || asset.kind !== order.kind) {
+    throw new ApiError('CONFLICT', 'O item desta proposta não é mais negociável.');
+  }
+
+  const currency = order.currency as MarketCurrency;
+  const totalPrice = order.unitPrice * quantity;
+  if (!Number.isSafeInteger(totalPrice) || totalPrice <= 0 || totalPrice > CURRENCY_CAP) {
+    throw new ApiError('VALIDATION_ERROR', 'Valor total inválido.');
+  }
+
+  const sellerBalance = currency === 'zeni' ? seller.zeni : seller.crystals;
+  if (sellerBalance + totalPrice > CURRENCY_CAP) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      'Você está no limite desta moeda. Gaste parte do saldo antes de aceitar a proposta.'
+    );
+  }
+
+  // Reserva primeiro as unidades da ordem. Toda a operação abaixo é uma
+  // transação única: se inventário, entrega ou crédito falharem, a reserva volta.
+  const claimed = await tx.marketBuyOrder.updateMany({
+    where: {
+      id: order.id,
+      status: 'active',
+      quantityRemaining: { gte: quantity },
+    },
+    data: { quantityRemaining: { decrement: quantity } },
+  });
+  if (claimed.count === 0) {
+    throw new ApiError('CONFLICT', 'Outro vendedor atendeu estas unidades primeiro. Atualize o mercado.');
+  }
+
+  await removeFromSellerEscrow(tx, seller, asset, quantity);
+  await restoreEscrow(tx, order.buyer, asset.kind, asset.itemId, quantity);
+
+  // O comprador já pagou quando criou a ordem; aqui o escrow é liberado
+  // diretamente ao vendedor, sem um segundo débito.
+  await addCurrency(tx, seller.id, currency, totalPrice, {
+    type: 'earn',
+    source: 'market_buy_order_sale',
+    accountId: seller.accountId,
+    metadata: {
+      orderId: order.id,
+      buyerId: order.buyerId,
+      itemId: order.itemId,
+      quantity,
+      unitPrice: order.unitPrice,
+      totalPrice,
+    },
+  });
+
+  const after = await tx.marketBuyOrder.findUniqueOrThrow({
+    where: { id: order.id },
+    select: { quantityRemaining: true },
+  });
+  if (after.quantityRemaining === 0) {
+    await tx.marketBuyOrder.update({
+      where: { id: order.id },
+      data: { status: 'filled', filledAt: new Date() },
+    });
+  }
+
+  await tx.marketBuyOrderTrade.create({
+    data: {
+      orderId: order.id,
+      buyerId: order.buyerId,
+      sellerId: seller.id,
+      quantity,
+      unitPrice: order.unitPrice,
+      totalPrice,
+      currency,
+    },
+  });
+
+  const priceText =
+    currency === 'crystal'
+      ? `${totalPrice} 💎`
+      : `${totalPrice.toLocaleString('pt-BR')} Zeni`;
+  await createPlayerNotification(tx, {
+    playerId: order.buyerId,
+    kind: 'market_buy_order_filled',
+    title: '🤝 Proposta atendida',
+    message: `${seller.name} vendeu ${quantity}× ${order.itemName} para sua proposta por ${priceText}.`,
+    metadata: {
+      orderId: order.id,
+      sellerId: seller.id,
+      itemId: order.itemId,
+      quantity,
+      currency,
+      totalPrice,
+    },
+  });
+
+  return { itemName: order.itemName, totalPrice, currency };
+}
+
+export function marketBuyOrderToView(
+  order: {
+    id: string;
+    buyerId: string;
+    kind: string;
+    itemId: string;
+    itemName: string;
+    itemIcon: string;
+    currency: string;
+    unitPrice: number;
+    quantity: number;
+    quantityRemaining: number;
+    status: string;
+    createdAt: Date;
+    filledAt: Date | null;
+    cancelledAt: Date | null;
+    buyer: {
+      name: string;
+      race: string;
+      avatarUrl: string | null;
+      cosmeticsEquipped: string | null;
+    };
+  },
+  viewerId: string
+): MarketBuyOrderView {
+  return {
+    id: order.id,
+    buyerId: order.buyerId,
+    buyerName: order.buyer.name,
+    buyerRace: order.buyer.race as MarketBuyOrderView['buyerRace'],
+    buyerAvatarUrl: order.buyer.avatarUrl,
+    buyerCosmetics: publicCosmeticsFromRaw(order.buyer.cosmeticsEquipped),
+    kind: order.kind as MarketListingKind,
+    itemId: order.itemId,
+    itemName: order.itemName,
+    itemIcon: order.itemIcon,
+    currency: order.currency as MarketCurrency,
+    unitPrice: order.unitPrice,
+    quantity: order.quantity,
+    quantityRemaining: order.quantityRemaining,
+    status: order.status as MarketBuyOrderView['status'],
+    createdAt: order.createdAt.toISOString(),
+    filledAt: order.filledAt?.toISOString() ?? null,
+    cancelledAt: order.cancelledAt?.toISOString() ?? null,
+    isMine: order.buyerId === viewerId,
+  };
 }
 
 export function marketListingToView(
