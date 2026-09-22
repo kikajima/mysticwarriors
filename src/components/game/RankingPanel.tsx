@@ -478,7 +478,7 @@ function GuildRanking({
                     </Chip>
                   )}
                   <p className="mt-1 text-[10px] text-amber-200/35">
-                    {guild.totalDonated.toLocaleString('pt-BR')} Zeni doados
+                    {guild.totalDonated.toLocaleString('pt-BR')} Créditos doados
                   </p>
                 </td>
                 <td className="px-3 py-2.5 text-right font-heading text-yellow-300">
@@ -523,7 +523,7 @@ function GuildRanking({
                 {guild.leaderName}
               </p>
               <p className="text-[10px] text-amber-200/30">
-                {guild.totalDonated.toLocaleString('pt-BR')} Zeni doados
+                {guild.totalDonated.toLocaleString('pt-BR')} Créditos doados
               </p>
             </div>
           </div>
