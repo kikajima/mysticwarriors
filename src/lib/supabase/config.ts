@@ -4,18 +4,22 @@
 // Usa SOMENTE as credenciais PUBLICÁVEIS do cliente Supabase.
 // Nunca mantenha service_role, chaves privadas ou segredos aqui.
 //
-// As variáveis NEXT_PUBLIC_* são inlined no bundle em build time.
-// Em produção/dev elas são obrigatórias: não existe fallback para um
-// projeto real, evitando acoplamento e exposição acidental.
+// NEXT_PUBLIC_* é inlined no bundle do navegador durante `next build`.
+// Por isso as referências abaixo precisam ser ESTÁTICAS
+// (process.env.NEXT_PUBLIC_...), nunca process.env[name].
+//
+// Em produção/dev elas são obrigatórias e devem existir ANTES do build.
+// Testes unitários usam placeholders neutros, nunca um projeto real.
 // =====================================================================
 
-function requiredPublicEnv(name: 'NEXT_PUBLIC_SUPABASE_URL' | 'NEXT_PUBLIC_SUPABASE_ANON_KEY'): string {
-  const value = process.env[name]?.trim();
-  if (value) return value;
+function requiredPublicEnv(
+  name: 'NEXT_PUBLIC_SUPABASE_URL' | 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  value: string | undefined,
+): string {
+  const normalized = value?.trim();
+  if (normalized) return normalized;
 
-  // Testes unitários e a fase de build não precisam tocar no Supabase.
-  // Use placeholders neutros, nunca credenciais/projeto reais.
-  if (process.env.NODE_ENV === 'test' || process.env.MW_BUILD_PHASE === '1') {
+  if (process.env.NODE_ENV === 'test') {
     return name === 'NEXT_PUBLIC_SUPABASE_URL'
       ? 'https://example.supabase.co'
       : 'test-publishable-placeholder';
@@ -24,9 +28,15 @@ function requiredPublicEnv(name: 'NEXT_PUBLIC_SUPABASE_URL' | 'NEXT_PUBLIC_SUPAB
   throw new Error(`Variável obrigatória ausente: ${name}`);
 }
 
-export const SUPABASE_URL = requiredPublicEnv('NEXT_PUBLIC_SUPABASE_URL');
+export const SUPABASE_URL = requiredPublicEnv(
+  'NEXT_PUBLIC_SUPABASE_URL',
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+);
 
-export const SUPABASE_PUBLISHABLE_KEY = requiredPublicEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+export const SUPABASE_PUBLISHABLE_KEY = requiredPublicEnv(
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+);
 
 /**
  * Versão do contrato de progresso na nuvem.

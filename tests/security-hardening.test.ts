@@ -84,10 +84,13 @@ describe('Release security hardening', () => {
     expect(auth).toContain('data: { token: hashed }');
   });
 
-  test('Supabase exige configuração explícita e não embute projeto real', async () => {
+  test('Supabase exige configuração explícita e usa referências públicas estáticas', async () => {
     const config = await Bun.file(`${ROOT}/src/lib/supabase/config.ts`).text();
-    expect(config).toContain("requiredPublicEnv('NEXT_PUBLIC_SUPABASE_URL')");
-    expect(config).toContain("requiredPublicEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')");
+    expect(config).toContain("'NEXT_PUBLIC_SUPABASE_URL'");
+    expect(config).toContain("'NEXT_PUBLIC_SUPABASE_ANON_KEY'");
+    expect(config).toContain('process.env.NEXT_PUBLIC_SUPABASE_URL');
+    expect(config).toContain('process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    expect(config).not.toContain('const value = process.env[name]');
     expect(config).toContain("'https://example.supabase.co'");
     expect(config).not.toMatch(/https:\/\/(?!example\.)[a-z0-9]{15,}\.supabase\.co/);
     expect(config).not.toMatch(/sb_publishable_[A-Za-z0-9_-]{20,}/);
