@@ -13,7 +13,7 @@ import { PublicPlayerProfileDialog } from './PublicPlayerProfileDialog';
 import { BOSS_ATTACK_ENERGY_COST } from '@/lib/game/rules';
 import { Crosshair, Heart, Shield, Swords, Skull, Timer, Zap } from 'lucide-react';
 
-/** Poder de scouter do oponente — fonte ÚNICA compartilhada com a engine
+/** Poder do Visor de Fluxo do oponente — fonte ÚNICA compartilhada com a engine
  * (Armadura de Escala, regra 5.1): o que o card mostra é o que o duelo usa. */
 const enemyPower = npcCombatPower;
 
