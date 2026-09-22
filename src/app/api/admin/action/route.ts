@@ -143,8 +143,8 @@ export async function POST(request: Request) {
       if (current !== null) {
         if (input.action === 'grant_dragon_ball' || (input.action === 'grant' && input.ballDelta)) {
           message =
-            'Esferas do Dragão são globais e não podem ser alteradas apenas pelo snapshot da nuvem. ' +
-            'O personagem precisa existir no servidor atual para receber uma estrela específica.';
+            'Chaves do Horizonte são globais e não podem ser alteradas apenas pelo snapshot da nuvem. ' +
+            'O personagem precisa existir no servidor atual para receber uma Chave específica.';
         } else {
           const patched =
             input.action === 'reset'
