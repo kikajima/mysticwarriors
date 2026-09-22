@@ -558,10 +558,10 @@ function DragonBallSearchTab({
               </div>
             )}
             <div className="flex flex-wrap gap-2 mt-3">
-              <Chip className="bg-yellow-950/50 text-yellow-300 border-yellow-800/50">🔮 {player.dragonBalls}/7 coletadas</Chip>
+              <Chip className="bg-yellow-950/50 text-yellow-300 border-yellow-800/50">◇ {player.dragonBalls}/7 Chaves reunidas</Chip>
               {freeBalls !== undefined && (
                 <Chip className={noFreeBalls ? 'bg-red-950/50 text-red-300 border-red-800/50' : 'bg-emerald-950/50 text-emerald-300 border-emerald-800/50'}>
-                  🌍 {freeBalls}/7 espalhadas
+                  🌍 {freeBalls}/7 Chaves livres
                 </Chip>
               )}
               <Chip className="bg-sky-950/50 text-sky-300 border-sky-800/50">🎯 {Math.round(chance * 100)}% de chance</Chip>
@@ -574,7 +574,7 @@ function DragonBallSearchTab({
             disabled={busy || complete || noFreeBalls || !!search}
             onClick={() => void onAction({ type: 'search_dragon_ball', hours: selectedHours })}
           >
-            {complete ? 'Conjunto completo' : noFreeBalls ? 'Nenhuma esfera espalhada' : search ? 'Busca em andamento' : `Iniciar busca (${selectedHours}h)`}
+            {complete ? 'Conjunto completo' : noFreeBalls ? 'Nenhuma Chave livre' : search ? 'Busca em andamento' : `Iniciar busca (${selectedHours}h)`}
           </GameButton>
         </div>
       </GameCard>
