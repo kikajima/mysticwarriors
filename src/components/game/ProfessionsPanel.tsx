@@ -507,7 +507,7 @@ function DragonBallSearchTab({
           <div className="flex-1">
             <h3 className="font-heading text-xl text-amber-100">Busca pelas Chaves</h3>
             <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">
-              Escolha quanto tempo seu radar ficará procurando. A busca não gasta energia. A chance base cresce até 20%; bônus dos dois espaços de acessório podem elevar a chance total até 50%. Cada busca encontra no máximo uma esfera e só pode começar se existir uma Chave sem dono no mundo.
+              Escolha quanto tempo seu radar ficará procurando. A busca não gasta energia. A chance base cresce até 20%; bônus dos dois espaços de acessório podem elevar a chance total até 50%. Cada busca encontra no máximo uma Chave e só pode começar se existir uma Chave sem dono no mundo.
             </p>
             {freeBalls !== undefined && (
               <div className={`mt-3 rounded-lg border p-3 ${
@@ -516,11 +516,11 @@ function DragonBallSearchTab({
                   : 'border-yellow-700/50 bg-yellow-950/25'
               }`}>
                 <p className={`font-heading ${noFreeBalls ? 'text-red-200' : 'text-yellow-200'}`}>
-                  🌍 {freeBalls}/7 {freeBalls === 1 ? 'Esfera espalhada' : 'Esferas espalhadas'} pelo mundo
+                  🌍 {freeBalls}/7 {freeBalls === 1 ? 'Chave espalhada' : 'Chaves espalhadas'} pelo mundo
                 </p>
                 <p className="text-[11px] text-amber-200/55 mt-1">
                   {noFreeBalls
-                    ? 'As 7 Esferas estão em posse de guerreiros. A busca está indisponível; dispute uma no PvP ou aguarde alguém invocar Aethelgard.'
+                    ? 'As 7 Chaves estão em posse de guerreiros. A busca está indisponível; dispute uma no PvP ou aguarde alguém abrir a Convergência do Horizonte.'
                     : `Ainda existem ${freeBalls} ${freeBalls === 1 ? 'Chave sem dono que pode ser encontrada' : 'Chaves sem dono que podem ser encontradas'} pela busca.`}
                 </p>
               </div>
@@ -529,7 +529,7 @@ function DragonBallSearchTab({
               <div className="mt-3 rounded-lg border border-orange-700/50 bg-orange-950/30 p-3">
                 <p className="font-heading text-orange-200">Busca em andamento: {totalHours}h</p>
                 <p className="text-2xl text-amber-100 tabular-nums mt-1">⏳ {countdown}</p>
-                <p className="text-xs text-amber-200/50">A esfera será aplicada apenas quando a busca terminar.</p>
+                <p className="text-xs text-amber-200/50">A Chave será concedida apenas quando a busca terminar.</p>
                 <GameButton
                   size="sm"
                   variant="ghost"
