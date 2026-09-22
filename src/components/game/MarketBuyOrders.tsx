@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { HandCoins, PackageCheck, XCircle } from 'lucide-react';
 import type {
@@ -54,15 +54,11 @@ export function MarketBuyOrdersTab({
   setPage: Dispatch<SetStateAction<number>>;
   onMutate: (payload: Record<string, unknown>) => Promise<boolean>;
 }) {
-  const [selectedId, setSelectedId] = useState('');
+  const [selectedId, setSelectedId] = useState(market.catalog[0]?.itemId ?? '');
   const [quantity, setQuantity] = useState(1);
   const [unitPrice, setUnitPrice] = useState(1);
   const [draftCurrency, setDraftCurrency] = useState<MarketCurrency>('zeni');
   const [sellQty, setSellQty] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    if (!selectedId && market.catalog[0]) setSelectedId(market.catalog[0].itemId);
-  }, [market.catalog, selectedId]);
 
   const selected = market.catalog.find((asset) => asset.itemId === selectedId) ?? null;
   const maxQuantity = selected?.kind === 'equipment' ? 99 : 999;
