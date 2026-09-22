@@ -174,7 +174,7 @@ describe('CONTRATO A — comportamento dos handlers reais × afirmações da wik
     // a wiki publica a matriz consolidada (v0.16)
     const ocupacao = wikiText('accoes-custos');
     expect(ocupacao).toContain('TRABALHANDO bloqueia APENAS 3 ações');
-    expect(ocupacao).toContain('Busca pelas Esferas');
+    expect(ocupacao).toContain('Busca pelas Chaves');
     expect(ocupacao).toContain('Matriz ação × estado');
     expect(ocupacao).toContain('coletar é sempre possível');
     expect(ocupacao).toContain('Coletar recompensa (qualquer tipo)');
