@@ -516,44 +516,42 @@ export async function marketSellableAssets(
     orderBy: [{ itemId: 'asc' }],
   });
 
-  const materialViews: MarketSellableAsset[] = materials
-    .map((row) => {
-      const asset = resolveMarketAsset(row.itemId);
-      if (!asset || asset.kind !== 'material') return null;
-      return {
-        kind: 'material' as const,
-        itemId: asset.itemId,
-        name: asset.name,
-        icon: asset.icon,
-        quantity: row.quantity,
-        description: asset.description,
-        category: asset.category,
-        rarity: asset.rarity,
-        tier: asset.tier,
-      };
-    })
-    .filter((row): row is MarketSellableAsset => row !== null);
+  const materialViews: MarketSellableAsset[] = [];
+  for (const row of materials) {
+    const asset = resolveMarketAsset(row.itemId);
+    if (!asset || asset.kind !== 'material') continue;
+    materialViews.push({
+      kind: 'material',
+      itemId: asset.itemId,
+      name: asset.name,
+      icon: asset.icon,
+      quantity: row.quantity,
+      description: asset.description,
+      category: asset.category,
+      rarity: asset.rarity,
+      tier: asset.tier,
+    });
+  }
 
   const items = parseItems(player.items);
-  const equipmentViews: MarketSellableAsset[] = items.owned
-    .map((itemId) => {
-      const asset = resolveMarketAsset(itemId);
-      if (!asset || asset.kind !== 'equipment') return null;
-      const total = itemCount(items, itemId);
-      const inUse = EQUIPPED_SLOTS.filter((slot) => (items[slot] ?? null) === itemId).length;
-      const available = Math.max(0, total - inUse);
-      if (available <= 0) return null;
-      return {
-        kind: 'equipment' as const,
-        itemId,
-        name: asset.name,
-        icon: asset.icon,
-        quantity: available,
-        description: asset.description,
-        category: asset.category,
-      };
-    })
-    .filter((row): row is MarketSellableAsset => row !== null);
+  const equipmentViews: MarketSellableAsset[] = [];
+  for (const itemId of items.owned) {
+    const asset = resolveMarketAsset(itemId);
+    if (!asset || asset.kind !== 'equipment') continue;
+    const total = itemCount(items, itemId);
+    const inUse = EQUIPPED_SLOTS.filter((slot) => (items[slot] ?? null) === itemId).length;
+    const available = Math.max(0, total - inUse);
+    if (available <= 0) continue;
+    equipmentViews.push({
+      kind: 'equipment',
+      itemId,
+      name: asset.name,
+      icon: asset.icon,
+      quantity: available,
+      description: asset.description,
+      category: asset.category,
+    });
+  }
 
   return [...materialViews, ...equipmentViews].sort(
     (a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name, 'pt-BR')
