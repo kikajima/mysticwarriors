@@ -1,5 +1,5 @@
 // =====================================================================
-// ESCALA DE PODER — ASCENSÃO Z (Capítulo 5 do sistema do dono)
+// ESCALA DE PODER — ESCALAS DE CAELUM (Capítulo 5 do sistema do dono)
 // ---------------------------------------------------------------------
 // O RPG original do dono usa uma Escala de Poder em vez de números de
 // bilhões: 10 categorias, de Mortal Comum (0) a Transcendente (9).
@@ -140,7 +140,7 @@ function safePower(power: number): number {
 }
 
 /**
- * Classifica um poder de scouter na Escala de Poder (ASCENSÃO Z).
+ * Classifica um poder de scouter na Escala de Poder (ESCALAS DE CAELUM).
  * Sempre devolve uma escala válida — lixo vira Mortal Comum.
  */
 export function getPowerScale(power: number): PowerScaleResult {
