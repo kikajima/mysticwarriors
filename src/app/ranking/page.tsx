@@ -15,7 +15,7 @@ import { RankingLive } from '@/components/RankingLive';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Ranking dos Guerreiros — Guerreiros Místicos',
+  title: 'Ranking dos Guerreiros — Myst Ki Warriors',
   description:
     'Veja os guerreiros mais poderosos do universo: nível, poder de luta, raça e vitórias calculados ao vivo a partir do progresso salvo na nuvem. Entre no jogo e dispute o topo.',
   alternates: { canonical: '/ranking' },
@@ -32,7 +32,7 @@ export default async function RankingPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
           <div>
             <Link href="/" className="text-xs text-amber-200/40 hover:text-amber-200/70">
-              ← Guerreiros Místicos
+              ← Myst Ki Warriors
             </Link>
             <h1 className="font-display text-4xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600 mt-2 flex items-center gap-3">
               <Crown className="w-8 h-8 text-yellow-400" /> Ranking dos Guerreiros
