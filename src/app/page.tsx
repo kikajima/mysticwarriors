@@ -17,8 +17,8 @@ export default function LandingPage() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/images/banner.png"
-            alt="Guerreiros místicos carregando energia ao pôr do sol"
+            src="/images/banner-mystki.svg"
+            alt="Myst Ki Warriors no Setor Caelum"
             className="w-full h-full object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-[#14100b]/60 to-[#14100b]" />
@@ -26,14 +26,13 @@ export default function LandingPage() {
 
         <div className="relative max-w-5xl mx-auto px-4 pt-24 pb-20 text-center">
           <p className="font-heading text-orange-300/80 tracking-[0.35em] text-xs sm:text-sm uppercase mb-4">
-            O RPG de gerenciamento dos clássicos browser games
+            RPG persistente no Setor Caelum
           </p>
           <h1 className="font-display text-6xl sm:text-8xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-orange-400 to-amber-600 drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)] tracking-wide leading-none">
-            Guerreiros<br />Místicos
+            Myst Ki<br />Warriors
           </h1>
           <p className="font-heading text-amber-200/90 text-base sm:text-xl mt-6 max-w-2xl mx-auto leading-relaxed">
-            Treine. Lute. Trabalhe. Colete as <span className="text-yellow-300">7 Esferas do Dragão</span> e
-            torne-se o guerreiro mais poderoso do universo — direto do navegador, de graça.
+            Treine. Lute. Trabalhe. Encontre as <span className="text-yellow-300">Chaves do Horizonte</span> e construa sua lenda entre os mundos do Setor Caelum — direto do navegador.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -117,17 +116,17 @@ export default function LandingPage() {
             <Feature
               icon={<Sparkles className="w-6 h-6" />}
               title={`${TECHNIQUES.length} técnicas lendárias`}
-              text={`Aprenda com ${TRAINING_MASTERS.length} mestres icônicos — do Punho do Lobo à Genki Dama. Técnicas supremas ocupam um slot exclusivo do loadout.`}
+              text={`Aprenda com ${TRAINING_MASTERS.length} mestres originais — das Garras do Lobo Astral à Convergência do Aether. Técnicas supremas ocupam um slot exclusivo do loadout.`}
             />
             <Feature
               icon={<Map className="w-6 h-6" />}
               title="Profissões com promoções"
-              text={`${PROFESSIONS.length} profissões com turnos de 1 hora — Agricultor, Cientista, Acadêmico, Policial e Atleta. Cada promoção aumenta o salário em até 5x e paga bônus de até 30.000 Zeni.`}
+              text={`${PROFESSIONS.length} profissões com turnos de 1 hora — Agricultor, Cientista, Acadêmico, Policial e Atleta. Cada promoção aumenta o salário em até 5x e paga bônus de até 30.000 Créditos.`}
             />
             <Feature
               icon={<Users className="w-6 h-6" />}
               title="Guildas e ranking ao vivo"
-              text="Funde sua guilda por 5.000 Zeni, receba doações, suba o nível coletivo e dispute o ranking dos guerreiros com PvP por faixa de nível."
+              text="Funde sua guilda por 5.000 Créditos, receba doações, suba o nível coletivo e dispute o ranking dos guerreiros com PvP por faixa de nível."
             />
             <Feature
               icon={<Trophy className="w-6 h-6" />}
@@ -144,7 +143,7 @@ export default function LandingPage() {
           <ShieldCheck className="w-10 h-10 text-emerald-400 mx-auto mb-4" />
           <h3 className="font-heading text-xl text-amber-100 mb-2">Zero pay-to-win. Para sempre.</h3>
           <p className="text-sm text-amber-200/60 leading-relaxed max-w-2xl mx-auto">
-            Todo o conteúdo é conquistado jogando: Zeni vem de profissões e batalhas, e{' '}
+            A progressão principal é conquistada jogando: Créditos vêm de profissões e batalhas, e{' '}
             <span className="text-sky-300">cristais</span> — a moeda dos cosméticos — caem das missões
             diárias, conquistas e do Ameaça Universal. Cosméticos nunca alteram atributos. VIP e Passe de
             Temporada trarão apenas conveniência e estilo quando chegarem.
@@ -171,8 +170,7 @@ export default function LandingPage() {
             Seu treino começa agora
           </h2>
           <p className="text-amber-200/60 mb-8">
-            Crie seu guerreiro em segundos — sem cadastro. Junte as Esferas do Dragão, invoque Shenlon e
-            desafie o universo.
+            Crie seu guerreiro em segundos. Reúna as Chaves do Horizonte, desperte Aethelgard e desafie os limites do Setor Caelum.
           </p>
           <Link
             href="/jogar"
@@ -187,7 +185,7 @@ export default function LandingPage() {
       {/* ===== FOOTER ===== */}
       <footer className="border-t border-amber-900/30 py-8">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-amber-200/40">
-          <p>Guerreiros Místicos — jogo de fã inspirado nos clássicos browser games de gerenciamento.</p>
+          <p>Myst Ki Warriors — jogo de fã inspirado nos clássicos browser games de gerenciamento.</p>
           <nav className="flex flex-wrap gap-4" aria-label="Links do site">
             <Link href="/jogar" className="hover:text-amber-200/70">Jogar</Link>
             <Link href="/ranking" className="hover:text-amber-200/70">Ranking</Link>
