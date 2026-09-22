@@ -18,7 +18,7 @@ export interface PowerScaleDef {
   index: number;
   /** Nome da categoria (idêntico ao livro). */
   nome: string;
-  /** Poder mínimo do scouter para pertencer à escala. */
+  /** Poder mínimo do visor de fluxo para pertencer à escala. */
   threshold: number;
   emoji: string;
   /** Texto curto de sabor. */
@@ -140,7 +140,7 @@ function safePower(power: number): number {
 }
 
 /**
- * Classifica um poder de scouter na Escala de Poder (ASCENSÃO Z).
+ * Classifica um poder de visor de fluxo na Escala de Poder (ASCENSÃO Z).
  * Sempre devolve uma escala válida — lixo vira Mortal Comum.
  */
 export function getPowerScale(power: number): PowerScaleResult {
