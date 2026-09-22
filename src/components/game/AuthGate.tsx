@@ -273,7 +273,7 @@ export function AuthGate({
         {bannerFailed ? (
           <div className="absolute inset-0 bg-gradient-to-b from-orange-900 via-amber-950 to-[#14100b] flex items-center justify-center">
             <span className="text-7xl" aria-hidden>
-              🐉
+              ◇
             </span>
           </div>
         ) : (
