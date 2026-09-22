@@ -3,9 +3,9 @@ import { RACE_LIST } from '@/lib/game/content/races';
 import { TRANSFORMATIONS } from '@/lib/game/content/transformations';
 
 export const metadata = {
-  title: 'Transformações — Guerreiros Místicos',
+  title: 'Transformações — Myst Ki Warriors',
   description:
-    'As árvores de transformação de Guerreiros Místicos por raça: Oozaru, Super Saiyajin, Super Namekuseijin, Overclock, Caos Desencadeado e os três caminhos finais de cada raça.',
+    'As árvores de transformação de Myst Ki Warriors: Fera Lupina, Ascensão Prateada, Ascensão Silvestre, Sobrecarga, Caos Desencadeado e três caminhos finais por linhagem.',
   alternates: { canonical: '/transformacoes' },
 };
 
@@ -14,7 +14,7 @@ export default function TransformacoesPage() {
     <main className="min-h-screen bg-[#14100b] text-amber-100">
       <div className="max-w-4xl mx-auto px-4 py-12">
         <Link href="/" className="text-xs text-amber-200/40 hover:text-amber-200/70">
-          ← Guerreiros Místicos
+          ← Myst Ki Warriors
         </Link>
         <h1 className="font-display text-4xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600 mt-2 mb-3">
           Árvores de Transformação
