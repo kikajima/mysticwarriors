@@ -185,7 +185,7 @@ export function CharacterSelect({
       </div>
 
       <footer className="mt-auto py-4 text-center text-amber-200/30 text-xs">
-        Guerreiros Místicos — um jogo de gerenciamento inspirado nos clássicos browsers games
+        Myst Ki Warriors — RPG persistente de navegador no Setor Caelum
       </footer>
 
       {/* Confirmação de exclusão */}
