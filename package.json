@@ -15,7 +15,8 @@
     "pretest": "prisma generate --schema prisma/schema.sqlite.prisma",
     "pretypecheck": "prisma generate --schema prisma/schema.sqlite.prisma && node scripts/clean-next-types.mjs && next typegen",
     "start": "node scripts/start-production.mjs",
-    "db:generate:test": "prisma generate --schema prisma/schema.sqlite.prisma"
+    "db:generate:test": "prisma generate --schema prisma/schema.sqlite.prisma",
+    "smoke:production": "node scripts/smoke-production.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
