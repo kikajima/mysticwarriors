@@ -131,10 +131,10 @@ export async function POST(request: Request) {
     const user = await verifySupabaseToken(parsed.data.accessToken);
     const preferredNick = resolveNick(parsed.data.nick, user);
 
-    const { account, promoted } = await db.$transaction(async (tx) => {
+    const { account, promoted, rotatedSession } = await db.$transaction(async (tx) => {
       // 1. conta já vinculada a este id Supabase?
       const linked = await tx.account.findUnique({ where: { supabaseUserId: user.id } });
-      if (linked) return { account: linked, promoted: false as const };
+      if (linked) return { account: linked, promoted: false as const, rotatedSession: null };
 
       // 2. sessão atual de convidado → PROMOVE (personagens preservados)
       // A sessão usa a conexão já reservada: consultar o db global aqui
@@ -153,7 +153,20 @@ export async function POST(request: Request) {
             isGuest: false,
           },
         });
-        return { account: promotedAccount, promoted: true as const };
+
+        // A sessão de convidado foi emitida antes de a conta ter privilégios
+        // permanentes. Ela é invalidada na própria transação da promoção e
+        // substituída por um token novo (anti session-fixation).
+        await tx.session.updateMany({
+          where: { id: current.session.id, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+        const freshSession = await createSession(
+          promotedAccount.id,
+          request.headers.get('user-agent') ?? undefined,
+          tx
+        );
+        return { account: promotedAccount, promoted: true as const, rotatedSession: freshSession };
       }
 
       // 3. cria conta nova vinculada ao id Supabase
@@ -166,10 +179,12 @@ export async function POST(request: Request) {
           isGuest: false,
         },
       });
-      return { account, promoted: false as const };
+      return { account, promoted: false as const, rotatedSession: null };
     });
 
-    const session = await createSession(account.id, request.headers.get('user-agent') ?? undefined);
+    const session =
+      rotatedSession ??
+      (await createSession(account.id, request.headers.get('user-agent') ?? undefined));
 
     await trackEvent(promoted ? 'account_promoted_supabase' : 'supabase_login', {
       accountId: account.id,
