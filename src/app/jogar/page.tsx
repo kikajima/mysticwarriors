@@ -198,7 +198,7 @@ export default function PlayPage() {
   const lastSavedCloudRef = useRef<string | null>(null);
   const lastImportantRef = useRef<string | null>(null);
   const fingerprintRef = useRef<string | null>(null);
-  const cloudSaveInFlightRef = useRef(false);
+  const cloudSaveInFlightRef = useRef<Promise<boolean> | null>(null);
   // v0.9.20 — coleta de conquistas (UI otimista): contador de coletas em
   // andamento + último estado do servidor recebido. Com várias coletas em
   // sequência, apenas a ÚLTIMA resposta aplica o estado real — evita que a
@@ -624,6 +624,29 @@ export default function PlayPage() {
 
   // (logoutAccount vive adiante, logo após saveToCloud — depende dele)
 
+  // Persistência do personagem ativo é otimista na UI, mas confirmada no
+  // servidor com retry. Uma falha transitória aqui não pode fazer o próximo
+  // reload abrir silenciosamente o personagem anterior.
+  const persistActivePlayer = useCallback(async (id: string) => {
+    const requestId = crypto.randomUUID();
+    const body = JSON.stringify({ playerId: id, type: 'select_player', requestId });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch('/api/game/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+        });
+        if (res.ok) return;
+        if (res.status === 401 || res.status === 403) break;
+      } catch {
+        // uma falha de rede recebe um retry curto com o MESMO requestId
+      }
+      if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    console.warn('[sessão] não foi possível persistir o personagem ativo; o próximo polling/login tentará novamente.');
+  }, []);
+
   // ===== Personagens =====
   const enterCharacter = useCallback(
     (p: PlayerView) => {
@@ -631,14 +654,11 @@ export default function PlayPage() {
       setPlayer(p);
       setView('dashboard');
       setScreen('game');
-      // registra o personagem ativo no SERVIDOR (fonte única no próximo boot)
-      fetch('/api/game/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerId: p.id, type: 'select_player' }),
-      }).catch(() => undefined);
+      // A navegação é imediata; a fonte única do próximo boot é confirmada
+      // em segundo plano com idempotência + retry de rede.
+      void persistActivePlayer(p.id);
     },
-    []
+    [persistActivePlayer]
   );
 
   const handleCreated = useCallback(
@@ -1017,9 +1037,18 @@ export default function PlayPage() {
    * nunca mais tentado). Sem `fp`, usa a impressão digital mais recente.
    */
   const saveToCloud = useCallback(async (fp?: string | null): Promise<boolean> => {
-    if (!auth || auth.isGuest || cloudSaveInFlightRef.current) return false;
-    cloudSaveInFlightRef.current = true;
-    try {
+    if (!auth || auth.isGuest) return false;
+
+    // Nunca DESCARTA um save porque outro está em voo. Chamadas concorrentes
+    // aguardam a anterior e são serializadas; no logout isso garante que o
+    // save final só acontece depois de qualquer auto-save já iniciado.
+    while (cloudSaveInFlightRef.current) {
+      await cloudSaveInFlightRef.current.catch(() => false);
+    }
+    if (fp && fp === lastSavedCloudRef.current) return true;
+
+    const run = (async (): Promise<boolean> => {
+      try {
       // playerId é OPCIONAL: sem personagem ativo (ex.: acabou de excluir
       // o último na tela de seleção), o snapshot devolve a lista da conta —
       // e a limpeza remove da nuvem as linhas que não existem mais.
@@ -1044,10 +1073,16 @@ export default function PlayPage() {
       await deleteStaleCloudCharacters(rows.map((r) => r.id));
       lastSavedCloudRef.current = fp ?? fingerprintRef.current;
       return true;
-    } catch {
-      return false;
+      } catch {
+        return false;
+      }
+    })();
+
+    cloudSaveInFlightRef.current = run;
+    try {
+      return await run;
     } finally {
-      cloudSaveInFlightRef.current = false;
+      if (cloudSaveInFlightRef.current === run) cloudSaveInFlightRef.current = null;
     }
   }, [playerId, auth]);
 
