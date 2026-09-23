@@ -56,6 +56,7 @@ Esses fluxos continuam protegidos por testes de contrato/sanitização onde apli
 
 - Os testes de integração da Oficina recriavam e migravam um banco inteiro por caso. Sob carga do CI, dois casos podiam ultrapassar o timeout de 5 s antes de chegar à lógica de crafting. A fixture agora migra uma vez por arquivo e mantém cada cenário isolado por personagem.
 - O primeiro desenho do smoke inicializava o schema com `prisma db push` e depois o boot tentava aplicar a cadeia histórica de migrations sobre as mesmas tabelas. O gate agora deixa o próprio boot criar/migrar o banco, reproduzindo melhor o caminho real da aplicação.
+- O repositório continha um gitlink órfão chamado `mysticwarriors`, sem `.gitmodules`, URL de submodule ou referências no código. Ele provocava warning no cleanup do checkout do GitHub Actions e foi removido.
 
 ## Critério da Etapa 11
 
