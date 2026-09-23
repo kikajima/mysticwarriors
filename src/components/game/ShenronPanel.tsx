@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { PlayerView } from '@/lib/game/types';
 import { GameButton, GameCard, SectionTitle } from './Bits';
-import { Coins, Swords, Heart, BookOpen, Sparkles } from 'lucide-react';
+import { Coins, Swords, Heart, BookOpen, Sparkles, KeyRound } from 'lucide-react';
 
 const WISHES = [
   {
@@ -88,15 +88,16 @@ export function ShenronPanel({
                 return (
                   <div
                     key={i}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-heading text-sm border-2 transition-all ${
+                    className={`w-11 h-11 rounded-lg flex flex-col items-center justify-center font-heading border transition-all ${
                       filled
-                        ? 'bg-gradient-to-br from-yellow-300 to-orange-600 border-amber-400 shadow-md shadow-orange-900/60 text-amber-950 scale-110'
-                        : 'bg-black/50 border-amber-900/40 text-amber-900/40'
+                        ? 'bg-gradient-to-br from-emerald-300 via-cyan-300 to-sky-500 border-cyan-200 shadow-md shadow-cyan-950/60 text-slate-950 scale-105'
+                        : 'bg-slate-950/70 border-cyan-950/70 text-cyan-900/60'
                     }`}
                     role="img"
                     aria-label={filled ? `Chave do Horizonte ${i + 1} obtida` : `Chave do Horizonte ${i + 1} faltando`}
                   >
-                    {filled ? '⭐'.repeat(Math.min(3, i + 1)) : '·'}
+                    <KeyRound className="w-4 h-4" aria-hidden />
+                    <span className="text-[9px] leading-none mt-0.5">CH-{i + 1}</span>
                   </div>
                 );
               })}
