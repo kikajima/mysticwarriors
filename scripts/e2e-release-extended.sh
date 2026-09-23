@@ -135,7 +135,7 @@ MSG="canal-privado-$TS"
 R=$(curl -s -b "$JAR_A" -X POST "$BASE/api/chat" -H 'Content-Type: application/json' \
   -d "{\"action\":\"send\",\"playerId\":\"$PA\",\"channel\":\"private\",\"targetId\":\"$PB\",\"body\":\"$MSG\"}")
 check "mensagem privada entre amigos enviada" "True" "$(echo "$R" | python3 -c 'import json,sys; print(json.load(sys.stdin)["success"])' 2>/dev/null)"
-R=$(curl -s -b "$JAR_B" "$BASE/api/chat?playerId=$PB&channel=private&targetId=$PA")
+R=$(curl -s -b "$JAR_B" "$BASE/api/chat?view=messages&playerId=$PB&channel=private&targetId=$PA")
 check "B lê a mensagem privada de A" "$MSG" "$(echo "$R" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["messages"][-1]["body"] if d.get("messages") else "")' 2>/dev/null)"
 
 R=$(curl -s -b "$JAR_B" -X POST "$BASE/api/chat" -H 'Content-Type: application/json' \
@@ -169,9 +169,10 @@ echo ""
 echo "=== EXT 6. TORNEIO: inscrição e atividade server-side ==="
 R=$(act "$JAR_A" "$PA" '"type":"tournament_fight"')
 check "luta de torneio inicia atividade" "battle" "$(echo "$R" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["activity"]["kind"])' 2>/dev/null)"
+TACT=$(echo "$R" | python3 -c 'import json,sys; print(json.load(sys.stdin)["activity"]["id"])' 2>/dev/null)
 bun scripts/e2e-db.ts finish-activity "$PA" >/dev/null
 R=$(curl -s -b "$JAR_A" "$BASE/api/game/state?playerId=$PA")
-check "resultado do torneio é aplicado pelo state" "True" "$(echo "$R" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(any(x.get("result",{}).get("mode")=="tournament" or x.get("mode")=="tournament" for x in d.get("pendingResults",[])))' 2>/dev/null)"
+check "resultado do torneio é aplicado exactly-once pelo state" "True" "$(echo "$R" | python3 -c 'import json,sys; d=json.load(sys.stdin); aid="'"$TACT"'"; print(any(x.get("activityId")==aid and x.get("kind")=="battle" for x in d.get("pendingResults",[])))' 2>/dev/null)"
 
 echo ""
 echo "=== EXT 7. CHAVES DO HORIZONTE E AETHELGARD ==="
