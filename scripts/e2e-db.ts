@@ -9,7 +9,13 @@ function activeRunId(): string {
 }
 
 function namesForRun(runId: string): string[] {
-  return [`AuditA${runId}`, `AuditB${runId}`, `GuestAudit${runId}`];
+  return [
+    `AuditA${runId}`,
+    `AuditB${runId}`,
+    `GuestAudit${runId}`,
+    `ExtA${runId}`,
+    `ExtB${runId}`,
+  ];
 }
 
 async function qaPlayer(id: string) {
@@ -107,6 +113,76 @@ async function main() {
   if (command === 'get-ledger-count') {
     const [id] = args; await qaPlayer(id);
     console.log(await db.walletTransaction.count({ where: { playerId: id } })); return;
+  }
+  if (command === 'setup-release-extended') {
+    const [aId, bId] = args;
+    await qaPlayer(aId); await qaPlayer(bId);
+    for (const id of [aId, bId]) {
+      await db.player.update({
+        where: { id },
+        data: {
+          level: 30,
+          zeni: 100_000,
+          crystals: 1_000,
+          hp: 2_000,
+          energy: 999,
+          strength: 200,
+          defense: 200,
+          speed: 200,
+          ki: 200,
+        },
+      });
+    }
+    for (const [playerId, herb, alloy] of [
+      [aId, 20, 20],
+      [bId, 10, 10],
+    ] as const) {
+      await db.inventoryStack.upsert({
+        where: { playerId_itemId: { playerId, itemId: 'erva_medicinal' } },
+        update: { quantity: herb },
+        create: { playerId, itemId: 'erva_medicinal', quantity: herb },
+      });
+      await db.inventoryStack.upsert({
+        where: { playerId_itemId: { playerId, itemId: 'liga_metais_leves' } },
+        update: { quantity: alloy },
+        create: { playerId, itemId: 'liga_metais_leves', quantity: alloy },
+      });
+    }
+    console.log('ok'); return;
+  }
+  if (command === 'finish-craft') {
+    const [id] = args; await qaPlayer(id);
+    const result = await db.craftJob.updateMany({
+      where: { playerId: id },
+      data: { endsAt: new Date(Date.now() - 1_000) },
+    });
+    if (result.count !== 1) throw new Error('QA craft job not found');
+    console.log('ok'); return;
+  }
+  if (command === 'finish-activity') {
+    const [id] = args; await qaPlayer(id);
+    const result = await db.activity.updateMany({
+      where: { playerId: id, completedAt: null },
+      data: { endsAt: new Date(Date.now() - 1_000) },
+    });
+    if (result.count < 1) throw new Error('QA active activity not found');
+    console.log(result.count); return;
+  }
+  if (command === 'give-all-horizon-keys') {
+    const [id] = args; await qaPlayer(id);
+    for (let star = 1; star <= 7; star++) {
+      await db.dragonBallPossession.upsert({
+        where: { star },
+        update: { playerId: id, acquiredAt: new Date() },
+        create: { star, playerId: id },
+      });
+    }
+    await db.player.update({ where: { id }, data: { dragonBalls: 7 } });
+    console.log('7'); return;
+  }
+  if (command === 'get-horizon-key-count') {
+    const [id] = args; await qaPlayer(id);
+    console.log(await db.dragonBallPossession.count({ where: { playerId: id } })); return;
   }
   if (command === 'cleanup-run') {
     const [ts] = args;
