@@ -1,0 +1,25 @@
+name: Production smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: URL pública do ambiente a validar
+        required: true
+        default: https://mysticwarriors-ohio.onrender.com
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Validate production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Production smoke
+        run: node scripts/smoke-production.mjs "${{ inputs.url }}"
