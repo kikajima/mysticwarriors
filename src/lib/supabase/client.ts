@@ -2,12 +2,12 @@
 // Supabase — cliente do navegador (v0.8)
 // ---------------------------------------------------------------------
 // Único ponto do front-end que fala com o Supabase. Todas as chamadas
-// usam a sessão DO PRÓPRIO USUÁRIO (RLS respeitado): a leitura e a
-// escrita em `profiles` só são possíveis para o dono da linha.
+// usam a sessão DO PRÓPRIO USUÁRIO e ficam limitadas a identidade,
+// perfil cosmético e leituras não autoritativas.
 //
-// O jogo em si continua 100% servido pelo backend Next.js (Prisma);
-// este módulo cuida de: identidade (Auth), leitura do progresso salvo
-// e upsert do snapshot produzido pelo servidor do jogo.
+// Stage 12: gameplay é 100% servido/escrito pelo backend Next.js. Este
+// módulo NÃO possui mais operações de escrita em personagens ou snapshots
+// globais; o espelho é sincronizado por DATABASE_URL no servidor.
 // =====================================================================
 
 import { createClient, type SupabaseClient, type Session, type User } from '@supabase/supabase-js';
@@ -404,55 +404,6 @@ export async function loadCloudProfile(): Promise<CloudProfileRow | null> {
   };
 }
 
-/**
- * Upsert do perfil (id do usuário logado). Falhas não interrompem o jogo:
- * o save é tentado novamente na próxima mudança relevante.
- *
- * v0.9.6: usado apenas para manter nick/nível de exibição da CONTA — o
- * progresso do jogo em si vive na tabela `personagens` (uma linha por
- * personagem, dono = user_id).
- */
-export async function upsertCloudProfile(profile: {
-  nick: string;
-  nivel: number;
-  xp: number;
-  progresso: CloudProgress;
-}): Promise<boolean> {
-  const session = await getSupabaseSession();
-  if (!session) return false;
-  const { error } = await getSupabaseClient()
-    .from('profiles')
-    .upsert(
-      {
-        id: session.user.id,
-        nick: profile.nick,
-        nivel: profile.nivel,
-        xp: profile.xp,
-        progresso: profile.progresso,
-      },
-      { onConflict: 'id' }
-    );
-  if (error) {
-    // TEMPORÁRIO (diagnóstico v0.9.3): o erro completo (código + dica do
-    // Postgres) aparece no console — nenhuma gravação falha em silêncio.
-    console.error(
-      '[nuvem] FALHA ao SALVAR o progresso na nuvem —',
-      JSON.stringify({
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-      })
-    );
-    return false;
-  }
-  // confirmação visível para o teste de verificação do dono
-  console.info(
-    `[nuvem] progresso salvo \u2713 ${profile.progresso?.characters?.length ?? 0} guerreiro(s), nick "${profile.nick}", nível ${profile.nivel}`
-  );
-  return true;
-}
-
 // =====================================================================
 // PERSONAGENS NA NUVEM (v0.9.6 — Mudança 3)
 // ---------------------------------------------------------------------
@@ -491,108 +442,6 @@ function logCloudError(prefix: string, error: { code?: string; message?: string;
     `${prefix} —`,
     JSON.stringify({ code: error.code, message: error.message, details: error.details, hint: error.hint })
   );
-}
-
-/**
- * Lê TODOS os personagens da conta logada (RLS: user_id = auth.uid()).
- * Devolve:
- *  - { rows } em sucesso (pode ser lista vazia — conta nova);
- *  - { rows: null } quando a tabela ainda não existe (SQL v0.9.6 não
- *    aplicado) — quem chama cai no formato antigo (profiles.progresso);
- *  - { rows: [] } em outros erros, LOGADOS (nunca silenciosos).
- */
-export async function loadCloudCharacters(): Promise<{ rows: CloudCharacterReadRow[] | null }> {
-  const session = await getSupabaseSession();
-  if (!session) return { rows: [] };
-  const { data, error } = await getSupabaseClient()
-    .from('personagens')
-    .select('id, nome, raca, nivel, poder, vitorias, derrotas, ativo, estado, criado_em, atualizado_em')
-    .eq('user_id', session.user.id)
-    .order('criado_em', { ascending: true });
-  if (error) {
-    // 42P01 = tabela não existe; PGRST205 = schema/tabela não encontrada
-    // na API → o dono ainda não colou o SQL da v0.9.6 (transição normal).
-    if (error.code === '42P01' || error.code === 'PGRST205') {
-      console.warn('[nuvem] tabela personagens ainda não existe (SQL v0.9.6 pendente) — usando formato antigo');
-      return { rows: null };
-    }
-    logCloudError('[nuvem] FALHA ao LER os personagens da nuvem', error);
-    return { rows: [] };
-  }
-  return { rows: (data as CloudCharacterReadRow[]) ?? [] };
-}
-
-/**
- * Salva (upsert) os personagens da conta — cada um na PRÓPRIA linha.
- * RLS garante que só as linhas do próprio usuário podem ser gravadas.
- * Falhas são logadas e devolvem false (o auto-save retenta depois).
- */
-export async function upsertCloudCharacters(rows: CloudCharacterRow[]): Promise<boolean> {
-  if (rows.length === 0) return true;
-  const session = await getSupabaseSession();
-  if (!session) return false;
-  const { error } = await getSupabaseClient()
-    .from('personagens')
-    .upsert(
-      rows.map((r) => ({ ...r, user_id: session.user.id })),
-      { onConflict: 'id' }
-    );
-  if (error) {
-    logCloudError('[nuvem] FALHA ao SALVAR os personagens na nuvem', error);
-    return false;
-  }
-  console.info(`[nuvem] personagens salvos \u2713 ${rows.length} guerreiro(s) — ${rows.map((r) => r.nome).join(', ')}`);
-  return true;
-}
-
-/**
- * Remove da nuvem as linhas da própria conta que NÃO estão na lista de ids
- * atuais (personagem excluído no servidor, ou linha migrada de outro
- * formato na transição para a v0.9.6). Roda só DEPOIS de um upsert bem-
- * sucedido — a lista atual sempre existe no banco do jogo antes.
- */
-export async function deleteStaleCloudCharacters(keepIds: string[]): Promise<boolean> {
-  const session = await getSupabaseSession();
-  if (!session) return false;
-  const query = getSupabaseClient()
-    .from('personagens')
-    .delete()
-    .eq('user_id', session.user.id);
-  // lista vazia = todos os personagens locais sumiram → limpa tudo
-  const filtered = keepIds.filter((id) => typeof id === 'string' && id.length > 0 && id.length <= 64);
-  if (filtered.length > 0) {
-    // sintaxe "not in" do PostgREST: valores entre parênteses e separados
-    // por vírgula; ids são cuids do servidor (sem vírgulas/aspas)
-    void query.not('id', 'in', `(${filtered.join(',')})`);
-  }
-  const { error } = await query;
-  if (error) {
-    logCloudError('[nuvem] FALHA ao LIMPAR personagens antigos da nuvem', error);
-    return false;
-  }
-  return true;
-}
-
-export async function loadCloudWorldBoss(): Promise<CloudWorldBossSnapshot | null> {
-  try {
-    const { data, error } = await getSupabaseClient().rpc('get_world_boss_snapshot');
-    if (error || !data) return null;
-    return data as CloudWorldBossSnapshot;
-  } catch {
-    return null;
-  }
-}
-
-export async function saveCloudWorldBoss(snapshot: CloudWorldBossSnapshot): Promise<boolean> {
-  const session = await getSupabaseSession();
-  if (!session) return false;
-  const { error } = await getSupabaseClient().rpc('save_world_boss_snapshot', { p_snapshot: snapshot });
-  if (error) {
-    console.error('[nuvem] FALHA ao salvar o Ameaça Universal', error.message);
-    return false;
-  }
-  console.info('[nuvem] Ameaça Universal salvo', snapshot.id, snapshot.currentHp);
-  return true;
 }
 
 /**
