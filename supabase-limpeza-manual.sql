@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — LIMPEZA MANUAL DA NUVEM (v0.9.10.2)
+-- MYST KI WARRIORS — LIMPEZA MANUAL DA NUVEM (v0.9.10.2)
 -- =====================================================================
 -- QUANDO USAR ESTE BLOCO: quando o "Reset geral do servidor" já rodou
 -- (o SERVIDOR está limpo), mas a NUVEM ainda tem personagens antigos
