@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — MIGRAÇÃO v0.9.6 (corrigida em v0.9.6.1): SEPARAR PERSONAGEM DE CONTA
+-- MYST KI WARRIORS — MIGRAÇÃO v0.9.6 (corrigida em v0.9.6.1): SEPARAR PERSONAGEM DE CONTA
 -- ---------------------------------------------------------------------
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE E CLIQUE EM "Run".
 -- RODE DEPOIS DO supabase-backup-v096.sql.
