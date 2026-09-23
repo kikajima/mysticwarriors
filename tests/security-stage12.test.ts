@@ -78,13 +78,26 @@ describe('Release stage 12 — cloud authority hardening', () => {
     expect(sql).toContain("drop policy if exists avatar_upload_proprio");
   });
 
-  test('rate-limit IP key rejects arbitrary/spoofable header text', async () => {
+  test('rate-limit IP key trusts only the last X-Forwarded-For hop', async () => {
     const rate = await Bun.file(path.join(ROOT, 'src/lib/rate-limit.ts')).text();
 
     expect(rate).toContain("import { isIP } from 'node:net'");
+    expect(rate).toContain("get('x-forwarded-for')");
     expect(rate).toContain('.at(-1)');
-    expect(rate).toContain('isIP(ip)');
+    expect(rate).toContain('isIP(forwarded)');
+    expect(rate).not.toContain("request.headers.get('cf-connecting-ip')");
+    expect(rate).not.toContain("request.headers.get('x-real-ip')");
     expect(rate).toContain("return 'unknown'");
+  });
+
+  test('session payloads are explicitly private and non-cacheable', async () => {
+    const route = await Bun.file(path.join(ROOT, 'src/app/api/auth/session/route.ts')).text();
+    expect(route).toContain("'cache-control': 'no-store, private'");
+    expect(route).toContain('SESSION_RESPONSE');
+  });
+
+  test('unused /api hello-world endpoint is not shipped', async () => {
+    expect(await Bun.file(path.join(ROOT, 'src/app/api/route.ts')).exists()).toBe(false);
   });
 
   test('backup export requires a strong configured secret', async () => {
