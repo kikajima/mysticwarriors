@@ -21,10 +21,19 @@ Este arquivo reúne apenas os itens operacionais que não devem depender de mem�
 - RPCs administrativas legadas por conta removidas.
 - Antes do lançamento público, habilitar no Dashboard do Supabase a proteção contra senhas vazadas (Leaked Password Protection).
 
+## Release Candidate — Etapa 16
+
+- RC atual: `1.0.0-rc.1`.
+- O `/api/health` expõe `release`, `releaseStage` e a identidade do deploy (`commit`, `branch`, `serviceName`, `externalUrl`).
+- No Render, esses campos usam as variáveis nativas `RENDER_GIT_COMMIT`, `RENDER_GIT_BRANCH`, `RENDER_SERVICE_NAME` e `RENDER_EXTERNAL_URL`.
+- O workflow **Production smoke** falha se o SHA implantado não for exatamente o esperado.
+- O deploy manual deve partir da branch `master`; após o deploy, executar o Production smoke contra o host público.
+
 ## Estado observado na Etapa 15
 
-- Em 23/09/2026, `https://mysticwarriors-ohio.onrender.com` respondeu HTTP 503 inclusive em `/api/health`; o ambiente não deve ser considerado pronto até o smoke remoto passar.
-- O código não consegue confirmar configuração privada do painel do Render; a validação do host público deve ser repetida após o próximo deploy.
+- Em 23/09/2026, o host entrou em cold start e inicialmente respondeu HTTP 503; poucos minutos depois voltou a HTTP 200.
+- A instância pública que voltou a responder ainda estava em código antigo (`securityStage: 12`), confirmando que o `master` mais recente ainda não havia sido implantado.
+- O painel privado do Render exige autenticação e não havia sessão/credenciais conectadas nesta execução; por isso o deploy manual não foi iniciado automaticamente.
 
 ## Render
 
