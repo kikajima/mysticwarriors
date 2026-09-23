@@ -112,6 +112,18 @@ export async function POST(request: Request) {
 
       const player = await requirePlayer(auth, playerId);
 
+      if (mode === 'url' && isPostgresDatabase()) {
+        // Produção não faz fetch server-side de URL arbitrária. Mesmo com
+        // resolução DNS prévia, DNS rebinding poderia trocar um host público
+        // por endereço interno entre a validação e a conexão. No ambiente
+        // persistente, avatares customizados devem usar o Storage da própria
+        // conta, eliminando completamente essa superfície de SSRF.
+        throw new ApiError(
+          'AVATAR_INVALID_URL',
+          'Por segurança, use o upload de imagem para salvar seu avatar na nuvem.'
+        );
+      }
+
       if (mode === 'storage') {
         // ===== v0.9.4 — URL do Supabase Storage do PRÓPRIO usuário =====
         // A imagem já está na nuvem (enviada pelo navegador com a sessão
