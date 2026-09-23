@@ -41,7 +41,7 @@ import {
   RefreshCw,
   Coins,
   Gem,
-  CircleDot,
+  KeyRound,
   Star,
   HeartPulse,
   FastForward,
@@ -747,7 +747,7 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                       <p className="text-sky-300 font-heading text-base tabular-nums">{selected.crystals.toLocaleString('pt-BR')}</p>
                     </div>
                     <div className="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2">
-                      <p className="text-amber-200/40 flex items-center gap-1"><CircleDot className="w-3 h-3" /> Chaves</p>
+                      <p className="text-amber-200/40 flex items-center gap-1"><KeyRound className="w-3 h-3" /> Chaves</p>
                       <p className="text-orange-300 font-heading text-base tabular-nums">{selected.dragonBalls}/7</p>
                     </div>
                     <div className="bg-black/30 rounded-lg border border-amber-900/40 px-3 py-2">
@@ -856,10 +856,10 @@ export function AdminPanel({ onSelfModified }: { onSelfModified?: () => void }) 
                   {/* Chaves globais: a estrela é única no mundo */}
                   <section className="bg-black/20 rounded-xl border border-amber-900/40 p-4">
                     <h3 className="font-heading text-sm text-amber-100 mb-2 flex items-center gap-1.5">
-                      <CircleDot className="w-4 h-4 text-orange-300" /> Conceder Chave do Horizonte
+                      <KeyRound className="w-4 h-4 text-orange-300" /> Conceder Chave do Horizonte
                     </h3>
                     <p className="text-[11px] text-amber-200/45 mb-3">
-                      Cada estrela existe uma única vez no mundo. Estrelas já possuídas por outro guerreiro aparecem bloqueadas.
+                      Cada Chave numerada existe uma única vez no mundo. Chaves já possuídas por outro guerreiro aparecem bloqueadas.
                     </p>
                     <div className="flex flex-wrap items-end gap-3">
                       <label className="text-xs text-amber-200/60 flex-1 min-w-[220px]">
