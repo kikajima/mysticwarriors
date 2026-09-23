@@ -19,7 +19,7 @@ Este arquivo reúne apenas os itens operacionais que não devem depender de mem�
 - Bucket `avatars`: até 5 MB e somente JPEG/PNG/WebP.
 - Escrita de snapshot do world boss bloqueada para `anon` e `authenticated`.
 - RPCs administrativas legadas por conta removidas.
-- Antes do lançamento público, habilitar no Dashboard do Supabase a proteção contra senhas vazadas (Leaked Password Protection).
+- `Leaked Password Protection` não está disponível no plano Free atual; o aviso do Advisor é aceito e compensado por política forte de senha e hardening do backend.
 
 ## Certificação de Produção — Etapa 17
 
@@ -28,7 +28,7 @@ Este arquivo reúne apenas os itens operacionais que não devem depender de mem�
 - Home, login, ranking, wiki, robots e sitemap validados em produção.
 - Headers de segurança validados externamente com nota A+.
 - CI do commit certificado verde após repetição do flake conhecido do Prisma/Bun, sem mudança de código.
-- **Pendência de go-live:** habilitar Leaked Password Protection no Supabase Auth.
+- **Go-live liberado no plano Free atual:** Leaked Password Protection permanece indisponível por limitação do plano e está registrado como risco aceito.
 - Evidência completa: `RELEASE-CERTIFICATION.md`.
 
 ## Release Candidate — Etapa 16
