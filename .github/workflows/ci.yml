@@ -25,6 +25,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Repository hygiene
+        run: |
+          if git ls-files --stage | grep -q '^160000 '; then
+            echo "::error::Gitlink/submodule entry detected. This repository must not contain nested repository pointers."
+            git ls-files --stage | grep '^160000 ' || true
+            exit 1
+          fi
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
