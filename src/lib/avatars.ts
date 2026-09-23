@@ -4,6 +4,8 @@ import os from 'os';
 import path from 'path';
 import { lookup } from 'dns/promises';
 import { isIP } from 'net';
+import { request as httpsRequest } from 'node:https';
+import type { IncomingMessage } from 'node:http';
 import sharp from 'sharp';
 import { ApiError } from '@/lib/api';
 import { resolveDbFilePath } from '@/lib/db-path';
@@ -31,6 +33,7 @@ import { resolveDbFilePath } from '@/lib/db-path';
 // =====================================================================
 
 export const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_AVATAR_PIXELS = 16_000_000; // 4000×4000 — anti decompression bomb
 
 function productionUsesPostgres(): boolean {
   return process.env.NODE_ENV === 'production' && /^postgres(?:ql)?:\/\//i.test(process.env.DATABASE_URL ?? '');
@@ -146,12 +149,22 @@ export async function validateImageBytes(bytes: Buffer): Promise<'jpg' | 'png' |
     throw new ApiError('AVATAR_INVALID_TYPE', 'O arquivo não é uma imagem JPG, PNG ou WebP válida.');
   }
   try {
-    const meta = await sharp(bytes).metadata();
-    if (!meta.format || !meta.width || !meta.height || meta.width < 8 || meta.height < 8) {
+    const meta = await sharp(bytes, { limitInputPixels: MAX_AVATAR_PIXELS }).metadata();
+    if (
+      !meta.format ||
+      !meta.width ||
+      !meta.height ||
+      meta.width < 8 ||
+      meta.height < 8 ||
+      meta.width * meta.height > MAX_AVATAR_PIXELS
+    ) {
       throw new Error('dimensões/formato inválidos');
     }
     // decodificação completa: renderiza uma miniatura a partir dos bytes
-    await sharp(bytes).resize(96, 96, { fit: 'inside' }).jpeg({ quality: 70 }).toBuffer();
+    await sharp(bytes, { limitInputPixels: MAX_AVATAR_PIXELS })
+      .resize(96, 96, { fit: 'inside' })
+      .jpeg({ quality: 70 })
+      .toBuffer();
     return kind;
   } catch {
     throw new ApiError('AVATAR_INVALID_TYPE', 'A imagem está corrompida ou não pôde ser decodificada.');
@@ -227,7 +240,7 @@ function isPrivateIp(ip: string): boolean {
   return false;
 }
 
-async function assertPublicHttpsHost(hostname: string): Promise<void> {
+async function resolvePublicHttpsHost(hostname: string): Promise<string> {
   const host = hostname.toLowerCase().replace(/\.$/, '');
   if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.internal') || host.endsWith('.local')) {
     throw new ApiError('AVATAR_INVALID_URL', 'Endereços internos não são permitidos para avatares.');
@@ -236,7 +249,7 @@ async function assertPublicHttpsHost(hostname: string): Promise<void> {
     if (isPrivateIp(host)) {
       throw new ApiError('AVATAR_INVALID_URL', 'Endereços internos não são permitidos para avatares.');
     }
-    return;
+    return host;
   }
   let records: Array<{ address: string }>;
   try {
@@ -244,9 +257,34 @@ async function assertPublicHttpsHost(hostname: string): Promise<void> {
   } catch {
     throw new ApiError('AVATAR_INVALID_URL', 'Não foi possível encontrar o endereço da imagem.');
   }
-  if (records.some((r) => isPrivateIp(r.address))) {
+  if (records.length === 0 || records.some((r) => isPrivateIp(r.address))) {
     throw new ApiError('AVATAR_INVALID_URL', 'Endereços internos não são permitidos para avatares.');
   }
+  return records[0].address;
+}
+
+function pinnedHttpsGet(url: URL, address: string): Promise<IncomingMessage> {
+  return new Promise((resolve, reject) => {
+    const req = httpsRequest(
+      {
+        protocol: 'https:',
+        hostname: address,
+        port: url.port ? Number(url.port) : 443,
+        path: `${url.pathname}${url.search}`,
+        method: 'GET',
+        servername: url.hostname,
+        headers: {
+          host: url.host,
+          'user-agent': 'MystKiWarriors-AvatarCheck/1.0',
+          accept: 'image/*',
+        },
+      },
+      resolve
+    );
+    req.setTimeout(FETCH_TIMEOUT_MS, () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+    req.end();
+  });
 }
 
 const FETCH_TIMEOUT_MS = 8000;
@@ -274,21 +312,23 @@ export async function fetchExternalImage(rawUrl: string): Promise<Buffer> {
         'Use um link HTTPS — o navegador bloqueia imagens HTTP em páginas seguras.'
       );
     }
-    await assertPublicHttpsHost(current.hostname);
+    // Resolve UMA vez, valida TODOS os endereços e conecta diretamente ao
+    // IP validado. Assim o fetch não faz um segundo DNS lookup suscetível a
+    // rebinding entre a checagem anti-SSRF e a conexão.
+    const address = await resolvePublicHttpsHost(current.hostname);
 
-    let res: Response;
+    let res: IncomingMessage;
     try {
-      res = await fetch(current, {
-        redirect: 'manual',
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        headers: { 'user-agent': 'GuerreirosMisticos-AvatarCheck/1.0', accept: 'image/*' },
-      });
+      res = await pinnedHttpsGet(current, address);
     } catch {
       throw new ApiError('AVATAR_INVALID_URL', 'Não foi possível baixar a imagem (timeout ou conexão recusada).');
     }
 
-    if (res.status >= 300 && res.status < 400) {
-      const loc = res.headers.get('location');
+    const status = res.statusCode ?? 0;
+    if (status >= 300 && status < 400) {
+      const rawLoc = res.headers.location;
+      const loc = Array.isArray(rawLoc) ? rawLoc[0] : rawLoc;
+      res.resume();
       if (!loc) {
         throw new ApiError('AVATAR_INVALID_URL', 'O link não devolveu uma imagem.');
       }
@@ -299,40 +339,37 @@ export async function fetchExternalImage(rawUrl: string): Promise<Buffer> {
       }
       continue;
     }
-    if (!res.ok) {
+    if (status < 200 || status >= 300) {
+      res.destroy();
       throw new ApiError(
         'AVATAR_INVALID_URL',
-        `O link não é uma imagem utilizável (resposta ${res.status}). Verifique se é o endereço DIRETO da imagem.`
+        `O link não é uma imagem utilizável (resposta ${status}). Verifique se é o endereço DIRETO da imagem.`
       );
     }
 
-    const declared = Number(res.headers.get('content-length') ?? 0);
+    const declaredRaw = res.headers['content-length'];
+    const declared = Number(Array.isArray(declaredRaw) ? declaredRaw[0] : declaredRaw ?? 0);
     if (declared > MAX_AVATAR_BYTES) {
+      res.destroy();
       throw new ApiError('AVATAR_TOO_LARGE', 'A imagem excede 5 MB.');
     }
-    // Content-Type: recusa páginas HTML/texto explícitas
-    const ctype = (res.headers.get('content-type') ?? '').toLowerCase();
+    const ctypeRaw = res.headers['content-type'];
+    const ctype = String(Array.isArray(ctypeRaw) ? ctypeRaw[0] : ctypeRaw ?? '').toLowerCase();
     if (ctype && !ctype.startsWith('image/') && ctype !== 'application/octet-stream') {
+      res.destroy();
       throw new ApiError('AVATAR_INVALID_URL', 'O link aponta para uma página, não para uma imagem.');
     }
 
-    // leitura com teto rígido (stream) — mesmo sem Content-Length
-    const reader = res.body?.getReader();
-    if (!reader) {
-      throw new ApiError('AVATAR_INVALID_URL', 'O link não devolveu conteúdo.');
-    }
     const chunks: Buffer[] = [];
     let total = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (!value) continue;
+    for await (const chunk of res) {
+      const value = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       total += value.byteLength;
       if (total > MAX_AVATAR_BYTES) {
-        await reader.cancel().catch(() => undefined);
+        res.destroy();
         throw new ApiError('AVATAR_TOO_LARGE', 'A imagem excede 5 MB.');
       }
-      chunks.push(Buffer.from(value));
+      chunks.push(value);
     }
     if (total === 0) {
       throw new ApiError('AVATAR_INVALID_URL', 'O link não devolveu conteúdo de imagem.');
