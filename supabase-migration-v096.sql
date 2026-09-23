@@ -67,26 +67,13 @@ create policy "personagens_select_proprias"
   using (user_id = (select auth.uid()));
 
 drop policy if exists "personagens_insert_proprias" on public.personagens;
-create policy "personagens_insert_proprias"
-  on public.personagens for insert
-  to authenticated
-  with check (user_id = (select auth.uid()));
-
 drop policy if exists "personagens_update_proprias" on public.personagens;
-create policy "personagens_update_proprias"
-  on public.personagens for update
-  to authenticated
-  using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
-
 drop policy if exists "personagens_delete_proprias" on public.personagens;
-create policy "personagens_delete_proprias"
-  on public.personagens for delete
-  to authenticated
-  using (user_id = (select auth.uid()));
 
--- acesso via API para o papel autenticado (RLS acima decide o resto)
-grant select, insert, update, delete on public.personagens to authenticated;
+-- Etapa 12+: o navegador pode ler somente as próprias linhas. Toda escrita
+-- de estado de jogo acontece pelo backend server-authoritative.
+revoke insert, update, delete on table public.personagens from anon, authenticated;
+grant select on table public.personagens to authenticated;
 
 -- ===== 3) MIGRAÇÃO: personagens de profiles.progresso → linhas =====
 -- Idempotente:
