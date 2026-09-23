@@ -232,9 +232,9 @@ export const ZENKAI = {
   relevanceFactor: 0.6,
   /** não repetir contra o mesmo adversário dentro de N horas */
   sameOpponentCooldownHours: 12,
-  /** vida mínima (fração do máximo) ao INICIAR a luta para contar Zenkai */
+  /** vida mínima (fração do máximo) ao INICIAR a luta para contar Resiliência Estelar */
   zenkaiRequiresHpPct: 0.5,
-  /** bônus por Zenkai */
+  /** bônus da Resiliência Estelar */
   strengthGain: 1,
 } as const;
 
@@ -276,7 +276,7 @@ export function shouldGrantZenkai(
   return { granted: true };
 }
 
-/** Atualiza os campos de controle após conceder um Zenkai (muta o objeto). */
+/** Atualiza os campos de controle após conceder Resiliência Estelar (contrato interno: Zenkai; muta o objeto). */
 export function registerZenkai(ctx: ZenkaiContext, opponentId: string, now = new Date()): void {
   ctx.lastZenkaiAt = now;
   ctx.lastZenkaiOpponentId = opponentId;
