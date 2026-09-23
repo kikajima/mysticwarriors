@@ -9,7 +9,7 @@ Host certificado: `https://mysticwarriors-ohio.onrender.com`
 ## Resultado
 
 **RC tecnicamente aprovado para produção.**  
-**Go-live público condicionado a 1 pendência operacional de Auth no Supabase: habilitar Leaked Password Protection.**
+**Go-live público liberado dentro das capacidades do plano Free do Supabase.**
 
 ## Evidências de produção
 
@@ -77,24 +77,25 @@ O banco de produção permanece com o hardening das Etapas 12 e 13 aplicado.
 
 O Advisor de segurança, consultado em 23/09/2026, ainda informa:
 
-- **Leaked Password Protection Disabled** — pendência de go-live.
+- **Leaked Password Protection Disabled** — aviso conhecido e aceito: o recurso não está disponível no plano Free atual do projeto.
 - Avisos de funções `SECURITY DEFINER` públicas/autenticadas já revisados nas etapas anteriores e mantidos somente onde fazem parte do contrato atual (ranking, snapshot público do World Boss e RPCs administrativas com checagem interna).
 - Tabelas `admins` e `world_boss_snapshots` com RLS sem policy aparecem apenas como INFO; acesso direto segue fechado pelos grants aplicados.
 
-## Única pendência antes do lançamento público
+## Limitação aceita do plano Free
 
-No painel do Supabase, habilitar **Leaked Password Protection** para Auth.
+O projeto permanece no plano Free do Supabase. Nesse plano, **Leaked Password Protection** não pode ser habilitado, portanto o aviso `auth_leaked_password_protection` continuará aparecendo no Security Advisor e não será tratado como falha de configuração.
 
-O painel exige autenticação interativa e não havia sessão/credenciais disponíveis durante esta certificação, portanto a configuração não foi alterada automaticamente.
+Controles compensatórios configurados no Auth:
 
-Depois de habilitar:
+- senha mínima de 8 caracteres;
+- exigência de minúscula, maiúscula, número e símbolo;
+- Secure password change habilitado;
+- exigência da senha atual ao atualizar a senha;
+- rate limiting e demais hardenings já aplicados no backend.
 
-1. Reexecutar o Supabase Security Advisor.
-2. Confirmar que `auth_leaked_password_protection` não aparece mais.
-3. Reexecutar o Production smoke contra o host público.
-4. Com ambos verdes, o RC pode ser promovido de `1.0.0-rc.1` para o release público final.
+Se o projeto migrar futuramente para um plano que ofereça Leaked Password Protection, o recurso deve ser habilitado e esta exceção removida da certificação.
 
 ## Status
 
 **RC 1.0.0-rc.1: CERTIFICADO TECNICAMENTE**  
-**GO-LIVE PÚBLICO: PENDENTE DE LEAKED PASSWORD PROTECTION**
+**GO-LIVE PÚBLICO: LIBERADO NO PLANO FREE ATUAL**
