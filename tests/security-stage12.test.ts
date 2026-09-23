@@ -54,6 +54,18 @@ describe('Release stage 12 — cloud authority hardening', () => {
     expect(route).toContain('use o upload de imagem');
   });
 
+  test('Supabase Storage avatar is revalidated by bytes and locked to safe types', async () => {
+    const route = await Bun.file(path.join(ROOT, 'src/app/api/game/avatar/route.ts')).text();
+    const sql = await Bun.file(path.join(ROOT, 'supabase-security-stage12.sql')).text();
+
+    expect(route).toContain('const storedBytes = await fetchExternalImage(url)');
+    expect(route).toContain('await validateImageBytes(storedBytes)');
+    expect(route).toContain('avatar-\\d+');
+    expect(sql).toContain('file_size_limit = 5242880');
+    expect(sql).toContain("allowed_mime_types = array['image/jpeg','image/png','image/webp']");
+    expect(sql).toContain("drop policy if exists avatar_upload_proprio");
+  });
+
   test('rate-limit IP key rejects arbitrary/spoofable header text', async () => {
     const rate = await Bun.file(path.join(ROOT, 'src/lib/rate-limit.ts')).text();
 
