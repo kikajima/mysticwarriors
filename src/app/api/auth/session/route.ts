@@ -13,6 +13,8 @@ import { toErrorResponse } from '@/lib/api';
  * v0.3: inclui `activePlayerId` — o personagem em uso vive no SERVIDOR.
  * O cliente não persiste mais playerId em localStorage (anti-XSS).
  */
+const SESSION_RESPONSE = { headers: { 'cache-control': 'no-store, private' } } as const;
+
 export async function GET() {
   try {
     // boot: garante versão de balanceamento (barato — 1 consulta/processo)
@@ -20,7 +22,7 @@ export async function GET() {
 
     const auth = await getAuth();
     if (!auth) {
-      return NextResponse.json({ success: true, account: null, characters: [] });
+      return NextResponse.json({ success: true, account: null, characters: [] }, SESSION_RESPONSE);
     }
 
     const characters = await db.player.findMany({
@@ -34,12 +36,15 @@ export async function GET() {
         ? auth.account.activePlayerId
         : null;
 
-    return NextResponse.json({
-      success: true,
-      account: accountToView(auth.account),
-      characters: characters.map(playerToView),
-      activePlayerId,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        account: accountToView(auth.account),
+        characters: characters.map(playerToView),
+        activePlayerId,
+      },
+      SESSION_RESPONSE
+    );
   } catch (error) {
     return toErrorResponse(error);
   }
