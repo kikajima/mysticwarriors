@@ -6,7 +6,10 @@ create table if not exists public.world_boss_snapshots (
 );
 
 alter table public.world_boss_snapshots enable row level security;
-grant select, insert, update on public.world_boss_snapshots to authenticated;
+-- Stage 12: snapshot global é somente leitura para clientes autenticados.
+-- O chefe autoritativo vive em game.WorldBoss.
+revoke insert, update, delete on public.world_boss_snapshots from authenticated;
+grant select on public.world_boss_snapshots to authenticated;
 
 create or replace function public.get_world_boss_snapshot()
 returns jsonb language sql security definer set search_path = public
@@ -26,5 +29,4 @@ $$;
 
 revoke all on function public.get_world_boss_snapshot() from public;
 grant execute on function public.get_world_boss_snapshot() to anon, authenticated;
-revoke all on function public.save_world_boss_snapshot(jsonb) from public;
-grant execute on function public.save_world_boss_snapshot(jsonb) to authenticated;
+revoke all on function public.save_world_boss_snapshot(jsonb) from public, anon, authenticated;
