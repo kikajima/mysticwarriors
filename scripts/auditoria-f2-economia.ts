@@ -1,7 +1,7 @@
 // =====================================================================
-// F2 — AUDITORIA DE ECONOMIA: treino × elixir × Zeni
+// F2 — AUDITORIA DE ECONOMIA: treino × elixir × Créditos
 // --------------------------------------------------------------------
-// SUSPEITA (versão antiga): elixir custava 5.000 Zeni fixo e era
+// SUSPEITA (versão antiga): elixir custava 5.000 Créditos fixo e era
 // centenas de vezes mais eficiente que treinar em atributos altos
 // (curva antiga: custo/ponto 5.787 no atributo 100 → 3.143.804 no 200).
 //
@@ -9,11 +9,11 @@
 //  1. Custo marginal de +1 atributo via treino nos pontos
 //     50/100/150/200 (e extras 65/90/250/300) para as 4 estatísticas,
 //     por raça (Humano tem trainCostMult 0,9);
-//  2. Zeni TOTAL para levar um atributo de 10 até X;
+//  2. Créditos TOTAL para levar um atributo de 10 até X;
 //  3. Custo marginal via TODOS os consumíveis/itens que dão atributo
-//     (hoje: APENAS o Elixir do Dragão, 75 💎, +2 em todos os 4
-//     atributos) e via desejos de Shenron (poder: +3 em tudo, 7 esferas);
-//  4. Valoração implícita do 💎 em Zeni (paridade Senzu × hospital) e
+//     (hoje: APENAS o Elixir Primordial, 75 💎, +2 em todos os 4
+//     atributos) e via desejos de Aethelgard (poder: +3 em tudo, 7 Chaves);
+//  4. Valoração implícita do 💎 em Créditos (paridade Fruto de Sylva × hospital) e
 //     PONTO DE CRUZAMENTO onde elixir supera treinar;
 //  5. LIMITADORES: teto de treino por energia (3⚡/treino, 12⚡/h) e
 //     teto de elixir por renda de 💎 (quests diárias/semanais,
@@ -75,7 +75,7 @@ for (const target of [50, 100, 150, 200, 250]) {
   for (let s = 10; s < target; s++) total += baseTrainingCost(s);
   const horasEnergia = (target - 10) / 4; // 3⚡/treino, 12⚡/h → 4 treinos/h
   console.log(
-    `  até ${String(target).padStart(3)}: ${fmt(total).padStart(12)} Zeni  ·  ${target - 10} treinos  ·  ≥ ${horasEnergia.toFixed(1)}h só de regen de energia (12⚡/h)`
+    `  até ${String(target).padStart(3)}: ${fmt(total).padStart(12)} Créditos  ·  ${target - 10} treinos  ·  ≥ ${horasEnergia.toFixed(1)}h só de regen de energia (12⚡/h)`
   );
 }
 
@@ -84,25 +84,25 @@ console.log('');
 console.log('=================================================================');
 console.log('F2 — 3. FONTES DE ATRIBUTO FORA DO TREINO (catálogo atual)');
 console.log('=================================================================');
-console.log('  • Elixir do Dragão (elixir_dragao): 75 💎 → +2 em CADA um dos 4 atributos (8 pontos)');
+console.log('  • Elixir Primordial (elixir_dragao): 75 💎 → +2 em CADA um dos 4 atributos (8 pontos)');
   console.log('    ⇒ 9,375 💎/ponto · custo por ponto/atributo = 75 💎/2');
-console.log('  • Desejo de Shenron "poder": 7 esferas → +3 em CADA um dos 4 atributos (12 pontos)');
-console.log('  • Zenkai (Saiyajin): +1 Força por derrota relevante (12h/adversário, risco real)');
+console.log('  • Bênção Primordial de Aethelgard "poder": 7 Chaves → +3 em CADA um dos 4 atributos (12 pontos)');
+console.log('  • Resiliência Estelar (Solaris): +1 Força por derrota relevante (12h/adversário, risco real)');
 console.log('  • NENHUM outro item da loja concede atributo direto — equipamentos dão');
 console.log('    bônus de COMBATE (atk/def/spd/ki efetivos), não pontos de personagem.');
-console.log('  • O elixirPrice() (dinâmico em Zeni) é LEGADO de teste — a loja cobra 75 💎 fixos.');
+console.log('  • O elixirPrice() (dinâmico em Créditos) é LEGADO de teste — a loja cobra 75 💎 fixos.');
 console.log('');
 
 // ---------- 4. Valoração do 💎 e ponto de cruzamento ----------
 console.log('=================================================================');
 console.log('F2 — 4. PONTO DE CRUZAMENTO: elixir (75💎 = 8 pontos) vs. treino');
 console.log('=================================================================');
-// Valoração implícita: 1 Feijão Senzu (10💎) cura 100% da vida; hospital
-// cobra 3 Zeni/HP. Vida cheia típica nv10-20 ≈ 300-450 HP ⇒ 900-1.350 Zeni
-// ≈ 10💎 ⇒ ~90-135 Zeni/💎. Usamos faixas de 50 / 100 / 200 Zeni/💎.
+// Valoração implícita: 1 Feijão Fruto de Sylva (10💎) cura 100% da vida; hospital
+// cobra 3 Créditos/HP. Vida cheia típica nv10-20 ≈ 300-450 HP ⇒ 900-1.350 Créditos
+// ≈ 10💎 ⇒ ~90-135 Créditos/💎. Usamos faixas de 50 / 100 / 200 Créditos/💎.
 const valuations = [50, 100, 200];
-console.log('Valoração implícita do 💎 (paridade Senzu×hospital: 10💎 = cura total ≈ 3 Zeni/HP):');
-console.log('  vida nv10 ≈ 380 HP → 1.140 Zeni ≈ 10💎 ⇒ ~114 Zeni/💎 (faixa 50–200 usada abaixo)');
+console.log('Valoração implícita do 💎 (paridade Fruto de Sylva×hospital: 10💎 = cura total ≈ 3 Créditos/HP):');
+console.log('  vida nv10 ≈ 380 HP → 1.140 Créditos ≈ 10💎 ⇒ ~114 Créditos/💎 (faixa 50–200 usada abaixo)');
 console.log('');
 for (const v of valuations) {
   const elixirZeniPerPoint = (75 * v) / 8;
@@ -115,11 +115,11 @@ for (const v of valuations) {
     }
   }
   console.log(
-    `  💎 = ${v} Zeni ⇒ elixir custa ${fmt(Math.round(elixirZeniPerPoint))} Zeni/ponto ⇒ treino supera elixir até o atributo ${cross > 0 ? cross : '—'} (depois disso, elixir é mais barato EM ZENI)`
+    `  💎 = ${v} Créditos ⇒ elixir custa ${fmt(Math.round(elixirZeniPerPoint))} Créditos/ponto ⇒ treino supera elixir até o atributo ${cross > 0 ? cross : '—'} (depois disso, elixir é mais barato EM ZENI)`
   );
 }
 console.log('');
-console.log('Interpretação correta da moeda: 💎 NÃO é comprável com Zeni nem com dinheiro real —');
+console.log('Interpretação correta da moeda: 💎 NÃO é comprável com Créditos nem com dinheiro real —');
 console.log('a única fonte é jogar. O cruzamento acima é contábil; o LIMITADOR real é a renda de 💎.');
 
 // ---------- 5. Limitadores ----------
@@ -133,13 +133,13 @@ const achCrystals = ACHIEVEMENTS.reduce((s, a) => s + (a.rewardCrystals ?? 0), 0
 const tournCrystals = 0;
 
 console.log(`A) ENERGIA limita o TREINO: ${TRAIN_ENERGY_COST}⚡/treino · regen 12⚡/h (${REGEN.energySeconds}s/ponto)`);
-console.log(`   ⇒ teto teórico de treino = 4 pontos/h = 96/dia (Zeni disponível à parte).`);
+console.log(`   ⇒ teto teórico de treino = 4 pontos/h = 96/dia (Créditos disponível à parte).`);
 console.log(`   Batalha PvE/PvP custa ${BATTLE_ENERGY_COST}⚡ — o mesmo pool.`);
 console.log('');
 console.log(`B) RENDA DE 💎 limita o ELIXIR (75💎 cada):`);
 console.log(`   • quests diárias: ${dailyCrystals}💎/dia`);
 console.log(`   • quests semanais: ${weeklyCrystals}💎/semana ≈ ${(weeklyCrystals / 7).toFixed(1)}💎/dia`);
-console.log(`   • torneio: ${tournCrystals}💎 — desde v0.9.25, lutas concedem somente Zeni + XP (cooldown ${TOURNAMENT_COOLDOWN_MS / 60_000}min)`);
+console.log(`   • torneio: ${tournCrystals}💎 — desde v0.9.25, lutas concedem somente Créditos + XP (cooldown ${TOURNAMENT_COOLDOWN_MS / 60_000}min)`);
 console.log(`   • boss mundial: 1💎 participação + bônus por posição, 1 boss/3 dias`);
 console.log(`   • conquistas: ${achCrystals}💎 NO TOTAL (one-time, irrecuperáveis)`);
 console.log('');
