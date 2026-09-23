@@ -1,11 +1,10 @@
 import { db } from '@/lib/db';
 import { requireAuth, requirePlayer } from '@/lib/auth';
-import { toErrorResponse, ok } from '@/lib/api';
+import { ApiError, toErrorResponse, ok } from '@/lib/api';
 import { serializeCharacterForCloud } from '@/lib/supabase/progress';
 import { collectCharacterExtras } from '@/lib/supabase/progress-server';
 import { computeDerived } from '@/lib/game/engine';
 import { syncAuthoritativeCloudCharacters } from '@/lib/supabase/serverCloud';
-import { ApiError } from '@/lib/api';
 
 // =====================================================================
 // GET /api/game/cloud-snapshot[?playerId=...] — personagens para a nuvem
