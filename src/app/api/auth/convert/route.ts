@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { ApiError, toErrorResponse } from '@/lib/api';
 import { LIMITS, clientIp, rateLimit } from '@/lib/rate-limit';
-import { accountToView, hashPassword, requireAuth } from '@/lib/auth';
+import { accountToView, createSession, hashPassword, requireAuth, setSessionCookie } from '@/lib/auth';
 import { playerToView } from '@/lib/game/engine';
 import { trackEvent } from '@/lib/analytics';
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     const normalized = username.trim();
     const lower = normalized.toLowerCase();
 
-    const account = await db.$transaction(async (tx) => {
+    const { account, session } = await db.$transaction(async (tx) => {
       const taken = await tx.account.findFirst({ where: { usernameLower: lower }, select: { id: true } });
       if (taken) throw new ApiError('USERNAME_TAKEN', 'Este nome de usuário já está em uso. Escolha outro!');
 
@@ -64,7 +64,20 @@ export async function POST(request: Request) {
           isGuest: false,
         },
       });
-      return updated;
+
+      // Promoção de privilégio: o cookie de convidado NÃO pode sobreviver
+      // à conversão. Revoga a sessão antiga e emite outra dentro da mesma
+      // transação para impedir session fixation.
+      await tx.session.updateMany({
+        where: { id: auth.session.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      const freshSession = await createSession(
+        updated.id,
+        request.headers.get('user-agent') ?? undefined,
+        tx
+      );
+      return { account: updated, session: freshSession };
     });
 
     const characters = await db.player.findMany({
@@ -74,12 +87,13 @@ export async function POST(request: Request) {
 
     await trackEvent('account_created', { accountId: account.id, metadata: { via: 'guest_conversion' } });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       account: accountToView(account),
       characters: characters.map(playerToView),
       message: 'Progresso salvo! Seu guerreiro agora está garantido na sua conta.',
     });
+    return setSessionCookie(response, session.token);
   } catch (error) {
     return toErrorResponse(error);
   }
