@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 const ROOT = process.cwd();
-const SCAN_DIRS = ['src', 'scripts', '.github', 'mini-services'];
+const SCAN_DIRS = ['src', 'scripts', '.github', 'mini-services', 'supabase'];
 const ROOT_FILES = [
   'DESIGN-DECISIONS.md',
   'worklog.md',
@@ -111,6 +111,76 @@ describe('Release security hardening', () => {
     expect(config).toContain('Referrer-Policy');
     expect(config).toContain('Permissions-Policy');
     expect(config).toContain('Strict-Transport-Security');
+    expect(config).toContain('Content-Security-Policy');
+    expect(config).toContain("frame-ancestors 'none'");
+    expect(config).toContain('X-Frame-Options');
+    expect(config).toContain('DENY');
+  });
+
+  test('espelho de gameplay é escrito e restaurado somente pelo backend', async () => {
+    const snapshot = await Bun.file(`${ROOT}/src/app/api/game/cloud-snapshot/route.ts`).text();
+    const restore = await Bun.file(`${ROOT}/src/app/api/game/cloud-restore/route.ts`).text();
+    const page = await Bun.file(`${ROOT}/src/app/jogar/page.tsx`).text();
+    const migration = await Bun.file(
+      `${ROOT}/supabase/migrations/20260923043000_stage12_server_authoritative_mirror.sql`
+    ).text();
+
+    expect(snapshot).toContain('syncServerCloudCharacters');
+    expect(restore).toContain('loadServerCloudCharacters');
+    expect(restore).toContain('z.object({}).strict()');
+    expect(restore).not.toContain('parsed.data.personagens');
+    expect(restore).not.toContain('sanitizeCloudProgress');
+    expect(page).not.toContain('upsertCloudCharacters(');
+    expect(page).not.toContain('deleteStaleCloudCharacters(');
+    expect(page).not.toContain('JSON.stringify({ personagens: rows })');
+    expect(migration).toContain('server_verified');
+    expect(migration).toContain('revoke insert, update, delete on public.personagens from authenticated');
+    expect(migration).toContain('where p.server_verified = true');
+  });
+
+  test('PvP offline não expõe snapshot interno por RPC autenticado', async () => {
+    const offline = await Bun.file(`${ROOT}/src/lib/supabase/offline-pvp.ts`).text();
+    const sql = await Bun.file(`${ROOT}/supabase-offline-pvp.sql`).text();
+    const action = await Bun.file(`${ROOT}/src/app/api/game/action/route.ts`).text();
+
+    expect(offline).toContain('loadServerOfflineOpponent');
+    expect(offline).not.toContain('/rest/v1/rpc/pvp_opponent');
+    expect(offline).not.toContain('SUPABASE_PUBLISHABLE_KEY');
+    expect(sql).not.toContain('grant execute on function public.pvp_opponent(text) to authenticated');
+    expect(action).not.toContain('extractBearerToken');
+  });
+
+  test('promoções de convidado rotacionam a sessão privilegiada', async () => {
+    const local = await Bun.file(`${ROOT}/src/app/api/auth/convert/route.ts`).text();
+    const bridge = await Bun.file(`${ROOT}/src/app/api/auth/supabase/route.ts`).text();
+
+    expect(local).toContain('id: auth.session.id');
+    expect(local).toContain('revokedAt: new Date()');
+    expect(local).toContain('setSessionCookie(response, session.token)');
+    expect(bridge).toContain('id: current.session.id');
+    expect(bridge).toContain('rotatedSession');
+    expect(bridge).toContain('revokedAt: new Date()');
+  });
+
+  test('avatares fixam DNS validado e limitam bomba de pixels', async () => {
+    const avatars = await Bun.file(`${ROOT}/src/lib/avatars.ts`).text();
+    const route = await Bun.file(`${ROOT}/src/app/api/game/avatar/route.ts`).text();
+
+    expect(avatars).toContain('MAX_AVATAR_PIXELS');
+    expect(avatars).toContain('function pinnedHttpsGet');
+    expect(avatars).toContain('hostname: address');
+    expect(avatars).toContain('servername: url.hostname');
+    expect(avatars).toContain('limitInputPixels: MAX_AVATAR_PIXELS');
+    expect(avatars).not.toContain('fetch(current');
+    expect(route).toContain('const storageBytes = await fetchExternalImage(url)');
+    expect(route).toContain('await validateImageBytes(storageBytes)');
+  });
+
+  test('rota de invocação administrativa usa guard compartilhado e rate limit', async () => {
+    const route = await Bun.file(`${ROOT}/src/app/api/admin/universal-threat/route.ts`).text();
+    expect(route).toContain('requirePanelAdmin(request)');
+    expect(route).toContain('rateLimit(');
+    expect(route).not.toContain('verifySupabaseAdmin(token)');
   });
 
   test('documentação vigente não contém o e-mail administrativo histórico', async () => {
