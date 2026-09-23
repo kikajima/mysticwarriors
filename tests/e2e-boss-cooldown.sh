@@ -32,6 +32,11 @@ echo "$CHAR" | grep -q '"success":true' && ok "personagem criado" || bad "create
 PLAYER_ID=$(echo "$CHAR" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
 [ -n "$PLAYER_ID" ] && ok "playerId obtido" || { echo "FALHA CRÍTICA: sem playerId"; exit 1; }
 
+# O calendário real pode estar fora da janela da Ameaça Universal.
+# Para testar especificamente cooldown/dano de forma determinística, este
+# banco efêmero de CI recebe uma invocação administrativa de QA.
+bun scripts/e2e-db.ts invoke-boss >/dev/null
+
 ACT() { # type extra-json
   curl -s -w '\n%{http_code}' -b "$JAR" -X POST "$BASE/api/game/action" -H 'Content-Type: application/json' \
     -d "{\"playerId\":\"$PLAYER_ID\",\"type\":\"$1\"${2:+,$2}}"
