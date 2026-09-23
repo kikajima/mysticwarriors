@@ -8,6 +8,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { PwaBootstrap } from "@/components/PwaBootstrap";
+import { siteUrl } from "@/lib/site";
 
 const geistSans = localFont({
   src: "../fonts/Geist-Variable.woff2",
@@ -37,7 +38,7 @@ const russoOne = localFont({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mysticwarriors-ohio.onrender.com";
+const SITE_URL = siteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
