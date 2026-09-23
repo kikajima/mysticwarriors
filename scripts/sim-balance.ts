@@ -1,5 +1,5 @@
 // =====================================================================
-// SIMULAÇÃO DE BALANCEAMENTO — Guerreiros Místicos
+// SIMULAÇÃO DE BALANCEAMENTO — Myst Ki Warriors
 // ---------------------------------------------------------------------
 // Reproduz a linha de base descrita na revisão:
 //  * nível 10, TODOS os atributos básicos em 50, vida cheia;
