@@ -1366,7 +1366,7 @@ export default function PlayPage() {
               </span>
               {player.dragonBalls > 0 && (
                 <span className="text-orange-300" title="Chaves do Horizonte">
-                  🔮 {player.dragonBalls}/7
+                  ◇ {player.dragonBalls}/7
                 </span>
               )}
             </div>
@@ -1455,7 +1455,7 @@ export default function PlayPage() {
               ⭐ {player.xp}/{player.xpToNext}
             </span>
             {player.dragonBalls > 0 && (
-              <span className="text-orange-300 whitespace-nowrap">🔮 {player.dragonBalls}/7</span>
+              <span className="text-orange-300 whitespace-nowrap">◇ {player.dragonBalls}/7</span>
             )}
           </div>
 

@@ -174,7 +174,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'guild_donator', category: 'guild', name: 'Mecenas', description: 'Doe 50.000 Créditos para guildas (total).', metric: 'guildDonated', target: 50000, rewardZeni: 10000, rewardXp: 3000, rewardCrystals: 10, icon: '💰' },
   // Coleção
   { id: 'items_10', category: 'collection', name: 'Colecionador', description: 'Tenha 10 itens diferentes no inventário.', metric: 'itemsOwned', target: 10, rewardZeni: 2000, rewardXp: 600, rewardCrystals: 3, icon: '🎒' },
-  { id: 'dragao_7', category: 'collection', name: 'Guardião das Chaves', description: 'Tenha as 7 Chaves do Horizonte ao mesmo tempo.', metric: 'dragonBalls', target: 7, rewardZeni: 7000, rewardXp: 2000, rewardCrystals: 15, icon: '🔮' },
+  { id: 'dragao_7', category: 'collection', name: 'Guardião das Chaves', description: 'Tenha as 7 Chaves do Horizonte ao mesmo tempo.', metric: 'dragonBalls', target: 7, rewardZeni: 7000, rewardXp: 2000, rewardCrystals: 15, icon: '◇' },
   // Progressão
   { id: 'missions_50', category: 'progression', name: 'Trabalhador Incansável', description: 'Conclua 50 turnos de trabalho.', metric: 'missionsDone', target: 50, rewardZeni: 4000, rewardXp: 1200, rewardCrystals: 4, icon: '📋' },
   { id: 'transform_1', category: 'progression', name: 'Além dos Limites', description: 'Desbloqueie sua primeira transformação.', metric: 'transformationsOwned', target: 1, rewardZeni: 5000, rewardXp: 1500, rewardCrystals: 5, icon: '⚡' },
