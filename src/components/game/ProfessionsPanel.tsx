@@ -143,7 +143,7 @@ export function ProfessionsPanel({
       <div className="flex gap-2" role="tablist">
         {(
           [
-            { key: 'search', label: '🔮 Busca' },
+            { key: 'search', label: '◇ Busca' },
             { key: 'professions', label: '💼 Profissões' },
             { key: 'quests', label: '📅 Diárias & Semanais' },
           ] as const
@@ -503,7 +503,7 @@ function DragonBallSearchTab({
     <div className="space-y-4">
       <GameCard className="p-6 border-yellow-700/50" glow={complete}>
         <div className="flex flex-col md:flex-row md:items-center gap-5">
-          <div className="text-6xl shrink-0 text-center" aria-hidden>🔮</div>
+          <div className="text-6xl shrink-0 text-center text-cyan-300" aria-hidden>◇</div>
           <div className="flex-1">
             <h3 className="font-heading text-xl text-amber-100">Busca pelas Chaves</h3>
             <p className="text-sm text-amber-200/60 mt-1 leading-relaxed">
