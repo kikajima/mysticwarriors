@@ -58,111 +58,16 @@ as $$
   );
 $$;
 
--- ===== 3) Lista de jogadores (somente admin) =====
--- Retorna todos os usuários com o que há no perfil de cada um.
+-- ===== 3) RPCs legadas de conta — aposentadas na Etapa 13 =====
+-- O painel atual opera por PERSONAGEM. Estas RPCs antigas não são mais
+-- chamadas pelo código e são removidas para reduzir a superfície exposta.
 
-create or replace function public.admin_list_players()
-returns table (
-  user_id uuid,
-  email text,
-  nick text,
-  nivel int,
-  xp bigint,
-  progresso jsonb,
-  created_at timestamptz
-)
-language sql
-stable
-security definer
-set search_path = public, auth
-as $$
-  select u.id, u.email, p.nick, p.nivel, p.xp, p.progresso, u.created_at
-  from auth.users u
-  left join public.profiles p on p.id = u.id
-  where public.is_admin()
-$$;
-
--- ===== 4) Ler o progresso salvo de um jogador (somente admin) =====
-
-create or replace function public.admin_get_progress(p_user_id uuid)
-returns jsonb
-language sql
-stable
-security definer
-set search_path = public, auth
-as $$
-  select p.progresso
-  from public.profiles p
-  where p.id = p_user_id
-    and public.is_admin()
-$$;
-
--- ===== 5) Gravar o progresso de um jogador (somente admin) =====
--- Substitui o snapshot jsonb e mantém nick/nivel/xp coerentes com o
--- personagem ativo do snapshot. Se ainda não existir linha no perfil,
--- tenta criar.
-
-create or replace function public.admin_update_progress(p_user_id uuid, p_progresso jsonb)
-returns boolean
-language plpgsql
-security definer
-set search_path = public, auth
-as $$
-declare
-  v_nick text;
-  v_nivel int;
-  v_xp bigint;
-begin
-  if not public.is_admin() then
-    raise exception 'Não autorizado.' using errcode = '42501';
-  end if;
-
-  select c->>'name', (c->>'level')::int, (c->>'xp')::bigint
-    into v_nick, v_nivel, v_xp
-  from jsonb_array_elements(p_progresso->'characters') c
-  where c->>'name' = p_progresso->>'activePlayerName'
-  limit 1;
-
-  update public.profiles p
-  set progresso = p_progresso,
-      nick = coalesce(v_nick, p.nick),
-      nivel = coalesce(v_nivel, p.nivel),
-      xp = coalesce(v_xp, p.xp)
-  where p.id = p_user_id;
-
-  if found then
-    return true;
-  end if;
-
-  begin
-    insert into public.profiles (id, nick, nivel, xp, progresso)
-    values (p_user_id, coalesce(v_nick, 'guerreiro'), coalesce(v_nivel, 1), coalesce(v_xp, 0), p_progresso);
-    return true;
-  exception when others then
-    return false;
-  end;
-end;
-$$;
-
--- ===== 6) Permissões de execução =====
--- Usuários comuns PODEM chamar is_admin() (recebem "false" e nada mais).
--- As demais funções só servem para o admin — mas mantemos a execução
--- liberada para "authenticated" porque a verificação interna é quem
--- decide; anônimos (sem login) ficam bloqueados.
-
--- v0.9.1: remove a antiga admin_reset_progress, caso exista de um SQL
--- anterior (ela zerava o progresso salvo; o reset agora preserva os
--- personagens e passa pela admin_update_progress).
+drop function if exists public.admin_list_players();
+drop function if exists public.admin_get_progress(uuid);
+drop function if exists public.admin_update_progress(uuid, jsonb);
 drop function if exists public.admin_reset_progress(uuid);
 
 revoke execute on function public.is_admin() from public, anon;
-revoke execute on function public.admin_list_players() from public, anon;
-revoke execute on function public.admin_get_progress(uuid) from public, anon;
-revoke execute on function public.admin_update_progress(uuid, jsonb) from public, anon;
-
 grant execute on function public.is_admin() to authenticated;
-grant execute on function public.admin_list_players() to authenticated;
-grant execute on function public.admin_get_progress(uuid) to authenticated;
-grant execute on function public.admin_update_progress(uuid, jsonb) to authenticated;
 
 -- ===== FIM — painel liberado para SEU_EMAIL_ADMIN_AQUI =====

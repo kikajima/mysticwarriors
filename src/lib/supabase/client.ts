@@ -454,123 +454,18 @@ export async function upsertCloudProfile(profile: {
 }
 
 // =====================================================================
-// PERSONAGENS NA NUVEM (v0.9.6 — Mudança 3)
+// NUVEM NO NAVEGADOR — LEITURAS/IDENTIDADE NÃO-AUTORITATIVAS
 // ---------------------------------------------------------------------
-// A CONTA (profiles) ficou apenas com o login. Cada PERSONAGEM é uma
-// linha própria na tabela `personagens`:
-//   id          = id do personagem no servidor do jogo (chave estável —
-//                 o mesmo nas duas pontas; nunca duplica);
-//   user_id     = dono (auth.uid()) — RLS só deixa tocar nas próprias;
-//   estado      = snapshot completo DO personagem (CloudCharacterSnapshot
-//                 v3, gerado pelo servidor do jogo);
-//   nome/raca/nivel/poder/vitorias/derrotas = colunas espelhadas para o
-//                 ranking público calcular direto no Postgres (RPC).
+// Etapa 12+: estado de personagem não é lido nem gravado diretamente
+// pelo browser. Snapshot/restore passam pelas rotas server-authoritative.
+// O cliente mantém apenas integrações que não fabricam estado de jogo.
 // =====================================================================
-
-/** Linha de personagem pronta para upsert (o servidor do jogo constrói). */
-export interface CloudCharacterRow {
-  id: string;
-  nome: string;
-  raca: string;
-  nivel: number;
-  poder: number;
-  vitorias: number;
-  derrotas: number;
-  ativo: boolean;
-  estado: CloudCharacterSnapshot;
-}
-
-/** Linha de personagem lida da nuvem (mesma forma + datas). */
-export interface CloudCharacterReadRow extends CloudCharacterRow {
-  criado_em: string | null;
-  atualizado_em: string | null;
-}
 
 function logCloudError(prefix: string, error: { code?: string; message?: string; details?: unknown; hint?: unknown }) {
   console.error(
     `${prefix} —`,
     JSON.stringify({ code: error.code, message: error.message, details: error.details, hint: error.hint })
   );
-}
-
-/**
- * Lê TODOS os personagens da conta logada (RLS: user_id = auth.uid()).
- * Devolve:
- *  - { rows } em sucesso (pode ser lista vazia — conta nova);
- *  - { rows: null } quando a tabela ainda não existe (SQL v0.9.6 não
- *    aplicado) — quem chama cai no formato antigo (profiles.progresso);
- *  - { rows: [] } em outros erros, LOGADOS (nunca silenciosos).
- */
-export async function loadCloudCharacters(): Promise<{ rows: CloudCharacterReadRow[] | null }> {
-  const session = await getSupabaseSession();
-  if (!session) return { rows: [] };
-  const { data, error } = await getSupabaseClient()
-    .from('personagens')
-    .select('id, nome, raca, nivel, poder, vitorias, derrotas, ativo, estado, criado_em, atualizado_em')
-    .eq('user_id', session.user.id)
-    .order('criado_em', { ascending: true });
-  if (error) {
-    // 42P01 = tabela não existe; PGRST205 = schema/tabela não encontrada
-    // na API → o dono ainda não colou o SQL da v0.9.6 (transição normal).
-    if (error.code === '42P01' || error.code === 'PGRST205') {
-      console.warn('[nuvem] tabela personagens ainda não existe (SQL v0.9.6 pendente) — usando formato antigo');
-      return { rows: null };
-    }
-    logCloudError('[nuvem] FALHA ao LER os personagens da nuvem', error);
-    return { rows: [] };
-  }
-  return { rows: (data as CloudCharacterReadRow[]) ?? [] };
-}
-
-/**
- * Salva (upsert) os personagens da conta — cada um na PRÓPRIA linha.
- * RLS garante que só as linhas do próprio usuário podem ser gravadas.
- * Falhas são logadas e devolvem false (o auto-save retenta depois).
- */
-export async function upsertCloudCharacters(rows: CloudCharacterRow[]): Promise<boolean> {
-  if (rows.length === 0) return true;
-  const session = await getSupabaseSession();
-  if (!session) return false;
-  const { error } = await getSupabaseClient()
-    .from('personagens')
-    .upsert(
-      rows.map((r) => ({ ...r, user_id: session.user.id })),
-      { onConflict: 'id' }
-    );
-  if (error) {
-    logCloudError('[nuvem] FALHA ao SALVAR os personagens na nuvem', error);
-    return false;
-  }
-  console.info(`[nuvem] personagens salvos \u2713 ${rows.length} guerreiro(s) — ${rows.map((r) => r.nome).join(', ')}`);
-  return true;
-}
-
-/**
- * Remove da nuvem as linhas da própria conta que NÃO estão na lista de ids
- * atuais (personagem excluído no servidor, ou linha migrada de outro
- * formato na transição para a v0.9.6). Roda só DEPOIS de um upsert bem-
- * sucedido — a lista atual sempre existe no banco do jogo antes.
- */
-export async function deleteStaleCloudCharacters(keepIds: string[]): Promise<boolean> {
-  const session = await getSupabaseSession();
-  if (!session) return false;
-  const query = getSupabaseClient()
-    .from('personagens')
-    .delete()
-    .eq('user_id', session.user.id);
-  // lista vazia = todos os personagens locais sumiram → limpa tudo
-  const filtered = keepIds.filter((id) => typeof id === 'string' && id.length > 0 && id.length <= 64);
-  if (filtered.length > 0) {
-    // sintaxe "not in" do PostgREST: valores entre parênteses e separados
-    // por vírgula; ids são cuids do servidor (sem vírgulas/aspas)
-    void query.not('id', 'in', `(${filtered.join(',')})`);
-  }
-  const { error } = await query;
-  if (error) {
-    logCloudError('[nuvem] FALHA ao LIMPAR personagens antigos da nuvem', error);
-    return false;
-  }
-  return true;
 }
 
 export async function loadCloudWorldBoss(): Promise<CloudWorldBossSnapshot | null> {
@@ -581,18 +476,6 @@ export async function loadCloudWorldBoss(): Promise<CloudWorldBossSnapshot | nul
   } catch {
     return null;
   }
-}
-
-export async function saveCloudWorldBoss(snapshot: CloudWorldBossSnapshot): Promise<boolean> {
-  const session = await getSupabaseSession();
-  if (!session) return false;
-  const { error } = await getSupabaseClient().rpc('save_world_boss_snapshot', { p_snapshot: snapshot });
-  if (error) {
-    console.error('[nuvem] FALHA ao salvar o Ameaça Universal', error.message);
-    return false;
-  }
-  console.info('[nuvem] Ameaça Universal salvo', snapshot.id, snapshot.currentHp);
-  return true;
 }
 
 /**

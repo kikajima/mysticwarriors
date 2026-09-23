@@ -141,25 +141,13 @@ create policy "personagens_select_proprias"
   using (user_id = (select auth.uid()));
 
 drop policy if exists "personagens_insert_proprias" on public.personagens;
-create policy "personagens_insert_proprias"
-  on public.personagens for insert
-  to authenticated
-  with check (user_id = (select auth.uid()));
-
 drop policy if exists "personagens_update_proprias" on public.personagens;
-create policy "personagens_update_proprias"
-  on public.personagens for update
-  to authenticated
-  using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
-
 drop policy if exists "personagens_delete_proprias" on public.personagens;
-create policy "personagens_delete_proprias"
-  on public.personagens for delete
-  to authenticated
-  using (user_id = (select auth.uid()));
 
-grant select, insert, update, delete on public.personagens to authenticated;
+-- Etapa 12+: o navegador pode ler somente as próprias linhas. Toda escrita
+-- de estado de jogo acontece pelo backend server-authoritative.
+revoke insert, update, delete on table public.personagens from anon, authenticated;
+grant select on table public.personagens to authenticated;
 
 -- Gatilho: atualizado_em sempre fresco.
 create or replace function public.tocar_personagem()
@@ -576,9 +564,9 @@ revoke execute on function public.admin_get_progress(uuid) from public, anon;
 revoke execute on function public.admin_update_progress(uuid, jsonb) from public, anon;
 
 grant execute on function public.is_admin() to authenticated;
-grant execute on function public.admin_list_players() to authenticated;
-grant execute on function public.admin_get_progress(uuid) to authenticated;
-grant execute on function public.admin_update_progress(uuid, jsonb) to authenticated;
+revoke execute on function public.admin_list_players() from public, anon, authenticated;
+revoke execute on function public.admin_get_progress(uuid) from public, anon, authenticated;
+revoke execute on function public.admin_update_progress(uuid, jsonb) from public, anon, authenticated;
 
 -- =====================================================================
 -- 8) STORAGE — bucket público de avatares
