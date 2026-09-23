@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
@@ -29,9 +29,21 @@ async function createPlayer(db: PrismaClient, items?: string) {
 }
 
 describe('Oficina completa — integração transacional', () => {
+  let db: PrismaClient;
+  let dir: string;
+
+  beforeAll(async () => {
+    const setup = await makeDb();
+    db = setup.db;
+    dir = setup.dir;
+  }, 15_000);
+
+  afterAll(async () => {
+    await db?.$disconnect();
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
   test('lote consome, persiste snapshot e cancelamento devolve tudo exatamente', async () => {
-    const { db, dir } = await makeDb();
-    try {
       const player = await createPlayer(db);
       await db.inventoryStack.createMany({
         data: [
@@ -87,15 +99,9 @@ describe('Oficina completa — integração transacional', () => {
         ['craft', -450],
         ['craft_cancel', 450],
       ]);
-    } finally {
-      await db.$disconnect();
-      rmSync(dir, { recursive: true, force: true });
-    }
   });
 
   test('lote concluído entrega a quantidade correta de consumíveis uma única vez', async () => {
-    const { db, dir } = await makeDb();
-    try {
       const player = await createPlayer(db);
       await db.inventoryStack.createMany({
         data: [
@@ -125,15 +131,9 @@ describe('Oficina completa — integração transacional', () => {
       }
       expect(error).toBeInstanceOf(ApiError);
       expect((error as ApiError).message).toContain('não tem fabricação');
-    } finally {
-      await db.$disconnect();
-      rmSync(dir, { recursive: true, force: true });
-    }
   });
 
   test('item permanente já possuído não pode ser fabricado novamente', async () => {
-    const { db, dir } = await makeDb();
-    try {
       const items = JSON.stringify({
         weapon: null,
         armor: null,
@@ -166,9 +166,5 @@ describe('Oficina completa — integração transacional', () => {
       const unchanged = await db.player.findUniqueOrThrow({ where: { id: player.id } });
       expect(unchanged.zeni).toBe(500);
       expect(await db.craftJob.findUnique({ where: { playerId: player.id } })).toBeNull();
-    } finally {
-      await db.$disconnect();
-      rmSync(dir, { recursive: true, force: true });
-    }
   });
 });
