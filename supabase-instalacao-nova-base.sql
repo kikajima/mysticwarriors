@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — INSTALAÇÃO COMPLETA NA NOVA BASE (2026)
+-- MYST KI WARRIORS — INSTALAÇÃO COMPLETA NA NOVA BASE (2026)
 -- =====================================================================
 -- PROJETO ALVO: rugbhzcmxmtmoqoxrhki (base NOVA, separada do projeto
 -- antigo a pedido do dono, para não misturar os dados).
