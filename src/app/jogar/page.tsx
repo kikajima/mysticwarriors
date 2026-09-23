@@ -37,11 +37,7 @@ import { noteServerTime, serverNowMs } from '@/lib/game/clock';
 import { projectPlayerRegen } from '@/lib/game/clientRegen';
 import {
   getSupabaseSession,
-  loadCloudProfile,
-  loadCloudCharacters,
   ensureCloudProfileNick,
-  upsertCloudCharacters,
-  deleteStaleCloudCharacters,
   supabaseSignOut,
   supabaseIsAdmin,
 } from '@/lib/supabase/client';
@@ -530,72 +526,38 @@ export default function PlayPage() {
       if (!account.isGuest && chars.length === 0) {
         const session = await getSupabaseSession();
         if (session) {
-          // v0.9.6: personagens são LINHAS próprias na nuvem — cada um com
-          // id/carteira/itens/cosméticos próprios (a conta só faz login).
-          const { rows } = await loadCloudCharacters();
-          if (rows && rows.length > 0) {
-            // restaura da nuvem (o servidor valida e clampa tudo)
-            try {
-              const res = await fetch('/api/game/cloud-restore', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ personagens: rows }),
-              });
-              const data = await res.json();
-              if (res.ok && data.success !== false && Array.isArray(data.characters)) {
-                finalChars = data.characters;
-                if (data.restored > 0) {
-                  toast({
-                    title: '☁️ Progresso restaurado da nuvem!',
-                    description: `${data.restored} ${data.restored === 1 ? 'guerreiro recuperado' : 'guerreiros recuperados'} — atualização passou, mas nada foi perdido.`,
-                    className: 'border-sky-600 bg-sky-950 text-sky-100',
-                  });
-                }
-              } else {
-                console.error(
-                  '[nuvem] FALHA na restauração dos personagens —',
-                  `HTTP ${res.status}`,
-                  data?.error ?? data?.message ?? ''
-                );
-              }
-            } catch (err) {
-              console.error('[nuvem] FALHA ao chamar a restauração dos personagens —', err);
-            }
-          } else if (rows === null) {
-            // tabela `personagens` ainda não existe (SQL v0.9.6 pendente)
-            // → formato antigo: profiles.progresso (v2), cosméticos da
-            // conta duplicados para cada personagem pelo servidor.
-            const profile = await loadCloudProfile();
-            if (profile?.progresso?.characters?.length) {
-              try {
-                const res = await fetch('/api/game/cloud-restore', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ progresso: profile.progresso }),
+          // Stage 12: o cliente envia apenas a INTENÇÃO de restaurar.
+          // O backend resolve o supabaseUserId da sessão local e lê somente
+          // snapshots server_verified; nenhum JSON de gameplay atravessa
+          // navegador → servidor neste fluxo.
+          try {
+            const res = await fetch('/api/game/cloud-restore', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({}),
+            });
+            const data = await res.json();
+            if (res.ok && data.success !== false && Array.isArray(data.characters)) {
+              finalChars = data.characters;
+              if (data.restored > 0) {
+                toast({
+                  title: '☁️ Progresso restaurado da nuvem!',
+                  description: `${data.restored} ${data.restored === 1 ? 'guerreiro recuperado' : 'guerreiros recuperados'} — atualização passou, mas nada foi perdido.`,
+                  className: 'border-sky-600 bg-sky-950 text-sky-100',
                 });
-                const data = await res.json();
-                if (res.ok && data.success !== false && Array.isArray(data.characters)) {
-                  finalChars = data.characters;
-                  if (data.restored > 0) {
-                    toast({
-                      title: '☁️ Progresso restaurado da nuvem!',
-                      description: `${data.restored} ${data.restored === 1 ? 'guerreiro recuperado' : 'guerreiros recuperados'} — atualização passou, mas nada foi perdido.`,
-                      className: 'border-sky-600 bg-sky-950 text-sky-100',
-                    });
-                  }
-                } else {
-                  console.error(
-                    '[nuvem] FALHA na restauração do progresso (formato antigo) —',
-                    `HTTP ${res.status}`,
-                    data?.error ?? data?.message ?? ''
-                  );
-                }
-              } catch (err) {
-                console.error('[nuvem] FALHA ao chamar a restauração (formato antigo) —', err);
               }
+            } else {
+              console.error(
+                '[nuvem] FALHA na restauração server-side —',
+                `HTTP ${res.status}`,
+                data?.error ?? data?.message ?? ''
+              );
             }
-          } else {
-            // conta nova: garante a linha da CONTA em profiles com o nick
+          } catch (err) {
+            console.error('[nuvem] FALHA ao chamar a restauração server-side —', err);
+          }
+
+          if (finalChars.length === 0) {
             try {
               await ensureCloudProfileNick(account.username);
             } catch (err) {
@@ -1024,11 +986,10 @@ export default function PlayPage() {
   // ===== v0.9.6 — AUTO-SAVE na nuvem (tabela `personagens`) =====
   // Dispara sempre que algo importante muda (subiu de nível, ganhou XP/
   // Créditos, comprou, treinou, iniciou/cancelou/coletou turno...): o servidor
-  // produz UMA LINHA POR PERSONAGEM (/api/game/cloud-snapshot) e o cliente
-  // grava cada uma com a sessão do próprio usuário (RLS). Depois de um
-  // save bem-sucedido, linhas antigas que não existem mais no servidor
-  // (personagem excluído / linha migrada) são limpas — a nuvem fica
-  // EXATAMENTE igual ao servidor. Convidados não salvam.
+  // produz UMA LINHA POR PERSONAGEM e o BACKEND a grava no espelho pelo
+  // PostgreSQL server-side. O cliente apenas dispara a sincronização e
+  // recebe sucesso/erro; não pode inserir, alterar ou apagar gameplay no
+  // Supabase. Convidados não salvam.
 
   /** Executa um save na nuvem agora (se aplicável).
    *
@@ -1057,20 +1018,21 @@ export default function PlayPage() {
         cache: 'no-store',
       });
       const snap = await snapRes.json();
-      if (!snapRes.ok || snap.success === false || !Array.isArray(snap.personagens)) {
+      if (
+        !snapRes.ok ||
+        snap.success === false ||
+        !Array.isArray(snap.personagens) ||
+        snap.serverSynced !== true
+      ) {
         console.error(
-          '[nuvem] FALHA ao gerar os personagens no servidor —',
+          '[nuvem] FALHA ao sincronizar o espelho autoritativo —',
           `HTTP ${snapRes.status}`,
           snap?.error ?? snap?.message ?? ''
         );
         return false;
       }
-      const rows = snap.personagens as import('@/lib/supabase/client').CloudCharacterRow[];
-      const saved = await upsertCloudCharacters(rows);
-      if (!saved) return false;
-      // sincroniza: remove da nuvem o que não existe mais no servidor
-      // (personagem excluído / linha antiga da migração)
-      await deleteStaleCloudCharacters(rows.map((r) => r.id));
+      // Stage 12: o próprio backend acabou de gravar/remover as linhas do
+      // espelho. O navegador nunca recebe permissão de escrita em gameplay.
       lastSavedCloudRef.current = fp ?? fingerprintRef.current;
       return true;
       } catch {
@@ -1086,9 +1048,9 @@ export default function PlayPage() {
     }
   }, [playerId, auth]);
 
-  // v0.9.4 — LOGOUT SEMPRE SALVA: a sessão do Supabase é encerrada só
-  // DEPOIS do save na nuvem (antes, o save do logout rodava após o
-  // signOut e falhava em silêncio — sem sessão não há como gravar).
+  // LOGOUT SEMPRE SINCRONIZA antes de encerrar a sessão. Stage 12: a
+  // escrita é server-side, mas mantemos a ordem para concluir o espelho
+  // enquanto a conta ainda está integralmente autenticada no cliente.
   const logoutAccount = useCallback(async () => {
     try {
       await Promise.race([saveToCloud(), new Promise((r) => setTimeout(r, 5000))]);
