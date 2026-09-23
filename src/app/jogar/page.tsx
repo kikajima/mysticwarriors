@@ -712,14 +712,12 @@ export default function PlayPage() {
       if (optimisticDelta && player) {
         setPlayer((prev) => (prev ? applyOptimisticDelta(prev, optimisticDelta) : prev));
       }
-      const send = async () => {
-        const session = ['attack_player', 'guild_invite'].includes(String(payload.type)) ? await getSupabaseSession() : null;
-        return fetch('/api/game/action', {
+      const send = async () =>
+        fetch('/api/game/action', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playerId, requestId, ...serverPayload }),
         });
-      };
       try {
         const requestStart = Date.now();
         let res: Response;
