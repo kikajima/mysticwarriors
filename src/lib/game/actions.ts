@@ -825,7 +825,7 @@ async function actionStartBattle(tx: Tx, player: Player, enemyId: string): Promi
 
   const rewards = npcRewards(idx, player.race, sim.won);
 
-  // Zenkai decidido AQUI pelos critérios de risco (sem cota diária):
+  // Resiliência Estelar decidida AQUI pelos critérios de risco (contrato interno: zenkai; sem cota diária):
   // derrota + adversário relevante + entrada com vida >= 50%
   let zenkai = false;
   if (!sim.won && player.hp >= derived.maxHp * ZENKAI.zenkaiRequiresHpPct) {
