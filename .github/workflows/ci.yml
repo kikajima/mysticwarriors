@@ -46,7 +46,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
         run: |
           rm -f ci-functional.db ci-functional.db-journal
-          bunx prisma db push --schema prisma/schema.sqlite.prisma --skip-generate
           bun run dev > /tmp/mw-functional-server.log 2>&1 &
           SERVER_PID=$!
           cleanup() {
