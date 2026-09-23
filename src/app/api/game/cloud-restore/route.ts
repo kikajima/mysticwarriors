@@ -120,7 +120,7 @@ export async function POST(request: Request) {
 
     const cloudRows = await loadAuthoritativeCloudCharacters(auth.account.supabaseUserId);
     if (!cloudRows) {
-      throw new ApiError('CLOUD_UNAVAILABLE', 'Restauração autoritativa da nuvem indisponível neste ambiente.');
+      throw new ApiError('PRECONDITION_FAILED', 'Restauração autoritativa da nuvem indisponível neste ambiente.');
     }
 
     // ===== linhas v3 lidas server-side =====
