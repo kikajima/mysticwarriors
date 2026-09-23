@@ -47,6 +47,18 @@ describe('Release stage 12 — cloud authority hardening', () => {
     expect(serverCloud).toContain('A sessão da nuvem não pertence a esta conta.');
   });
 
+  test('legacy local permanent auth is invisible in production', async () => {
+    for (const rel of [
+      'src/app/api/auth/login/route.ts',
+      'src/app/api/auth/register/route.ts',
+      'src/app/api/auth/convert/route.ts',
+    ]) {
+      const route = await Bun.file(path.join(ROOT, rel)).text();
+      expect(route).toContain("process.env.NODE_ENV === 'production'");
+      expect(route).toContain("status: 404");
+    }
+  });
+
   test('production avatar URL mode is closed against DNS rebinding SSRF', async () => {
     const route = await Bun.file(path.join(ROOT, 'src/app/api/game/avatar/route.ts')).text();
 
