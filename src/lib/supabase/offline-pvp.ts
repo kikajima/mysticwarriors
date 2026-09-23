@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { ApiError } from '@/lib/api';
-import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './config';
+import { loadServerOfflineOpponent } from './server-mirror';
 import { cloudCharacterToPlayerData, sanitizeCloudCharacterState } from './progress';
 import { isStaleAfterReset } from '@/lib/game/resetGuard';
 import { DAILY_QUESTS, WEEKLY_QUESTS } from '@/lib/game/content/quests';
@@ -10,18 +10,13 @@ import { computeDerived } from '@/lib/game/engine';
 interface OfflineRow { id: string; nome: string; estado: unknown; atualizado_em: string; ativo: boolean }
 export interface OfflineOpponent { user_id: string; personagens: OfflineRow[] }
 
-/** Only a name is accepted from the client. All state comes directly from Supabase. */
-export async function fetchOfflineOpponent(name: string, accessToken?: string | null): Promise<OfflineOpponent> {
-  if (!accessToken) throw new ApiError('UNAUTHORIZED', 'Entre na sua conta para desafiar este guerreiro.');
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/pvp_opponent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ p_nome: name }),
-    cache: 'no-store',
-    signal: AbortSignal.timeout(8000),
-  });
-  if (!res.ok) throw new ApiError('CONFLICT', 'Não foi possível carregar o adversário. Tente novamente.');
-  const data = await res.json() as OfflineOpponent | null;
+/**
+ * Only a name is accepted from the client. Stage 12 resolves the snapshot
+ * through the server-side PostgreSQL connection; no Supabase bearer token
+ * or public RPC is exposed to the browser.
+ */
+export async function fetchOfflineOpponent(name: string): Promise<OfflineOpponent> {
+  const data = await loadServerOfflineOpponent(name);
   if (!data?.user_id || !Array.isArray(data.personagens) || !data.personagens.some((r) => r.nome === name)) {
     throw new ApiError('NOT_FOUND', 'Guerreiro não encontrado no ranking.');
   }
