@@ -4,6 +4,7 @@ import { toErrorResponse, ok } from '@/lib/api';
 import { serializeCharacterForCloud } from '@/lib/supabase/progress';
 import { collectCharacterExtras } from '@/lib/supabase/progress-server';
 import { computeDerived } from '@/lib/game/engine';
+import { syncServerCloudCharacters } from '@/lib/supabase/server-mirror';
 
 // =====================================================================
 // GET /api/game/cloud-snapshot[?playerId=...] — personagens para a nuvem
@@ -11,8 +12,8 @@ import { computeDerived } from '@/lib/game/engine';
 // v0.9.6 (Mudança 3): produz UMA LINHA POR PERSONAGEM para a tabela
 // `personagens` do Supabase (id = id do personagem no servidor do jogo,
 // user_id = dono, estado = snapshot v3 completo, colunas espelhadas para
-// o ranking público). O cliente apenas TRANSPORTA estas linhas com a
-// própria sessão (RLS: só as próprias linhas podem ser gravadas).
+// o ranking público). Stage 12: o BACKEND grava o espelho diretamente.
+// O navegador não tem mais permissão de mutar estado de gameplay no Supabase.
 //
 // playerId é OPCIONAL: sem ele, a lista da CONTA inteira é devolvida —
 // usado p/ sincronizar após EXCLUIR um personagem (a tela de seleção não
@@ -55,7 +56,12 @@ export async function GET(request: Request) {
       };
     });
 
+    const serverSynced = auth.account.supabaseUserId
+      ? await syncServerCloudCharacters(auth.account.supabaseUserId, rows)
+      : false;
+
     return ok({
+      serverSynced,
       // exibição apenas — o ativo da conta (ou o primeiro) serve de rosto
       nick: auth.account.username ?? characters[0]?.name ?? 'guerreiro',
       nivel: characters[0]?.level ?? 1,
