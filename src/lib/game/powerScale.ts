@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------
 // O RPG original do dono usa uma Escala de Poder em vez de números de
 // bilhões: 10 categorias, de Mortal Comum (0) a Transcendente (9).
-// O jogo traduz o PODER DO SCOUTER (computeDerived) para a escala
+// O jogo traduz o PODER DO VISOR DE FLUXO (computeDerived) para a escala
 // equivalente — mesma linguagem da mesa, sem inflar números.
 //
 // Regra 5.1 (Diferença de Escala): comparar a escala do atacante com a
@@ -18,7 +18,7 @@ export interface PowerScaleDef {
   index: number;
   /** Nome da categoria (idêntico ao livro). */
   nome: string;
-  /** Poder mínimo do scouter para pertencer à escala. */
+  /** Poder mínimo do Visor de Fluxo para pertencer à escala. */
   threshold: number;
   emoji: string;
   /** Texto curto de sabor. */
