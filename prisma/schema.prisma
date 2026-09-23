@@ -1,4 +1,4 @@
-// Guerreiros Místicos — Schema Prisma
+// Myst Ki Warriors — Schema Prisma
 // ---------------------------------------------------------------------
 // PRODUÇÃO: PostgreSQL do Supabase (schema "game").
 // O DATABASE_URL do Render deve usar o Session Pooler do Supabase
@@ -179,7 +179,7 @@ model Player {
   // transformações
   transformationId    String?
   transformationsOwned String   @default("[]")
-  // anti-farm Zenkai (Saiyajin)
+  // anti-farm Resiliência Estelar (Solaris)
   lastZenkaiAt         DateTime?
   zenkaiWindowStart    DateTime?
   zenkaiCount24h       Int      @default(0)
