@@ -9,23 +9,23 @@ import { DAILY_QUESTS, WEEKLY_QUESTS } from '@/lib/game/content/quests';
 import { dailyPeriod, weeklyPeriod } from '@/lib/progression';
 import { filterStaleRows } from '@/lib/game/resetGuard';
 import {
-  sanitizeCloudProgress,
   sanitizeCloudCharacterState,
   cloudCharacterToPlayerData,
-  CloudValidationError,
   type CloudCharacterSnapshot,
 } from '@/lib/supabase/progress';
 import { trackEvent } from '@/lib/analytics';
+import { loadServerCloudCharacters } from '@/lib/supabase/server-mirror';
 
 // =====================================================================
 // POST /api/game/cloud-restore — restaura personagens da nuvem
 // ---------------------------------------------------------------------
 // v0.9.6 (Mudança 3): cada personagem é uma LINHA da tabela `personagens`
-// do Supabase. O cliente lê as próprias linhas (RLS) e as envia aqui:
-//   { personagens: [{ id, nome, raca, nivel, poder, vitorias, derrotas,
-//                     ativo, estado, atualizado_em }] }
-// O formato ANTIGO (profiles.progresso com characters[]) continua aceito
-// como reserva — cobre a janela entre o deploy e o dono colar o SQL novo.
+// do Supabase.
+//
+// Stage 12: o navegador NÃO fornece mais snapshots. Esta rota recebe apenas
+// uma intenção vazia e lê o espelho pelo PostgreSQL server-side, vinculado ao
+// supabaseUserId da sessão. Isso impede que um usuário forje um snapshot
+// "válido" com moedas/atributos/itens e o restaure no banco autoritativo.
 //
 // v0.9.10.1 — GUARDA ANTI-RESSURREIÇÃO PÓS-RESET: se o servidor foi
 // resetado (GameMeta.serverResetAt), snapshots da nuvem ANTERIORES ao
@@ -39,16 +39,13 @@ import { trackEvent } from '@/lib/analytics';
 //  - exige conta VINCULADA ao Supabase (convidados não restauram);
 //  - só restaura quando a conta local está SEM personagens (o local
 //    vence quando os dois existem — evita "ressurreição" de exclusões);
-//  - TODO valor vindo da nuvem passa por sanitização: catálogos
-//    filtrados, números clampados, strings dimensionadas;
-//  - o id da linha vira o id do Player local (chave estável — o próximo
-//    save sobrescreve a própria linha na nuvem, nunca duplica).
+//  - apenas linhas marcadas server_verified=true pelo backend Stage 12
+//    podem ser restauradas;
+//  - TODO valor vindo do espelho passa por sanitização como defesa adicional;
+//  - o id da linha vira o id do Player local (chave estável).
 // =====================================================================
 
-const restoreSchema = z.object({
-  personagens: z.array(z.unknown()).max(10).optional(),
-  progresso: z.unknown().optional(),
-});
+const restoreSchema = z.object({}).strict();
 
 interface PlayerLookup {
   player: {
@@ -119,47 +116,33 @@ export async function POST(request: Request) {
       throw new ApiError('VALIDATION_ERROR', 'Dados de restauração inválidos.');
     }
 
-    // ===== forma v3 (personagens[]) ou v2 (progresso) =====
-    // v0.9.10.1: marcador do último reset geral — presente, snapshots
-    // pré-reset são descartados (a nuvem seria o único jeito de um
-    // personagem antigo voltar depois de um "Reset geral do servidor").
+    // O espelho é lido diretamente pelo servidor. Linhas antigas, criadas
+    // quando o cliente ainda tinha UPDATE, ficam em quarentena
+    // (server_verified=false) e não entram aqui.
+    const cloudRows = await loadServerCloudCharacters(auth.account.supabaseUserId);
+    if (cloudRows === null) {
+      throw new ApiError(
+        'PRECONDITION_FAILED',
+        'O espelho seguro da nuvem está indisponível. Tente novamente em instantes.'
+      );
+    }
+
+    // v0.9.10.1: snapshots anteriores ao último reset geral continuam
+    // proibidos, mesmo sendo server-verified.
     const serverResetAt = await db.gameMeta
       .findUnique({ where: { key: 'serverResetAt' } })
       .then((m) => m?.value ?? null)
       .catch(() => null);
 
-    let restoreList: { char: CloudCharacterSnapshot; ativo: boolean; atualizadoEm: unknown }[] = [];
-    let staleDropped = 0;
-    if (Array.isArray(parsed.data.personagens) && parsed.data.personagens.length > 0) {
-      const sanitized = sanitizeCharacterRows(parsed.data.personagens);
-      const filtered = filterStaleRows(sanitized, serverResetAt);
-      restoreList = filtered.kept;
-      staleDropped = filtered.dropped;
-      if (staleDropped > 0) {
-        console.warn(
-          `[cloud-restore] servidor resetado em ${serverResetAt} — ${staleDropped} snapshot(s) da nuvem ` +
-            `PRÉ-RESET descartado(s) (sem ressurreição).`
-        );
-      }
-    } else if (parsed.data.progresso !== undefined) {
-      if (serverResetAt) {
-        // formato v2 legado não carrega timestamp — pós-reset ele só pode
-        // ser pré-reset. Bloqueado inteiro (e LOGADO, nunca silencioso).
-        console.warn(
-          `[cloud-restore] servidor resetado em ${serverResetAt} — progresso v2 legado IGNORADO (pós-reset).`
-        );
-      } else {
-        try {
-          const progress = sanitizeCloudProgress(parsed.data.progresso);
-          const activeName = progress.activePlayerName;
-          restoreList = progress.characters.map((char) => ({ char, ativo: char.name === activeName, atualizadoEm: null }));
-        } catch (e) {
-          if (e instanceof CloudValidationError) {
-            throw new ApiError('VALIDATION_ERROR', e.message);
-          }
-          throw e;
-        }
-      }
+    const sanitized = sanitizeCharacterRows(cloudRows);
+    const filtered = filterStaleRows(sanitized, serverResetAt);
+    const restoreList: { char: CloudCharacterSnapshot; ativo: boolean; atualizadoEm: unknown }[] = filtered.kept;
+    const staleDropped = filtered.dropped;
+    if (staleDropped > 0) {
+      console.warn(
+        `[cloud-restore] servidor resetado em ${serverResetAt} — ${staleDropped} snapshot(s) da nuvem ` +
+          `PRÉ-RESET descartado(s) (sem ressurreição).`
+      );
     }
 
     const existing = await db.player.findMany({
