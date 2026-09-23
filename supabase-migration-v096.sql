@@ -49,7 +49,8 @@ create table if not exists public.personagens (
   ativo         boolean not null default false, -- personagem em uso pela conta
   estado        jsonb not null default '{}'::jsonb, -- snapshot completo (v3)
   criado_em     timestamptz not null default now(),
-  atualizado_em timestamptz not null default now()
+  atualizado_em timestamptz not null default now(),
+  server_verified boolean not null default false -- só backend/admin confiável
 );
 
 create index if not exists idx_personagens_user    on public.personagens (user_id);
@@ -66,27 +67,13 @@ create policy "personagens_select_proprias"
   to authenticated
   using (user_id = (select auth.uid()));
 
+-- Stage 12: gameplay no espelho é somente leitura para o navegador.
+-- O backend grava por DATABASE_URL e não pelo papel authenticated.
 drop policy if exists "personagens_insert_proprias" on public.personagens;
-create policy "personagens_insert_proprias"
-  on public.personagens for insert
-  to authenticated
-  with check (user_id = (select auth.uid()));
-
 drop policy if exists "personagens_update_proprias" on public.personagens;
-create policy "personagens_update_proprias"
-  on public.personagens for update
-  to authenticated
-  using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
-
 drop policy if exists "personagens_delete_proprias" on public.personagens;
-create policy "personagens_delete_proprias"
-  on public.personagens for delete
-  to authenticated
-  using (user_id = (select auth.uid()));
-
--- acesso via API para o papel autenticado (RLS acima decide o resto)
-grant select, insert, update, delete on public.personagens to authenticated;
+revoke insert, update, delete on public.personagens from authenticated;
+grant select on public.personagens to authenticated;
 
 -- ===== 3) MIGRAÇÃO: personagens de profiles.progresso → linhas =====
 -- Idempotente:
@@ -208,6 +195,7 @@ as $$
     select distinct on (user_id, nome)
       p.*
     from public.personagens p
+    where p.server_verified = true
     order by user_id, nome, atualizado_em desc
   ),
   ranked as (
@@ -305,7 +293,7 @@ begin
     return false;
   end if;
 
-  insert into public.personagens (id, user_id, nome, raca, nivel, poder, vitorias, derrotas, ativo, estado, atualizado_em)
+  insert into public.personagens (id, user_id, nome, raca, nivel, poder, vitorias, derrotas, ativo, estado, server_verified, atualizado_em)
   values (
     p_personagem->>'id',
     (p_personagem->>'user_id')::uuid,
@@ -317,6 +305,7 @@ begin
     coalesce((p_personagem->>'derrotas')::int, 0),
     coalesce((p_personagem->>'ativo')::boolean, false),
     coalesce(p_personagem->'estado', '{}'::jsonb),
+    true,
     now()
   )
   on conflict (id) do update set
@@ -328,6 +317,7 @@ begin
     derrotas = excluded.derrotas,
     ativo = excluded.ativo,
     estado = excluded.estado,
+    server_verified = true,
     atualizado_em = now();
 
   return true;
@@ -365,6 +355,7 @@ begin
         )::bigint,
         p.poder
       ),
+      server_verified = true,
       atualizado_em = now()
   where p.id = p_personagem_id;
 
