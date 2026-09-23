@@ -26,5 +26,4 @@ $$;
 
 revoke all on function public.get_world_boss_snapshot() from public;
 grant execute on function public.get_world_boss_snapshot() to anon, authenticated;
-revoke all on function public.save_world_boss_snapshot(jsonb) from public;
-grant execute on function public.save_world_boss_snapshot(jsonb) to authenticated;
+revoke execute on function public.save_world_boss_snapshot(jsonb) from public, anon, authenticated;
