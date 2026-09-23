@@ -124,7 +124,8 @@ create table if not exists public.personagens (
   ativo         boolean not null default false, -- personagem em uso pela conta
   estado        jsonb not null default '{}'::jsonb, -- snapshot completo (v3)
   criado_em     timestamptz not null default now(),
-  atualizado_em timestamptz not null default now()
+  atualizado_em timestamptz not null default now(),
+  server_verified boolean not null default false -- só backend/admin confiável
 );
 
 create index if not exists idx_personagens_user    on public.personagens (user_id);
@@ -324,6 +325,7 @@ as $$
     select distinct on (user_id, nome)
       p.*
     from public.personagens p
+    where p.server_verified = true
     order by user_id, nome, atualizado_em desc
   ),
   ranked as (
@@ -417,7 +419,7 @@ begin
     return false;
   end if;
 
-  insert into public.personagens (id, user_id, nome, raca, nivel, poder, vitorias, derrotas, ativo, estado, atualizado_em)
+  insert into public.personagens (id, user_id, nome, raca, nivel, poder, vitorias, derrotas, ativo, estado, server_verified, atualizado_em)
   values (
     p_personagem->>'id',
     (p_personagem->>'user_id')::uuid,
@@ -429,6 +431,7 @@ begin
     coalesce((p_personagem->>'derrotas')::int, 0),
     coalesce((p_personagem->>'ativo')::boolean, false),
     coalesce(p_personagem->'estado', '{}'::jsonb),
+    true,
     now()
   )
   on conflict (id) do update set
@@ -440,6 +443,7 @@ begin
     derrotas = excluded.derrotas,
     ativo = excluded.ativo,
     estado = excluded.estado,
+    server_verified = true,
     atualizado_em = now();
 
   return true;
@@ -475,6 +479,7 @@ begin
         )::bigint,
         p.poder
       ),
+      server_verified = true,
       atualizado_em = now()
   where p.id = p_personagem_id;
 
@@ -601,8 +606,38 @@ create policy "avatar_upload_proprio" on storage.objects
   for insert to authenticated
   with check (
     bucket_id = 'avatars'
-    and name like auth.uid()::text || '/%'
-    and coalesce((metadata->>'mimetype') like 'image/%', false)
+    and name ~ ('^' || auth.uid()::text || '/avatar-[0-9]+[.](jpg|png|webp)
+
+-- (DELETE e UPDATE continuam SEM policy: jogadores não apagam nem
+--  sobrescrevem arquivos pela API.)
+
+-- =====================================================================
+-- 9) CONFIRMAÇÃO FINAL — deve listar as 3 tabelas + as funções
+-- =====================================================================
+
+select 'profiles' as tabela, (select count(*) from public.profiles) as linhas
+union all
+select 'personagens', (select count(*) from public.personagens)
+union all
+select 'admins', (select count(*) from public.admins);
+
+select proname, pg_get_function_identity_arguments(oid) as argumentos
+from pg_proc
+where pronamespace = 'public'::regnamespace
+  and proname in ('is_admin', 'ranking_nuvem', 'admin_list_players', 'admin_get_progress',
+                  'admin_update_progress', 'admin_list_personagens', 'admin_get_personagem_estado',
+                  'admin_upsert_personagem', 'admin_update_personagem_estado', 'admin_reset_cloud')
+order by proname;
+
+-- ===== FIM — instalação completa na base nova! =====
+-- Depois disto o jogo já pode: criar contas na nuvem, salvar personagens
+-- por linha, ranking público ao vivo, painel admin e reset da nuvem.
+
+revoke execute on function public.criar_perfil_ao_cadastrar() from public, anon, authenticated;
+
+revoke execute on function public.tocar_personagem() from public, anon, authenticated;
+)
+    and coalesce(metadata->>'mimetype', '') in ('image/jpeg', 'image/png', 'image/webp')
     and coalesce((metadata->>'size')::bigint, 0) <= 5242880
   );
 
