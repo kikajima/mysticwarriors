@@ -21,6 +21,16 @@ Este arquivo reúne apenas os itens operacionais que não devem depender de mem�
 - RPCs administrativas legadas por conta removidas.
 - Antes do lançamento público, habilitar no Dashboard do Supabase a proteção contra senhas vazadas (Leaked Password Protection).
 
+## Certificação de Produção — Etapa 17
+
+- RC `1.0.0-rc.1` implantado no Render com SHA exato `1eaabae80ab6a4ff32e2a8a602eef6a5f939bfd3`.
+- `/api/health`: release/branch/SHA corretos, `database: ok`, `cloudAuthority: server`.
+- Home, login, ranking, wiki, robots e sitemap validados em produção.
+- Headers de segurança validados externamente com nota A+.
+- CI do commit certificado verde após repetição do flake conhecido do Prisma/Bun, sem mudança de código.
+- **Pendência de go-live:** habilitar Leaked Password Protection no Supabase Auth.
+- Evidência completa: `RELEASE-CERTIFICATION.md`.
+
 ## Release Candidate — Etapa 16
 
 - RC atual: `1.0.0-rc.1`.
