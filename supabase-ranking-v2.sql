@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — RANKING VIVO v2 (v0.9.5)
+-- MYST KI WARRIORS — RANKING VIVO v2 (v0.9.5)
 -- ---------------------------------------------------------------------
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE E CLIQUE EM "Run".
 --
