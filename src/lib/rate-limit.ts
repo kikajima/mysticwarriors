@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 // =====================================================================
 // Rate limiting em memória (proteção contra brute force)
 // ---------------------------------------------------------------------
@@ -50,9 +51,20 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
 
 /** Extrai o IP do request (atrás de proxy usa x-forwarded-for). */
 export function clientIp(request: Request): string {
-  const fwd = request.headers.get('x-forwarded-for');
-  if (fwd) return fwd.split(',')[0].trim();
-  return request.headers.get('x-real-ip') ?? 'unknown';
+  // Nunca usa texto arbitrário como chave de bucket: além de permitir
+  // bypass por spoof, cabeçalhos enormes/diferentes poderiam inflar o Map.
+  // Atrás de um proxy que APPENDA X-Forwarded-For, o último IP é o salto
+  // mais próximo e não o valor que o cliente tentou prefixar.
+  const candidates = [
+    request.headers.get('cf-connecting-ip'),
+    request.headers.get('x-forwarded-for')?.split(',').map((v) => v.trim()).filter(Boolean).at(-1),
+    request.headers.get('x-real-ip'),
+  ];
+  for (const raw of candidates) {
+    const ip = raw?.trim();
+    if (ip && ip.length <= 64 && isIP(ip)) return ip;
+  }
+  return 'unknown';
 }
 
 // limites nomeados (centralizados para ajuste fácil)
