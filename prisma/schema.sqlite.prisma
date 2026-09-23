@@ -1,4 +1,4 @@
-// Guerreiros Místicos — Schema Prisma
+// Myst Ki Warriors — Schema Prisma
 // ---------------------------------------------------------------------
 // DESENVOLVIMENTO: SQLite (padrão, zero configuração).
 // PRODUÇÃO (PostgreSQL): troque o provider abaixo e aponte DATABASE_URL
@@ -181,7 +181,7 @@ model Player {
   // transformações
   transformationId    String?
   transformationsOwned String   @default("[]")
-  // anti-farm Zenkai (Saiyajin)
+  // anti-farm Resiliência Estelar (Solaris)
   lastZenkaiAt         DateTime?
   zenkaiWindowStart    DateTime?
   zenkaiCount24h       Int      @default(0)
