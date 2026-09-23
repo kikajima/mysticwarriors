@@ -89,7 +89,386 @@ export type AuthOutcome =
   | {
       status: 'error';
       message: string;
-      export async function loadCloudWorldBoss(): Promise<CloudWorldBossSnapshot | null> {
+      /** O serviço de contas pediu espera (429) ou o endereço já existe. */
+      kind?: 'rate-limit' | 'existing-account';
+      /** Segundos sugeridos antes da próxima tentativa. */
+      retryInSeconds?: number;
+    };
+
+/**
+ * O Supabase exige ~60s entre pedidos de cadastro e limita o envio de
+ * e-mails de confirmação por hora. Esta trava local espelha a primeira
+ * regra: cliques/Enters repetidos jamais viram vários cadastros — o
+ * jogador vê uma contagem regressiva em vez de um erro 429.
+ */
+const SIGNUP_MIN_INTERVAL_MS = 60_000;
+const SIGNUP_COOLDOWN_KEY = 'gm-signup-last-at';
+
+function lastSignUpAt(): number {
+  if (typeof window === 'undefined') return 0;
+  const value = Number(window.localStorage.getItem(SIGNUP_COOLDOWN_KEY));
+  return Number.isFinite(value) ? value : 0;
+}
+
+function markSignUpAttempt(): void {
+  if (typeof window !== 'undefined') window.localStorage.setItem(SIGNUP_COOLDOWN_KEY, String(Date.now()));
+}
+
+/**
+ * Cadastro via supabase.auth.signUp() com o nick nos metadados.
+ * Devolve 'confirm-email' quando o projeto exige confirmação de e-mail
+ * (nenhuma sessão é devolvida até o usuário clicar no link recebido).
+ */
+export async function supabaseSignUp({ email, password, nick }: SignUpInput): Promise<AuthOutcome> {
+  const now = Date.now();
+  const elapsed = now - lastSignUpAt();
+  if (elapsed < SIGNUP_MIN_INTERVAL_MS) {
+    const wait = Math.max(1, Math.ceil((SIGNUP_MIN_INTERVAL_MS - elapsed) / 1000));
+    return {
+      status: 'error',
+      message: `Calma, guerreiro! Aguarde ${wait} segundo(s) antes de tentar criar a conta de novo.`,
+      kind: 'rate-limit',
+      retryInSeconds: wait,
+    };
+  }
+
+  try {
+    const { data, error } = await getSupabaseClient().auth.signUp({
+      email,
+      password,
+      options: {
+        data: { nick },
+        emailRedirectTo: `${window.location.origin}/jogar`,
+      },
+    });
+    // o pedido realmente chegou ao Supabase — conta para a trava de 60s
+    // (falhas de conexão acima não caem aqui e não travam novas tentativas)
+    markSignUpAttempt();
+    if (error) {
+      const translated = translateSupabaseAuthError(error);
+      return {
+        status: 'error',
+        message: translated.message,
+        kind: translated.kind,
+        retryInSeconds: translated.retryInSeconds,
+      };
+    }
+    if (data.session) return { status: 'session', session: data.session };
+    return { status: 'confirm-email' };
+  } catch {
+    return { status: 'error', message: 'Falha de conexão com o servidor de contas. Tente novamente.' };
+  }
+}
+
+export async function supabaseSignIn(email: string, password: string): Promise<AuthOutcome> {
+  try {
+    const { data, error } = await getSupabaseClient().auth.signInWithPassword({ email, password });
+    if (error) {
+      const translated = translateSupabaseAuthError(error);
+      return {
+        status: 'error',
+        message: translated.message,
+        kind: translated.kind,
+        retryInSeconds: translated.retryInSeconds,
+      };
+    }
+    if (data.session) return { status: 'session', session: data.session };
+    return { status: 'error', message: 'Não foi possível entrar. Tente novamente.' };
+  } catch {
+    return { status: 'error', message: 'Falha de conexão com o servidor de contas. Tente novamente.' };
+  }
+}
+
+export async function supabaseResetPassword(email: string): Promise<AuthOutcome> {
+  try {
+    const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/jogar`,
+    });
+    if (error) {
+      const translated = translateSupabaseAuthError(error);
+      return { status: 'error', message: translated.message, kind: translated.kind, retryInSeconds: translated.retryInSeconds };
+    }
+    return { status: 'confirm-email' };
+  } catch {
+    return { status: 'error', message: 'Falha de conexão com o servidor de contas. Tente novamente.' };
+  }
+}
+
+export async function supabaseUpdatePassword(password: string): Promise<AuthOutcome> {
+  try {
+    const { error } = await getSupabaseClient().auth.updateUser({ password });
+    if (error) return { status: 'error', message: error.message };
+    return { status: 'session', session: (await getSupabaseSession())! };
+  } catch {
+    return { status: 'error', message: 'Não foi possível atualizar a senha. Solicite um novo link.' };
+  }
+}
+
+export async function supabaseSignOut(): Promise<void> {
+  try {
+    await getSupabaseClient().auth.signOut();
+  } catch {
+    // segue o logout local mesmo se o servidor de contas não responder
+  }
+}
+
+// ===== Admin (v0.9) =====
+
+/**
+ * Consulta o SUPABASE (RPC is_admin — security definer) se a conta logada
+ * é a administradora. A comparação de e-mail acontece DENTRO do Supabase,
+ * na tabela `admins` — o jogo não embute nenhum endereço no código.
+ * Qualquer erro (função ainda não criada, rede, sessão ausente) → false:
+ * para quem não é admin, o painel simplesmente não existe.
+ */
+export async function supabaseIsAdmin(): Promise<boolean> {
+  // Duas tentativas: falhas de rede são transitórias (a resposta de admin
+  // não pode se perder por um soluço de conexão). Erro definitivo do
+  // Supabase — ex.: função inexistente porque o SQL do painel ainda não
+  // foi instalado — retorna false na hora, sem retry.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const { data, error } = await getSupabaseClient().rpc('is_admin');
+      if (!error) return data === true;
+      if (error.code === 'PGRST202' || error.code === '404') return false;
+      // TEMPORÁRIO (diagnóstico v0.9.3): erro inesperado não passa em branco
+      console.warn('[nuvem] falha ao verificar admin:', error.code, error.message);
+    } catch {
+      // rede instável → tenta de novo
+    }
+    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 800));
+  }
+  return false;
+}
+
+// ===== Avatar no Supabase Storage (v0.9.4) =====
+
+/**
+ * Envia a imagem do avatar DIRETO para o bucket público "avatars" do
+ * Supabase (pasta exclusiva do usuário logado: "{userId}/avatar-....jpg")
+ * e devolve a URL pública. A imagem passa a viver NA NUVEM — sobrevive a
+ * qualquer limpeza do servidor do jogo — e a URL é gravada no personagem
+ * (via /api/game/avatar, modo 'storage'), entrando no snapshot da conta.
+ *
+ * Requer sessão logada (convidados não usam Storage). Qualquer falha é
+ * logada no console e devolve null — quem chama cai no upload antigo.
+ */
+export async function uploadAvatarToStorage(file: File): Promise<string | null> {
+  const session = await getSupabaseSession();
+  if (!session) return null;
+  try {
+    const ext =
+      file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+    const path = `${session.user.id}/avatar-${Date.now()}.${ext}`;
+    const { error } = await getSupabaseClient().storage.from('avatars').upload(path, file, {
+      contentType: file.type || 'image/jpeg',
+      upsert: false,
+    });
+    if (error) {
+      // TEMPORÁRIO (diagnóstico v0.9.4): nenhuma falha é silenciosa
+      console.error(
+        '[nuvem] FALHA no upload do avatar (Storage) —',
+        JSON.stringify({ message: error.message })
+      );
+      return null;
+    }
+    const { data } = getSupabaseClient().storage.from('avatars').getPublicUrl(path);
+    if (!data?.publicUrl) {
+      console.error('[nuvem] FALHA no upload do avatar — URL pública indisponível');
+      return null;
+    }
+    return data.publicUrl;
+  } catch (err) {
+    console.error('[nuvem] FALHA no upload do avatar (exceção) —', err);
+    return null;
+  }
+}
+
+// ===== Erros amigáveis (códigos reais do projeto Supabase) =====
+
+export interface TranslatedAuthError {
+  message: string;
+  /** O serviço pediu espera ou o endereço já tem uma conta. */
+  kind?: 'rate-limit' | 'existing-account';
+  /** Segundos sugeridos antes da próxima tentativa. */
+  retryInSeconds?: number;
+}
+
+export function translateSupabaseAuthError(error: {
+  code?: string | null;
+  message?: string | null;
+  status?: number | null;
+}): TranslatedAuthError {
+  const code = error.code ?? '';
+  const msg = error.message ?? '';
+
+  switch (code) {
+    case 'invalid_credentials':
+      return { message: 'E-mail ou senha incorretos. Confira e tente de novo.' };
+    case 'email_not_confirmed':
+      return {
+        message:
+          'Seu e-mail ainda não foi confirmado. Abra o link que enviamos para você (procure também no spam) e depois entre.',
+      };
+    case 'user_already_registered':
+      return {
+        message: 'Este e-mail já tem uma conta. Vamos abrir a tela de login para você entrar.',
+        kind: 'existing-account',
+      };
+    case 'weak_password':
+      return { message: 'A senha precisa ter pelo menos 8 caracteres.' };
+    case 'over_email_send_rate_limit':
+      return {
+        message:
+          'Este cadastro já foi enviado ou o serviço de contas está temporariamente limitando novos e-mails. Confira sua caixa de entrada e, se a conta já existir, use "Entrar". Não é necessário cadastrar novamente.',
+        kind: 'rate-limit',
+        retryInSeconds: 300,
+      };
+    case 'over_request_rate_limit':
+      return {
+        message: 'Muitas tentativas em pouco tempo. Aguarde cerca de 1 minuto e tente de novo.',
+        kind: 'rate-limit',
+        retryInSeconds: 60,
+      };
+    case 'email_address_invalid':
+      return { message: 'Este e-mail não parece válido. Confira o endereço digitado.' };
+    case 'user_banned':
+      return { message: 'Esta conta está bloqueada. Fale com o suporte.' };
+    case 'validation_failed':
+      return { message: 'Dados inválidos. Confira e-mail, senha e apelido.' };
+    default:
+      break;
+  }
+
+  // mensagens legadas (sem error_code)
+  if (/already registered/i.test(msg))
+    return { message: 'Este e-mail já tem conta. Use "Entrar" para acessar.' };
+  if (/at least 6 characters/i.test(msg)) return { message: 'A senha precisa ter pelo menos 8 caracteres.' };
+  if (/invalid login credentials/i.test(msg))
+    return { message: 'E-mail ou senha incorretos. Confira e tente de novo.' };
+  if (/email not confirmed/i.test(msg)) {
+    return {
+      message:
+        'Seu e-mail ainda não foi confirmado. Abra o link que enviamos para você (procure também no spam) e depois entre.',
+    };
+  }
+  if (/rate limit/i.test(msg) || error.status === 429) {
+    return {
+      message: 'Muitas tentativas em pouco tempo. Aguarde um instante e tente de novo.',
+      kind: 'rate-limit',
+      retryInSeconds: 60,
+    };
+  }
+
+  return { message: 'Não foi possível continuar agora. Tente novamente em instantes.' };
+}
+
+// ===== Perfil na nuvem (tabela `profiles`) =====
+
+export interface CloudProfileRow {
+  nick: string | null;
+  nivel: number | null;
+  xp: number | null;
+  progresso: CloudProgress | null;
+}
+
+/** Lê o perfil do usuário logado (RLS garante que só o dono enxergue). */
+export async function loadCloudProfile(): Promise<CloudProfileRow | null> {
+  const session = await getSupabaseSession();
+  if (!session) return null;
+  const { data, error } = await getSupabaseClient()
+    .from('profiles')
+    .select('nick, nivel, xp, progresso')
+    .eq('id', session.user.id)
+    .maybeSingle();
+  if (error) {
+    // TEMPORÁRIO (diagnóstico v0.9.3): falha de leitura da nuvem JAMAIS é
+    // silenciosa — código, mensagem e dica do Postgres vão par no console.
+    console.error(
+      '[nuvem] FALHA ao LER o perfil salvo na nuvem —',
+      JSON.stringify({
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      })
+    );
+    return null;
+  }
+  if (!data) return null;
+  return {
+    nick: data.nick ?? null,
+    nivel: data.nivel ?? null,
+    xp: data.xp ?? null,
+    progresso: (data.progresso as CloudProgress | null) ?? null,
+  };
+}
+
+/**
+ * Upsert do perfil (id do usuário logado). Falhas não interrompem o jogo:
+ * o save é tentado novamente na próxima mudança relevante.
+ *
+ * v0.9.6: usado apenas para manter nick/nível de exibição da CONTA — o
+ * progresso do jogo em si vive na tabela `personagens` (uma linha por
+ * personagem, dono = user_id).
+ */
+export async function upsertCloudProfile(profile: {
+  nick: string;
+  nivel: number;
+  xp: number;
+  progresso: CloudProgress;
+}): Promise<boolean> {
+  const session = await getSupabaseSession();
+  if (!session) return false;
+  const { error } = await getSupabaseClient()
+    .from('profiles')
+    .upsert(
+      {
+        id: session.user.id,
+        nick: profile.nick,
+        nivel: profile.nivel,
+        xp: profile.xp,
+        progresso: profile.progresso,
+      },
+      { onConflict: 'id' }
+    );
+  if (error) {
+    // TEMPORÁRIO (diagnóstico v0.9.3): o erro completo (código + dica do
+    // Postgres) aparece no console — nenhuma gravação falha em silêncio.
+    console.error(
+      '[nuvem] FALHA ao SALVAR o progresso na nuvem —',
+      JSON.stringify({
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      })
+    );
+    return false;
+  }
+  // confirmação visível para o teste de verificação do dono
+  console.info(
+    `[nuvem] progresso salvo \u2713 ${profile.progresso?.characters?.length ?? 0} guerreiro(s), nick "${profile.nick}", nível ${profile.nivel}`
+  );
+  return true;
+}
+
+// =====================================================================
+// NUVEM NO NAVEGADOR — LEITURAS/IDENTIDADE NÃO-AUTORITATIVAS
+// ---------------------------------------------------------------------
+// Etapa 12+: estado de personagem não é lido nem gravado diretamente
+// pelo browser. Snapshot/restore passam pelas rotas server-authoritative.
+// O cliente mantém apenas integrações que não fabricam estado de jogo.
+// =====================================================================
+
+function logCloudError(prefix: string, error: { code?: string; message?: string; details?: unknown; hint?: unknown }) {
+  console.error(
+    `${prefix} —`,
+    JSON.stringify({ code: error.code, message: error.message, details: error.details, hint: error.hint })
+  );
+}
+
+export async function loadCloudWorldBoss(): Promise<CloudWorldBossSnapshot | null> {
   try {
     const { data, error } = await getSupabaseClient().rpc('get_world_boss_snapshot');
     if (error || !data) return null;
