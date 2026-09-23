@@ -1,4 +1,3 @@
-import { extractBearerToken } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { toErrorResponse, ApiError, ok } from '@/lib/api';
@@ -97,13 +96,12 @@ async function executeActionWithRetry(
   auth: Awaited<ReturnType<typeof requireAuth>>,
   playerId: string,
   type: string,
-  args: Record<string, unknown>,
-  accessToken?: string | null
+  args: Record<string, unknown>
 ): Promise<ActionResult> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      return await executeGameAction(auth, playerId, type, args, accessToken);
+      return await executeGameAction(auth, playerId, type, args);
     } catch (error) {
       if (!isTransientDatabaseError(error) || attempt === 2) throw error;
       lastError = error;
@@ -253,7 +251,7 @@ export async function POST(request: Request) {
             throw e;
           }
         }
-        const r = await executeActionWithRetry(auth, playerId, type, { ...args, requestId }, extractBearerToken(request));
+        const r = await executeActionWithRetry(auth, playerId, type, { ...args, requestId });
         return r;
         } finally {
           actionExecMs = Date.now() - execStartedAt;
