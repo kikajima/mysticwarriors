@@ -101,8 +101,12 @@ describe('PvP offline e preservação do estado', () => {
     await db.gameMeta.create({ data: { key: 'serverResetAt', value: new Date(Date.now() + 60000).toISOString() } });
     await expect(db.$transaction((tx) => restoreOfflineOpponent(tx, snapshot, 'Offline Warrior'))).rejects.toThrow('não está mais disponível');
   });
-  test('consulta offline sem token é recusada antes de acessar a nuvem', async () => {
-    await expect(fetchOfflineOpponent('Offline Warrior')).rejects.toThrow('Entre na sua conta');
+  test('consulta offline não depende de bearer Supabase do navegador', async () => {
+    const source = await Bun.file(path.join(process.cwd(), 'src/lib/supabase/offline-pvp.ts')).text();
+    expect(source).toContain('loadServerOfflineOpponent');
+    expect(source).not.toContain('SUPABASE_PUBLISHABLE_KEY');
+    expect(source).not.toContain('/rest/v1/rpc/pvp_opponent');
+    await expect(fetchOfflineOpponent('Offline Warrior')).rejects.toThrow('Guerreiro não encontrado');
   });
   test('consulta normaliza encontro antigo sem perder dano', async () => {
     const until = new Date(Date.now() + 7 * 86400000);
