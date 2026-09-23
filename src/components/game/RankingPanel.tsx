@@ -20,7 +20,7 @@ import { Chip, GameButton } from './Bits';
 import { PublicPlayerIdentity } from './PublicPlayerIdentity';
 import { PublicPlayerProfileDialog } from './PublicPlayerProfileDialog';
 import { fetchPanelJson, LoadFail, RankingSkeleton } from './PanelLoad';
-import { ChevronLeft, ChevronRight, Crosshair, Crown, Shield, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Crosshair, Crown, Shield, Users, KeyRound } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 const REFRESH_MS = 60_000;
@@ -337,8 +337,9 @@ function WarriorRanking({
                     </Chip>
                   )}
                   {entry.dragonBallStars && entry.dragonBallStars.length > 0 && (
-                    <Chip className="ml-1.5 bg-orange-950/60 text-orange-300 border-orange-800/50">
-                      🔮 {entry.dragonBallStars.map((star) => `${star}★`).join(' ')}
+                    <Chip className="ml-1.5 bg-cyan-950/60 text-cyan-200 border-cyan-800/50">
+                      <KeyRound className="w-3 h-3" aria-hidden />
+                      {entry.dragonBallStars.map((star) => `CH-${star}`).join(' ')}
                     </Chip>
                   )}
                   <p className="mt-1 text-[10px] text-amber-200/35">
