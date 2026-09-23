@@ -100,44 +100,6 @@ export async function verifySupabaseAdmin(accessToken: string | null): Promise<b
   return res.ok && res.data === true;
 }
 
-// ===== Lista de jogadores (nuvem) =====
-
-export interface CloudPlayerRow {
-  user_id: string;
-  email: string | null;
-  nick: string | null;
-  nivel: number | null;
-  xp: number | null;
-  progresso: unknown;
-  created_at: string | null;
-}
-
-export async function adminListCloudPlayers(accessToken: string): Promise<CloudPlayerRow[] | null> {
-  const res = await callRpc<CloudPlayerRow[]>('admin_list_players', accessToken);
-  if (!res.ok || !Array.isArray(res.data)) return null;
-  return res.data;
-}
-
-// ===== Progresso individual (nuvem) =====
-
-export async function adminGetCloudProgress(accessToken: string, userId: string): Promise<unknown | null> {
-  const res = await callRpc<unknown>('admin_get_progress', accessToken, { p_user_id: userId });
-  if (!res.ok) return null;
-  return res.data ?? null;
-}
-
-export async function adminUpdateCloudProgress(
-  accessToken: string,
-  userId: string,
-  progresso: unknown
-): Promise<boolean> {
-  const res = await callRpc<boolean>('admin_update_progress', accessToken, {
-    p_user_id: userId,
-    p_progresso: progresso,
-  });
-  return res.ok && res.data === true;
-}
-
 // =====================================================================
 // PERSONAGENS NA NUVEM (v0.9.6 — Mudança 4: painel opera sobre personagens)
 // ---------------------------------------------------------------------
