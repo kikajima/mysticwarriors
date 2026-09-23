@@ -11,7 +11,7 @@
 // Regras do livro traduzidas:
 //  • Máximo 6 Ímpetos; combates começam com 1;
 //  • Espírito de Superação: enfrentar alguém ≥1 Escala acima → +1
-//    no início do combate (talento Saiyajin, adotado como regra geral
+//    no início do combate (herança Solaris, adotada como regra geral
 //    do azarão para gerar as viradas "David vs Golias" do sistema);
 //  • Ganhos (uma vez por gatilho por rodada): receber golpe poderoso,
 //    obter crítico (Abertura), cair abaixo da metade da Vida (1×/luta);
@@ -109,7 +109,7 @@ export function isHeavyBlow(damage: number, receiverMaxHp: number): boolean {
 /**
  * Quebra de Limite — poder efetivo para a ESCALA durante o efeito:
  * +1 Escala significa lutar no PATAMAR MÍNIMO da escala seguinte
- * (a escala é uma função degrau do poder do scouter).
+ * (a escala é uma função degrau do poder do Visor de Fluxo).
  */
 export function effectiveScalePower(power: number, quebraActive: boolean): number {
   if (!quebraActive) return power;
