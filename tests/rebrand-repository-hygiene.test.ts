@@ -51,6 +51,20 @@ const OLD_BRAND_PHRASES = [
   'Esfera do Dragão',
   'Radar das Esferas',
   'ASCENSÃO Z',
+  'Kakaroto',
+  'Cell',
+  'Broly',
+  'Gohan',
+  'Tartaruga',
+  'Mestre Kame',
+  'Vegeta',
+  'Piccolo',
+  'Kuririn',
+  'Tenshinhan',
+  'Freeza',
+  'Frieza',
+  'Kaioshin',
+  'Sonjin',
 ];
 
 const OLD_COMMENT_TERMS = [
@@ -60,6 +74,10 @@ const OLD_COMMENT_TERMS = [
   'Namekusei',
   'Majin',
   'Scouter',
+  'Tartaruga',
+  'Mestre Kame',
+  'Freeza',
+  'Frieza',
 ];
 
 function extractComments(source: string): string {
