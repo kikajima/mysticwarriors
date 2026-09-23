@@ -35,4 +35,22 @@ grant select on table public.personagens to authenticated;
 revoke all on table public.world_boss_snapshots from anon, authenticated;
 revoke execute on function public.save_world_boss_snapshot(jsonb) from public, anon, authenticated;
 
+-- Storage de avatar: o bucket também impõe o mesmo contrato da aplicação.
+update storage.buckets
+set file_size_limit = 5242880,
+    allowed_mime_types = array['image/jpeg','image/png','image/webp']::text[]
+where id = 'avatars';
+
+drop policy if exists avatar_upload_proprio on storage.objects;
+create policy avatar_upload_proprio
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'avatars'
+    and name like (auth.uid()::text || '/avatar-%')
+    and lower(storage.extension(name)) in ('jpg','jpeg','png','webp')
+    and coalesce(metadata->>'mimetype','') in ('image/jpeg','image/png','image/webp')
+  );
+
 commit;
