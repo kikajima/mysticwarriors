@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { ApiError } from '@/lib/api';
 import { isPostgresDatabase } from '@/lib/game/persistence';
