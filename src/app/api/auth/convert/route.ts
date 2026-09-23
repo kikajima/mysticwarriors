@@ -29,6 +29,15 @@ const convertSchema = z.object({
  * identidade da conta são atualizados dentro de uma transação.
  */
 export async function POST(request: Request) {
+  // Etapa 12: autenticação permanente de produção é EXCLUSIVAMENTE
+  // Supabase Auth (e-mail verificado). As rotas locais antigas ficam
+  // disponíveis apenas para dev/testes e não formam uma porta paralela.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { success: false, error: { code: 'NOT_FOUND', message: 'Não encontrado.' } },
+      { status: 404, headers: { 'cache-control': 'no-store' } }
+    );
+  }
   try {
     const ip = clientIp(request);
     const rl = rateLimit(`convert:${ip}`, LIMITS.convert.limit, LIMITS.convert.windowMs);
