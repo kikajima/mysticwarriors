@@ -1,4 +1,5 @@
 import { db } from '../src/lib/db';
+import { invokeUniversalThreat } from '../src/lib/worldboss';
 
 const [, , command, ...args] = process.argv;
 
@@ -25,6 +26,11 @@ async function qaPlayer(id: string) {
 async function main() {
   if (!command) throw new Error('missing command');
 
+  if (command === 'invoke-boss') {
+    await invokeUniversalThreat();
+    console.log('boss invoked');
+    return;
+  }
   if (command === 'set-crystals') {
     const [id, raw] = args; await qaPlayer(id);
     await db.player.update({ where: { id }, data: { crystals: Number(raw) } });
