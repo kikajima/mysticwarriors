@@ -55,3 +55,59 @@ jobs:
         run: |
           bun run db:generate
           bun run build
+
+
+  functional-e2e:
+    name: Release functional E2E
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: file:./release-e2e.db
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate SQLite Prisma client
+        run: bun run db:generate:test
+
+      - name: Start application
+        run: |
+          NODE_ENV=development bun run dev > /tmp/mw-release-e2e.log 2>&1 &
+          echo $! > /tmp/mw-release-e2e.pid
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mw-release-e2e.log
+          exit 1
+
+      - name: Core functional audit
+        run: bun run test:e2e
+
+      - name: Shop and inventory smoke
+        run: bash tests/e2e-v0910.sh
+
+      - name: World boss cooldown smoke
+        run: bash tests/e2e-boss-cooldown.sh
+
+      - name: Server log on failure
+        if: failure()
+        run: tail -n 300 /tmp/mw-release-e2e.log || true
+
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f /tmp/mw-release-e2e.pid ]; then
+            kill "$(cat /tmp/mw-release-e2e.pid)" 2>/dev/null || true
+          fi
