@@ -8,7 +8,8 @@ Este arquivo reúne apenas os itens operacionais que não devem depender de mem�
 - Gate funcional: auditoria E2E principal, loja/inventário e cooldown da Ameaça Universal.
 - Varredura de secrets e contratos de hardening das Etapas 12 e 13.
 - Repositório sem gitlinks/submódulos órfãos; o CI falha se um ponteiro `160000` reaparecer.
-- Health check da aplicação: `/api/health`.
+- Health check da aplicação: `/api/health` valida também a conexão com o banco.
+- Smoke remoto manual: `bun run smoke:production -- https://SEU-HOST` ou workflow **Production smoke** no GitHub Actions.
 
 ## Supabase de produção
 
@@ -19,6 +20,11 @@ Este arquivo reúne apenas os itens operacionais que não devem depender de mem�
 - Escrita de snapshot do world boss bloqueada para `anon` e `authenticated`.
 - RPCs administrativas legadas por conta removidas.
 - Antes do lançamento público, habilitar no Dashboard do Supabase a proteção contra senhas vazadas (Leaked Password Protection).
+
+## Estado observado na Etapa 15
+
+- Em 23/09/2026, `https://mysticwarriors-ohio.onrender.com` respondeu HTTP 503 inclusive em `/api/health`; o ambiente não deve ser considerado pronto até o smoke remoto passar.
+- O código não consegue confirmar configuração privada do painel do Render; a validação do host público deve ser repetida após o próximo deploy.
 
 ## Render
 
