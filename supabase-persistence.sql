@@ -45,8 +45,75 @@ create policy "avatar_upload_proprio" on storage.objects
   for insert to authenticated
   with check (
     bucket_id = 'avatars'
-    and name like auth.uid()::text || '/%'
-    and coalesce((metadata->>'mimetype') like 'image/%', false)
+    and name ~ ('^' || auth.uid()::text || '/avatar-[0-9]+[.](jpg|png|webp)
+
+-- (DELETE e UPDATE continuam SEM policy: jogadores não apagam nem
+--  sobrescrevem arquivos pela API — avatares antigos apenas somem do
+--  personagem, os bytes ficam guardados.)
+
+-- ===== 3) Ranking público calculado ao vivo =====
+-- Ordena TODOS os personagens de TODOS os perfis por nível → vitórias →
+-- XP (a mesma ordem do jogo) e calcula o poder com a MESMA fórmula do
+-- scouter do jogo. security definer para ler os perfis, mas devolve
+-- SOMENTE: posição, nome, nível, poder e total.
+
+create or replace function public.ranking_nuvem(p_limite int default 25, p_offset int default 0)
+returns table (posicao bigint, nome text, nivel int, poder bigint, total bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with chars as (
+    select
+      ch->>'name' as guerreiro,
+      (ch->>'level')::int as nivel_char,
+      (ch->>'battlesWon')::int as vitorias,
+      (ch->>'xp')::bigint as xp_char,
+      (ch->>'strength')::int as forca,
+      (ch->>'defense')::int as defesa,
+      (ch->>'speed')::int as velocidade,
+      (ch->>'ki')::int as ki
+    from public.profiles pf,
+         jsonb_array_elements(pf.progresso->'characters') ch
+    where pf.progresso is not null
+      and jsonb_typeof(pf.progresso->'characters') = 'array'
+  ),
+  ranked as (
+    select
+      guerreiro,
+      nivel_char,
+      row_number() over (order by nivel_char desc, vitorias desc, xp_char desc) as pos,
+      round(
+        nivel_char * 15
+        + round(forca * 2.2)
+        + round(ki * 2.4) * 0.9
+        + round(defesa * 1.8)
+        + round(defesa * 1.1 + ki * 0.9) * 0.6
+        + velocidade * 2
+      )::bigint as poder
+    from chars
+  )
+  select
+    ranked.pos,
+    ranked.guerreiro,
+    ranked.nivel_char,
+    ranked.poder,
+    (select count(*) from chars) as total
+  from ranked
+  order by ranked.pos
+  limit greatest(1, least(coalesce(p_limite, 25), 100))
+  offset greatest(0, coalesce(p_offset, 0))
+$$;
+
+-- Página pública (/ranking) consulta sem login → anon precisa executar;
+-- o jogo também pode chamar logado → authenticated.
+revoke execute on function public.ranking_nuvem(int, int) from public;
+grant execute on function public.ranking_nuvem(int, int) to anon, authenticated;
+
+-- ===== FIM — avatares na nuvem + ranking ao vivo =====
+)
+    and coalesce(metadata->>'mimetype', '') in ('image/jpeg', 'image/png', 'image/webp')
     and coalesce((metadata->>'size')::bigint, 0) <= 5242880
   );
 
