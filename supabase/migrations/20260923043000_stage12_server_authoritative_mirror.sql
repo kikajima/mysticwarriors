@@ -182,6 +182,16 @@ begin
   end if;
 end $$;
 
+-- Snapshot legado do chefe também não pode ser gravado por qualquer
+-- authenticated. O chefe autoritativo vive em game.WorldBoss.
+revoke insert, update, delete on public.world_boss_snapshots from authenticated;
+do $
+begin
+  if to_regprocedure('public.save_world_boss_snapshot(jsonb)') is not null then
+    execute 'revoke all on function public.save_world_boss_snapshot(jsonb) from authenticated';
+  end if;
+end $;
+
 -- Storage: metadado continua sendo só a primeira barreira; o backend também
 -- baixa e decodifica os bytes reais antes de aceitar a URL.
 drop policy if exists "avatar_upload_proprio" on storage.objects;
