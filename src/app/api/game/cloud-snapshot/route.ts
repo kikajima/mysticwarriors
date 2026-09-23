@@ -1,9 +1,10 @@
 import { db } from '@/lib/db';
 import { requireAuth, requirePlayer } from '@/lib/auth';
-import { toErrorResponse, ok } from '@/lib/api';
+import { ApiError, toErrorResponse, ok } from '@/lib/api';
 import { serializeCharacterForCloud } from '@/lib/supabase/progress';
 import { collectCharacterExtras } from '@/lib/supabase/progress-server';
 import { computeDerived } from '@/lib/game/engine';
+import { syncAuthoritativeCloudCharacters } from '@/lib/supabase/serverCloud';
 
 // =====================================================================
 // GET /api/game/cloud-snapshot[?playerId=...] — personagens para a nuvem
@@ -30,6 +31,10 @@ export async function GET(request: Request) {
     // posse validada SOMENTE quando um personagem específico é pedido
     if (playerId) await requirePlayer(auth, playerId);
 
+    if (!auth.account.supabaseUserId) {
+      throw new ApiError('FORBIDDEN', 'Esta conta ainda não está vinculada à nuvem.');
+    }
+
     const characters = await db.player.findMany({
       where: { accountId: auth.account.id, isBot: false },
       orderBy: { createdAt: 'asc' },
@@ -55,7 +60,13 @@ export async function GET(request: Request) {
       };
     });
 
+    const cloudSynced = await syncAuthoritativeCloudCharacters(auth.account.supabaseUserId, rows);
+    if (!cloudSynced) {
+      throw new ApiError('PRECONDITION_FAILED', 'Sincronização autoritativa da nuvem indisponível neste ambiente.');
+    }
+
     return ok({
+      cloudSynced: true,
       // exibição apenas — o ativo da conta (ou o primeiro) serve de rosto
       nick: auth.account.username ?? characters[0]?.name ?? 'guerreiro',
       nivel: characters[0]?.level ?? 1,

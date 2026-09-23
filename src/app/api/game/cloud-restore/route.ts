@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { db } from '@/lib/db';
 import { ApiError, toErrorResponse, ok } from '@/lib/api';
 import { requireAuth } from '@/lib/auth';
@@ -9,23 +8,21 @@ import { DAILY_QUESTS, WEEKLY_QUESTS } from '@/lib/game/content/quests';
 import { dailyPeriod, weeklyPeriod } from '@/lib/progression';
 import { filterStaleRows } from '@/lib/game/resetGuard';
 import {
-  sanitizeCloudProgress,
   sanitizeCloudCharacterState,
   cloudCharacterToPlayerData,
-  CloudValidationError,
   type CloudCharacterSnapshot,
 } from '@/lib/supabase/progress';
 import { trackEvent } from '@/lib/analytics';
+import { loadAuthoritativeCloudCharacters, verifySupabaseIdentity } from '@/lib/supabase/serverCloud';
 
 // =====================================================================
 // POST /api/game/cloud-restore — restaura personagens da nuvem
 // ---------------------------------------------------------------------
-// v0.9.6 (Mudança 3): cada personagem é uma LINHA da tabela `personagens`
-// do Supabase. O cliente lê as próprias linhas (RLS) e as envia aqui:
-//   { personagens: [{ id, nome, raca, nivel, poder, vitorias, derrotas,
-//                     ativo, estado, atualizado_em }] }
-// O formato ANTIGO (profiles.progresso com characters[]) continua aceito
-// como reserva — cobre a janela entre o deploy e o dono colar o SQL novo.
+// Etapa 12: o navegador NÃO envia mais estado de jogo para restauração.
+// O servidor identifica a conta pela sessão local, valida o Bearer Supabase
+// contra o supabaseUserId vinculado e lê public.personagens diretamente pela
+// conexão PostgreSQL autoritativa. Assim, payloads fabricados pelo cliente
+// nunca viram Player local.
 //
 // v0.9.10.1 — GUARDA ANTI-RESSURREIÇÃO PÓS-RESET: se o servidor foi
 // resetado (GameMeta.serverResetAt), snapshots da nuvem ANTERIORES ao
@@ -37,18 +34,12 @@ import { trackEvent } from '@/lib/analytics';
 //
 // Regras de segurança:
 //  - exige conta VINCULADA ao Supabase (convidados não restauram);
-//  - só restaura quando a conta local está SEM personagens (o local
-//    vence quando os dois existem — evita "ressurreição" de exclusões);
-//  - TODO valor vindo da nuvem passa por sanitização: catálogos
-//    filtrados, números clampados, strings dimensionadas;
-//  - o id da linha vira o id do Player local (chave estável — o próximo
-//    save sobrescreve a própria linha na nuvem, nunca duplica).
+//  - exige Bearer válido do MESMO usuário Supabase vinculado;
+//  - ignora/rejeita qualquer estado enviado pelo navegador;
+//  - só restaura quando a conta local está SEM personagens (o local vence);
+//  - o estado lido server-side ainda passa pela sanitização completa;
+//  - o id da linha vira o id do Player local (chave estável).
 // =====================================================================
-
-const restoreSchema = z.object({
-  personagens: z.array(z.unknown()).max(10).optional(),
-  progresso: z.unknown().optional(),
-});
 
 interface PlayerLookup {
   player: {
@@ -113,13 +104,26 @@ export async function POST(request: Request) {
       );
     }
 
+    const authHeader = request.headers.get('authorization') ?? '';
+    const token = /^Bearer\s+(.+)$/i.exec(authHeader)?.[1]?.trim() ?? '';
+    await verifySupabaseIdentity(token, auth.account.supabaseUserId);
+
+    // Payload de estado é proibido: a fonte é exclusivamente o banco.
     const body = await request.json().catch(() => ({}));
-    const parsed = restoreSchema.safeParse(body);
-    if (!parsed.success) {
-      throw new ApiError('VALIDATION_ERROR', 'Dados de restauração inválidos.');
+    if (
+      body &&
+      typeof body === 'object' &&
+      ('personagens' in body || 'progresso' in body || 'estado' in body)
+    ) {
+      throw new ApiError('VALIDATION_ERROR', 'Estado de restauração não pode ser enviado pelo cliente.');
     }
 
-    // ===== forma v3 (personagens[]) ou v2 (progresso) =====
+    const cloudRows = await loadAuthoritativeCloudCharacters(auth.account.supabaseUserId);
+    if (!cloudRows) {
+      throw new ApiError('PRECONDITION_FAILED', 'Restauração autoritativa da nuvem indisponível neste ambiente.');
+    }
+
+    // ===== linhas v3 lidas server-side =====
     // v0.9.10.1: marcador do último reset geral — presente, snapshots
     // pré-reset são descartados (a nuvem seria o único jeito de um
     // personagem antigo voltar depois de um "Reset geral do servidor").
@@ -130,8 +134,8 @@ export async function POST(request: Request) {
 
     let restoreList: { char: CloudCharacterSnapshot; ativo: boolean; atualizadoEm: unknown }[] = [];
     let staleDropped = 0;
-    if (Array.isArray(parsed.data.personagens) && parsed.data.personagens.length > 0) {
-      const sanitized = sanitizeCharacterRows(parsed.data.personagens);
+    if (cloudRows.length > 0) {
+      const sanitized = sanitizeCharacterRows(cloudRows);
       const filtered = filterStaleRows(sanitized, serverResetAt);
       restoreList = filtered.kept;
       staleDropped = filtered.dropped;
@@ -140,25 +144,6 @@ export async function POST(request: Request) {
           `[cloud-restore] servidor resetado em ${serverResetAt} — ${staleDropped} snapshot(s) da nuvem ` +
             `PRÉ-RESET descartado(s) (sem ressurreição).`
         );
-      }
-    } else if (parsed.data.progresso !== undefined) {
-      if (serverResetAt) {
-        // formato v2 legado não carrega timestamp — pós-reset ele só pode
-        // ser pré-reset. Bloqueado inteiro (e LOGADO, nunca silencioso).
-        console.warn(
-          `[cloud-restore] servidor resetado em ${serverResetAt} — progresso v2 legado IGNORADO (pós-reset).`
-        );
-      } else {
-        try {
-          const progress = sanitizeCloudProgress(parsed.data.progresso);
-          const activeName = progress.activePlayerName;
-          restoreList = progress.characters.map((char) => ({ char, ativo: char.name === activeName, atualizadoEm: null }));
-        } catch (e) {
-          if (e instanceof CloudValidationError) {
-            throw new ApiError('VALIDATION_ERROR', e.message);
-          }
-          throw e;
-        }
       }
     }
 
