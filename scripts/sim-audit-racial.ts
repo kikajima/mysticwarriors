@@ -39,11 +39,11 @@ import type { RaceId } from '../src/lib/game/types';
 
 const RACE_ORDER: RaceId[] = ['saiyajin', 'humano', 'namekuseijin', 'androide', 'majin'];
 const RACE_PT: Record<RaceId, string> = {
-  saiyajin: 'Saiyajin',
+  saiyajin: 'Solaris',
   humano: 'Humano',
-  namekuseijin: 'Namekuseijin',
+  namekuseijin: 'Verdant',
   androide: 'Androide',
-  majin: 'Majin',
+  majin: 'Amorph',
 };
 
 const SEEDS = 250; // × 2 arranjos de lado = 500 lutas por par (mín. exigido: 200)
@@ -413,7 +413,7 @@ md.push(`$ git log --format="%h %ad %s" --date=short -- src/lib/game/content/rac
 md.push(gitRaces);
 md.push('```');
 md.push('');
-md.push(`**Leitura:** o arquivo entra no repositório já com os valores da **calibração v0.4** em \`${racesFirst.h}\` (${racesFirst.d}) — a correção do desbalanceamento v0.3 (Majin 1.05×4 eixos, Humano +10% defesa etc.) foi calibrada na árvore de trabalho e commitada junto com a reestruturação do engine. O único commit posterior que tocou \`races.ts\` é \`${racesLast.h}\` (${racesLast.d}), que alterou APENAS o TEXTO de um perk do Androide ("Missões custam 15% menos energia e rendem +5% de Zeni" → "Trabalhos rendem +5% de Zeni", wiki-audit v0.9.23) — **os modificadores de COMBATE estão congelados desde a criação do arquivo (${racesFirst.d})**.`);
+md.push(`**Leitura:** o arquivo entra no repositório já com os valores da **calibração v0.4** em \`${racesFirst.h}\` (${racesFirst.d}) — a correção do desbalanceamento v0.3 (Amorph 1.05×4 eixos, Humano +10% defesa etc.) foi calibrada na árvore de trabalho e commitada junto com a reestruturação do engine. O único commit posterior que tocou \`races.ts\` é \`${racesLast.h}\` (${racesLast.d}), que alterou APENAS o TEXTO de um perk do Androide ("Missões custam 15% menos energia e rendem +5% de Créditos" → "Trabalhos rendem +5% de Créditos", wiki-audit v0.9.23) — **os modificadores de COMBATE estão congelados desde a criação do arquivo (${racesFirst.d})**.`);
 md.push('');
 md.push('### Marcos do engine APÓS a calibração v0.4 (todos 2026-09-13/14 UTC)');
 md.push('');
@@ -438,7 +438,7 @@ md.push('```');
 md.push('');
 md.push('### Conclusão da cronologia');
 md.push('');
-md.push('**A auditoria externa antiga (Majin ~85,9% · Humano ~67,0% · Saiyajin ~46,3% · Namekuseijin ~36,1% · Androide ~14,8%) é ANTERIOR à calibração v0.4 do races.ts.** Esses números correspondem ao estado v0.3 (Majin com +5% em 4 eixos compostos, defesa superdimensionada) que o `worklog.md` registra ter sido reproduzido exatamente pelo `scripts/sim-balance.ts` ANTES da correção (46,25 / 66,98 / 36,23 / 14,70 / 85,85, com 41,7% de lutas no limite de rodadas) e corrigido para 48,3 / 57,7 / 46,6 / 45,8 / 51,7 pós-v0.4. O estado pré-v0.4 **nunca existiu como commit** do engine novo — a calibração aconteceu na árvore de trabalho antes do commit de reestruturação `1316bca` (' + racesFirst.d + '). Desde então o engine recebeu **5+ mudanças mecânicas** (Armadura de Escala 17:17, Ímpeto 17:33, Exaustão 18:24 — todas em 2026-09-13; MAX_ROUNDS=40 2026-09-14 00:49; garantia de técnica 2026-09-14 14:48) **sem recalibrar os modificadores raciais** — é exatamente esta defasagem que a presente simulação mede.');
+md.push('**A auditoria externa antiga (Amorph ~85,9% · Humano ~67,0% · Solaris ~46,3% · Verdant ~36,1% · Androide ~14,8%) é ANTERIOR à calibração v0.4 do races.ts.** Esses números correspondem ao estado v0.3 (Amorph com +5% em 4 eixos compostos, defesa superdimensionada) que o `worklog.md` registra ter sido reproduzido exatamente pelo `scripts/sim-balance.ts` ANTES da correção (46,25 / 66,98 / 36,23 / 14,70 / 85,85, com 41,7% de lutas no limite de rodadas) e corrigido para 48,3 / 57,7 / 46,6 / 45,8 / 51,7 pós-v0.4. O estado pré-v0.4 **nunca existiu como commit** do engine novo — a calibração aconteceu na árvore de trabalho antes do commit de reestruturação `1316bca` (' + racesFirst.d + '). Desde então o engine recebeu **5+ mudanças mecânicas** (Armadura de Escala 17:17, Ímpeto 17:33, Exaustão 18:24 — todas em 2026-09-13; MAX_ROUNDS=40 2026-09-14 00:49; garantia de técnica 2026-09-14 14:48) **sem recalibrar os modificadores raciais** — é exatamente esta defasagem que a presente simulação mede.');
 md.push('');
 md.push('---');
 md.push('');
@@ -520,7 +520,7 @@ md.push('');
   const andrC6 = wr('C6', 'androide');
   const saiyC1 = wr('C1', 'saiyajin');
   const saiyC6 = wr('C6', 'saiyajin');
-  md.push(`**Padrão emergente:** nos cenários SEM equipamento (C1→C2→C3→C4→C6), a hierarquia INVERTE com a progressão — **Androide sobe a cada faixa** (${pct1(andrC1)} no C1 → ${pct1(andrC6)} no C6) enquanto **Saiyajin cai a cada faixa** (${pct1(saiyC1)} → ${pct1(saiyC6)}); as curvas se cruzam entre C2 e C3. **Majin nunca fica abaixo de 55%** em nenhuma config (o "bom em tudo" fica acima do centro em TODAS as faixas). C6 é borderline: Androide ${pct1(wr('C6', 'androide'))} (${Math.abs(100 * wr('C6', 'androide') - 65).toFixed(1)}pp abaixo do teto de 65%) e Saiyajin ${pct1(wr('C6', 'saiyajin'))} (${Math.abs(35 - 100 * wr('C6', 'saiyajin')).toFixed(1)}pp acima do piso de 35%) — dentro do corredor por margem apertada. DECISÃO praticamente extinta (0,9% no C1; 0,0% nas demais) — as lutas resolvem por KO.`);
+  md.push(`**Padrão emergente:** nos cenários SEM equipamento (C1→C2→C3→C4→C6), a hierarquia INVERTE com a progressão — **Androide sobe a cada faixa** (${pct1(andrC1)} no C1 → ${pct1(andrC6)} no C6) enquanto **Solaris cai a cada faixa** (${pct1(saiyC1)} → ${pct1(saiyC6)}); as curvas se cruzam entre C2 e C3. **Amorph nunca fica abaixo de 55%** em nenhuma config (o "bom em tudo" fica acima do centro em TODAS as faixas). C6 é borderline: Androide ${pct1(wr('C6', 'androide'))} (${Math.abs(100 * wr('C6', 'androide') - 65).toFixed(1)}pp abaixo do teto de 65%) e Solaris ${pct1(wr('C6', 'saiyajin'))} (${Math.abs(35 - 100 * wr('C6', 'saiyajin')).toFixed(1)}pp acima do piso de 35%) — dentro do corredor por margem apertada. DECISÃO praticamente extinta (0,9% no C1; 0,0% nas demais) — as lutas resolvem por KO.`);
 }
 md.push('');
 md.push('### 4.1. Robustez — replicação com bloco INDEPENDENTE de sementes (250..499)');
@@ -585,13 +585,13 @@ md.push('');
   verdictLines.forEach((l) => md.push(l));
   md.push('');
   md.push(
-    `**A suspeita antiga (Majin 85,9% / Androide 14,8%) ${
+    `**A suspeita antiga (Amorph 85,9% / Androide 14,8%) ${
       c2majin < 0.65 && c2androide > 0.35 && !anyOutlier
         ? 'NÃO se reproduz'
         : c2majin < 0.65 && c2androide > 0.35
           ? 'NÃO se reproduz no cenário comparável (C2), mas existem configs com dispersão >15pp (ver lista acima)'
           : 'SE REPRODUZ (total ou parcialmente) — ver tabela C2'
-    }** no engine atual (HEAD ${gitHead}): no cenário comparável C2 (mesmo desenho da calibração antiga — nível 10, atributos 50, sem itens/técnicas), Majin mede **${pct(c2majin)}** e Androide **${pct(c2androide)}**. ${
+    }** no engine atual (HEAD ${gitHead}): no cenário comparável C2 (mesmo desenho da calibração antiga — nível 10, atributos 50, sem itens/técnicas), Amorph mede **${pct(c2majin)}** e Androide **${pct(c2androide)}**. ${
       anyOutlier
         ? 'Configs com alguma raça a mais de 15 pp do centro: **' + results.filter((r) => dispersion(r).outliers.length).map((r) => r.cfg.id).join(', ') + '**.'
         : 'Nenhuma configuração tem raça a mais de 15 pp do centro.'
