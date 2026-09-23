@@ -42,7 +42,7 @@ A identidade pública e a documentação usam exclusivamente a nomenclatura de M
 - **Mestre Orun** (líder bot da guilda extinta): volta a ser bot sem guilda
   (sparring do mundo, sem relação com guildas). Não faz parte do roster
   canônico de bots (`BOTS` em content/names.ts) — em bases novas ele não
-  nasce; a ficção dele (loja, técnicas, itens da Escola da Tartaruga) é
+  nasce; a ficção dele (loja, técnicas, itens da Escola da Maré Astral) é
   lore de mundo, não mecanismo de guilda.
 - **Saída de guilda pelo último membro DISSOLVE a guilda e LIMPA AS DOAÇÕES
   na mesma transação** (v0.15 — mesma regra de erasure do painel:
