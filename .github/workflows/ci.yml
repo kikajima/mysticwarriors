@@ -74,6 +74,11 @@ jobs:
             tail -n 300 /tmp/mw-functional-server.log
             exit 1
           fi
+          if ! bash scripts/e2e-release-extended.sh; then
+            echo "===== LOG DO SERVIDOR (SMOKE ESTENDIDO) ====="
+            tail -n 400 /tmp/mw-functional-server.log
+            exit 1
+          fi
 
       - name: TypeScript
         run: bun run typecheck
