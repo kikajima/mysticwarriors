@@ -67,7 +67,7 @@ export const INITIAL_PLAYER_DATA = {
   transformationsOwned: '[]',
   cosmeticsEquipped: '{}',
   cosmeticsOwned: '[]',
-  // anti-farm Zenkai (Saiyajin)
+  // anti-farm Resiliência Estelar (Solaris)
   lastZenkaiAt: null,
   zenkaiWindowStart: null,
   zenkaiCount24h: 0,
