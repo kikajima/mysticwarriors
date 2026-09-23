@@ -121,7 +121,7 @@
   }
 }
 
-/* ===== Utilidades do jogo Guerreiros Místicos ===== */
+/* ===== Utilidades do jogo Myst Ki Warriors ===== */
 
 .font-display {
   font-family: var(--font-bangers), 'Segoe UI', cursive;
@@ -326,7 +326,7 @@
   animation: scale-seal-pulse 2.4s ease-out infinite;
 }
 
-/* v0.9.13 — Chamas do medidor de Ímpeto (Cap. 7 do ASCENSÃO Z): cada
+/* v0.9.13 — Chamas do medidor de Ímpeto (Cap. 7 de ESCALAS DE CAELUM): cada
    chama acesa tremula levemente (brilho + altura), como fogo vivo —
    a leitura do medidor é instantânea sem depender de números. */
 @keyframes impeto-flicker {
