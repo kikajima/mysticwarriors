@@ -31,7 +31,7 @@ export const BALANCE_VERSION = 6;
  * TRABALHANDO bloqueia APENAS as 2 ações abaixo. TUDO mais é LIBERADO:
  * Treino, PvP, Ameaça Universal, Oficina/Crafting, loja (comprar/vender/usar), gestão completa de
  * guilda, coleta de recompensas (conquista/diária/missão/torneio),
- * equipamento/inventário, Oficina/Crafting, perfil e visualizações, Shenron,
+ * equipamento/inventário, Oficina/Crafting, perfil e visualizações, Aethelgard,
  * cosméticos, talentos, técnicas, transformações, estratégia.
  *
  * REGRA DE COLETA (parte 2 da 3ª ordem): coleta de recompensa de
@@ -213,10 +213,10 @@ export function trainingCost(statValue: number, race: string): number {
   return Math.max(1, Math.floor(baseTrainingCost(statValue) * econ.trainCostMult));
 }
 
-// ===== Zenkai (Saiyajin) — balanceado por RISCO, não por cota diária =====
+// ===== Resiliência Estelar (Solaris) — balanceada por RISCO, não por cota diária =====
 
 /**
- * ZENKAI v0.4 — sem teto diário. O ganho permanente é limitado pelo
+ * Resiliência Estelar v0.4 (contrato interno: ZENKAI) — sem teto diário. O ganho permanente é limitado pelo
  * RISCO REAL da derrota e pela economia de recuperação:
  *  1. só conta derrota para adversário RELEVANTE (nível >= 60% do seu —
  *     perder de propósito para fracos não ativa nada);
@@ -251,7 +251,7 @@ export interface ZenkaiDecision {
 }
 
 /**
- * Decide se um Zenkai pode ser concedido (sem cota diária — ver ZENKAI).
+ * Decide se a Resiliência Estelar pode ser concedida (sem cota diária; contrato interno: ZENKAI).
  */
 export function shouldGrantZenkai(
   ctx: ZenkaiContext,
