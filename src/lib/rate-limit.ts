@@ -55,15 +55,18 @@ export function clientIp(request: Request): string {
   // bypass por spoof, cabeçalhos enormes/diferentes poderiam inflar o Map.
   // Atrás de um proxy que APPENDA X-Forwarded-For, o último IP é o salto
   // mais próximo e não o valor que o cliente tentou prefixar.
-  const candidates = [
-    request.headers.get('cf-connecting-ip'),
-    request.headers.get('x-forwarded-for')?.split(',').map((v) => v.trim()).filter(Boolean).at(-1),
-    request.headers.get('x-real-ip'),
-  ];
-  for (const raw of candidates) {
-    const ip = raw?.trim();
-    if (ip && ip.length <= 64 && isIP(ip)) return ip;
-  }
+  // Deploy oficial: Render. O proxy da plataforma APPENDA X-Forwarded-For;
+  // por isso confiamos somente no ÚLTIMO hop válido dessa cadeia. Cabeçalhos
+  // alternativos como cf-connecting-ip/x-real-ip podem ser enviados pelo
+  // próprio cliente quando não há um proxy confiável específico na frente
+  // e, portanto, não servem como identidade para rate limiting.
+  const forwarded = request.headers
+    .get('x-forwarded-for')
+    ?.split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .at(-1);
+  if (forwarded && forwarded.length <= 64 && isIP(forwarded)) return forwarded;
   return 'unknown';
 }
 
