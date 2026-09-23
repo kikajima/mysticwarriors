@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — BLOCO 2: RESET GERAL DA NUVEM (v0.9.10)
+-- MYST KI WARRIORS — BLOCO 2: RESET GERAL DA NUVEM (v0.9.10)
 -- =====================================================================
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE E CLIQUE EM "Run".
 --
