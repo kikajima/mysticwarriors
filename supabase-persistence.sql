@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — TUDO NA NUVEM (v0.9.4)
+-- MYST KI WARRIORS — TUDO NA NUVEM (v0.9.4)
 -- ---------------------------------------------------------------------
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE E CLIQUE EM "Run".
 --
