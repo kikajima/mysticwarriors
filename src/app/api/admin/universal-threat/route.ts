@@ -1,15 +1,23 @@
-import { extractBearerToken, verifySupabaseAdmin } from '@/lib/supabase/admin';
+import { requirePanelAdmin } from '@/lib/supabase/admin';
 import { invokeUniversalThreat } from '@/lib/worldboss';
-import { ok, toErrorResponse } from '@/lib/api';
+import { ApiError, ok, toErrorResponse } from '@/lib/api';
+import { clientIp, rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const token = extractBearerToken(request);
-    if (!token || !(await verifySupabaseAdmin(token))) {
-      return Response.json({ success: false, error: { code: 'NOT_FOUND', message: 'Não encontrado.' } }, { status: 404 });
+    const guard = await requirePanelAdmin(request);
+    if (!guard.ok) {
+      return Response.json(
+        { success: false, error: { code: guard.code, message: guard.message } },
+        { status: guard.status }
+      );
+    }
+    const rl = rateLimit(`admin-universal-threat:${clientIp(request)}`, 3, 5 * 60_000);
+    if (!rl.allowed) {
+      throw new ApiError('RATE_LIMITED', 'Muitas invocações seguidas. Aguarde alguns minutos.');
     }
     await invokeUniversalThreat();
     return ok({ message: 'Ameaça Universal invocada por 24 horas.' });
