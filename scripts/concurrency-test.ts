@@ -1,5 +1,5 @@
 /**
- * TESTES DE CONCORRÊNCIA — Guerreiros Místicos
+ * TESTES DE CONCORRÊNCIA — Myst Ki Warriors
  * Roda contra o dev server (localhost:3000). Verifica que operações
  * simultâneas NÃO duplicam efeitos (compra, claim, boss).
  *
@@ -114,7 +114,7 @@ async function main() {
     check('HP do boss nunca negativo', boss.currentHp >= 0, `(hp=${boss.currentHp})`);
   }
 
-  // ===== TESTE 4: dois desejos SIMULTÂNEOS com 7 esferas =====
+  // ===== TESTE 4: dois desejos SIMULTÂNEOS com 7 Chaves =====
   await db.player.update({ where: { id: playerId }, data: { dragonBalls: 7, zeni: 0 } });
   const w1 = post('/api/game/action', cookie, { playerId, type: 'wish', wishType: 'riqueza' });
   const w2 = post('/api/game/action', cookie, { playerId, type: 'wish', wishType: 'riqueza' });
@@ -122,7 +122,7 @@ async function main() {
   const wishSuccesses = [w1r, w2r].filter((r) => r.json?.success).length;
   check('desejos simultâneos: exatamente 1 sucesso', wishSuccesses === 1, `(sucessos=${wishSuccesses})`);
   const afterWish = await db.player.findUniqueOrThrow({ where: { id: playerId } });
-  check('Zenkai do desejo: +8000 exatamente (sem duplicar)', afterWish.zeni === 8000, `(zeni=${afterWish.zeni})`);
+  check('Resiliência Estelar do desejo: +8000 exatamente (sem duplicar)', afterWish.zeni === 8000, `(zeni=${afterWish.zeni})`);
   check('esferas zeradas', afterWish.dragonBalls === 0);
 
   // ===== TESTE 5: state polling concorrente não corrompe regen =====
