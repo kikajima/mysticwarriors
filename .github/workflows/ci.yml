@@ -64,6 +64,8 @@ jobs:
     timeout-minutes: 15
     env:
       DATABASE_URL: file:./release-e2e.db
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
     steps:
       - name: Checkout
         uses: actions/checkout@v4
