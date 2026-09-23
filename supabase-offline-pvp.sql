@@ -1,9 +1,9 @@
--- Offline opponents share the same world. Read-only gameplay lookup.
--- Account credentials, email addresses and profiles never leave the database.
--- The private helper intentionally reads other warriors for PvP; table RLS stays owner-only.
+-- LEGADO (Stage 12): o PvP offline agora é resolvido exclusivamente pelo
+-- backend via DATABASE_URL. As funções abaixo podem permanecer instaladas
+-- para compatibilidade de schema, mas NÃO recebem EXECUTE de authenticated.
 create schema if not exists private;
 revoke all on schema private from public, anon;
-grant usage on schema private to authenticated;
+revoke usage on schema private from authenticated;
 
 create or replace function private.pvp_opponent(p_nome text)
 returns jsonb language plpgsql stable security definer set search_path = ''
@@ -37,11 +37,9 @@ begin
   );
 end;
 $$;
-revoke all on function private.pvp_opponent(text) from public, anon;
-grant execute on function private.pvp_opponent(text) to authenticated;
+revoke all on function private.pvp_opponent(text) from public, anon, authenticated;
 
 create or replace function public.pvp_opponent(p_nome text)
 returns jsonb language sql stable security invoker set search_path = ''
 as $$ select private.pvp_opponent(p_nome); $$;
-revoke all on function public.pvp_opponent(text) from public, anon;
-grant execute on function public.pvp_opponent(text) to authenticated;
+revoke all on function public.pvp_opponent(text) from public, anon, authenticated;
