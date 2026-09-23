@@ -126,6 +126,13 @@ export async function POST(request: Request) {
         if (!auth.account.supabaseUserId || folder !== auth.account.supabaseUserId) {
           throw new ApiError('FORBIDDEN', 'Este avatar não pertence à sua conta.');
         }
+
+        // A policy do Storage valida metadados, não os bytes reais. Um
+        // cliente customizado poderia declarar image/jpeg para qualquer
+        // conteúdo. Baixamos pelo caminho anti-SSRF e decodificamos com
+        // Sharp antes de aceitar a URL como avatar persistido.
+        const storageBytes = await fetchExternalImage(url);
+        await validateImageBytes(storageBytes);
         newAvatarUrl = url;
       } else {
         // baixa com proteção completa (https exigido no fetch, anti-SSRF,
