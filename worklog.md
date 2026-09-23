@@ -65,7 +65,7 @@ Testes (agent-browser E2E + VLM):
 - Guilda "Guerreiros Z" criada por 5.000 Créditos, líder visível, badge no ranking ✓
 - Limite de personagens: 3 criados, 4º slot não aparece; troca de personagem; logout → AuthGate; login de volta ✓
 - VLM: layout desktop e mobile (390px) aprovado em guildas, treino/mestres, missões, loja, authgate e seleção ✓
-- Lint 0 erros; banco limpo (dados de teste removidos, personagem do usuário Sonjin + 15 bots preservados)
+- Lint 0 erros; banco limpo (dados de teste removidos, personagem do usuário personagem legado + 15 bots preservados)
 
 Stage Summary:
 - Jogo atualizado e rodando em / com servidor daemon persistente
@@ -104,7 +104,7 @@ Testes:
 Stage Summary:
 - Jogo completo em /jogar com landing pública em /
 - Novos modelos: Session, WalletTransaction, QuestProgress, AchievementState, WorldBoss(Damage), Season(RankEntry), GuildDonation, Purchase, CosmeticOwned, AnalyticsEvent; Player ganhou crystals/loadout/strategy/transformações/zenkai-farm/stateVersion/pvpWins/trainingsDone/guildDonated; Guild ganhou level/xp/totalDonated
-- Personagens antigos de convidado (Sonjin) ficaram órfãos por design do novo modelo de segurança — preservados no banco/ranking, inacessíveis a qualquer conta (nenhuma ação é possível sobre eles)
+- Personagens antigos de convidado (personagem legado) ficaram órfãos por design do novo modelo de segurança — preservados no banco/ranking, inacessíveis a qualquer conta (nenhuma ação é possível sobre eles)
 
 ---
 Task ID: 4
@@ -130,12 +130,12 @@ Testes:
 - concurrency-test: 12/12 (compras/claims/boss/desejos simultâneos)
 - e2e-p0-smoke.sh: 13/13 (missão bloqueia ações, World Boss exceção, POST removido → 405, CHARACTER_LIMIT_REACHED)
 - next build (produção): ✓ 27 rotas
-- Banco após limpeza: 0 contas, 16 players (Sonjin lvl 3 + 15 bots preservados), boss HP restaurado
+- Banco após limpeza: 0 contas, 16 players (personagem legado lvl 3 + 15 bots preservados), boss HP restaurado
 
 Stage Summary:
 - Deploy desbloqueado: build de produção passa limpo
 - P0 essencial concluído: RNG determinístico, PvP simétrico com defensor completo, bloqueio central de missão, analytics transacional (fix de performance crítico), daily PvP progressiva, first_battle correto, limite de personagens transacional, endpoint de manutenção pública removido
-- REGRA ABSOLUTA respeitada: nenhum dado destruído; Sonjin e bots intactos
+- REGRA ABSOLUTA respeitada: nenhum dado destruído; personagem legado e bots intactos
 
 ---
 Task ID: 5
@@ -143,7 +143,7 @@ Agent: main (Super Z)
 Task: v0.3 completa — 3 bugs críticos + 4 bugs altos + 10 ajustes funcionais (prompt de 17 itens do usuário, sem pular etapas)
 
 Work Log:
-- BACKUP PRÉVIO: backups/custom-backup-pre-v03-20260910-193549.db + contagens (0 contas, 16 players: Sonjin + 15 bots) — REGRA ABSOLUTA respeitada
+- BACKUP PRÉVIO: backups/custom-backup-pre-v03-20260910-193549.db + contagens (0 contas, 16 players: personagem legado + 15 bots) — REGRA ABSOLUTA respeitada
 - MIGRAÇÕES (3, todas aditivas, zero perda): add_gender_to_player (default male p/ dados existentes), add_avatar_url (opcional), add_request_dedup_and_active_player (tabela RequestDedup + Account.activePlayerId @unique)
 - P1-1 localStorage REMOVIDO 100%: STORAGE_KEY eliminado do page.tsx; personagem ativo vive no SERVIDOR (account.activePlayerId); nova action select_player; /api/auth/session devolve activePlayerId (sanitizado); /api/game/state aceita playerId OPCIONAL (sem ele usa o ativo); boot: session → ativo válido ? jogo : CharacterSelect
 - P1-2 limite no frontend: CharacterSelect mostra card "Limite de 3 personagens atingido. Delete um para criar novo." com botão "Criar Novo Guerreiro" disabled quando >= 3
@@ -156,8 +156,8 @@ Work Log:
 - A2 missão UX: banner no dashboard "⚠️ Você está em uma missão! Pode atacar o World Boss..." com CTA; botões EM MISSÃO [disabled] com title "Você está em uma missão ativa" em Treino/Missões/Batalha/Ranking
 - A3 sexo: gender no schema/create (zod enum + default male); CharacterCreate passo 3 (👨 Masculino / 👩 Feminino, emoji por raça+sexo); GenderBadge ♂/♀ (azul/rosa) sobre avatares; RACE_EMOJI_GENDER p/ fallback
 - A4 avatar: Player.avatarUrl; POST /api/game/avatar modo URL (só http/https — bloqueia javascript:/data:/file:) e modo upload (magic bytes JPG/PNG/WebP, <5MB, filename server-side anti-path-traversal, /public/avatars/); DELETE remove; AvatarDialog com 2 abas (URL/upload), preview, loading, toasts; PlayerAvatar com fallback racial
-- A5 Sonjin deletado via scripts/delete-sonjin.ts (transacional, guilda/activePlayer defensivos, cascata) — banco com exatamente 15 bots
-- A6 nomes ORIGINAIS: 60 nomes no gerador (nenhum exato da franquia; sem 'Son' nos títulos; epítetos originais); 15 bots renomeados via scripts/rename-bots.ts (UPDATE preservando IDs/stats) — Kakaroto→Kaoran, Kael Voran→Kael Voran, Moroq do Vazio→Amorph Bumbo etc.
+- A5 personagem legado deletado via scripts/delete-sonjin.ts (transacional, guilda/activePlayer defensivos, cascata) — banco com exatamente 15 bots
+- A6 nomes ORIGINAIS: 60 nomes no gerador (nenhum exato da franquia; sem 'Son' nos títulos; epítetos originais); 15 bots renomeados via scripts/rename-bots.ts (UPDATE preservando IDs/stats) — Kaoran→Kaoran, Kael Voran→Kael Voran, Moroq do Vazio→Amorph Bumbo etc.
 - A7 raças rebalanceadas (nenhum bônus > 15%): Solaris 10% físico + 10% XP + Resiliência Estelar; Humano 10% defesa + 10% regen energia + treino -10%; Verdant 15% regen vida + 5% Ki + 5% esquiva; Sintético 10% velocidade + missões -15% energia + 5% zeni; Amorph +5% em tudo + 5% absorção — perks textuais espelham os números
 - A8 DELETE /api/game/character/[playerId]: requirePlayer (403 alheio), CANNOT_DELETE_LAST no último, guilda (líder→transfere/solo→dissolve), activePlayerId limpo, cascata transacional, rate-limit 6/min
 - A9 CharacterSelect: avatar com badge de sexo, "Nome (♀)", "Raça · Masculino/Feminino", botão excluir com alertdialog de confirmação
@@ -175,7 +175,7 @@ Testes:
 Stage Summary:
 - v0.3 completa: checklist de 17 itens do usuário 100% implementado e verificado
 - Segurança: playerId nunca persiste no cliente; replay protection; rate-limit no state; avatares validados (protocolo + magic bytes + anti-path-traversal); delete de personagem com posse + guarda do último
-- Conteúdo: nomes 100% originais (gerador + bots), raças simétricas ≤15%, Sonjin removido
+- Conteúdo: nomes 100% originais (gerador + bots), raças simétricas ≤15%, personagem legado removido
 - Deploy pronto: build de produção passa (era o bloqueiro da sessão anterior, já resolvido na Task 4)
 
 ---
@@ -184,7 +184,7 @@ Agent: main (Super Z)
 Task: v0.4 — preservação de dados, avatar real, farm livre, rebalanceamento sistêmico, atividades server-side, regras de missão (prompt completo do usuário)
 
 Work Log:
-- BACKUP: backups/custom-backup-pre-v04-20260910-212459.db + snapshot db-dir | Banco: 0 contas, 15 bots (nomes originais), 1 boss, 0 guildas, 0 walletTx. Sonjin já não existe (nada excluído — regra de preservação)
+- BACKUP: backups/custom-backup-pre-v04-20260910-212459.db + snapshot db-dir | Banco: 0 contas, 15 bots (nomes originais), 1 boss, 0 guildas, 0 walletTx. personagem legado já não existe (nada excluído — regra de preservação)
 - SIM BASELINE (scripts/sim-balance.ts): REPRODUZIU EXATAMENTE os números do usuário — Solaris 46,25% | Humano 66,98% | Verdant 36,23% | Sintético 14,70% | Amorph 85,85% | limite de rodadas 41,7% (10.000 lutas, 500 sementes/par, lados invertidos)
 - DIAGNÓSTICO (micro-experimentos scripts/sim-debug-speed.ts):
   * Mitigação por SUBTRAÇÃO amplifica defesa: +10% def racial → −27% dano líquido sofrido (humano 67%)
@@ -215,14 +215,14 @@ Work Log:
 - AVATAR REAL: armazenamento em db/avatars (mesmo volume do banco, via DATABASE_URL) servido por /api/game/avatars/[filename] (cache imutável, anti-traversal); upload valida magic bytes + DECODIFICAÇÃO REAL (sharp re-encoda miniatura); URL espelhada server-side (fetch https-only, DNS+anti-SSRF, redirects manuais revalidados, timeout 8s, teto 5MB stream, content-type); PlayerAvatar reseta failed quando URL muda; AvatarDialog com revokeObjectURL + preload de confirmação; polling guard 6s contra resposta atrasada
 - EXECUTANDO REMOVIDO: aviso global "⚡ executando..." eliminado; progresso discreto nos botões (disabled); animações próprias preservadas
 - BUILD/DEPLOY: database-runtime-build.sh não-destrutivo (banco existente PRESERVADO + migrate deploy; copia preview só na 1ª publicação); package.json db:push SEM --accept-data-loss; db:deploy = prisma migrate deploy
-- MIGRAÇÃO v04_activities_regen_hp: 100% aditiva, validada em CÓPIA (15 bots idênticos antes/depois) e aplicada no real com prisma migrate deploy (15 bots + boss "Cell Perfeito" preservados)
+- MIGRAÇÃO v04_activities_regen_hp: 100% aditiva, validada em CÓPIA (15 bots idênticos antes/depois) e aplicada no real com prisma migrate deploy (15 bots + boss "Ameaça Universal" preservados)
 
 Testes:
 - bun test: 90/90 (novos: regen dual-clock consulta única/15s/5s, soft cap, pierce, desempate 50/50, durações, estimateLevels, activityToView, farm ausente, curva treino Int32-safe, elixir dinâmico, allowlist missão, calibração racial na meta)
 - Simulações: controle 10k lutas = 48,3/57,7/46,6/45,8/51,7% (era 46,3/67,0/36,2/14,7/85,9) com 0% limite (era 41,7%); estendidas INÍCIO/MEIO/FIM todas 44–56%
 - e2e-audit.sh 49/49 | e2e-v03.sh 27/27 | e2e-v04.sh NOVO 25/25 | e2e-p0-smoke.sh 13/13 | concurrency 12/12 (após WAL)
 - agent-browser: criação com perks novos, treino com overlay server-side (DOM), batalha travada (ESC não fecha; Continuar no fim), missão (banner correto, EM MISSÃO disabled em treino/loja, World Boss liberado, missão intacta), transição claimable + Coletar, avatar upload→persistido→200 image/png, mobile 390px sem overflow, localStorage vazio, reload no meio do treino → retomado e aplicado, console limpo
-- Banco final: 15 bots (Sonjin não existia — nenhuma exclusão), 0 contas, boss ativo preservado, avatares de teste limpos
+- Banco final: 15 bots (personagem legado não existia — nenhuma exclusão), 0 contas, boss ativo preservado, avatares de teste limpos
 - npm run build: ✓ produção (30 rotas, incluindo /api/game/avatars/[filename])
 
 Stage Summary:
@@ -240,7 +240,7 @@ Work Log:
 - PRAGMA corrigido ($queryRaw — PRAGMAs retornam valores no SQLite)
 - Build de produção final: ✓ 0 erros, 28 páginas estáticas, 30 rotas
 - Bateria final: bun test 90/90 | e2e-audit 49/49 | e2e-v03 27/27 | e2e-v04 25/25 | p0-smoke 13/13 | concurrency 12/12 | sim-balance: 48,3/57,7/46,6/45,8/51,7% com 0,0% limite de rodadas
-- Estado final do banco: 15 bots preservados (Sonjin não existia — nenhuma exclusão feita), 0 contas, boss "Cell Perfeito" com HP restaurado ao valor pré-teste, danos de teste limpos, 0 atividades pendentes
+- Estado final do banco: 15 bots preservados (personagem legado não existia — nenhuma exclusão feita), 0 contas, boss "Ameaça Universal" com HP restaurado ao valor pré-teste, danos de teste limpos, 0 atividades pendentes
 - Backup pré-migração disponível em backups/custom-backup-pre-v04-20260910-212459.db
 
 Stage Summary:
@@ -269,7 +269,7 @@ Testes:
 - Regressão: e2e-audit 49/49 | e2e-p0-smoke 13/13 | e2e-v03 27/27 | e2e-v04 25/25 (após reiniciar dev p/ limpar rate-limit de guest 10/h em memória — falha era ambiental, não código) | concurrency 12/12
 - agent-browser: batalha com observador DOM (75 amostras): rounds 0→1→2→3→4→5 MONOTÔNICOS (sem replay), resultado 1x, Continuar fecha sem novo diálogo; reload NO MEIO da batalha → diálogo reabre sozinho e retoma; cosméticos comprados+equipados via UI (6 itens): aura glow + ring-4 dourada no avatar, título "o Lendário" no header/ficha/seleção, fundo Sala do Tempo na ficha, selo Pose Suprema, EFEITO TELEPORTE capturado ao entrar em cena; mobile 390px sem overflow, bottom nav fixed visível, localStorage vazio; console sem erros
 - npm run build: ✓ produção compilada; dev server permanece 200 pós-build
-- Banco final: 15 bots, 0 contas (estado pré-sessão restaurado), boss Cell Perfeito 2.5M/2.5M, balanceVersion=5 registrada, artefatos de teste removidos
+- Banco final: 15 bots, 0 contas (estado pré-sessão restaurado), boss Ameaça Universal 2.5M/2.5M, balanceVersion=5 registrada, artefatos de teste removidos
 - Backup pré-migração: backups/custom-backup-pre-v05-20260911-005110.db (+wal)
 
 Stage Summary:
@@ -304,7 +304,7 @@ Testes:
 - lint 0 erros | tsc --noEmit ok | npm run build ✓ 28 páginas
 - agent-browser: criação→dashboard SEM aura (DOM: ficha sem .aura, 0 pulsos, XP header+mini-bar+ "faltam")→Profissões (5 cards, Trabalhar 1h, "Agricultor — Lavrador", turno em andamento)→claim pela UI (500+300 zenni, progresso 1/3 no banco)→Loja compra+equipa os 2 cosméticos (ficha COM .aura, pulsos no retrato header+ficha)→batalha (94→91 ⚡, Continuar só no fim, sem duplicar)→mobile 390px sem overflow, bottom nav Início/Lutar/Trabalho/Treino/Mais→seleção: lixeira no personagem único, caixa de confirmação, exclusão OK, "Sua primeira lenda começa aqui!"; console sem erros
 - VLM (2 agentes): primeiro reprovou screenshots (capturados com scroll — ficha fora do quadro) mas confirmou recursos ao vivo; recapturados com scrollY=0 → APROVADO: card limpo sem cosmético, glow laranja na borda + halo dourado no retrato com cosméticos, "Experiência (faltam 80 p/ o nível 2)" visível
-- Banco final: 0 contas, 15 bots, boss Cell Perfeito 2.5M/2.5M restaurado, 0 atividades pendentes, balanceVersion=6; backup pré-migração disponível
+- Banco final: 0 contas, 15 bots, boss Ameaça Universal 2.5M/2.5M restaurado, 0 atividades pendentes, balanceVersion=6; backup pré-migração disponível
 
 Stage Summary:
 - v0.6 completa: 8 ajustes do usuário implementados e verificados com evidências
@@ -911,12 +911,12 @@ Work Log:
 - LIMPEZA ESTRUTURAL: upload/extracted/ (cópia da extração do tar) REMOVIDA — era fonte de testes DUPLICADOS (bun test rodava 2x os arquivos); o tar original permanece em upload/
 - NOVO src/lib/game/powerScale.ts (módulo 100% puro): as 10 escalas do livro do dono (Mortal Comum → Transcendente) calibradas no conteúdo real do jogo (fresh=111→Mortal Comum; bots 168–1598→Marcial–Planetário; Kronar ~2840→Estelar; 1800+ Estelar; 4k Galáctico; 9k Cósmico; 20k Divino; 45k Deus Maior; 100k Transcendente) + getPowerScale() (com progresso/poder restante, tolerante a lixo) + scaleDiff()/scaleDiffLabel() (REGRA 5.1 — Diferença de Escala)
 - Dashboard.tsx: selo da escala sob o Poder de Luta + NOVO card "Escala de Poder" (selo grande, ESCALA n/9, barra de progresso gradiente rumo à próxima escala com aria/progressbar, trilha visual das 10 escalas, texto do topo Transcendente)
-- BattlePanel.tsx: cada carta de oponente PvE agora mostra o selo da escala DELE + comparativo com o jogador (ex.: "+5 escalas acima" vermelho em Broly; "mesma escala" neutro; "N escalas abaixo" verde) — regra 5.1 visível antes de lutar; tooltip com o poder de luta exato do oponente
+- BattlePanel.tsx: cada carta de oponente PvE agora mostra o selo da escala DELE + comparativo com o jogador (ex.: "+5 escalas acima" vermelho em Kronar; "mesma escala" neutro; "N escalas abaixo" verde) — regra 5.1 visível antes de lutar; tooltip com o poder de luta exato do oponente
 - RankingPanel.tsx: selo compacto (emoji + En) ao lado do poder em cada linha do ranking in-game
 - tests/power-scale.test.ts NOVO: 9 testes (as 10 categorias do livro, limites exatos, calibração com bots/chefe real, progresso/restante, topo, lixo/+Infinity, regra 5.1, rótulos de perigo/neutro/vantagem)
 - Correções durante testes: +Infinity agora sobe ao topo (safePower); expectativas calibradas (Kronar=Estelar; Marcial vs Planetário = 2 escalas)
 - Dados de QA limpos do banco (TesteZ e EscalaQA + contas convidadas) — estado pristino restaurado: 15 bots / 0 contas
-- VERIFICAÇÃO: suíte completa 259/259 (sem duplicação); lint OK; agente-browser E2E: card da escala renderiza ("ESCALA 0 / 9", "faltam 9 de poder"), badges nos oponentes (Broly "🌌 Guerreiro Galáctico +5 escalas acima"), badge no ranking; zero page errors
+- VERIFICAÇÃO: suíte completa 259/259 (sem duplicação); lint OK; agente-browser E2E: card da escala renderiza ("ESCALA 0 / 9", "faltam 9 de poder"), badges nos oponentes (Kronar "🌌 Guerreiro Galáctico +5 escalas acima"), badge no ranking; zero page errors
 
 Stage Summary:
 - RECURSO ENTREGUE: Escala de Poder do sistema ESCALAS DE CAELUM integrada à ficha, batalha e ranking — mesma linguagem/nomenclatura do RPG do dono (Cap. 5, regra 5.1), zero mudança no motor de combate (aditivo e puro)
@@ -960,7 +960,7 @@ Work Log:
   - UI: BattlePanel — badges pré-batalha nos cards de oponentes ("🛡️ Armadura de Escala N contra você", "💥 escala esmagadora — crie Aberturas!", "⚔️ +N% de dano") + selo/escala do World Boss no card da ameaça; BattleLogDialog — pontos pulsantes para abertura/quebra de barreira; WorldBossView ganha power (server-side)
   - Regra 5.2 respeitada: escala NÃO altera esquiva/precisão (nenhuma mudança no passo de esquiva)
 - ESTILO (obrigatório): Bits.tsx — GameButton focus-visible ring âmbar (acessibilidade teclado), GameCard novo prop `interactive` (elevação + moldura no hover — usado nos cards de oponentes e itens da loja), ResourceBar brilho deslizante bar-sheen SOBRE o preenchimento (só quando >4% preenchido), SectionTitle filete de gradiente, Chip transition; Dashboard — selo da escala com pulso dourado (scale-seal) + tooltips na trilha de escalas; nav mobile — indicador de aba ativa (filete âmbar) + active:scale-90; globals.css — keyframes bar-sheen/scale-seal-pulse e prefers-reduced-motion DESLIGA animações decorativas (acessibilidade)
-- TESTES: tests/scale-armor.test.ts NOVO (17 testes: cálculo puro 5.1, saturação em 3, crushing 5.3, lixo/+Infinity, faixa da aberturaChance, simulações com semente — inferior causa menos/superior causa mais, rounds do azarão sempre crushing|abertura|breakthrough, piso de dano ≥1, textos narrativos, primeiro round inalterado — regra 5.2, calibração com Saibaman/Broly/Kronar reais); suíte completa 276/276 (era 259); combat.test.ts/sim-debug-speed.ts atualizados (Combatant.power, padrão neutro 1000)
+- TESTES: tests/scale-armor.test.ts NOVO (17 testes: cálculo puro 5.1, saturação em 3, crushing 5.3, lixo/+Infinity, faixa da aberturaChance, simulações com semente — inferior causa menos/superior causa mais, rounds do azarão sempre crushing|abertura|breakthrough, piso de dano ≥1, textos narrativos, primeiro round inalterado — regra 5.2, calibração com Saibaman/Kronar/Kronar reais); suíte completa 276/276 (era 259); combat.test.ts/sim-debug-speed.ts atualizados (Combatant.power, padrão neutro 1000)
 - LIMPEZA: dados de QA removidos (QAEscala, PainelFix, IframeQA, EstiloQA + contas convidadas) — banco pristino 15 bots/0 contas; testes de persistência verdes pós-limpeza; lint OK; tsc OK; dev.log limpo
 
 Stage Summary:
@@ -1046,7 +1046,7 @@ Work Log:
   * BattleLogDialog: evento 🎯 DESTINO (gradiente esmeralda) e 🌀 REPOSICIONAMENTO (gradiente violeta-fuchsia) com labels bold e pontos pulsantes
   * globals.css: .talent-flame (chama viva reusando impeto-flicker) e talent-glow (halo dourado); prefers-reduced-motion desliga ambos
 - TESTES: tests/talents.test.ts NOVO (15 testes: catálogo/ids únicos/custo 1, getTalent, parseTalents com lixo, validação de compra feliz+nível+duplicado+zeni, determinismo sem talentos, reroll aparece/cai Ímpeto/máx 1×rodada/acerto com dano, reposition dispara/anula dano/máx 1×rodada/sem ganho de Ímpeto no dano anulado, medidores 0–6, integridade, constantes); suíte completa 315/315 (era 300); lint OK; tsc OK
-- E2E agent-browser COMPROVADO: compra na UI (POST buy_talent 200 → card "Dominado" → "Ativo em todas as batalhas"); badges no card de Ímpeto; luta vs Cell Júnior → "[🌀 TalentQA gasta 1 Ímpeto para se reposicionar… mas o instante escapa!]" disparado por golpe pesado real; luta vs Soldado de Varth → "R1🎯 DESTINOTalentQA acerta um golpe brutal! (-4 HP) [🎯 Repetição do Destino — 1 Ímpeto para repetir o teste!]" — reroll com SUCESSO e dano aplicado; zero erros de console (entrada antiga de erro de sintaxe era cache do navegador — browser novo confirmou limpo)
+- E2E agent-browser COMPROVADO: compra na UI (POST buy_talent 200 → card "Dominado" → "Ativo em todas as batalhas"); badges no card de Ímpeto; luta vs inimigo de teste → "[🌀 TalentQA gasta 1 Ímpeto para se reposicionar… mas o instante escapa!]" disparado por golpe pesado real; luta vs Soldado de Varth → "R1🎯 DESTINOTalentQA acerta um golpe brutal! (-4 HP) [🎯 Repetição do Destino — 1 Ímpeto para repetir o teste!]" — reroll com SUCESSO e dano aplicado; zero erros de console (entrada antiga de erro de sintaxe era cache do navegador — browser novo confirmou limpo)
 - INCIDENTE RESOLVIDO durante o E2E: dev server rodava com client Prisma antigo em memória (db:push regenerou node_modules mas o Turbopack não recarrega) → restart do servidor resolveu
 - LIMPEZA: contas de QA removidas (TalentQA, QARound14 + convidados) — banco pristino 0 contas/15 bots; WAL checkpoint; testes de persistência verdes pós-limpeza; commit 0cb8fe6
 
@@ -1078,7 +1078,7 @@ Work Log:
   * BattlePanel: card de Ímpeto agora documenta o PREÇO da Quebra ("Depois vem o preço: 💧 2 rodadas de Exaustão — golpes −15%, dano recebido +10%") — o jogador decide sabendo a tradeoff completa do Cap. 29
 - TESTES: tests/exaustao.test.ts NOVO (9 testes): constantes moderadas; causalidade ESTRITA (nunca exausto sem ter quebrado — 80 seeds); narração de entrada ≤1×/lado; 💧 sempre DEPOIS da rodada da quebra; fadiga limitada (~2 rodadas em rounds distintos); determinismo (mesma semente → textos e danos idênticos); medidores 0–6; integridade HP/rodadas; suíte completa 324/324 (era 315); lint OK; tsc OK
 - RECEITA DE TESTE documentada: luta desgastante precisa de golpes ≥18% do HP (gatilho de Ímpeto) COM Defesa Heroica intercalando (senão o lado que quebra morre antes do buff expirar) — grindBattle copia a receita do impeto.test.ts (atk 900, HP 3000): 16/40 seeds mostram o ciclo completo
-- E2E agent-browser: luta real vs Cell Júnior com personagem nv15 → QUEBRA DE LIMITE disparou e narrou corretamente (R7 "⚡ QUEBRA DE LIMITE! ExaustQA rompe os próprios limites — +1 Escala por 2 rodadas!") + Defesa Heroica + ganhos de Ímpeto em cadeia; a janela E2E da exaustão é estreita (personagem ou morre durante o buff ou vence antes de expirar) — cobertura garantida pelos 9 testes na mesma code path; recalibrações nv18/22 testadas (vitórias)
+- E2E agent-browser: luta real vs inimigo de teste com personagem nv15 → QUEBRA DE LIMITE disparou e narrou corretamente (R7 "⚡ QUEBRA DE LIMITE! ExaustQA rompe os próprios limites — +1 Escala por 2 rodadas!") + Defesa Heroica + ganhos de Ímpeto em cadeia; a janela E2E da exaustão é estreita (personagem ou morre durante o buff ou vence antes de expirar) — cobertura garantida pelos 9 testes na mesma code path; recalibrações nv18/22 testadas (vitórias)
 - LIMPEZA: ExaustQA + convidado removidos → banco pristino 0 contas/15 bots; WAL checkpoint; commit ba26696
 
 Stage Summary:
@@ -1292,7 +1292,7 @@ Work Log:
 - E2E agent-browser (desktop 1280×800 + mobile 390×844):
   * Sessão limpa (cookies clear) → /wiki direto: 200, título correto, 23 artigos no DOM, índice com grupos, links cruzados renderizados
   * Busca "ímpeto" → "6 seções encontradas" (Combate/Ímpeto/Escala/Estratégias/Talentos/World Boss); busca "zenkai" → 3 seções com 2 <mark> de destaque; busca "xyzabc123" → estado vazio correto
-  * Spot-check de números na página renderizada: 40 rodadas ✓ · escala 100.000 ✓ · torneio 1.800 ✓ · cura 3 Créditos/HP ✓ · Quebra +1 Escala/2 rodadas ✓ · curva XP 80×nível^1,55 com valores 2.838/8.311 = saída da função real ✓ · Broly 11.000 ✓ · roubo 8% ✓ · ±5 níveis ✓ · decisão 71% → hospital 1 vida ✓
+  * Spot-check de números na página renderizada: 40 rodadas ✓ · escala 100.000 ✓ · torneio 1.800 ✓ · cura 3 Créditos/HP ✓ · Quebra +1 Escala/2 rodadas ✓ · curva XP 80×nível^1,55 com valores 2.838/8.311 = saída da função real ✓ · Kronar 11.000 ✓ · roubo 8% ✓ · ±5 níveis ✓ · decisão 71% → hospital 1 vida ✓
   * Login (/jogar limpo): ícone aria-label presente → clique → NOVA ABA t2 com /wiki (login preservado em t1)
   * Logado (guest + WikiQA Guerreiro criado): ícone no header → NOVA ABA t3 /wiki; aba do jogo INALTERADA depois (🪙500 · ❤️145/145 · ⚡100/100 · personagem intacto)
   * Mobile 390px: botão índice + drawer completo (grupos COMBATE/PROGRESSÃO/etc., 83 links); tabela 480px > viewport 364px com scroll horizontal
@@ -1507,7 +1507,7 @@ Work Log:
 - MOCK (mini-services/supabase-mock): toggle GET /__rpc_delete?installed=false|true — desinstala a RPC em runtime para REPRODUZIR o estado real da produção no E2E; estado exposto no /__dump
 - TESTES: admin-delete.test.ts — world sem guilda de sistema; "Tropa bloqueada" substituído por "guilda com líder BOT é excluível como qualquer outra (proteção OBSOLETA) + nome liberado + bot sobrevive guildless"; novos: só-nuvem limpa conta órfã inerte; só-nuvem com ledger mantém conta; alvo inexistente → audit failed + mensagem clara; listagem da nuvem indisponível → diagnóstico + audit failed. wiki-contract: teste INVERTIDO (rota NÃO contém ensureSystemGuild; módulo NÃO existe; leave limpa doações; wiki sem "guilda pública do sistema"/"Mestre Orun"; wiki contém "ZERO guildas"). persistence: contagem 13→14 migrations
 - E2E SETUP (scripts/e2e-v015-setup.ts): Admin QA E2E + 20k zeni; QA Local Alvo (local+nuvem); QA Só Nuvem E2E (nasce local → espelha → linha local apagada = fantasma real + conta auth órfã = h4); Príncipe QA (só-nuvem com acento, direto na nuvem)
-- E2E NAVEGADOR (agent-browser, dev server apontado ao mock 4010 e devolvido à real): (1) tela de guildas abre SEM ERRO com 0 guildas — "Guildas do universo (0)" + "Nenhuma guilda fundada ainda. Seja o primeiro a hastear uma bandeira!", zero menções a Tropa/Tartaruga (screenshot qa-v015-1); (2) painel admin aba Guildas: estado vazio reescrito (qa-v015-2); (3) busca "tartaruga"/"tropa" no painel → NENHUM personagem; wiki "tropa" → 0 menções; wiki "tartaruga" → 1 hit = técnica Onda de Aether "Escola da Tartaruga" (lore de mundo, não guilda) + 0 "guilda pública do sistema" + 0 "Mestre Orun" (qa-v015-3); (4) CICLO DE VIDA: fundar "QA Ciclo Guilda" (qa-v015-4) → doar 300 → sair (último membro) → guilda DISSOLVIDA + doação limpa (SQL: guildas=0, doações=0, matriz 18/18) → 2 reloads + revisitas → NADA REAPARECE — mecanismo MORTO (qa-v015-5/6); (5) RPC DESINSTALADA no mock → exclusão de "QA Só Nuvem E2E" → toast REPRODUZ exatamente a falha do dono ("NADA foi apagado. A RPC admin_delete_personagem NÃO está instalada...") + audit failed com motivo + fantasma sobrevive (qa-v015-8); (6) RPC instalada → retry → SUCESSO com relatório completo incluindo "conta auth local órfã limpa" — sumiu da nuvem (dump), do painel, do ranking; backup em personagens_backup_reset (qa-v015-9); (7) QA Local Alvo (ambas camadas) → cascade completo "matriz 18/18 limpa. Nuvem: 1 linha(ns) apagada(s)" — regressão ok (qa-v015-10); (8) ACENTO: "Principe QA" → botão travado + dica "Ainda não confere — digite Príncipe QA exatamente (acentos...)" (qa-v015-11); "Príncipe QA" → exclusão ok (qa-v015-12); (9) auditoria: 1 FALHOU + 9 concluídas + 4 bloqueadas visíveis (qa-v015-13); (10) MOBILE 390px toque real: guildas vazio (qa-v015-14) + painel guildas zero (qa-v015-15); (11) final: dev server devolvido à nuvem REAL, jogo abre limpo, 0 erros de console (qa-v015-16)
+- E2E NAVEGADOR (agent-browser, dev server apontado ao mock 4010 e devolvido à real): (1) tela de guildas abre SEM ERRO com 0 guildas — "Guildas do universo (0)" + "Nenhuma guilda fundada ainda. Seja o primeiro a hastear uma bandeira!", zero menções a guilda automática legada (screenshot qa-v015-1); (2) painel admin aba Guildas: estado vazio reescrito (qa-v015-2); (3) busca "tartaruga"/"tropa" no painel → NENHUM personagem; wiki "tropa" → 0 menções; wiki "tartaruga" → 1 hit = técnica Onda de Aether "Escola da Maré Astral" (lore de mundo, não guilda) + 0 "guilda pública do sistema" + 0 "Mestre Orun" (qa-v015-3); (4) CICLO DE VIDA: fundar "QA Ciclo Guilda" (qa-v015-4) → doar 300 → sair (último membro) → guilda DISSOLVIDA + doação limpa (SQL: guildas=0, doações=0, matriz 18/18) → 2 reloads + revisitas → NADA REAPARECE — mecanismo MORTO (qa-v015-5/6); (5) RPC DESINSTALADA no mock → exclusão de "QA Só Nuvem E2E" → toast REPRODUZ exatamente a falha do dono ("NADA foi apagado. A RPC admin_delete_personagem NÃO está instalada...") + audit failed com motivo + fantasma sobrevive (qa-v015-8); (6) RPC instalada → retry → SUCESSO com relatório completo incluindo "conta auth local órfã limpa" — sumiu da nuvem (dump), do painel, do ranking; backup em personagens_backup_reset (qa-v015-9); (7) QA Local Alvo (ambas camadas) → cascade completo "matriz 18/18 limpa. Nuvem: 1 linha(ns) apagada(s)" — regressão ok (qa-v015-10); (8) ACENTO: "Principe QA" → botão travado + dica "Ainda não confere — digite Príncipe QA exatamente (acentos...)" (qa-v015-11); "Príncipe QA" → exclusão ok (qa-v015-12); (9) auditoria: 1 FALHOU + 9 concluídas + 4 bloqueadas visíveis (qa-v015-13); (10) MOBILE 390px toque real: guildas vazio (qa-v015-14) + painel guildas zero (qa-v015-15); (11) final: dev server devolvido à nuvem REAL, jogo abre limpo, 0 erros de console (qa-v015-16)
 - GATES: suíte 436/436 (433 base + netos de v0.15: +4 novos, -1 removido, contagem de migrations corrigida) · lint ✓ · tsc ✓ (cache limpo) · banco dev PRISTINO pós-cleanup (0 humanos/contas/guildas/doações/sessions, 16 bots, matriz 18/18, AdminActionLog PRESERVADO com 13 entradas como prova viva) · 16 screenshots em download/qa-v015-*.png
 
 Stage Summary:
