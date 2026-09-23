@@ -39,6 +39,42 @@ jobs:
       - name: Unit and contract tests
         run: bun run test
 
+      - name: Functional HTTP audit
+        env:
+          DATABASE_URL: file:./ci-functional.db
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+        run: |
+          rm -f ci-functional.db ci-functional.db-journal
+          bunx prisma db push --schema prisma/schema.sqlite.prisma --skip-generate
+          bun run dev > /tmp/mw-functional-server.log 2>&1 &
+          SERVER_PID=$!
+          cleanup() {
+            kill "$SERVER_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then
+              break
+            fi
+            if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+              echo "Servidor encerrou durante o boot"
+              cat /tmp/mw-functional-server.log
+              exit 1
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/api/health >/dev/null || {
+            echo "Servidor não ficou pronto a tempo"
+            cat /tmp/mw-functional-server.log
+            exit 1
+          }
+          if ! bash scripts/e2e-audit.sh; then
+            echo "===== LOG DO SERVIDOR ====="
+            tail -n 300 /tmp/mw-functional-server.log
+            exit 1
+          fi
+
       - name: TypeScript
         run: bun run typecheck
 
