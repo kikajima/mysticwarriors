@@ -1,0 +1,218 @@
+name: Export Z.ai public snapshot
+
+on:
+  push:
+    branches:
+      - tmp/export-dragon-saga-20260923
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Crawl deployed public client
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p export/snapshot/site export/snapshot/external
+          cat > /tmp/crawl.py <<'PY'
+          import os, re, json, ssl, urllib.request, urllib.parse
+          from collections import deque
+          from html.parser import HTMLParser
+          from datetime import datetime, timezone
+
+          TARGET = "https://h1d208k93yk0-d.space-z.ai/"
+          ORIGIN = urllib.parse.urlsplit(TARGET)
+          OUT = os.path.abspath("export/snapshot")
+          SITE = os.path.join(OUT, "site")
+          EXT = os.path.join(OUT, "external")
+          os.makedirs(SITE, exist_ok=True)
+          os.makedirs(EXT, exist_ok=True)
+
+          allowed_external = {"fonts.googleapis.com", "fonts.gstatic.com", "z-cdn.chatglm.cn"}
+          asset_exts = {
+              ".js",".css",".json",".webmanifest",".map",".txt",".xml",
+              ".png",".jpg",".jpeg",".webp",".gif",".svg",".ico",
+              ".woff",".woff2",".ttf",".otf",
+              ".mp3",".ogg",".wav",".m4a",".aac",".webm",".mp4",
+          }
+          text_exts = {".js",".css",".json",".webmanifest",".map",".txt",".xml",".html",".htm",".svg"}
+          headers = {
+              "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/153 Safari/537.36",
+              "Accept": "*/*",
+          }
+          ctx = ssl.create_default_context()
+          q = deque([TARGET])
+          seen = set()
+          manifest = []
+          total = 0
+          MAX_FILES = 800
+          MAX_TOTAL = 350 * 1024 * 1024
+          MAX_ONE = 80 * 1024 * 1024
+
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.urls = []
+              def handle_starttag(self, tag, attrs):
+                  d = dict(attrs)
+                  for k in ("src","href","poster"):
+                      v = d.get(k)
+                      if v:
+                          self.urls.append(v)
+                  srcset = d.get("srcset")
+                  if srcset:
+                      for part in srcset.split(","):
+                          u = part.strip().split(" ")[0]
+                          if u:
+                              self.urls.append(u)
+
+          def clean_url(u, base):
+              if not u or u.startswith(("data:","blob:","javascript:","mailto:","#")):
+                  return None
+              try:
+                  absu = urllib.parse.urljoin(base, u)
+                  p = urllib.parse.urlsplit(absu)
+                  if p.scheme not in ("http","https"):
+                      return None
+                  return urllib.parse.urlunsplit((p.scheme,p.netloc,p.path,p.query,""))
+              except Exception:
+                  return None
+
+          def allowed(u):
+              p = urllib.parse.urlsplit(u)
+              if p.netloc == ORIGIN.netloc:
+                  if p.path == "/" or p.path.startswith("/_next/"):
+                      return True
+                  ext = os.path.splitext(p.path)[1].lower()
+                  return ext in asset_exts
+              return p.netloc in allowed_external
+
+          def local_path(u):
+              p = urllib.parse.urlsplit(u)
+              path = p.path or "/"
+              if path.endswith("/"):
+                  path += "index.html"
+              name = path.lstrip("/") or "index.html"
+              if p.query:
+                  safeq = re.sub(r"[^A-Za-z0-9._-]+","_",p.query)[:120]
+                  root, ext = os.path.splitext(name)
+                  name = root + "__q_" + safeq + ext
+              if p.netloc == ORIGIN.netloc:
+                  return os.path.join(SITE, name)
+              return os.path.join(EXT, p.netloc, name)
+
+          def enqueue_candidates(text, base):
+              found = set()
+              if "<html" in text.lower() or "<!doctype" in text.lower():
+                  parser = P()
+                  try:
+                      parser.feed(text)
+                      found.update(parser.urls)
+                  except Exception:
+                      pass
+              found.update(re.findall(r'https?://[^\s"\'<>\\)]+', text))
+              pat = r'(?:(?:\.\./|\./|/)?[A-Za-z0-9_@%+~#=,./-]+\.(?:js|css|json|webmanifest|map|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf|mp3|ogg|wav|m4a|aac|webm|mp4))(?:\?[^\s"\'<>\\)]*)?'
+              found.update(re.findall(pat, text, flags=re.I))
+              found.update(re.findall(r'_next/static/[A-Za-z0-9_@%+~#=,./-]+', text))
+              for raw in found:
+                  u = clean_url(raw, base)
+                  if u and allowed(u) and u not in seen:
+                      q.append(u)
+
+          while q and len(seen) < MAX_FILES and total < MAX_TOTAL:
+              u = q.popleft()
+              if u in seen or not allowed(u):
+                  continue
+              seen.add(u)
+              rec = {"url": u}
+              try:
+                  req = urllib.request.Request(u, headers=headers)
+                  with urllib.request.urlopen(req, timeout=30, context=ctx) as r:
+                      data = r.read(MAX_ONE + 1)
+                      if len(data) > MAX_ONE:
+                          rec.update(status="skipped-too-large", bytes=len(data))
+                          manifest.append(rec)
+                          continue
+                      ctype = r.headers.get("Content-Type","")
+                      final = r.geturl()
+                  lp = local_path(u)
+                  os.makedirs(os.path.dirname(lp), exist_ok=True)
+                  with open(lp,"wb") as f:
+                      f.write(data)
+                  total += len(data)
+                  rec.update(status="ok", path=os.path.relpath(lp, OUT), bytes=len(data), content_type=ctype, final_url=final)
+                  manifest.append(rec)
+                  ext = os.path.splitext(urllib.parse.urlsplit(u).path)[1].lower()
+                  is_text = ext in text_exts or any(x in ctype.lower() for x in ("text/","javascript","json","xml"))
+                  if is_text:
+                      text = data.decode("utf-8", errors="replace")
+                      enqueue_candidates(text, final)
+              except Exception as e:
+                  rec.update(status="error", error=f"{type(e).__name__}: {e}")
+                  manifest.append(rec)
+
+          with open(os.path.join(OUT,"manifest.json"),"w",encoding="utf-8") as f:
+              json.dump({
+                  "target": TARGET,
+                  "captured_at_utc": datetime.now(timezone.utc).isoformat(),
+                  "file_count": sum(1 for x in manifest if x.get("status")=="ok"),
+                  "total_bytes": total,
+                  "entries": manifest,
+              }, f, ensure_ascii=False, indent=2)
+
+          readme = """Dragon Saga Online — snapshot público do cliente web
+          ==================================================
+
+          Origem: https://h1d208k93yk0-d.space-z.ai/
+          Data da captura: 23/09/2026
+
+          Este pacote contém somente recursos PUBLICAMENTE entregues ao navegador:
+          HTML, bundles JavaScript/CSS e assets estáticos encontrados por rastreamento
+          das referências do build publicado.
+
+          NÃO é uma cópia garantida do projeto-fonte original. Não inclui código-fonte
+          TypeScript/React não publicado, segredos, banco de dados, variáveis privadas,
+          dados de usuários nem backend que não seja entregue publicamente.
+
+          Estrutura:
+          - site/         arquivos do mesmo host, preservando os caminhos URL
+          - external/     fontes/ícones externos públicos referenciados pela página
+          - manifest.json inventário da captura
+
+          Para testar localmente:
+              cd site
+              python3 -m http.server 8000
+          e abra http://127.0.0.1:8000/
+
+          Observação: funcionalidades que dependem de APIs/backend remoto podem não
+          funcionar offline. O objetivo deste arquivo é preservar o cliente publicado.
+          """
+          with open(os.path.join(OUT,"README.txt"),"w",encoding="utf-8") as f:
+              f.write(readme)
+
+          print("captured", sum(1 for x in manifest if x.get("status")=="ok"), "files", total, "bytes")
+          PY
+          python3 /tmp/crawl.py
+          tar -cf export/dragon-saga-online-public-snapshot-2026-09-23.tar -C export snapshot
+          ls -lh export/dragon-saga-online-public-snapshot-2026-09-23.tar
+          python3 - <<'PY'
+          import json
+          d=json.load(open('export/snapshot/manifest.json',encoding='utf-8'))
+          print("FILES", d["file_count"], "BYTES", d["total_bytes"])
+          scripts=[e for e in d["entries"] if e.get("status")=="ok" and ".js" in e.get("url","")]
+          print("JS", len(scripts))
+          for e in scripts[:60]:
+              print(e["url"], e.get("bytes"))
+          PY
+
+      - name: Upload tar
+        uses: actions/upload-artifact@v4
+        with:
+          name: dragon-saga-online-public-snapshot
+          path: export/dragon-saga-online-public-snapshot-2026-09-23.tar
+          if-no-files-found: error
+          retention-days: 1
