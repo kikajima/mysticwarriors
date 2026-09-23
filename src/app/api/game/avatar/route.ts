@@ -134,10 +134,22 @@ export async function POST(request: Request) {
           throw new ApiError('AVATAR_INVALID_URL', 'URL de avatar da nuvem inválida.');
         }
         const rest = url.slice(expectedPrefix.length);
-        const folder = decodeURIComponent(rest.split('/')[0] ?? '');
+        const parts = rest.split('/');
+        const folder = decodeURIComponent(parts[0] ?? '');
+        const objectName = decodeURIComponent(parts.slice(1).join('/'));
         if (!auth.account.supabaseUserId || folder !== auth.account.supabaseUserId) {
           throw new ApiError('FORBIDDEN', 'Este avatar não pertence à sua conta.');
         }
+        if (!/^avatar-\d+\.(?:jpg|png|webp)$/i.test(objectName)) {
+          throw new ApiError('AVATAR_INVALID_URL', 'Objeto de avatar inválido.');
+        }
+
+        // A policy do Storage é defesa adicional, não autoridade de tipo.
+        // Busca o objeto no host CONFIÁVEL do próprio Supabase e decodifica
+        // os bytes reais antes de aceitar a URL. SVG/HTML e mimetype forjado
+        // nunca entram no Player.
+        const storedBytes = await fetchExternalImage(url);
+        await validateImageBytes(storedBytes);
         newAvatarUrl = url;
       } else {
         // baixa com proteção completa (https exigido no fetch, anti-SSRF,
