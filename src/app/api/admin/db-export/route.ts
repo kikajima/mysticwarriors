@@ -21,7 +21,9 @@ function digest(value: string): Buffer {
 }
 
 function secretMatches(provided: string, expected: string): boolean {
-  if (!provided || !expected) return false;
+  // Segredo curto equivale a rota desabilitada. Evita que uma configuração
+  // operacional fraca transforme o backup completo em alvo de força bruta.
+  if (!provided || !expected || expected.length < 32) return false;
   return timingSafeEqual(digest(provided), digest(expected));
 }
 
