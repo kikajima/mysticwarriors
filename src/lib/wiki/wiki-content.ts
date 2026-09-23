@@ -92,7 +92,7 @@ const COMBAT = {
 const BASIC_ENERGY_KI_COST = 10;
 /** ORIGEM: src/lib/game/engine.ts — batalhas: replay base 1,1 s + 0,48 s/rodada (teto 32 s). */
 const BATTLE_REPLAY = { baseMs: 1100, perRoundMs: 480, maxMs: 32_000 } as const;
-/** ORIGEM: src/lib/game/rules.ts — ZENKAI. */
+/** ORIGEM: src/lib/game/rules.ts — Resiliência Estelar (contrato interno: ZENKAI). */
 const ZENKAI = { relevanceFactor: 0.6, sameOpponentCooldownHours: 12, zenkaiRequiresHpPct: 0.5 } as const;
 /** ORIGEM: src/lib/worldboss.ts — exportado e validado pelo teste de contrato. */
 const BOSS = {
