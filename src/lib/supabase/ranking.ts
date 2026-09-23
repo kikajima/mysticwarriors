@@ -197,7 +197,7 @@ export async function getPublicRanking(limit = 25): Promise<PublicRanking> {
   });
   return {
     entries: players.map((p, i) => ({
-      // mesma fórmula do jogo (scouterPower do /api/game/ranking)
+      // mesma fórmula do jogo (função técnica scouterPower do /api/game/ranking)
       position: i + 1,
       name: p.name,
       race: p.race,
