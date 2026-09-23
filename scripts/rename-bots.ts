@@ -1,6 +1,6 @@
 /**
  * Renomeia os bots do ranking para nomes ORIGINAIS (nenhum nome exato
- * da franquia Dragon Ball). Preserva IDs, stats, histórico e tudo mais —
+ * da identidade anterior). Preserva IDs, stats, histórico e tudo mais —
  * é um UPDATE pontual por nome, nunca delete/recreate.
  *
  * Uso: bun scripts/rename-bots.ts

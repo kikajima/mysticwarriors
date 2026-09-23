@@ -388,7 +388,7 @@ export async function attackWorldBoss(
     strategy: getStrategy('defensive'), // o chefe é um colosso defensivo
   };
   // v0.9.12 — ARMADURA DE ESCALA (regras 5.1/5.3) contra o chefe: o poder
-  // dele é calculado pela MESMA fórmula de scouter (npcCombatPower). O
+  // dele é calculado pela MESMA fórmula do Visor de Fluxo (npcCombatPower). O
   // azarão 4+ escalas abaixo tem golpes ESMAGADOS, mas críticos geram
   // ABERTURAS (×1.75) e 3 delas dão a uma TÉCNICA o tratamento de
   // diferença 3 ("quebra de barreira") — mesma tradução do duelo.

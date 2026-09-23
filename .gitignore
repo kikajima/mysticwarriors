@@ -81,3 +81,6 @@ db/backups/
 *.rar
 *.zip
 *.bak
+
+# Saídas locais de inspeção visual/VLM (não versionar)
+scripts/vlm-*.json

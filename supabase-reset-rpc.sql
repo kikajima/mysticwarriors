@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — RPC admin_reset_cloud (v3 — corrige o erro 23502)
+-- MYST KI WARRIORS — RPC admin_reset_cloud (v3 — corrige o erro 23502)
 -- =====================================================================
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE E CLIQUE EM "Run".
 -- É uma instalação ÚNICA (uma vez só) — depois disso, o botão "Reset

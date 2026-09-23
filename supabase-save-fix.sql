@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — CORREÇÃO DO SAVE NA NUVEM (v0.9.3)
+-- MYST KI WARRIORS — CORREÇÃO DO SAVE NA NUVEM (v0.9.3)
 -- ---------------------------------------------------------------------
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE E CLIQUE EM "Run".
 --

@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — PAINEL DE ADMINISTRADOR (v0.9.1)
+-- MYST KI WARRIORS — PAINEL DE ADMINISTRADOR (v0.9.1)
 -- ---------------------------------------------------------------------
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE E CLIQUE EM "Run".
 --

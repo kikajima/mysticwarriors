@@ -27,7 +27,7 @@ export interface RaceEconomyDef {
   trainCostMult: number;     // custo de treino
   energyRegenMult: number;   // velocidade de regeneração de energia
   hpRegenMult: number;       // velocidade de regeneração de vida
-  zenkai: boolean;           // bônus Saiyajin ao perder batalhas
+  zenkai: boolean;           // Resiliência Estelar da linhagem Solaris ao perder batalhas
 }
 
 export interface RaceInfo {
@@ -566,7 +566,7 @@ export interface Combatant {
   kiPower: number;    // poder de ataque de energia
   defPower: number;   // defesa física
   resPower: number;   // resistência de energia
-  /** Poder de luta do scouter — alimenta a ESCALA DE PODER (regra 5.1). */
+  /** Poder de luta do Visor de Fluxo — alimenta a ESCALA DE PODER (regra 5.1). */
   power: number;
   raceCombat: RaceCombatDef;
   techniques: TechniqueDef[];
@@ -670,7 +670,7 @@ export interface DerivedStats {
     speed: number;
     ki: number;
   };
-  power: number; // poder de luta total (scouter)
+  power: number; // poder de luta total (Visor de Fluxo)
 }
 
 /** Dados de regeneração por tempo — alimentam o contador do Dashboard. */
@@ -847,7 +847,7 @@ export interface RankingEntry {
   isBot: boolean;
   attackable: boolean;
   guildName?: string | null;
-  /** Visível apenas para quem possui o Radar das Esferas. */
+  /** Visível apenas para quem possui o Rastreador do Horizonte. */
   dragonBallStars?: number[] | null;
   position?: number;
   /** Only level differences restrict ranking challenges. */

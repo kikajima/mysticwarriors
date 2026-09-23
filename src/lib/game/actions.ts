@@ -825,7 +825,7 @@ async function actionStartBattle(tx: Tx, player: Player, enemyId: string): Promi
 
   const rewards = npcRewards(idx, player.race, sim.won);
 
-  // Zenkai decidido AQUI pelos critérios de risco (sem cota diária):
+  // Resiliência Estelar decidida AQUI pelos critérios de risco (contrato interno: zenkai; sem cota diária):
   // derrota + adversário relevante + entrada com vida >= 50%
   let zenkai = false;
   if (!sim.won && player.hp >= derived.maxHp * ZENKAI.zenkaiRequiresHpPct) {
@@ -841,7 +841,7 @@ async function actionStartBattle(tx: Tx, player: Player, enemyId: string): Promi
     ).granted;
   }
 
-  // Majin: absorção de vida ao vencer já embutida no HP final previsto
+  // Amorph: absorção de vida ao vencer já embutida no HP final previsto
   let playerEndHp = sim.playerEndHp;
   if (sim.won && playerCombatant.raceCombat.absorbOnWinPct > 0) {
     playerEndHp = Math.min(sim.playerMaxHp, playerEndHp + Math.floor(sim.playerMaxHp * playerCombatant.raceCombat.absorbOnWinPct));
@@ -1114,7 +1114,7 @@ export async function actionStartPvp(tx: Tx, player: Player, targetId: string): 
 
   const xpGain = pvpRewards(target.level, player.level, player.race);
 
-  // Zenkai decidido AQUI (derrota + adversário relevante + vida de entrada)
+  // Resiliência Estelar decidida AQUI (derrota + adversário relevante + vida de entrada)
   let zenkai = false;
   if (!sim.won && player.hp >= derived.maxHp * ZENKAI.zenkaiRequiresHpPct) {
     zenkai = shouldGrantZenkai(
@@ -1129,7 +1129,7 @@ export async function actionStartPvp(tx: Tx, player: Player, targetId: string): 
     ).granted;
   }
 
-  // Majin: absorção de vida ao vencer
+  // Amorph: absorção de vida ao vencer
   let playerEndHp = sim.playerEndHp;
   if (sim.won && playerCombatant.raceCombat.absorbOnWinPct > 0) {
     playerEndHp = Math.min(sim.playerMaxHp, playerEndHp + Math.floor(sim.playerMaxHp * playerCombatant.raceCombat.absorbOnWinPct));

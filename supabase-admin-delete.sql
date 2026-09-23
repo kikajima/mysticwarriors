@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — RPC admin_delete_personagem (v0.14)
+-- MYST KI WARRIORS — RPC admin_delete_personagem (v0.14)
 -- ---------------------------------------------------------------------
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE E CLIQUE EM "Run".
 -- Instalação ÚNICA (uma vez só) — depois disso, o botão "Excluir" do

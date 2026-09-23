@@ -6,7 +6,11 @@
 - Resultado visual de combate somente depois de todas as rodadas; uma atividade não deve abrir duas vezes.
 - WorldBoss/WorldBossDamage são registros do SQLite do servidor, não snapshots individuais do Supabase. Preservar o volume persistente em qualquer deploy.
 
-# Guerreiros Místicos — Registro de Decisões de Design
+# Myst Ki Warriors — Registro de Decisões de Design
+
+## Política de compatibilidade pós-rebrand
+
+A identidade pública e a documentação usam exclusivamente a nomenclatura de Myst Ki Warriors. Identificadores técnicos legados podem permanecer no código, banco e saves quando renomeá-los exigiria migration ou quebraria compatibilidade; eles não definem a apresentação pública do jogo.
 
 > **⚠️ NOTA DE INCIDENTE (2026-09-15, ~19:27):** a plataforma restaurou o
 > ambiente para o checkpoint de 14/set 17:24 no MEIO da sessão v0.14. Todo o
@@ -31,14 +35,14 @@
   `Guild.isSystem`**: o conceito deixa de existir no banco. A produção não
   pode "nascer" com ela — nada na cadeia cria guilda (a criação era
   runtime, agora extinta).
-- **A proteção "Tropa da Tartaruga não é excluível" foi REMOVIDA do painel
+- **A proteção "guilda automática legada não é excluível" foi REMOVIDA do painel
   admin** (obsoleta): TODA guilda listada é de jogador e TODA é excluível.
-  O nome "Tropa da Tartaruga" está LIBERADO — qualquer jogador pode fundar
+  O nome "guilda automática legada" está LIBERADO — qualquer jogador pode fundar
   a própria guilda com esse nome, sem conflito.
-- **Mestre Kame** (líder bot da guilda extinta): volta a ser bot sem guilda
+- **Mestre Orun** (líder bot da guilda extinta): volta a ser bot sem guilda
   (sparring do mundo, sem relação com guildas). Não faz parte do roster
   canônico de bots (`BOTS` em content/names.ts) — em bases novas ele não
-  nasce; a ficção dele (loja, técnicas, itens da Escola da Tartaruga) é
+  nasce; a ficção dele (loja, técnicas, itens da Escola da Maré Astral) é
   lore de mundo, não mecanismo de guilda.
 - **Saída de guilda pelo último membro DISSOLVE a guilda e LIMPA AS DOAÇÕES
   na mesma transação** (v0.15 — mesma regra de erasure do painel:
@@ -124,7 +128,7 @@
 
 ## ~~Guilda pública do sistema (v0.9.24)~~ — REVERTIDA pela v0.15
 
-- ~~"Tropa da Tartaruga": bootstrap do mundo (`ensureSystemGuild` na primeira
+- ~~"guilda automática legada": bootstrap do mundo (`ensureSystemGuild` na primeira
   visita à tela de guildas), sempre presente, sem vantagens especiais.~~
   **DECISÃO REVERTIDA EM 2026-09-15 (v0.15):** a guilda de sistema foi
   EXTINTA por decisão final do dono (ver a seção ⛔ no topo). O
@@ -197,7 +201,7 @@
 - **Antes (v0.9.3–v0.9.25):** allowlist `MISSION_ALLOWED_ACTIONS` de 4
   ações (world_boss_attack, select_player, claim_mission, cancel_mission)
   — TUDO mais negado durante o trabalho: loja, guilda, hospital, PvP,
-  coletas, equipamento, Shenron, cosméticos, talentos… (deny-by-default).
+  coletas, equipamento, Aethelgard, cosméticos, talentos… (deny-by-default).
 - **Agora (v0.16):** blocklist `MISSION_BLOCKED_ACTIONS` com EXATAMENTE 3
   ações (`battle`, `tournament_fight`, `search_dragon_ball`) — allow-by-default. O
   handler de trabalho em si mantém o próprio erro `MISSION_IN_PROGRESS`
@@ -211,7 +215,7 @@
   ATACANTE é quem se sujeita às checagens de ocupação; o ALVO é sempre
   atacável esteja trabalhando/treinando/lutando. A v0.16 só AUMENTOU a
   liberdade do atacante (agora pode atacar durante o próprio trabalho).
-- **UI espelha a matriz:** botões de loja/guilda/PvP/coleta/Shenron/cosméticos/talentos perderam o `disabled={… || onMission}`;
+- **UI espelha a matriz:** botões de loja/guilda/PvP/coleta/Aethelgard/cosméticos/talentos perderam o `disabled={… || onMission}`;
   PvE/torneio mantêm o bloqueio com MENSAGEM CLARA que lista o que
   segue liberado.
 - **TESTES ANTI-DRIFT PERMANENTES** (`tests/occupation-matrix.test.ts`):
@@ -223,7 +227,7 @@
   (seção "Ações, Custos e Ocupação") e o teste de contrato da wiki vigia.
 
 
-- **HOSPITAL DO DR. BRIEF REMOVIDO:** não existe mais ação manual de cura total por Zeni. Um nocaute ainda resgata o guerreiro com 1 HP, mas a volta ao combate depende de regeneração natural ou itens de cura. A decisão elimina o ciclo de cura instantânea que permitia lutar sem intervalo. (2026-09-20)
+- **HOSPITAL DO DR. BRIEF REMOVIDO:** não existe mais ação manual de cura total por Créditos. Um nocaute ainda resgata o guerreiro com 1 HP, mas a volta ao combate depende de regeneração natural ou itens de cura. A decisão elimina o ciclo de cura instantânea que permitia lutar sem intervalo. (2026-09-20)
 
 ## 💬 CHAT PERSISTENTE — HISTÓRICO FORA DAS CASCATAS (2026-09-19)
 
@@ -347,7 +351,7 @@ idempotência, cooldown condicional ou autoridade do servidor.
   feitos na Oficina não podem ser fabricados em duplicata. Consumíveis e
   projetos continuam empilháveis.
 - **Cancelamento é reversível antes do término:** cancelar uma fabricação em
-  andamento devolve integralmente os ingredientes e o Zeni consumidos. Job
+  andamento devolve integralmente os ingredientes e o Créditos consumidos. Job
   já concluído não pode ser cancelado; deve ser coletado. O reembolso passa
   pelo ledger da economia (`type=refund`, `source=craft_cancel`).
 - **Coleta é exatamente uma vez:** a quantidade armazenada no `CraftJob`

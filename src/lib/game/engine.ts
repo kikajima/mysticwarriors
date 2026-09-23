@@ -498,7 +498,7 @@ export function buildPlayerCombatant(player: Player & GuildContext): Combatant {
     kiPower: d.kiPower,
     defPower: d.defPower,
     resPower: d.resPower,
-    // poder de luta do scouter — alimenta a Armadura de Escala (5.1)
+    // poder de luta do Visor de Fluxo — alimenta a Armadura de Escala (5.1)
     power: d.power,
     raceCombat: rc,
     techniques: loadoutTechniques(player),
@@ -530,7 +530,7 @@ export function buildNpcCombatant(enemyIdx: number): Combatant {
     kiPower,
     defPower: Math.round(e.defense * 1.8),
     resPower: Math.round(e.defense * 1.1 + e.ki * 0.9),
-    // poder de luta do scouter — alimenta a Armadura de Escala (5.1)
+    // poder de luta do Visor de Fluxo — alimenta a Armadura de Escala (5.1)
     power: npcCombatPower(e),
     raceCombat: neutral,
     techniques: [],

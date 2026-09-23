@@ -1,4 +1,4 @@
-// Guerreiros Místicos — Schema Prisma
+// Myst Ki Warriors — Schema Prisma
 // ---------------------------------------------------------------------
 // PRODUÇÃO: PostgreSQL do Supabase (schema "game").
 // O DATABASE_URL do Render deve usar o Session Pooler do Supabase
@@ -158,7 +158,7 @@ model Player {
   guildDonated  Int       @default(0)
   missionsDone  Int       @default(0)
   dragonBalls   Int       @default(0)
-  // v0.9.17 — conquistas narrativas (ASCENSÃO Z): Milagre no Limite e
+  // v0.9.17 — conquistas narrativas (ESCALAS DE CAELUM): Milagre no Limite e
   // David vs Golias (contadores aditivos, default 0)
   miracleWins   Int       @default(0)
   davidWins     Int       @default(0)
@@ -179,7 +179,7 @@ model Player {
   // transformações
   transformationId    String?
   transformationsOwned String   @default("[]")
-  // anti-farm Zenkai (Saiyajin)
+  // anti-farm Resiliência Estelar (Solaris)
   lastZenkaiAt         DateTime?
   zenkaiWindowStart    DateTime?
   zenkaiCount24h       Int      @default(0)
@@ -202,7 +202,7 @@ model Player {
   // jogo não lê nem escreve nela desde a v0.9.6.
   cosmeticsEquipped String?
   cosmeticsOwned   String?
-  // v0.9.15 — TALENTOS DE ÍMPETO (Cap. 7 do ASCENSÃO Z): os dois gastos
+  // v0.9.15 — TALENTOS DE ÍMPETO (Cap. 7 do ESCALAS DE CAELUM): os dois gastos
   // restantes de 1 Ímpeto ("Repetir um d10" e "Reposicionamento
   // dramático") como talentos compráveis — JSON [talentId].
   talents         String    @default("[]")

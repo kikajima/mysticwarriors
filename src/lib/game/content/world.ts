@@ -259,7 +259,7 @@ export function getEnemy(id: string): { enemy: Enemy; index: number } | null {
 }
 
 /**
- * Poder de scouter equivalente de um oponente PvE (v0.9.12).
+ * Poder de Visor de Fluxo equivalente de um oponente PvE (v0.9.12).
  * MESMA fórmula da ficha do jogador (computeDerived), sem equipamentos
  * — fonte ÚNICA: engine (Armadura de Escala, regra 5.1) e cartas de
  * oponente na UI leem daqui, nunca de uma cópia local.

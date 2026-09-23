@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =====================================================================
-# AUDITORIA E2E — Guerreiros Místicos
+# AUDITORIA E2E — Myst Ki Warriors
 # Testa segurança (autorização), economia, progressão e regras do jogo
 # diretamente contra o servidor dev (localhost:3000).
 # =====================================================================
@@ -96,23 +96,23 @@ check "convidado cria personagem" "audit" "$( [ -n "$PG" ] && echo audit || echo
 echo ""
 echo "=== 4. ECONOMIA: saldos e atributos sem teto ==="
 
-# 4.1 (v0.9.2) consumíveis custam DIAMANTES: B tem 0 cristais; Senzu = 10 💎
+# 4.1 (v0.9.2) consumíveis custam DIAMANTES: B tem 0 cristais; Fruto de Sylva = 10 💎
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"senzu\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "compra sem diamantes → INSUFFICIENT_CRYSTALS" "INSUFFICIENT_CRYSTALS" "$R"
 
 # 4.1b dá 10 diamantes ao B → compra sai e zera o saldo
 bun scripts/e2e-db.ts set-crystals "$PB" 10 >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"senzu\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
-check "compra de Senzu com 10 diamantes" "True" "$R"
+check "compra de Fruto de Sylva com 10 diamantes" "True" "$R"
 CRY=$(curl -s -b $JAR_B "$BASE/api/game/state?playerId=$PB" | python3 -c 'import json,sys;print(json.load(sys.stdin)["player"]["crystals"])' 2>/dev/null)
 check "diamantes debitados (10 → 0)" "0" "$CRY"
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"senzu\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
 check "segunda compra sem diamantes → INSUFFICIENT_CRYSTALS" "INSUFFICIENT_CRYSTALS" "$R"
 
-# 4.1c Zeni insuficiente (item em Zeni): Luvas custam 300; B fica com 100
+# 4.1c Créditos insuficiente (item em Créditos): Luvas custam 300; B fica com 100
 bun scripts/e2e-db.ts set-zeni "$PB" 100 >/dev/null
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"buy\",\"itemId\":\"luvas\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
-check "compra sem Zeni → INSUFFICIENT_ZENI" "INSUFFICIENT_ZENI" "$R"
+check "compra sem Créditos → INSUFFICIENT_ZENI" "INSUFFICIENT_ZENI" "$R"
 
 # 4.2 atributos sem teto: começa muito acima do antigo limite 999
 BUN_SET=$(bun scripts/e2e-db.ts setup-high-stats "$PB" 2>&1 | tail -1)
@@ -132,9 +132,9 @@ echo "=== 5. COMBATE: loadout, estratégia e PvP ==="
 
 # 5.1 aprender técnicas
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"learn_technique\",\"techniqueId\":\"kamehameha\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
-check "aprender Kamehameha" "True" "$R"
+check "aprender Onda de Aether" "True" "$R"
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"learn_technique\",\"techniqueId\":\"genki_dama\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
-check "aprender Genki Dama (suprema)" "True" "$R"
+check "aprender Convergência do Aether (suprema)" "True" "$R"
 
 # genki_dama é suprema → não pode no slot 1
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"equip_technique\",\"slot\":\"1\",\"techniqueId\":\"genki_dama\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["error"]["code"])' 2>/dev/null)
@@ -266,7 +266,7 @@ REQ_DONATE="guild-donate-$TS"
 R=$(curl -s -b $JAR_B -X POST $BASE/api/game/action -H 'Content-Type: application/json' -d "{\"playerId\":\"$PB\",\"type\":\"donate_guild\",\"amount\":8000,\"requestId\":\"$REQ_DONATE\"}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["success"])' 2>/dev/null)
 check "doar 8000 para a guilda" "True" "$R"
 GUILD_LVL=$(curl -s -b $JAR_B "$BASE/api/game/guilds?playerId=$PB" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["myGuild"]["level"] if d.get("myGuild") else "")' 2>/dev/null)
-check "guilda subiu para nível 2 (8.000 Zeni)" "2" "$GUILD_LVL"
+check "guilda subiu para nível 2 (8.000 Créditos)" "2" "$GUILD_LVL"
 
 echo ""
 echo "=== 11. ECONOMIA: ledger e transações ==="

@@ -375,7 +375,7 @@ export function buildTournamentOpponent(fighter: TournamentFighter, player: Comb
   // nível "de ringue": próximo ao do jogador (a Armadura de Escala compara
   // o PODER, não o nível, mas o card e o log ficam coerentes)
   const level = Math.max(1, Math.round(player.level * m));
-  // poder do scouter proporcional à ameaça real construída
+  // poder do Visor de Fluxo proporcional à ameaça real construída
   const power = round2((player.power * m * (b.atk + b.ki + b.def + b.spd)) / 4);
   const battleKi = 40 + ki * 4;
   return {

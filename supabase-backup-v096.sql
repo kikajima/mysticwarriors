@@ -1,5 +1,5 @@
 -- =====================================================================
--- GUERREIROS MÍSTICOS — BACKUP ANTES DA MIGRAÇÃO v0.9.6 (RODE PRIMEIRO)
+-- MYST KI WARRIORS — BACKUP ANTES DA MIGRAÇÃO v0.9.6 (RODE PRIMEIRO)
 -- ---------------------------------------------------------------------
 -- COLE ESTE BLOCO INTEIRO NO SQL EDITOR DO SUPABASE E CLIQUE EM "Run".
 --
