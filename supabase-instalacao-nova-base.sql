@@ -141,26 +141,13 @@ create policy "personagens_select_proprias"
   to authenticated
   using (user_id = (select auth.uid()));
 
+-- Stage 12: gameplay no espelho é somente leitura para o navegador.
+-- O backend grava por DATABASE_URL e não pelo papel authenticated.
 drop policy if exists "personagens_insert_proprias" on public.personagens;
-create policy "personagens_insert_proprias"
-  on public.personagens for insert
-  to authenticated
-  with check (user_id = (select auth.uid()));
-
 drop policy if exists "personagens_update_proprias" on public.personagens;
-create policy "personagens_update_proprias"
-  on public.personagens for update
-  to authenticated
-  using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
-
 drop policy if exists "personagens_delete_proprias" on public.personagens;
-create policy "personagens_delete_proprias"
-  on public.personagens for delete
-  to authenticated
-  using (user_id = (select auth.uid()));
-
-grant select, insert, update, delete on public.personagens to authenticated;
+revoke insert, update, delete on public.personagens from authenticated;
+grant select on public.personagens to authenticated;
 
 -- Gatilho: atualizado_em sempre fresco.
 create or replace function public.tocar_personagem()
