@@ -62,7 +62,7 @@ export async function GET(request: Request) {
 
     const cloudSynced = await syncAuthoritativeCloudCharacters(auth.account.supabaseUserId, rows);
     if (!cloudSynced) {
-      throw new ApiError('CLOUD_UNAVAILABLE', 'Sincronização autoritativa da nuvem indisponível neste ambiente.');
+      throw new ApiError('PRECONDITION_FAILED', 'Sincronização autoritativa da nuvem indisponível neste ambiente.');
     }
 
     return ok({
