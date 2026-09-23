@@ -122,8 +122,7 @@ export async function executeGameAction(
   auth: AuthContext,
   playerId: string,
   type: string,
-  args: Record<string, unknown>,
-  accessToken?: string | null
+  args: Record<string, unknown>
 ): Promise<ActionResult> {
   let offline: OfflineOpponent | undefined;
   let targetName = '';
@@ -135,7 +134,7 @@ export async function executeGameAction(
     try { targetName = decodeURIComponent(String(args.targetId).slice(6)); }
     catch { throw new ApiError('VALIDATION_ERROR', 'Adversário inválido.'); }
     const local = await db.player.findUnique({ where: { name: targetName } });
-    if (!local) offline = await fetchOfflineOpponent(targetName, accessToken);
+    if (!local) offline = await fetchOfflineOpponent(targetName);
   }
 
   // Guildas vivem no SQLite autoritativo, mas um guerreiro desconectado
@@ -149,10 +148,7 @@ export async function executeGameAction(
       await requirePlayer(auth, playerId);
       const local = await db.player.findUnique({ where: { name: guildInviteName } });
       if (!local) {
-        if (!accessToken) {
-          throw new ApiError('UNAUTHORIZED', 'Entre na sua conta para convidar guerreiros offline.');
-        }
-        guildOffline = await fetchOfflineOpponent(guildInviteName, accessToken);
+        guildOffline = await fetchOfflineOpponent(guildInviteName);
       }
     }
   }
