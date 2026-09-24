@@ -2,7 +2,7 @@ const DEFAULT_URL = 'https://mysticwarriors-ohio.onrender.com';
 const base = new URL(process.argv[2] || process.env.PRODUCTION_URL || DEFAULT_URL).origin;
 const failures = [];
 const expectedCommit = (process.env.EXPECTED_COMMIT || '').trim();
-const expectedRelease = (process.env.EXPECTED_RELEASE || '1.0.0-rc.1').trim();
+const expectedRelease = (process.env.EXPECTED_RELEASE || '1.0.0').trim();
 
 async function get(path) {
   try {
@@ -36,7 +36,7 @@ if (health) {
   expect(json?.database === 'ok', '/api/health: banco não está ok');
   expect(json?.cloudAuthority === 'server', '/api/health: cloudAuthority inesperado');
   expect(json?.release === expectedRelease, `/api/health: release ${json?.release ?? 'ausente'} != ${expectedRelease}`);
-  expect(json?.releaseStage === 16, `/api/health: releaseStage ${json?.releaseStage ?? 'ausente'} != 16`);
+  expect(json?.releaseStage === 18, `/api/health: releaseStage ${json?.releaseStage ?? 'ausente'} != 18`);
   if (expectedCommit) {
     const deployedCommit = json?.deployment?.commit || '';
     expect(deployedCommit === expectedCommit, `/api/health: commit implantado ${deployedCommit || 'ausente'} != ${expectedCommit}`);
