@@ -1,5 +1,5 @@
-export const RELEASE_VERSION = '1.0.0-rc.1';
-export const RELEASE_STAGE = 16;
+export const RELEASE_VERSION = '1.0.0';
+export const RELEASE_STAGE = 18;
 
 export function deploymentIdentity() {
   return {
