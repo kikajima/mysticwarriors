@@ -21,6 +21,15 @@ Este arquivo reúne apenas os itens operacionais que não devem depender de mem�
 - RPCs administrativas legadas por conta removidas.
 - `Leaked Password Protection` não está disponível no plano Free atual; o aviso do Advisor é aceito e compensado por política forte de senha e hardening do backend.
 
+## Release Oficial — Etapa 18
+
+- Versão promovida de `1.0.0-rc.1` para `1.0.0` sem alteração de gameplay.
+- `package.json`, `src/lib/release.ts`, Production smoke e contratos apontam para `1.0.0`.
+- `releaseStage` oficial: `18`.
+- Notas do release: `RELEASE-1.0.0.md`.
+- Após o merge, criar referência estável `release/v1.0.0`.
+- **Publicação efetiva:** somente depois que o Render expuser `release: 1.0.0`, `releaseStage: 18`, branch `master`, SHA esperado e `database: ok`.
+
 ## Certificação de Produção — Etapa 17
 
 - RC `1.0.0-rc.1` implantado no Render com SHA exato `1eaabae80ab6a4ff32e2a8a602eef6a5f939bfd3`.
