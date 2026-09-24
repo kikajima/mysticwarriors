@@ -28,6 +28,6 @@ jobs:
 
       - name: Production smoke
         env:
-          EXPECTED_RELEASE: 1.0.0-rc.1
+          EXPECTED_RELEASE: 1.0.0
           EXPECTED_COMMIT: ${{ inputs.expected_commit || github.sha }}
         run: node scripts/smoke-production.mjs "${{ inputs.url }}"
